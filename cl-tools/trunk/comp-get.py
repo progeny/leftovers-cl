@@ -39,8 +39,6 @@ compsdir = cachedir + "/comps"
 availabledir = compsdir + "/available"
 installeddir = compsdir + "/installed"
 
-sources_list = "/etc/apt/sources.list"
-
 # For each source in SOURCES_LIST, check the source for a comps.xml,
 # and if one exists, download it and save it to COMPSDIR; then, for
 # each subcomponent, create a link to the comps.xml in
@@ -48,63 +46,10 @@ sources_list = "/etc/apt/sources.list"
 # manipulate it using that name. Also call "aptitude update" so
 # the APT database is up to date with any component updates.
 def comps_update():
-    os.system("aptitude update")
+    cl.update_apt()
 
     print "Updating component metadata:"
-
-    for (fmt, uri, dist, comps) in cl.parse_sources_list(sources_list):
-        if fmt == "deb":
-            # For each (APT) component, construct a URL to
-            # the comps.xml file and check if it exists in
-            # a protocol-specific way.
-            for comp in comps:
-                print "  Checking %s/%s..." % (dist, comp),
-
-                url = "%s/dists/%s/%s/comps.xml" % (uri, dist, comp)
-                (proto, host, path, x, y, z) = urlparse.urlparse(url)
-                if proto == "http":
-                    # Connect to the HTTP server to verify that
-                    # comps.xml exists:
-                    h = httplib.HTTP(host)
-                    h.putrequest("GET", path)
-                    h.putheader("Host", host)
-                    h.putheader("Accept", "application/xml")
-                    h.endheaders()
-                    (code, message, headers) = h.getreply()
-                    if code != 200:
-                        print "not a component."
-                        continue
-                elif proto == "file":
-                    # Check the file system to verify that comps.xml
-                    # exists:
-                    if not os.path.exists(path):
-                        print "not a component."
-                        continue
-                else:
-                    print "protocol `%s' not supported." % proto
-                    continue
-
-                # Download the comps.xml and save it to COMPSDIR:
-                comps_xml = "%s/%s.xml" % (compsdir, comp)
-                comps_xml_tmp = "%s/.%s.xml" % (compsdir, comp)
-                urllib.urlretrieve(url, comps_xml_tmp)
-                if os.path.exists(comps_xml):
-                    if filecmp.cmp(comps_xml, comps_xml_tmp):
-                        os.unlink(comps_xml_tmp)
-                        print "up-to-date."
-                        continue
-                os.rename(comps_xml_tmp, comps_xml)
-
-                # Create links to the downloaded comps.xml in
-                # AVAILABLEDIR using each of the subcomponent names,
-                # so they can be manipulated using the names:
-                comp = rhpl.comps.Comps(comps_xml)
-                for group in comp.groups.values():
-                    comps_xml_sub = "%s/%s.xml" % (availabledir, group.id)
-                    if not os.path.exists(comps_xml_sub):
-                        os.symlink(comps_xml, comps_xml_sub)
-
-                print "updated."
+    cl.update_available()
 
     print "Done."
 
@@ -320,6 +265,9 @@ def comps_list_installed():
     for package in installed:
         print package
 
+def status_cb(s):
+    print s
+
 def main():
     action_list = { "update": (comps_update, False),
                     "install": (comps_install, True),
@@ -363,6 +311,7 @@ Commands are:
             purge = True
                                 
     cl.init()
+    cl.register_status_cb(status_cb)
 
     (action_call, param) = action_list[sys.argv[1]]
     if (param and len(args) < 1) or (not param and len(args) > 0):
