@@ -20,6 +20,9 @@
 import sys
 import os
 import string
+import httplib
+import urlparse
+import urllib
 
 import apt_pkg
 import rhpl.comps
@@ -76,6 +79,8 @@ def parse_sources_list(path = None):
     f = open(path)
     for line in f:
         items = line.split()
+        if len(items) < 1:
+            continue
         if items[0] in recognized_repo_types:
             repos.append((items[0], items[1], items[2], tuple(items[3:])))
 
@@ -88,7 +93,7 @@ def update_available():
     compsdir = _retrieve_config_dir_path("Dir::Comps")
     availabledir = _retrieve_config_dir_path("Dir::Comps::Available")
 
-    for (fmt, uri, dist, comps) in cl.parse_sources_list():
+    for (fmt, uri, dist, comps) in parse_sources_list():
         if fmt == "deb":
             # For each (APT) component, construct a URL to
             # the comps.xml file and check if it exists in
