@@ -245,7 +245,10 @@ def update_installed():
                 else:
                     new_status = "none"
             else:
-                new_status = "complete"
+                if len(_istatus[group.id]["installed"]):
+                    new_status = "complete"
+                else:
+                    new_status = "none"
 
                 # If this is a new component and it's completely
                 # installed, assume it was installed explicitly.
