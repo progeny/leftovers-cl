@@ -58,6 +58,20 @@ def init(options, argv):
 
 # Use a callback system to report status.
 
+class StatusDict(dict):
+    def __init__(self, **kw):
+        dict.__init__(self)
+        for key in kw.keys():
+            self[key] = kw[key]
+
+    def __str__(self):
+        return self["message"]
+
+class ComponentException(StatusDict, Exception):
+    def __init__(self, **kw):
+        Exception.__init__(self)
+        StatusDict.__init__(self, **kw)
+
 status_cb = None
 
 def register_status_cb(cb):
@@ -66,7 +80,10 @@ def register_status_cb(cb):
 
 def status(s):
     if status_cb:
-        status_cb(s)
+        if isinstance(s, StatusDict):
+            status_cb(s)
+        else:
+            status_cb(StatusDict(message=s))
 
 # XXX apt_pkg should provide some mechanism for iterating over
 # the lines in sources.list. It's pretty silly that we have to
