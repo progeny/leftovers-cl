@@ -321,12 +321,12 @@ def comps_list_installed():
         print package
 
 def main():
-    update = False
-    install = False
-    remove = False
-    upgrade = False
-    list_available = False
-    list_installed = False
+    action_list = { "update": (comps_update, False),
+                    "install": (comps_install, True),
+                    "remove": (comps_remove, True),
+                    "upgrade": (comps_upgrade, False),
+                    "list-available": (comps_list_available, False),
+                    "list-installed": (comps_list_installed, False) }
 
     def usage(status):
         print """Usage: %s COMMAND [OPTIONS] [COMPONENT]
@@ -345,19 +345,7 @@ Commands are:
         sys.exit(status)
 
     # parse command line
-    if sys.argv[1] == "update":
-        update = True
-    elif sys.argv[1] == "install":
-        install = True
-    elif sys.argv[1] == "remove":
-        remove = True
-    elif sys.argv[1] == "upgrade":
-        upgrade = True
-    elif sys.argv[1] == "list-available":
-        list_available = True
-    elif sys.argv[1] == "list-installed":
-        list_installed = True
-    else:
+    if sys.argv[1] not in action_list.keys():
         usage(1)
 
     options = [ 'purge' ]
@@ -374,33 +362,15 @@ Commands are:
             # XXX not actually used yet
             purge = True
                                 
-    # initialize apt_pkg:
-    apt_pkg.init()
+    cl.init()
 
-    if update:
-        if len(args) != 0:
-            usage(1)
-        comps_update()
-    elif install:
-        if len(args) != 1:
-            usage(1)
-        comp_install(args[0])
-    elif remove:
-        if len(args) != 1:
-            usage(1)
-        comp_remove(args[0])
-    elif upgrade:
-        if len(args) != 0:
-            usage(1)
-        comps_upgrade()
-    elif list_available:
-        if len(args) != 0:
-            usage(1)
-        comps_list_available()
-    elif list_installed:
-        if len(args) != 0:
-            usage(1)
-        comps_list_installed()
+    (action_call, param) = action_list[sys.argv[1]]
+    if (param and len(args) < 1) or (not param and len(args) > 0):
+        usage(1)
+    if param:
+        action_call(args[0])
+    else:
+        action_call()
 
 if __name__ == "__main__":
     main()
