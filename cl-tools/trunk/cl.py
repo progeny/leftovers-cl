@@ -222,8 +222,8 @@ def update_installed():
                                        "status": "new" }
 
             # Clear out the old package lists.
-            _istatus[group.id]["missing"] = []
-            _istatus[group.id]["installed"] = []
+            missing = []
+            installed = []
             missing_optional = []
 
             # Look through the package list for missing and installed
@@ -231,31 +231,33 @@ def update_installed():
             for (type, package) in group.packages.values():
                 if package not in installed_pkgs:
                     if type in ("mandatory", "default"):
-                        _istatus[group.id]["missing"].append(package)
+                        missing.append(package)
                     else:
                         # XXX: We don't use this yet, but we could.
                         missing_optional.append(package)
                 else:
-                    _istatus[group.id]["installed"].append(package)
+                    installed.append(package)
 
             # Set the new status.
-            if len(_istatus[group.id]["missing"]):
-                if len(_istatus[group.id]["installed"]):
+            if len(missing):
+                if len(installed):
                     new_status = "partial"
                 else:
                     new_status = "none"
             else:
-                if len(_istatus[group.id]["installed"]):
-                    new_status = "complete"
-                else:
+                if not len(installed):
                     new_status = "none"
+                else:
+                    new_status = "complete"
 
-                # If this is a new component and it's completely
-                # installed, assume it was installed explicitly.
-                if _istatus[group.id]["status"] == "new":
-                    _istatus[group.id]["follow"] = True
+                    # If this is a new component and it's completely
+                    # installed, assume it was installed explicitly.
+                    if _istatus[group.id]["status"] == "new":
+                        _istatus[group.id]["follow"] = True
 
             _istatus[group.id]["status"] = new_status
+            _istatus[group.id]["missing"] = missing
+            _istatus[group.id]["installed"] = installed
 
     # We're done.  Save the installed status for next time.
     istatus_f = open(istatus_path, "w")
