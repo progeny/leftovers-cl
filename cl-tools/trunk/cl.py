@@ -173,7 +173,8 @@ def update_available():
     do_status_update = False
     compsdir = _retrieve_config_dir_path("Dir::Comps")
 
-    comps_xml_found = []
+    old_comps_xml_list = os.listdir(compsdir)
+
     for (fmt, uri, dist, comps) in parse_sources_list():
         if fmt == "deb":
             # For each (APT) component, construct a URL to
@@ -211,6 +212,13 @@ def update_available():
                 comps_xml_tmp = "%s/.%s.xml" % (compsdir, comp)
                 urllib.urlretrieve(url, comps_xml_tmp)
 
+                # Remove the XML file from the list of "old" files;
+                # once we're done, the list will only contain files
+                # not updated.
+                if os.path.basename(comps_xml) in old_comps_xml_list:
+                    sys.stderr.write("found %s, not deleting\n" % (os.path.basename(comps_xml),))
+                    old_comps_xml_list.remove(os.path.basename(comps_xml))
+
                 if os.path.exists(comps_xml):
 
                     # No change?  Keep the old one.
@@ -246,21 +254,15 @@ def update_available():
                             if pkg not in packages:
                                 _istatus[group.id]["obsolete"].append(pkg)
 
-                # Keep track of the repositories we've checked.
-                comps_xml_found.append(comps_xml)
-
                 os.rename(comps_xml_tmp, comps_xml)
 
                 status("updated.")
 
     # Get rid of comps files we didn't download.
-    for comps_fn in os.listdir(compsdir):
-        if comps_fn[-4:] != ".xml":
-            continue
-
-        comps_xml = "%s/%s" % (compsdir, comps_fn)
-        if comps_xml not in comps_xml_found:
-            os.unlink(comps_xml)
+    for comps_fn in old_comps_xml_list:
+        if comps_fn[-4:] == ".xml":
+            sys.stderr.write("deleting %s\n" % (comps_fn,))
+            os.unlink("%s/%s" % (compsdir, comps_fn))
 
     if do_status_update:
         status("New components found, updating installed status...")
