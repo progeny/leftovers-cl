@@ -1,3 +1,12 @@
+cl-tools (1.3.1) unstable; urgency=low
+
+  * New version.
+
+  * comp2repo.py: Fix bug in code that determines the name of the
+    component repository.
+
+ -- Ian Murdock <imurdock@progeny.com>  Thu, 30 Sep 2004 14:16:24 -0500
+
 cl-tools (1.3) unstable; urgency=low
 
   * New version.

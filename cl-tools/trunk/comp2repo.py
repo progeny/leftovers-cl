@@ -307,8 +307,23 @@ for package in packages.keys():
 # XXX this is currently pretty inflexibile and assumes the
 # Progeny layout convention of dists/cl/COMPONENT/...
 
-# We assume the first group is the name of the component repository.
-id = comps.groups.values()[0].id; name = comps.groups.values()[0].name
+# We assume the group with an id that comes first alphabetically is
+# the name of the component repository, due to our naming conventions
+# for components (<foo>, <foo>-devel, <foo>-i18n-<lang> etc.). This
+# is inflexible too and should eventually be specified in comps.xml
+# directly.
+
+def compare_groups(group1, group2):
+    if group1.id < group2.id:
+        return -1
+    elif group1.id > group2.id:
+        return 1
+    else:
+        return 0
+
+k = comps.groups.values()
+k.sort(compare_groups)
+id = k[0].id; name = k[0].name
 
 os.chdir("../../../")
 os.system("apt-ftparchive packages dists/cl/%s/binary-i386 " \
