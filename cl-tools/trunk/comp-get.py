@@ -237,8 +237,8 @@ def status_cb(s):
 
 def main():
     action_list = { "update": (comps_update, False),
-                    "install": (comps_install, True),
-                    "remove": (comps_remove, True),
+                    "install": (comp_install, True),
+                    "remove": (comp_remove, True),
                     "upgrade": (comps_upgrade, False),
                     "list-available": (comps_list_available, False),
                     "list-installed": (comps_list_installed, False) }
@@ -264,7 +264,7 @@ Commands are:
         usage(1)
 
     options = [ ('p', 'purge', "APT::Get::Purge") ]
-    args = cl.init(sys.argv[2:])
+    args = cl.init(options, sys.argv[2:])
     purge = apt_pkg.Config["APT::Get::Purge"]
 
     cl.register_status_cb(status_cb)
