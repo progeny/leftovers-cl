@@ -216,7 +216,6 @@ def update_available():
                 # once we're done, the list will only contain files
                 # not updated.
                 if os.path.basename(comps_xml) in old_comps_xml_list:
-                    sys.stderr.write("found %s, not deleting\n" % (os.path.basename(comps_xml),))
                     old_comps_xml_list.remove(os.path.basename(comps_xml))
 
                 if os.path.exists(comps_xml):
@@ -261,7 +260,6 @@ def update_available():
     # Get rid of comps files we didn't download.
     for comps_fn in old_comps_xml_list:
         if comps_fn[-4:] == ".xml":
-            sys.stderr.write("deleting %s\n" % (comps_fn,))
             os.unlink("%s/%s" % (compsdir, comps_fn))
 
     if do_status_update:
