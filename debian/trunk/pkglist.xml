@@ -46,7 +46,6 @@
     <entry>pcmcia-cs</entry>
     <entry>perl</entry>
     <entry>procps</entry>
-    <entry>progsreiserfs</entry>
     <entry>python</entry>
     <entry>python-apt</entry>
     <entry>python-gnome2</entry>
@@ -66,7 +65,6 @@
     <entry>syslinux</entry>
     <entry>tar</entry>
     <entry>tcsh</entry>
-    <entry>t1-xfree86-nonfree</entry>
     <entry>ttf-bitstream-vera</entry>
     <entry>ttf-arphic-bkai00mp</entry>
     <entry>ttf-arphic-bsmi00lp</entry>
@@ -76,8 +74,6 @@
     <entry>ttf-freefont</entry>
     <entry>ttf-kochi-gothic</entry>
     <entry>ttf-kochi-mincho</entry>
-    <entry>ttf-xfree86-nonfree</entry>
-    <entry>ttf-xfree86-nonfree-syriac</entry>
     <entry>util-linux</entry>
     <entry>util-linux-locales</entry>
     <entry>whiptail</entry>
