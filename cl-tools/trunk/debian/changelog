@@ -7,6 +7,9 @@ cl-tools (1.4.1) unstable; urgency=low
     package isn't configured properly?). We'll have to have better
     Python bindings to be able to be more intelligent about this.
 
+  * comp-get.py (comp_upgrade): Call aptitude upgrade again after
+    installing new packages and removing old ones.
+
  -- Ian Murdock <imurdock@progeny.com>  Mon,  1 Nov 2004 15:33:23 -0500
 
 cl-tools (1.4) unstable; urgency=low

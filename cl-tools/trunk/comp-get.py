@@ -310,6 +310,8 @@ def comps_upgrade():
         # XXX we always succeed here too (see comp_remove)
         os.system("dpkg --remove %s" % packages)
 
+    os.system("aptitude upgrade")
+
     for id in components_updated:
         comps_xml_available = "%s/%s.xml" % (availabledir, id)
         comps_xml_installed = "%s/%s.xml" % (installeddir, id)
