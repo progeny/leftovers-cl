@@ -48,7 +48,7 @@ def list_to_string(list):
 
 # For each source in SOURCES_LIST, check the source for a comps.xml,
 # and if one exists, download it and save it to COMPSDIR; then, for
-# each uservisible subcomponent, create a link to the comps.xml in
+# each subcomponent, create a link to the comps.xml in
 # AVAILABLEDIR using the subcomponent name, so the user can
 # manipulate it using that name. Also call "aptitude update" so
 # the APT database is up to date with any component updates.
@@ -121,14 +121,10 @@ def comps_update():
                     os.rename(comps_xml_tmp, comps_xml)
 
                     # Create links to the downloaded comps.xml in
-                    # AVAILABLEDIR using each of the uservisible
-                    # subcomponent names, so
-                    # they can be manipulated using those names:
+                    # AVAILABLEDIR using each of the subcomponent names,
+                    # so they can be manipulated using the names:
                     comp = rhpl.comps.Comps(comps_xml)
                     for group in comp.groups.values():
-                        if group.user_visible == False:
-                            continue
-
                         comps_xml_sub = "%s/%s.xml" % (availabledir, group.id)
                         if not os.path.exists(comps_xml_sub):
                             os.symlink(comps_xml, comps_xml_sub)

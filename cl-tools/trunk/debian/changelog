@@ -1,5 +1,8 @@
 cl-tools (1.4.2) unstable; urgency=low
 
+  * comp-get.py Make non-uservisible components available for
+    installation too.
+
   * Use /var/lib/cl-tools rather than /var/cache/cl-tools for storing
     component information.
 
