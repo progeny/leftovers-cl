@@ -115,7 +115,7 @@ Commands are:
         else:
             action_call()
     except Exception, e:
-        print str(e)
+        print "error: " + str(e)
 
 if __name__ == "__main__":
     main()
