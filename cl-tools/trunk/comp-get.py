@@ -43,18 +43,6 @@ def comps_update():
 
     print "Done."
 
-# Install the component ID.
-def comp_install(id):
-    cl.install(id)
-
-# Remove the component ID.
-def comp_remove(id):
-    cl.remove(id)
-
-# Upgrade installed components to current versions.
-def comps_upgrade():
-    cl.upgrade()
-
 # List the components currently available.
 def comps_list_available():
     for package in cl.get_available():
@@ -70,9 +58,9 @@ def status_cb(s):
 
 def main():
     action_list = { "update": (comps_update, False),
-                    "install": (comp_install, True),
-                    "remove": (comp_remove, True),
-                    "upgrade": (comps_upgrade, False),
+                    "install": (cl.install, True),
+                    "remove": (cl.remove, True),
+                    "upgrade": (cl.upgrade, False),
                     "list-available": (comps_list_available, False),
                     "list-installed": (comps_list_installed, False) }
 
