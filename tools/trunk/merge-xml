@@ -1,0 +1,60 @@
+#!/usr/bin/python
+
+# merge-xml: a Python wrapper to merge.xslt.
+
+import sys
+import os
+import optparse
+import libxml2
+import libxslt
+
+merge_xslt_paths = [".", "/usr/share/merge-xml"]
+
+def merge_two(doc, fn):
+    "merge the libxml2 parse tree in doc with the XML file fn"
+    global style
+
+    result = style.applyStylesheet(doc, { "with": "'%s'" % (fn,) })
+    return result
+
+def main():
+    global style
+
+    libxml2.keepBlanksDefault(0)
+
+    optionparser = optparse.OptionParser()
+    optionparser.add_option("-o", "--output", dest="outfn", default="",
+                            help="write output to FILE", metavar="FILE")
+    optionparser.add_option("-s", "--stylesheet-path", dest="sheetpath",
+                            default="", help="path to merge.xslt")
+    (opts, args) = optionparser.parse_args()
+
+    if opts.sheetpath:
+        merge_xslt_paths.insert(opts.sheetpath, 0)
+
+    xslt_path = None
+    for p in merge_xslt_paths:
+        if os.path.exists(p + "/merge.xslt"):
+            xslt_path = p + "/merge.xslt"
+            break
+
+    if not xslt_path:
+        raise RuntimeError, "could not find merge.xslt"
+
+    if opts.outfn:
+        outfile = open(opts.outfn, "w")
+    else:
+        outfile = sys.stdout
+
+    styledoc = libxml2.parseFile(xslt_path)
+    style = libxslt.parseStylesheetDoc(styledoc)
+
+    doc = libxml2.parseFile(args[0])
+
+    for fn in args[1:]:
+        doc = merge_two(doc, fn)
+
+    doc.formatDump(outfile, 1)
+
+if __name__ == "__main__":
+    main()
