@@ -21,7 +21,7 @@ import apt_pkg
 
 def init(argv):
     apt_pkg.InitConfig()
-    args = apt_pkg.ParseCommandLine(apt_pkg.GetConfig(), [], argv)
+    args = apt_pkg.ParseCommandLine(apt_pkg.Config, [], argv)
     apt_pkg.InitSystem()
 
     return args
@@ -30,8 +30,15 @@ def init(argv):
 # the lines in sources.list. It's pretty silly that we have to
 # parse it ourselves.
 
-def parse_sources_list(path):
+def parse_sources_list(path = None):
     recognized_repo_types = ("deb", "deb-src")
+
+    if path is None:
+        config_key = "Dir::Etc::SourceList"
+        path = ""
+        while len(path) < 1 or path[0] != "/":
+            path = apt_pkg.Config[config_key] + path
+            config_key = string.join(string.split(config_key, "::")[:-1], "::")
 
     repos = []
     f = open(path)
