@@ -459,19 +459,19 @@ def get_extra_packages():
     nocomp_pkgs.sort()
     return tuple(nocomp_pkgs)
 
-def _get_by_status(status):
+def _get_by_status(status_list):
     global _istatus
 
     match = []
     for id in _istatus.keys():
-        if _istatus[id]["status"] == status:
+        if _istatus[id]["status"] in status_list:
             match.append(id)
 
     match.sort()
     return tuple(match)
 
 def get_installed():
-    return _get_by_status("complete")
+    return _get_by_status(("complete", "legacy"))
 
 def get_partial():
-    return _get_by_status("partial")
+    return _get_by_status(("partial",))
