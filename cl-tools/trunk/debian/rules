@@ -34,10 +34,12 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/cl-tools.
-	cp comp2repo.py debian/cl-tools/usr/bin/comp2repo
-	cp compsmerge.py debian/cl-tools/usr/bin/compsmerge
-	cp debootstrap-script debian/cl-tools/usr/lib/debootstrap/scripts/cl
+	cp update-sources.list.py debian/cl-tools/usr/sbin/update-sources.list
 
+	# Add here commands to install the package into debian/cl-tools-dev.
+	cp comp2repo.py debian/cl-tools-dev/usr/bin/comp2repo
+	cp compsmerge.py debian/cl-tools-dev/usr/bin/compsmerge
+	cp debootstrap-script debian/cl-tools-dev/usr/lib/debootstrap/scripts/cl
 
 binary-arch: build install
 # We have nothing to do by default.
