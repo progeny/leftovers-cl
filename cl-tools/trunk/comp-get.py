@@ -18,18 +18,8 @@
 #
 # Written by Ian Murdock <imurdock@progeny.com>.
 
-import os
 import sys
-import string
 import apt_pkg
-import filecmp
-import getopt
-import httplib
-import re
-import rhpl.comps
-import shutil
-import urllib
-import urlparse
 
 sys.path.append("/usr/share/cl-tools")
 import cl
