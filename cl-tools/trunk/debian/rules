@@ -36,7 +36,7 @@ install: build
 	# Add here commands to install the package into debian/cl-tools.
 	cp comp2repo.py debian/cl-tools/usr/bin/comp2repo
 	cp compsmerge.py debian/cl-tools/usr/bin/compsmerge
-	cp debootstrap-script debian/cl-tools/usr/lib/debootstrap/scripts
+	cp debootstrap-script debian/cl-tools/usr/lib/debootstrap/scripts/cl
 
 
 binary-arch: build install
