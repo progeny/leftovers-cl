@@ -31,6 +31,9 @@ import shutil
 import urllib
 import urlparse
 
+sys.path.append("/usr/share/cl-tools")
+import cl
+
 cachedir = "/var/lib/cl-tools"
 compsdir = cachedir + "/comps"
 availabledir = compsdir + "/available"

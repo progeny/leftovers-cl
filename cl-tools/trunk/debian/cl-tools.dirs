@@ -1,5 +1,6 @@
 usr/bin
 usr/sbin
+usr/share/cl-tools
 var/lib/cl-tools
 var/lib/cl-tools/comps
 var/lib/cl-tools/comps/available

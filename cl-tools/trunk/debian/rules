@@ -34,6 +34,7 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/cl-tools.
+	cp cl.py debian/cl-tools/usr/share/cl-tools/cl.py
 	cp comp-get.py debian/cl-tools/usr/bin/comp-get
 	cp update-sources.list.py debian/cl-tools/usr/sbin/update-sources.list
 
