@@ -6,9 +6,9 @@
     <entry>bash</entry>
     <entry>bogl-bterm</entry>
     <entry>bzip2</entry>
+    <entry>cl-tools</entry>
     <entry>coreutils</entry>
     <entry>debootstrap</entry>
-    <entry>debootstrap-script-cl</entry>
     <entry>dosfstools</entry>
     <entry>dpkg</entry>
     <entry>e2fsprogs</entry>
