@@ -260,9 +260,11 @@ Commands are:
         sys.exit(status)
 
     # parse command line
+    purge = False
     options = [ ('p', 'purge', "APT::Get::Purge") ]
     args = cl.init(options, sys.argv)
-    purge = apt_pkg.Config["APT::Get::Purge"]
+    if apt_pkg.Config.has_key("APT::Get::Purge"):
+        purge = apt_pkg.Config["APT::Get::Purge"]
 
     action = args[0]
     if action not in action_list.keys():
