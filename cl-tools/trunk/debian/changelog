@@ -12,6 +12,9 @@ cl-tools (1.4.1) unstable; urgency=low
   * comp-get.py (comp_upgrade): Call aptitude upgrade again after
     installing new packages and removing old ones.
 
+  * Added python-rhpl dependency to both cl-tools and cl-tools-dev (for
+    comps.py).
+
   * Added python dependency to both cl-tools and cl-tools-dev.
 
  -- Ian Murdock <imurdock@progeny.com>  Mon,  1 Nov 2004 15:33:23 -0500
