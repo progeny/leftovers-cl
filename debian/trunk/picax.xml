@@ -22,7 +22,7 @@
         0
     </part-size>
     <source>
-        none
+        separate
     </source>
     <installer_options>
         <inst-base-tarball-dist>
