@@ -17,6 +17,10 @@
 # Written by Ian Murdock <imurdock@progeny.com>
 #         and Jeff Licquia <licquia@progeny.com>.
 
+import sys
+import os
+import string
+
 import apt_pkg
 import rhpl.comps
 
@@ -26,6 +30,7 @@ default_config = { "Dir::Comps": "var/lib/cl-tools/comps",
 
 def _retrieve_config_dir_path(key):
     path = ""
+    config_key = key
     while len(path) < 1 or path[0] != "/":
         path = apt_pkg.Config[config_key] + path
         config_key = string.join(string.split(config_key, "::")[:-1], "::")
