@@ -4,6 +4,7 @@
     <entry>apt</entry>
     <entry>base-files</entry>
     <entry>bash</entry>
+    <entry>bogl-bterm</entry>
     <entry>bzip2</entry>
     <entry>coreutils</entry>
     <entry>debootstrap</entry>
@@ -24,6 +25,7 @@
     <entry>krb5-clients</entry>
     <entry>kudzu</entry>
     <entry>less</entry>
+    <entry>libselinux1</entry>
     <entry>libpam-cracklib</entry>
     <entry>libpam-modules</entry>
     <entry>libpam-runtime</entry>
@@ -33,10 +35,7 @@
     <entry>lvm2</entry>
     <entry>mawk</entry>
     <entry>mdadm</entry>
-    <!--
     <entry>module-init-tools</entry>
-    -->
-    <entry>modutils</entry>
     <entry>mount</entry>
     <entry>mtools</entry>
     <entry>net-tools</entry>
@@ -153,7 +152,7 @@ sudo chroot $PICAX_DEST /usr/sbin/update-gdkpixbuf-loaders
         <exclude path="/usr/include"/>
       </manidiff>
       <script interpreter="/bin/sh">
-sudo chroot $PICAX_DEST /usr/bin/pango-querymodules /usr/lib/pango/1.2.0/modules/*.so > $PICAX_DEST/etc/pango/pango.modules
+sudo chroot $PICAX_DEST /usr/bin/pango-querymodules /usr/lib/pango/1.*/modules/*.so > $PICAX_DEST/etc/pango/pango.modules
       </script>
     </package>
     <package name="lvm-common">
@@ -163,7 +162,7 @@ sudo chroot $PICAX_DEST /usr/bin/pango-querymodules /usr/lib/pango/1.2.0/modules
         <exclude path="/usr/include"/>
       </manidiff>
       <script interpreter="/bin/sh">
-ln -s lvm-10 $PICAX_DEST/lib/lvm-default
+ln -s lvm-200 $PICAX_DEST/lib/lvm-default
       </script>
     </package>
     <package name="mawk">
