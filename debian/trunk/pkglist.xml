@@ -145,6 +145,7 @@ sudo chroot $PICAX_DEST /usr/sbin/update-gdkpixbuf-loaders
         <exclude path="/usr/include"/>
       </manidiff>
       <script interpreter="/bin/sh">
+sudo chroot $PICAX_DEST mkdir /etc/pango
 sudo chroot $PICAX_DEST /usr/bin/pango-querymodules /usr/lib/pango/1.*/modules/*.so > $PICAX_DEST/etc/pango/pango.modules
       </script>
     </package>
