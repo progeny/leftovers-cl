@@ -77,6 +77,19 @@ def _retrieve_config_dir_path(key):
         config_key = string.join(string.split(config_key, "::")[:-1], "::")
     return path
 
+def _get_installed_pkgs():
+    installed_pkgs = []
+    status_f = open(status_path)
+
+    status_parser = apt_pkg.ParseTagFile(status_f)
+    while status_parser.Step():
+        if string.find(status_parser.Section["Status"], "not-installed") != -1:
+            continue
+        installed_pkgs.append(status_parser.Section["Package"])
+
+    status_f.close()
+    return installed_pkgs
+
 def init(options, argv):
     global _default_config
     global _istatus
@@ -246,16 +259,7 @@ def update_installed():
     istatus_path = _retrieve_config_dir_path("Dir::Comps::InstalledState")
 
     # Get a list of installed packages.
-    installed_pkgs = []
-    status_f = open(status_path)
-
-    status_parser = apt_pkg.ParseTagFile(status_f)
-    while status_parser.Step():
-        if string.find(status_parser.Section["Status"], "not-installed") != -1:
-            continue
-        installed_pkgs.append(status_parser.Section["Package"])
-
-    status_f.close()
+    installed_pkgs = _get_installed_pkgs()
 
     # Now look at each available component to see what's installed.
     for file in os.listdir(compsdir):
@@ -426,6 +430,20 @@ def get_available():
     available = list(_istatus.keys())
     available.sort()
     return tuple(available)
+
+def get_extra_packages():
+    global _istatus
+
+    comp_pkgs = reduce(lambda x,y: x[:] + y[:],
+                       map(lambda x: x["installed"], _istatus.values()))
+
+    nocomp_pkgs = []
+    for pkg in _get_installed_pkgs():
+        if pkg not in comp_pkgs:
+            nocomp_pkgs.append(pkg)
+
+    nocomp_pkgs.sort()
+    return tuple(nocomp_pkgs)
 
 def _get_by_status(status):
     global _istatus
