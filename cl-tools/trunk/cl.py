@@ -20,6 +20,7 @@
 import sys
 import os
 import string
+import filecmp
 import httplib
 import urlparse
 import urllib
@@ -27,9 +28,9 @@ import urllib
 import apt_pkg
 import rhpl.comps
 
-default_config = { "Dir::Comps": "var/lib/cl-tools/comps",
-                   "Dir::Comps::Available": "available",
-                   "Dir::Comps::Installed": "installed" }
+default_config = { "Dir::Comps": "var/lib/cl-tools/comps/",
+                   "Dir::Comps::Available": "available/",
+                   "Dir::Comps::Installed": "installed/" }
 
 def _retrieve_config_dir_path(key):
     path = ""
