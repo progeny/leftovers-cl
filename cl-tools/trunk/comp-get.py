@@ -56,6 +56,11 @@ def comps_list_installed():
     for package in cl.get_installed():
         print package
 
+# List the components partially installed.
+def comps_list_partial():
+    for package in cl.get_partial():
+        print package
+
 def status_cb(s):
     print s
 
@@ -65,7 +70,8 @@ def main():
                     "remove": (cl.remove, True),
                     "upgrade": (cl.upgrade, False),
                     "list-available": (comps_list_available, False),
-                    "list-installed": (comps_list_installed, False) }
+                    "list-installed": (comps_list_installed, False),
+                    "list-partial": (comps_list_partial, False) }
 
     def usage(status):
         print """Usage: %s [OPTIONS] COMMAND [COMPONENT]
@@ -80,7 +86,8 @@ Commands are:
   upgrade            Upgrade installed components to current versions
                      via the aptitude command
   list-available     List the components currently available
-  list-installed     List the components currently installed""" % \
+  list-installed     List the components currently installed
+  list-partial       List the components only partially installed""" % \
         sys.exit(status)
 
     # parse command line

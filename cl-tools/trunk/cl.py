@@ -427,13 +427,19 @@ def get_available():
     available.sort()
     return tuple(available)
 
-def get_installed():
+def _get_by_status(status):
     global _istatus
 
-    installed = []
+    match = []
     for id in _istatus.keys():
-        if _istatus[id]["status"] == "complete":
-            installed.append(id)
+        if _istatus[id]["status"] == status:
+            match.append(id)
 
-    installed.sort()
-    return tuple(installed)
+    match.sort()
+    return tuple(match)
+
+def get_installed():
+    return _get_by_status("complete")
+
+def get_partial():
+    return _get_by_status("partial")
