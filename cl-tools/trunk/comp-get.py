@@ -20,6 +20,7 @@
 
 import os
 import sys
+import string
 import apt_pkg
 import filecmp
 import getopt
@@ -32,19 +33,10 @@ import urlparse
 
 cachedir = "/var/lib/cl-tools"
 compsdir = cachedir + "/comps"
-availabledir = cachedir + "/comps/available"
-installeddir = cachedir + "/comps/installed"
+availabledir = compsdir + "/available"
+installeddir = compsdir + "/installed"
 
 sources_list = "/etc/apt/sources.list"
-
-def list_to_string(list):
-    string = ""
-    for node in list:
-        if string == "":
-            string = node
-        else:
-            string = string + " " + node
-    return string
 
 # For each source in SOURCES_LIST, check the source for a comps.xml,
 # and if one exists, download it and save it to COMPSDIR; then, for
@@ -164,7 +156,7 @@ def comp_install(id):
             if type == "mandatory" or type =="default":
                 packages_to_install.append(package)
 
-    packages = list_to_string(packages_to_install)
+    packages = string.join(packages_to_install, " ")
 
     # Call aptitude install to install PACKAGES_TO_INSTALL:
     os.system("aptitude install %s" % packages)
@@ -201,7 +193,7 @@ def comp_remove(id):
     # XXX need to be smarter here about only removing packages that
     # aren't depended upon by a package in another component..
 
-    packages = list_to_string(packages_to_remove)
+    packages = string.join(packages_to_remove, " ")
 
     # Call aptitide remove to remove PACKAGES_TO_REMOVE:
     # XXX we always succeed here, pending implementation of the above
@@ -296,12 +288,12 @@ def comps_upgrade():
     os.system("aptitude upgrade")
 
     # Install packages that have been added to a component:
-    packages = list_to_string(packages_to_install)
+    packages = string.join(packages_to_install, " ")
     if packages != "":
         os.system("aptitude install %s" % packages)
 
     # Remove packages that have been removed from a component:
-    packages = list_to_string(packages_to_remove)
+    packages = string.join(packages_to_remove, " ")
     if packages != "":
         # XXX we always succeed here too (see comp_remove)
         os.system("dpkg --remove %s" % packages)
