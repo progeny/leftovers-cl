@@ -21,6 +21,7 @@ import sys
 import os
 import string
 import filecmp
+import shutil
 import httplib
 import urlparse
 import urllib
@@ -185,3 +186,41 @@ def install(id):
     # Copy the comps.xml used during installation to INSTALLEDDIR for
     # later use during upgrade and remove operations:
     shutil.copy(comps_xml_available, comps_xml_installed)
+
+def remove(id):
+    installeddir = _retrieve_config_dir_path("Dir::Comps::Installed")
+    comps_xml_installed = "%s/%s.xml" % (installeddir, id)
+
+    if not os.path.exists(comps_xml_installed):
+        status("Component %s not installed." % id)
+        return
+
+    # Parse comps.xml:
+    comp = rhpl.comps.Comps(comps_xml_installed)
+
+    # Build the list of packages to remove:
+    packages_to_remove = []
+    for group in comp.groups.values():
+        # Only remove the packages in the subcomponent ID, not the
+        # other subcomponents.
+        if group.id != id:
+            continue
+        for (type, package) in group.packages.values():
+            # Verify that the package is actually installed before adding
+            # it to the list, to suppress spurious warnings:
+            if not os.path.exists("/var/lib/dpkg/info/%s.list" % package):
+                continue
+            packages_to_remove.append(package)
+
+    # XXX need to be smarter here about only removing packages that
+    # aren't depended upon by a package in another component..
+
+    packages = string.join(packages_to_remove, " ")
+
+    # Call aptitide remove to remove PACKAGES_TO_REMOVE:
+    # XXX we always succeed here, pending implementation of the above
+    # check ("need to be smarter here...")
+    os.system("dpkg --remove %s" % packages)
+
+    # Remove the comps.xml used during installation from INSTALLEDDIR:
+    os.unlink(comps_xml_installed)

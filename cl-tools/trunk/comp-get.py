@@ -59,41 +59,7 @@ def comp_install(id):
 
 # Remove the component ID.
 def comp_remove(id):
-    comps_xml_installed = "%s/%s.xml" % (installeddir, id)
-
-    if not os.path.exists(comps_xml_installed):
-        print "Component %s not installed." % id
-        sys.exit(1)
-
-    # Parse comps.xml:
-    comp = rhpl.comps.Comps(comps_xml_installed)
-
-    # Build the list of packages to remove:
-    packages_to_remove = []
-    for group in comp.groups.values():
-        # Only remove the packages in the subcomponent ID, not the
-        # other subcomponents.
-        if group.id != id:
-            continue
-        for (type, package) in group.packages.values():
-            # Verify that the package is actually installed before adding
-            # it to the list, to suppress spurious warnings:
-            if not os.path.exists("/var/lib/dpkg/info/%s.list" % package):
-                continue
-            packages_to_remove.append(package)
-
-    # XXX need to be smarter here about only removing packages that
-    # aren't depended upon by a package in another component..
-
-    packages = string.join(packages_to_remove, " ")
-
-    # Call aptitide remove to remove PACKAGES_TO_REMOVE:
-    # XXX we always succeed here, pending implementation of the above
-    # check ("need to be smarter here...")
-    os.system("dpkg --remove %s" % packages)
-
-    # Remove the comps.xml used during installation from INSTALLEDDIR:
-    os.unlink(comps_xml_installed)
+    cl.remove(id)
 
 # Upgrade installed components to current versions.
 def comps_upgrade():
