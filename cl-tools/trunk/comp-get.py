@@ -141,7 +141,7 @@ def comp_install(id, devel):
         # Only add the packages in the main component, unless DEVEL is
         # True.
         if group.id != id:
-            if not devel and group.id == id + "-devel":
+            if not (devel and group.id == id + "-devel"):
                 continue
         for (type, package) in group.packages.values():
             # Only add the "mandatory" and "default" packages:
@@ -152,7 +152,9 @@ def comp_install(id, devel):
                     packages = packages + " " + package
 
     # Call apt-get install to install PACKAGES:
-    os.system("apt-get install %s" % packages)
+    if os.system("apt-get install %s" % packages) != 0:
+        # Installation failed:
+        return
 
     # Copy the comps.xml used during installation to INSTALLEDDIR for
     # later use during upgrade and remove operations:
@@ -183,7 +185,9 @@ def comp_remove(id):
                 packages = packages + " " + package
 
     # Call dpkg --remove to remove PACKAGES:
-    os.system("dpkg --remove %s" % packages)
+    if os.system("dpkg --remove %s" % packages) != 0:
+        # Removal failed:
+        return
 
     # Remove the comps.xml used during installation from INSTALLEDDIR:
     os.unlink(comps_xml_installed)
@@ -221,7 +225,7 @@ def comps_upgrade(devel):
             # Only add the packages in the main component, unless
             # DEVEL is True.
             if group.id != id:
-                if not devel and group.id == id + "-devel":
+                if not (devel and group.id == id + "-devel"):
                     continue
             for (type, package) in group.packages.values():
                 # Only add the "mandatory" and "default" packages:
@@ -238,7 +242,7 @@ def comps_upgrade(devel):
             # Only add the packages in the main component, unless
             # DEVEL is True.
             if group.id != id:
-                if not devel and group.id == id + "-devel":
+                if not (devel and group.id == id + "-devel"):
                     continue
             for (type, package) in group.packages.values():
                 # Only add the "mandatory" and "default" packages:
@@ -272,7 +276,9 @@ def comps_upgrade(devel):
                 else:
                     packages = packages + " " + package
         if packages != "":
-            os.system("apt-get install %s" % packages)
+            if os.system("apt-get install %s" % packages) != 0:
+                # Installation failed:
+                return
 
         # Each package in the INSTALLED dictionary that is not in the
         # AVAILABLE dictionary is a package that has been removed.
@@ -285,7 +291,9 @@ def comps_upgrade(devel):
                 else:
                     packages = packages + " " + package
         if packages != "":
-            os.system("dpkg --remove %s" % packages)
+            if os.system("dpkg --remove %s" % packages) != 0:
+                # Removal failed:
+                return
 
         # Update the comps.xml used during installation in INSTALLEDDIR:
         shutil.copy(comps_xml_available, comps_xml_installed)
