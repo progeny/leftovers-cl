@@ -45,8 +45,29 @@ _default_config = { "Dir::Comps": "var/lib/cl-tools/comps/",
 #     values: none, partial, complete
 #   installed: List of installed packages from this component
 #   missing:   List of packages not installed from this component
+#   obsolete:  List of packages no longer part of this component
 
 _istatus = {}
+
+# This checks to make sure that there's a cache entry for a given
+# component, and creates it if not.  Callers of this function should
+# also check for the "new" status and set it appropriately.
+def _check_istatus(id):
+    global _istatus
+
+    defaults = { "id": id,
+                 "follow": False,
+                 "missing": [],
+                 "installed": [],
+                 "obsolete": [],
+                 "status": "new" }
+
+    if not _istatus.has_key(id):
+        _istatus[id] = {}
+
+    for key in defaults.keys():
+        if not _istatus[id].has_key(key):
+            _istatus[id][key] = defaults[key]
 
 def _retrieve_config_dir_path(key):
     path = ""
@@ -132,6 +153,9 @@ def update_apt():
     os.system("aptitude update")
 
 def update_available():
+    global _istatus
+
+    do_cache_update = False
     compsdir = _retrieve_config_dir_path("Dir::Comps")
 
     for (fmt, uri, dist, comps) in parse_sources_list():
@@ -170,14 +194,49 @@ def update_available():
                 comps_xml = "%s/%s.xml" % (compsdir, comp)
                 comps_xml_tmp = "%s/.%s.xml" % (compsdir, comp)
                 urllib.urlretrieve(url, comps_xml_tmp)
+
                 if os.path.exists(comps_xml):
+
+                    # No change?  Keep the old one.
                     if filecmp.cmp(comps_xml, comps_xml_tmp):
                         os.unlink(comps_xml_tmp)
                         status("up-to-date.")
                         continue
+
+                    # Check for removed packages.
+                    comp = rhpl.comps.Comps(comps_xml_tmp)
+
+                    for group in comps.groups.values():
+
+                        # If we find brand-new components, be sure to
+                        # do a cache update when we're done.
+                        _check_istatus(group.id)
+                        if _istatus[group.id]["status"] == "new":
+                            do_cache_update = True
+                            continue
+
+                        # Don't bother with components we're not following.
+                        if not _istatus[group.id]["follow"]:
+                            continue
+
+                        # Get a list of packages referred to in this group.
+                        # Package types don't matter here, since any
+                        # reference means the package is not obsolete.
+                        packages = map(lambda x: x[1], group.packages.values())
+
+                        # Go through the current installed list and mark
+                        # all removed packages as obsolete.
+                        for pkg in _istatus[group.id]["installed"]:
+                            if pkg not in packages:
+                                _istatus[group.id]["obsolete"].append(pkg)
+
                 os.rename(comps_xml_tmp, comps_xml)
 
                 status("updated.")
+
+    if do_cache_update:
+        status("New components found, updating installed status...")
+        update_installed()
 
 def update_installed():
     global _istatus
@@ -216,10 +275,7 @@ def update_installed():
         for group in comp.groups.values():
 
             # New component (or upgrading from old cl-tools).
-            if not _istatus.has_key(group.id):
-                _istatus[group.id] = { "id": group.id,
-                                       "follow": False,
-                                       "status": "new" }
+            _check_istatus(group.id)
 
             # Clear out the old package lists.
             missing = []
@@ -255,9 +311,18 @@ def update_installed():
                     if _istatus[group.id]["status"] == "new":
                         _istatus[group.id]["follow"] = True
 
+            # Check the obsolete list for removed packages.
+            obsolete = _istatus[group.id]["obsolete"][:]
+
+            for package in obsolete:
+                if package not in installed_pkgs:
+                    obsolete.remove(package)
+
+            # Apply all the changes.
             _istatus[group.id]["status"] = new_status
             _istatus[group.id]["missing"] = missing
             _istatus[group.id]["installed"] = installed
+            _istatus[group.id]["obsolete"] = obsolete
 
     # We're done.  Save the installed status for next time.
     istatus_f = open(istatus_path, "w")
