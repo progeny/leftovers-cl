@@ -1,8 +1,5 @@
 <?xml version="1.0" ?>
 <picaxconfig>
-    <apt-repo-path>
-        deb http://hackers.progeny.com/~imurdock/anaconda/ debian/
-    </apt-repo-path>
     <arch>
         i386
     </arch>
@@ -37,6 +34,9 @@
         <inst-help-path>
             /scratch/imurdock/pd/anaconda-help
         </inst-help-path>
+        <inst-debconf-seed-path>
+            /scratch/imurdock/pd/debconf-settings
+        </inst-debconf-seed-path>
         <inst-isolinux-config>
             /scratch/imurdock/pd/isolinux
         </inst-isolinux-config>
@@ -49,9 +49,6 @@
         <inst-pixmap-path>
             /scratch/imurdock/pd/pixmaps
         </inst-pixmap-path>
-        <inst-debconf-seed-path>
-            /scratch/imurdock/pd/debconf-settings
-        </inst-debconf-seed-path>
     </installer_options>
     <media_options/>
     <repository component="audio" distribution="cl"/>
