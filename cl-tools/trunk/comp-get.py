@@ -63,106 +63,7 @@ def comp_remove(id):
 
 # Upgrade installed components to current versions.
 def comps_upgrade():
-    components_updated = []
-    packages_to_install = []
-    packages_to_remove = []
-
-    for file in os.listdir(installeddir):
-        comps_xml_available = "%s/%s" % (availabledir, file)
-        comps_xml_installed = "%s/%s" % (installeddir, file)
-
-        m = re.search("\S+\\.xml", file)
-        if m is None:
-            # Eh?
-            continue
-        else:
-            id = file[m.start():m.end() - 4]
-
-        if not os.path.exists(comps_xml_available):
-            # No updated information for this component is available:
-            continue
-
-        if filecmp.cmp(comps_xml_installed, comps_xml_available):
-            # Component is unchanged:
-            continue
-
-        # Parse comps.xml:
-        comp_available = rhpl.comps.Comps(comps_xml_available)
-        comp_installed = rhpl.comps.Comps(comps_xml_installed)
-
-        # Build dictionaries of available and installed packages, for
-        # use in determining which packages have been added and which
-        # packages have been removed from the component:
-
-        packages_available = {}
-        for group in comp_available.groups.values():
-            # Only add the packages in the subcomponent ID, not the
-            # other subcomponents.
-            if group.id != id:
-                continue
-            for (type, package) in group.packages.values():
-                # Only add the "mandatory" and "default" packages:
-                if type == "mandatory" or type =="default":
-                    packages_available[package] = True
-
-        packages_installed = {}
-        for group in comp_installed.groups.values():
-            # Only add the packages in the subcomponent ID, not the
-            # other subcomponents.
-            if group.id != id:
-                continue
-            for (type, package) in group.packages.values():
-                # Only add the "mandatory" and "default" packages:
-                if type == "mandatory" or type =="default":
-                    packages_installed[package] = True
-
-        # Each package in the PACKAGES_AVAILABLE dictionary that is not
-        # in the PACKAGES_INSTALLED dictionary is a new package. Add it
-        # to the list of packages to be installed:
-        for package in packages_available.keys():
-            if not packages_installed.has_key(package):
-                packages_to_install.append(package)
-
-        # Each package in the PACKAGES_INSTALLED dictionary that
-        # is not in the PACKAGES_AVAILABLE dictionary is a package that
-        # has been removed. Add it to the list of packages to be
-        # removed.
-        for package in packages_installed.keys():
-            if not packages_available.has_key(package):
-                packages_to_remove.append(package)
-
-        components_updated.append(id)
-
-    # Deal with the case where a package has moved from one component
-    # to another (i.e., don't remove it):
-    for package in packages_to_remove:
-        try:
-            i = packages_to_install.index(package)
-        except ValueError, e:
-            continue
-        if i >= 0:
-            packages_to_remove.remove(package)
-            
-    os.system("aptitude upgrade")
-
-    # Install packages that have been added to a component:
-    packages = string.join(packages_to_install, " ")
-    if packages != "":
-        os.system("aptitude install %s" % packages)
-
-    # Remove packages that have been removed from a component:
-    packages = string.join(packages_to_remove, " ")
-    if packages != "":
-        # XXX we always succeed here too (see comp_remove)
-        os.system("dpkg --remove %s" % packages)
-
-    os.system("aptitude upgrade")
-
-    for id in components_updated:
-        comps_xml_available = "%s/%s.xml" % (availabledir, id)
-        comps_xml_installed = "%s/%s.xml" % (installeddir, id)
-        # Update the comps.xml used during installation in INSTALLEDDIR:
-        shutil.copy(comps_xml_available, comps_xml_installed)
+    cl.upgrade()
 
 # List the components currently available.
 def comps_list_available():
@@ -247,8 +148,8 @@ Commands are:
             action_call(args[0])
         else:
             action_call()
-    except e:
-        print e.str()
+    except Exception, e:
+        print str(e)
 
 if __name__ == "__main__":
     main()
