@@ -30,19 +30,31 @@ import shutil
 import urllib
 import urlparse
 
-cachedir="/var/cache/cl-tools"
-#cachedir="./cl-tools"
-availabledir = cachedir + "/available"
-installeddir = cachedir + "/installed"
+cachedir = "/var/cache/cl-tools"
+compsdir = cachedir + "/comps"
+availabledir = cachedir + "/comps/available"
+installeddir = cachedir + "/comps/installed"
 
 sources_list = "/etc/apt/sources.list"
 
+def list_to_string(list):
+    string = ""
+    for node in list:
+        if string == "":
+            string = node
+        else:
+            string = string + " " + node
+    return string
+
 # For each source in SOURCES_LIST, check the source for a comps.xml,
-# and if one exists, download it and save it to AVAILABLE_DIR.
-# Also call "apt-get update" so the APT database is up to date with
-# any component updates.
+# and if one exists, download it and save it to COMPSDIR; then, for
+# each uservisible subcomponent, create a link to the comps.xml in
+# AVAILABLEDIR using the subcomponent name, so the user can
+# manipulate it using that name. Also call "aptitude update" so
+# the APT database is up to date with any component updates.
 def comps_update():
-    os.system("apt-get update")
+    if os.system("aptitude update") != 0:
+        return
 
     print "Updating component metadata:"
 
@@ -98,9 +110,9 @@ def comps_update():
                         print "protocol `%s' not supported." % proto
                         continue
 
-                    # Download the comps.xml and save it to AVAILABLEDIR:
-                    comps_xml = "%s/%s.xml" % (availabledir, comp)
-                    comps_xml_tmp = "%s/.%s.xml" % (availabledir, comp)
+                    # Download the comps.xml and save it to COMPSDIR:
+                    comps_xml = "%s/%s.xml" % (compsdir, comp)
+                    comps_xml_tmp = "%s/.%s.xml" % (compsdir, comp)
                     urllib.urlretrieve(url, comps_xml_tmp)
                     if os.path.exists(comps_xml):
                         if filecmp.cmp(comps_xml, comps_xml_tmp):
@@ -108,19 +120,29 @@ def comps_update():
                             print "up-to-date."
                             continue
                     os.rename(comps_xml_tmp, comps_xml)
+
+                    # Create links to the downloaded comps.xml in
+                    # AVAILABLEDIR using each of the uservisible
+                    # subcomponent names, so
+                    # they can be manipulated using those names:
+                    comp = rhpl.comps.Comps(comps_xml)
+                    for group in comp.groups.values():
+                        if group.user_visible == False:
+                            continue
+
+                        comps_xml_sub = "%s/%s.xml" % (availabledir, group.id)
+                        if not os.path.exists(comps_xml_sub):
+                            os.symlink(comps_xml, comps_xml_sub)
+                    
                     print "updated."
         line = file.readline()
         lineno = lineno + 1
     file.close()
 
-    # XXX merge all comps.xml fragments into a single comps.xml file
-    # and use that for further operations?
-
     print "Done."
 
-# Install the component ID. If DEVEL is True, install the component's
-# development support.
-def comp_install(id, devel):
+# Install the component ID.
+def comp_install(id):
     comps_xml_available = "%s/%s.xml" % (availabledir, id)
     comps_xml_installed = "%s/%s.xml" % (installeddir, id)
 
@@ -136,23 +158,21 @@ def comp_install(id, devel):
     comp = rhpl.comps.Comps(comps_xml_available)
 
     # Build the list of packages to install:
-    packages = ""
+    packages_to_install = []
     for group in comp.groups.values():
-        # Only add the packages in the main component, unless DEVEL is
-        # True.
+        # Only add the packages in the subcomponent ID, not the other
+        # subcomponents.
         if group.id != id:
-            if not (devel and group.id == id + "-devel"):
-                continue
+            continue
         for (type, package) in group.packages.values():
             # Only add the "mandatory" and "default" packages:
             if type == "mandatory" or type =="default":
-                if packages == "":
-                    packages = packages + package
-                else:
-                    packages = packages + " " + package
+                packages_to_install.append(package)
 
-    # Call apt-get install to install PACKAGES:
-    if os.system("apt-get install %s" % packages) != 0:
+    packages = list_to_string(packages_to_install)
+
+    # Call aptitude install to install PACKAGES_TO_INSTALL:
+    if os.system("aptitude install %s" % packages) != 0:
         # Installation failed:
         return
 
@@ -172,29 +192,38 @@ def comp_remove(id):
     comp = rhpl.comps.Comps(comps_xml_installed)
 
     # Build the list of packages to remove:
-    packages = ""
+    packages_to_remove = []
     for group in comp.groups.values():
+        # Only remove the packages in the subcomponent ID, not the
+        # other subcomponents.
+        if group.id != id:
+            continue
         for (type, package) in group.packages.values():
             # Verify that the package is actually installed before adding
             # it to the list, to suppress spurious warnings:
             if not os.path.exists("/var/lib/dpkg/info/%s.list" % package):
                 continue
-            if packages == "":
-                packages = packages + package
-            else:
-                packages = packages + " " + package
+            packages_to_remove.append(package)
 
-    # Call dpkg --remove to remove PACKAGES:
-    if os.system("dpkg --remove %s" % packages) != 0:
-        # Removal failed:
-        return
+    # XXX need to be smarter here about only removing packages that
+    # aren't depended upon by a package in another component..
+
+    packages = list_to_string(packages_to_remove)
+
+    # Call aptitide remove to remove PACKAGES_TO_REMOVE:
+    # XXX we always succeed here, pending implementation of the above
+    # check ("need to be smarter here...")
+    os.system("dpkg --remove %s" % packages)
 
     # Remove the comps.xml used during installation from INSTALLEDDIR:
     os.unlink(comps_xml_installed)
 
-# Upgrade installed components to current versions. If DEVEL is True,
-# upgrade the components' development support.
-def comps_upgrade(devel):
+# Upgrade installed components to current versions.
+def comps_upgrade():
+    components_updated = []
+    packages_to_install = []
+    packages_to_remove = []
+
     for file in os.listdir(installeddir):
         comps_xml_available = "%s/%s" % (availabledir, file)
         comps_xml_installed = "%s/%s" % (installeddir, file)
@@ -218,88 +247,84 @@ def comps_upgrade(devel):
         comp_available = rhpl.comps.Comps(comps_xml_available)
         comp_installed = rhpl.comps.Comps(comps_xml_installed)
 
-        # Build the list of packages in the newest version of the
-        # component:
-        packages_available = ""
-        for group in comp_available.groups.values():
-            # Only add the packages in the main component, unless
-            # DEVEL is True.
-            if group.id != id:
-                if not (devel and group.id == id + "-devel"):
-                    continue
-            for (type, package) in group.packages.values():
-                # Only add the "mandatory" and "default" packages:
-                if type == "mandatory" or type =="default":
-                    if packages_available == "":
-                        packages_available = packages_available + package
-                    else:
-                        packages_available = packages_available + " " + package
-
-        # Build the list of packages in the currently installed
-        # version of the component:
-        packages_installed = ""
-        for group in comp_installed.groups.values():
-            # Only add the packages in the main component, unless
-            # DEVEL is True.
-            if group.id != id:
-                if not (devel and group.id == id + "-devel"):
-                    continue
-            for (type, package) in group.packages.values():
-                # Only add the "mandatory" and "default" packages:
-                if type == "mandatory" or type =="default":
-                    if packages_installed == "":
-                        packages_installed = packages_installed + package
-                    else:
-                        packages_installed = packages_installed + " " + package
-
         # Build dictionaries of available and installed packages, for
         # use in determining which packages have been added and which
         # packages have been removed from the component:
 
-        available = {}
-        for package in packages_available.split():
-            available[package] = True
+        packages_available = {}
+        for group in comp_available.groups.values():
+            # Only add the packages in the subcomponent ID, not the
+            # other subcomponents.
+            if group.id != id:
+                continue
+            for (type, package) in group.packages.values():
+                # Only add the "mandatory" and "default" packages:
+                if type == "mandatory" or type =="default":
+                    packages_available[package] = True
 
-        installed = {}
-        for package in packages_installed.split():
-            installed[package] = True
+        packages_installed = {}
+        for group in comp_installed.groups.values():
+            # Only add the packages in the subcomponent ID, not the
+            # other subcomponents.
+            if group.id != id:
+                continue
+            for (type, package) in group.packages.values():
+                # Only add the "mandatory" and "default" packages:
+                if type == "mandatory" or type =="default":
+                    packages_installed[package] = True
 
-        os.system("apt-get upgrade")
+        # Each package in the PACKAGES_AVAILABLE dictionary that is not
+        # in the PACKAGES_INSTALLED dictionary is a new package. Add it
+        # to the list of packages to be installed:
+        for package in packages_available.keys():
+            if not packages_installed.has_key(package):
+                packages_to_install.append(package)
 
-        # Each package in the AVAILABLE dictionary that is not in the
-        # INSTALLED dictionary is a new package. Install it:
-        packages = ""
-        for package in available.keys():
-            if not installed.has_key(package):
-                if packages == "":
-                    packages = packages + package
-                else:
-                    packages = packages + " " + package
-        if packages != "":
-            if os.system("apt-get install %s" % packages) != 0:
-                # Installation failed:
-                return
+        # Each package in the PACKAGES_INSTALLED dictionary that
+        # is not in the PACKAGES_AVAILABLE dictionary is a package that
+        # has been removed. Add it to the list of packages to be
+        # removed.
+        for package in packages_installed.keys():
+            if not packages_available.has_key(package):
+                packages_to_remove.append(package)
 
-        # Each package in the INSTALLED dictionary that is not in the
-        # AVAILABLE dictionary is a package that has been removed.
-        # Remove it:
-        packages = ""
-        for package in installed.keys():
-            if not available.has_key(package):
-                if packages == "":
-                    packages = packages + package
-                else:
-                    packages = packages + " " + package
-        if packages != "":
-            if os.system("dpkg --remove %s" % packages) != 0:
-                # Removal failed:
-                return
+        components_updated.append(id)
 
+    # Deal with the case where a package has moved from one component
+    # to another (i.e., don't remove it):
+    for package in packages_to_remove:
+        try:
+            i = packages_to_install.index(package)
+        except ValueError, e:
+            continue
+        if i >= 0:
+            packages_to_remove.remove(package)
+            
+    if os.system("aptitude upgrade") != 0:
+        return
+
+    # Install packages that have been added to a component:
+    packages = list_to_string(packages_to_install)
+    if packages != "":
+        if os.system("aptitude install %s" % packages) != 0:
+            # Installation failed:
+            return
+
+    # Remove packages that have been removed from a component:
+    packages = list_to_string(packages_to_remove)
+    if packages != "":
+        # XXX we always succeed here too (see comp_remove)
+        os.system("dpkg --remove %s" % packages)
+
+    for id in components_updated:
+        comps_xml_available = "%s/%s.xml" % (availabledir, id)
+        comps_xml_installed = "%s/%s.xml" % (installeddir, id)
         # Update the comps.xml used during installation in INSTALLEDDIR:
         shutil.copy(comps_xml_available, comps_xml_installed)
 
 # List the components currently available.
 def comps_list_available():
+    available = []
     for file in os.listdir(availabledir):
         m = re.search("\S+\\.xml", file)
         if m is None:
@@ -307,11 +332,16 @@ def comps_list_available():
             continue
         else:
             id = file[m.start():m.end() - 4]
+        available.append(id)
 
-        print id
+    available.sort()
+
+    for package in available:
+        print package
 
 # List the components currently installed.
 def comps_list_installed():
+    installed = []
     for file in os.listdir(installeddir):
         m = re.search("\S+\\.xml", file)
         if m is None:
@@ -319,8 +349,12 @@ def comps_list_installed():
             continue
         else:
             id = file[m.start():m.end() - 4]
+        installed.append(id)
 
-        print id
+    installed.sort()
+
+    for package in installed:
+        print package
 
 def main():
     update = False
@@ -336,18 +370,14 @@ def main():
 Commands are:
   update             Update component information using sources from
                      /etc/apt/sources.list
-  install COMPONENT  Install the component COMPONENT via the apt-get
+  install COMPONENT  Install the component COMPONENT via the aptitude
                      command
-  remove COMPONENT   Remove the component COMPONENT via the apt-get
+  remove COMPONENT   Remove the component COMPONENT via the aptitude
                      command  
   upgrade            Upgrade installed components to current versions
-                     via the apt-get command
+                     via the aptitude command
   list-available     List the components currently available
-  list-installed     List the components currently installed
-
-Options are:
-  --devel            Install component's development support""" \
-          % sys.argv[0]
+  list-installed     List the components currently installed""" % \
         sys.exit(status)
 
     # parse command line
@@ -366,9 +396,9 @@ Options are:
     else:
         usage(1)
 
-    options = [ 'devel' ]
+    options = [ 'purge' ]
 
-    devel = False
+    purge = False
 
     try:
         opts, args = getopt.getopt(sys.argv[2:], '', options)
@@ -376,8 +406,9 @@ Options are:
         print e
         usage(1)
     for opt in opts:
-        if opt[0] == "--devel":
-            devel = True
+        if opt[0] == "--purge":
+            # XXX not actually used yet
+            purge = True
                                 
     # initialize apt_pkg:
     apt_pkg.init()
@@ -389,7 +420,7 @@ Options are:
     elif install:
         if len(args) != 1:
             usage(1)
-        comp_install(args[0], devel)
+        comp_install(args[0])
     elif remove:
         if len(args) != 1:
             usage(1)
@@ -397,7 +428,7 @@ Options are:
     elif upgrade:
         if len(args) != 0:
             usage(1)
-        comps_upgrade(devel)
+        comps_upgrade()
     elif list_available:
         if len(args) != 0:
             usage(1)
