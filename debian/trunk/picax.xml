@@ -49,6 +49,9 @@
         <inst-pixmap-path>
             /scratch/imurdock/pd/pixmaps
         </inst-pixmap-path>
+        <inst-debconf-seed-path>
+            /scratch/imurdock/pd/debconf-settings
+        </inst-debconf-seed-path>
     </installer_options>
     <media_options/>
     <repository component="audio" distribution="cl"/>
