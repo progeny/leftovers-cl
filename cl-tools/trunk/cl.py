@@ -17,6 +17,15 @@
 # Written by Ian Murdock <imurdock@progeny.com>
 #         and Jeff Licquia <licquia@progeny.com>.
 
+import apt_pkg
+
+def init(argv):
+    apt_pkg.InitConfig()
+    args = apt_pkg.ParseCommandLine(apt_pkg.GetConfig(), [], argv)
+    apt_pkg.InitSystem()
+
+    return args
+
 # XXX apt_pkg should provide some mechanism for iterating over
 # the lines in sources.list. It's pretty silly that we have to
 # parse it ourselves.
