@@ -67,10 +67,8 @@ class StatusDict(dict):
     def __str__(self):
         return self["message"]
 
-class ComponentException(StatusDict, Exception):
-    def __init__(self, **kw):
-        Exception.__init__(self)
-        StatusDict.__init__(self, **kw)
+class ComponentError(StandardError):
+    pass
 
 status_cb = None
 
@@ -174,12 +172,11 @@ def install(id):
     comps_xml_installed = "%s/%s.xml" % (installeddir, id)
 
     if os.path.exists(comps_xml_installed):
-        status("Component %s already installed." % id)
-        return
+        raise ComponentError, "Component %s already installed." % id
 
     if not os.path.exists(comps_xml_available):
-        status("Component %s not found (did you run --update?)" % id)
-        return
+        raise ComponentError, "Component %s not found (did you run --update?)"\
+              % id
 
     # Parse comps.xml:
     comp = rhpl.comps.Comps(comps_xml_available)
@@ -210,8 +207,7 @@ def remove(id):
     comps_xml_installed = "%s/%s.xml" % (installeddir, id)
 
     if not os.path.exists(comps_xml_installed):
-        status("Component %s not installed." % id)
-        return
+        raise ComponentError, "Component %s not installed." % id
 
     # Parse comps.xml:
     comp = rhpl.comps.Comps(comps_xml_installed)
