@@ -1,5 +1,7 @@
 cl-tools (1.4.2) unstable; urgency=low
 
+  * New version.
+
   * comp-get.py Make non-uservisible components available for
     installation too.
 
