@@ -244,7 +244,7 @@ def main():
                     "list-installed": (comps_list_installed, False) }
 
     def usage(status):
-        print """Usage: %s COMMAND [OPTIONS] [COMPONENT]
+        print """Usage: %s [OPTIONS] COMMAND [COMPONENT]
 
 Commands are:
   update             Update component information using sources from
@@ -260,16 +260,17 @@ Commands are:
         sys.exit(status)
 
     # parse command line
-    if sys.argv[1] not in action_list.keys():
-        usage(1)
-
     options = [ ('p', 'purge', "APT::Get::Purge") ]
-    args = cl.init(options, sys.argv[2:])
+    args = cl.init(options, sys.argv)
     purge = apt_pkg.Config["APT::Get::Purge"]
+
+    action = args[0]
+    if action not in action_list.keys():
+        usage(1)
 
     cl.register_status_cb(status_cb)
 
-    (action_call, param) = action_list[sys.argv[1]]
+    (action_call, param) = action_list[action]
     if (param and len(args) < 1) or (not param and len(args) > 0):
         usage(1)
     if param:
