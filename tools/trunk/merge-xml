@@ -46,7 +46,7 @@ def main():
             raise RuntimeError, "not enough files specified"
 
         if opts.sheetpath:
-            merge_xslt_paths.insert(opts.sheetpath, 0)
+            merge_xslt_paths.insert(0, opts.sheetpath)
 
         xslt_path = None
         for p in merge_xslt_paths:
