@@ -9,6 +9,7 @@
     <entry>cl-tools</entry>
     <entry>coreutils</entry>
     <entry>debootstrap</entry>
+    <entry>dosfstools</entry>
     <entry>dpkg</entry>
     <entry>e2fsprogs</entry>
     <entry>findutils</entry>
@@ -20,6 +21,7 @@
     <entry>hostname</entry>
     <entry>hwdata</entry>
     <entry>kudzu</entry>
+    <entry>jfsutils</entry>
     <entry>less</entry>
     <entry>libselinux1</entry>
     <entry>libpam-modules</entry>
