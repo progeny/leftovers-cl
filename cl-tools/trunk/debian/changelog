@@ -1,3 +1,14 @@
+cl-tools (1.4.1) unstable; urgency=low
+
+  * comp-get.py: Don't try to be intelligent about whether a call to
+    aptitude succeeds or fails; we simply don't have enough information now
+    to know for sure (e.g., if aptitude install returns non-zero, is
+    it because a package failed to install, or because some other
+    package isn't configured properly?). We'll have to have better
+    Python bindings to be able to be more intelligent about this.
+
+ -- Ian Murdock <imurdock@progeny.com>  Mon,  1 Nov 2004 15:33:23 -0500
+
 cl-tools (1.4) unstable; urgency=low
 
   * Split cl-tools into two packages: cl-tools, for the end-user tools;

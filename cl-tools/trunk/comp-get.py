@@ -53,8 +53,7 @@ def list_to_string(list):
 # manipulate it using that name. Also call "aptitude update" so
 # the APT database is up to date with any component updates.
 def comps_update():
-    if os.system("aptitude update") != 0:
-        return
+    os.system("aptitude update")
 
     print "Updating component metadata:"
 
@@ -172,9 +171,7 @@ def comp_install(id):
     packages = list_to_string(packages_to_install)
 
     # Call aptitude install to install PACKAGES_TO_INSTALL:
-    if os.system("aptitude install %s" % packages) != 0:
-        # Installation failed:
-        return
+    os.system("aptitude install %s" % packages)
 
     # Copy the comps.xml used during installation to INSTALLEDDIR for
     # later use during upgrade and remove operations:
@@ -300,15 +297,12 @@ def comps_upgrade():
         if i >= 0:
             packages_to_remove.remove(package)
             
-    if os.system("aptitude upgrade") != 0:
-        return
+    os.system("aptitude upgrade")
 
     # Install packages that have been added to a component:
     packages = list_to_string(packages_to_install)
     if packages != "":
-        if os.system("aptitude install %s" % packages) != 0:
-            # Installation failed:
-            return
+        os.system("aptitude install %s" % packages)
 
     # Remove packages that have been removed from a component:
     packages = list_to_string(packages_to_remove)
