@@ -78,6 +78,8 @@ def _retrieve_config_dir_path(key):
     return path
 
 def _get_installed_pkgs():
+    status_path = _retrieve_config_dir_path("Dir::State::status")
+
     installed_pkgs = []
     status_f = open(status_path)
 
@@ -255,7 +257,6 @@ def update_installed():
     global _istatus
 
     compsdir = _retrieve_config_dir_path("Dir::Comps")
-    status_path = _retrieve_config_dir_path("Dir::State::status")
     istatus_path = _retrieve_config_dir_path("Dir::Comps::InstalledState")
 
     current_components = []
