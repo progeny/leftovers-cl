@@ -41,7 +41,7 @@
             /home/imurdock/progeny/debian/isolinux
         </inst-isolinux-config>
         <inst-kernel-path>
-            /home/imurdock/progeny/debian/kernel-image-2.6.6_install1_i386.deb
+            /home/imurdock/progeny/debian/kernel-image-2.6.5_install.2_i386.deb
         </inst-kernel-path>
         <inst-package-list-path>
             /home/imurdock/progeny/debian/pkglist.xml

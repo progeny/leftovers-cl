@@ -24,7 +24,6 @@
       <groupreq>j2re-1.4</groupreq>
       <groupreq>linux-2.6</groupreq>
       <groupreq>lsb-2.0</groupreq>
-      <groupreq>mono-1.0</groupreq>
       <groupreq>mozilla-firefox-1.0</groupreq>
       <groupreq>openoffice.org-1.1</groupreq>
       <groupreq>progeny</groupreq>
@@ -45,6 +44,7 @@
       <groupreq>j2sdk-1.4</groupreq>
       <groupreq>linux-2.6-devel</groupreq>
       <groupreq>lsb-2.0-devel</groupreq>
+      <groupreq>mono-1.0</groupreq>
       <groupreq>mono-1.0-devel</groupreq>
       <groupreq>mozilla-1.7-devel</groupreq>
       <groupreq>perl-5.8</groupreq>
