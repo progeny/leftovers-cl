@@ -388,21 +388,28 @@ def remove(id):
 def upgrade():
     global _istatus
 
-    # Install each component we're following.  This will upgrade
-    # the packages in each component individually, install new
-    # packages, and so on.
+    # Look for packages to install and remove.
     packages_to_install = []
+    packages_to_remove = []
+    valid_packages = reduce(lambda x,y: x + y["installed"],
+                            [[]] + list(_istatus.values()))
+
     for id in _istatus.keys():
         if _istatus[id]["follow"]:
             packages_to_install.extend(_istatus[id]["installed"])
 
-    packages = string.join(packages_to_install, " ")
+            for package in _istatus[id]["obsolete"]:
+                if package not in valid_packages:
+                    packages_to_remove.append(package)
 
+    # Install or upgrade member packages.
+    packages = string.join(packages_to_install, " ")
     os.system("aptitude install " + packages)
 
-    # Remove packages that have been removed from a component:
-    # XXX: with the new system, we've lost this ability.  We need
-    #      to restore it.
+    # Remove packages that have been removed from components, if any.
+    if len(packages_to_remove):
+        packages = string.join(packages_to_remove, " ")
+        os.system("dpkg --remove " + packages)
 
     # Take care of the rest of the packages upgrades that we may need.
     status("Upgrading non-component packages...")
