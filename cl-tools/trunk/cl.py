@@ -25,14 +25,14 @@ compsdir = cachedir + "/comps"
 availabledir = compsdir + "/available"
 installeddir = compsdir + "/installed"
 
-def init(argv):
+def init(options, argv):
     global cachedir
     global compsdir
     global availabledir
     global installeddir
 
     apt_pkg.InitConfig()
-    args = apt_pkg.ParseCommandLine(apt_pkg.Config, [], argv)
+    args = apt_pkg.ParseCommandLine(apt_pkg.Config, options, argv)
     apt_pkg.InitSystem()
 
     return args
