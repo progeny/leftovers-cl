@@ -436,7 +436,9 @@ def upgrade():
 
     # Install or upgrade member packages.
     packages = string.join(packages_to_install, " ")
-    os.system("aptitude install " + packages)
+    retval = os.system("aptitude install " + packages)
+    if retval:
+        raise RuntimeError, "could not upgrade components"
 
     # Remove packages that have been removed from components, if any.
     if len(packages_to_remove):
