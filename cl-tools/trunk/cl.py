@@ -85,7 +85,9 @@ def _get_installed_pkgs():
 
     status_parser = apt_pkg.ParseTagFile(status_f)
     while status_parser.Step():
-        if string.find(status_parser.Section["Status"], "not-installed") != -1:
+        pkg_status = status_parser.Section["Status"]
+        if string.find(pkg_status, "not-installed") != -1 or\
+           string.find(pkg_status, "config-files") != -1:
             continue
         installed_pkgs.append(status_parser.Section["Package"])
 
