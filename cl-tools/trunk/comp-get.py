@@ -296,21 +296,10 @@ Commands are:
     if sys.argv[1] not in action_list.keys():
         usage(1)
 
-    options = [ 'purge' ]
+    options = [ ('p', 'purge', "APT::Get::Purge") ]
+    args = cl.init(sys.argv[2:])
+    purge = apt_pkg.Config["APT::Get::Purge"]
 
-    purge = False
-
-    try:
-        opts, args = getopt.getopt(sys.argv[2:], '', options)
-    except getopt.GetoptError, e:
-        print e
-        usage(1)
-    for opt in opts:
-        if opt[0] == "--purge":
-            # XXX not actually used yet
-            purge = True
-                                
-    cl.init()
     cl.register_status_cb(status_cb)
 
     (action_call, param) = action_list[sys.argv[1]]
