@@ -1,3 +1,9 @@
+cl-tools (1.4.3) unstable; urgency=low
+
+  * debootstrap-script: Added libgcrypt11.
+
+ -- Ian Murdock <imurdock@progeny.com>  Thu, 30 Dec 2004 14:36:41 -0500
+
 cl-tools (1.4.2) unstable; urgency=low
 
   * New version.
