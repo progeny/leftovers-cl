@@ -52,82 +52,59 @@ def comps_update():
 
     print "Updating component metadata:"
 
-    # XXX apt_pkg should provide some mechanism for iterating over
-    # the lines in sources.list. It's pretty silly that we have to
-    # parse it ourselves.
+    for (fmt, uri, dist, comps) in cl.parse_sources_list(sources_list):
+        if fmt == "deb":
+            # For each (APT) component, construct a URL to
+            # the comps.xml file and check if it exists in
+            # a protocol-specific way.
+            for comp in comps:
+                print "  Checking %s/%s..." % (dist, comp),
 
-    file = open(sources_list, "r")
-    line = file.readline()
-    lineno = 0
-    while line:
-        elem = line.split()
-        if len(elem) != 0:
-            fmt = elem[0]
-            if fmt == "deb":
-                # This is a "deb" line. Parse it into its constituent
-                # elements (uri, dist, and comps).
-                if len(elem) != 4:
-                    print "%s: parse error at line %d" % (sources_list, lineno)
-                    print "  %s" % line
-                    sys.exit(1)
-                uri = elem[1]
-                dist = elem[2]
-                comps = elem[3:]
-
-                # For each (APT) component, construct a URL to
-                # the comps.xml file and check if it exists in
-                # a protocol-specific way.
-                for comp in comps:
-                    print "  Checking %s/%s..." % (dist, comp),
-
-                    url = "%s/dists/%s/%s/comps.xml" % (uri, dist, comp)
-                    (proto, host, path, x, y, z) = urlparse.urlparse(url)
-                    if proto == "http":
-                        # Connect to the HTTP server to verify that
-                        # comps.xml exists:
-                        h = httplib.HTTP(host)
-                        h.putrequest("GET", path)
-                        h.putheader("Host", host)
-                        h.putheader("Accept", "application/xml")
-                        h.endheaders()
-                        (code, message, headers) = h.getreply()
-                        if code != 200:
-                            print "not a component."
-                            continue
-                    elif proto == "file":
-                        # Check the file system to verify that comps.xml
-                        # exists:
-                        if not os.path.exists(path):
-                            print "not a component."
-                            continue
-                    else:
-                        print "protocol `%s' not supported." % proto
+                url = "%s/dists/%s/%s/comps.xml" % (uri, dist, comp)
+                (proto, host, path, x, y, z) = urlparse.urlparse(url)
+                if proto == "http":
+                    # Connect to the HTTP server to verify that
+                    # comps.xml exists:
+                    h = httplib.HTTP(host)
+                    h.putrequest("GET", path)
+                    h.putheader("Host", host)
+                    h.putheader("Accept", "application/xml")
+                    h.endheaders()
+                    (code, message, headers) = h.getreply()
+                    if code != 200:
+                        print "not a component."
                         continue
+                elif proto == "file":
+                    # Check the file system to verify that comps.xml
+                    # exists:
+                    if not os.path.exists(path):
+                        print "not a component."
+                        continue
+                else:
+                    print "protocol `%s' not supported." % proto
+                    continue
 
-                    # Download the comps.xml and save it to COMPSDIR:
-                    comps_xml = "%s/%s.xml" % (compsdir, comp)
-                    comps_xml_tmp = "%s/.%s.xml" % (compsdir, comp)
-                    urllib.urlretrieve(url, comps_xml_tmp)
-                    if os.path.exists(comps_xml):
-                        if filecmp.cmp(comps_xml, comps_xml_tmp):
-                            os.unlink(comps_xml_tmp)
-                            print "up-to-date."
-                            continue
-                    os.rename(comps_xml_tmp, comps_xml)
+                # Download the comps.xml and save it to COMPSDIR:
+                comps_xml = "%s/%s.xml" % (compsdir, comp)
+                comps_xml_tmp = "%s/.%s.xml" % (compsdir, comp)
+                urllib.urlretrieve(url, comps_xml_tmp)
+                if os.path.exists(comps_xml):
+                    if filecmp.cmp(comps_xml, comps_xml_tmp):
+                        os.unlink(comps_xml_tmp)
+                        print "up-to-date."
+                        continue
+                os.rename(comps_xml_tmp, comps_xml)
 
-                    # Create links to the downloaded comps.xml in
-                    # AVAILABLEDIR using each of the subcomponent names,
-                    # so they can be manipulated using the names:
-                    comp = rhpl.comps.Comps(comps_xml)
-                    for group in comp.groups.values():
-                        comps_xml_sub = "%s/%s.xml" % (availabledir, group.id)
-                        if not os.path.exists(comps_xml_sub):
-                            os.symlink(comps_xml, comps_xml_sub)
-                    
-                    print "updated."
-        line = file.readline()
-        lineno = lineno + 1
-    file.close()
+                # Create links to the downloaded comps.xml in
+                # AVAILABLEDIR using each of the subcomponent names,
+                # so they can be manipulated using the names:
+                comp = rhpl.comps.Comps(comps_xml)
+                for group in comp.groups.values():
+                    comps_xml_sub = "%s/%s.xml" % (availabledir, group.id)
+                    if not os.path.exists(comps_xml_sub):
+                        os.symlink(comps_xml, comps_xml_sub)
+
+                print "updated."
 
     print "Done."
 
