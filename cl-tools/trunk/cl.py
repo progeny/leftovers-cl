@@ -120,6 +120,30 @@ def init(options, argv):
 
 # Use a callback system to report status.
 
+class StatusItem:
+    def __init__(self, callback, init_msg = None):
+        self.callback = callback
+        self.percentage = 0
+        if init_msg:
+            self.current_message = init_msg
+            self.do_callback()
+
+    def do_callback(self):
+        self.callback(self)
+
+    def message(self, message, percent = None):
+        self.current_message = message
+        if percent:
+            self.percentage = percent
+        self.do_callback()
+
+    def set_percentage(self, percent):
+        self.percentage = percent
+        self.do_callback()
+
+    def get_info(self):
+        return (self.current_message, self.percentage)
+
 class StatusDict(dict):
     def __init__(self, **kw):
         dict.__init__(self)
@@ -138,12 +162,13 @@ def register_status_cb(cb):
     global status_cb
     status_cb = cb
 
-def status(s):
-    if status_cb:
-        if isinstance(s, StatusDict):
-            status_cb(s)
-        else:
-            status_cb(StatusDict(message=s))
+def _new_status(message):
+    global status_cb
+    return StatusItem(status_cb, message)
+
+def _quick_status(message):
+    global status_cb
+    StatusItem(status_cb).message(message, 100)
 
 # XXX apt_pkg should provide some mechanism for iterating over
 # the lines in sources.list. It's pretty silly that we have to
@@ -183,7 +208,7 @@ def update_available():
             # the comps.xml file and check if it exists in
             # a protocol-specific way.
             for comp in comps:
-                status("  Checking %s/%s..." % (dist, comp))
+                status = _new_status("  Checking %s/%s..." % (dist, comp))
 
                 url = "%s/dists/%s/%s/comps.xml" % (uri, dist, comp)
                 (proto, host, path, x, y, z) = urlparse.urlparse(url)
@@ -197,16 +222,16 @@ def update_available():
                     h.endheaders()
                     (code, message, headers) = h.getreply()
                     if code != 200:
-                        status("not a component.")
+                        status.message("not a component.", 100)
                         continue
                 elif proto == "file":
                     # Check the file system to verify that comps.xml
                     # exists:
                     if not os.path.exists(path):
-                        status("not a component.")
+                        status.message("not a component.", 100)
                         continue
                 else:
-                    status("protocol `%s' not supported." % proto)
+                    status.message("protocol `%s' not supported." % proto, 100)
                     continue
 
                 # Download the comps.xml and save it to COMPSDIR:
@@ -225,7 +250,7 @@ def update_available():
                     # No change?  Keep the old one.
                     if filecmp.cmp(comps_xml, comps_xml_tmp):
                         os.unlink(comps_xml_tmp)
-                        status("up-to-date.")
+                        status.message("up-to-date.", 100)
                         continue
 
                     # Check for removed packages.
@@ -257,7 +282,7 @@ def update_available():
 
                 os.rename(comps_xml_tmp, comps_xml)
 
-                status("updated.")
+                status.message("updated.", 100)
 
     # Get rid of comps files we didn't download.
     for comps_fn in old_comps_xml_list:
@@ -265,8 +290,9 @@ def update_available():
             os.unlink("%s/%s" % (compsdir, comps_fn))
 
     if do_status_update:
-        status("New components found, updating installed status...")
+        status = _new_status("New components found, updating installed status...")
         update_installed()
+        status.message("done.", 100)
 
 def update_installed():
     global _istatus
@@ -371,7 +397,7 @@ def install(id):
               % id
 
     if _istatus[id]["status"] == "complete":
-        status("Component %s is up to date." % id)
+        _quick_status("Component %s is up to date." % id)
         return
 
     # Build the list of packages to install:
@@ -381,9 +407,10 @@ def install(id):
     os.system("aptitude install %s" % packages)
 
     # Update the installed list.
-    status("Updating list of installed components...")
+    status = _new_status("Updating list of installed components...")
     _istatus[id]["follow"] = True
     update_installed()
+    status.message("done.", 100)
 
 def remove(id):
     global _istatus
@@ -415,9 +442,10 @@ def remove(id):
     os.system("dpkg --remove %s" % packages)
 
     # Update the installed list.
-    status("Updating list of installed components...")
+    status = _new_status("Updating list of installed components...")
     _istatus[id]["follow"] = False
     update_installed()
+    status.message("done.", 100)
 
 def upgrade():
     global _istatus
@@ -448,13 +476,14 @@ def upgrade():
         os.system("dpkg --remove " + packages)
 
     # Take care of the rest of the packages upgrades that we may need.
-    status("Upgrading non-component packages...")
+    _quick_status("Upgrading non-component packages...")
     os.system("aptitude upgrade")
 
     # Update the installed list.
-    status("Updating list of installed components...")
+    status = _new_status("Updating list of installed components...")
     _istatus[id]["follow"] = False
     update_installed()
+    status.message("done.", 100)
 
 def get_available():
     global _istatus

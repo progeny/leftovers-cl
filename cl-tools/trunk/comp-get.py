@@ -60,7 +60,10 @@ def comps_list_legacy():
         print package
 
 def status_cb(s):
-    print s
+    (msg, percent) = s.get_info()
+    sys.stdout.write(msg)
+    if percent > 99:
+        sys.stdout.write("\n")
 
 def main():
     action_list = { "update": (comps_update, False),
