@@ -110,7 +110,7 @@ done
         <exclude path="/usr/include"/>
       </manidiff>
       <script interpreter="/bin/sh">
-ln -s /usr/share/themes/Industrial/gtk-2.0/gtkrc $PICAX_DEST/etc/gtk-2.0/gtkrc
+sed 's,text\[INSENSITIVE\].*ffffff,text[INSENSITIVE] = "#202020,' &lt; /usr/share/themes/Industrial/gtk-2.0/gtkrc &gt; $PICAX_DEST/etc/gtk-2.0/gtkrc
       </script>
     </package>
     <package name="libc6">
