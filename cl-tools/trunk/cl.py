@@ -173,6 +173,7 @@ def update_available():
     do_status_update = False
     compsdir = _retrieve_config_dir_path("Dir::Comps")
 
+    comps_xml_found = []
     for (fmt, uri, dist, comps) in parse_sources_list():
         if fmt == "deb":
             # For each (APT) component, construct a URL to
@@ -219,7 +220,7 @@ def update_available():
                         continue
 
                     # Check for removed packages.
-                    comp = rhpl.comps.Comps(comps_xml_tmp)
+                    comps = rhpl.comps.Comps(comps_xml_tmp)
 
                     for group in comps.groups.values():
 
@@ -245,9 +246,21 @@ def update_available():
                             if pkg not in packages:
                                 _istatus[group.id]["obsolete"].append(pkg)
 
+                # Keep track of the repositories we've checked.
+                comps_xml_found.append(comps_xml)
+
                 os.rename(comps_xml_tmp, comps_xml)
 
                 status("updated.")
+
+    # Get rid of comps files we didn't download.
+    for comps_fn in os.listdir(compsdir):
+        if comps_fn[-4:] != ".xml":
+            continue
+
+        comps_xml = "%s/%s" % (compsdir, comps_fn)
+        if comps_xml not in comps_xml_found:
+            os.unlink(comps_xml)
 
     if do_status_update:
         status("New components found, updating installed status...")
