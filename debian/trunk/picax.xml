@@ -7,7 +7,7 @@
         Progeny Debian
     </cd-label>
     <dest-path>
-        /scratch2/imurdock/iso-i386
+        /scratch/imurdock/iso-i386
     </dest-path>
     <installer>
         anaconda
@@ -29,52 +29,52 @@
 	    cl
 	</inst-base-tarball-dist>
         <inst-comps>
-            /scratch/imurdock/pd/comps.xml
+            /home/imurdock/progeny/debian/comps.xml
         </inst-comps>
         <inst-help-path>
-            /scratch/imurdock/pd/anaconda-help
+            /usr/share/anaconda/help
         </inst-help-path>
         <inst-debconf-seed-path>
-            /scratch/imurdock/pd/debconf-settings
+            /home/imurdock/progeny/debian/debconf-settings
         </inst-debconf-seed-path>
         <inst-isolinux-config>
-            /scratch/imurdock/pd/isolinux
+            /home/imurdock/progeny/debian/isolinux
         </inst-isolinux-config>
         <inst-kernel-path>
-            /scratch/imurdock/pd/kernel-image-2.6.6-2-386_2.6.6-2_i386.deb
+            /home/imurdock/progeny/debian/kernel-image-2.6.6-2-386_2.6.6-2_i386.deb
         </inst-kernel-path>
         <inst-package-list-path>
-            /scratch/imurdock/pd/pkglist.xml
+            /home/imurdock/progeny/debian/pkglist.xml
         </inst-package-list-path>
         <inst-pixmap-path>
-            /scratch/imurdock/pd/pixmaps
+            /usr/share/anaconda/pixmaps
         </inst-pixmap-path>
     </installer_options>
     <media_options/>
-    <repository component="audio" distribution="cl"/>
-    <repository component="cl-devel" distribution="cl"/>
-    <repository component="crossover-3.0" distribution="cl"/>
-    <repository component="cups-1.1" distribution="cl"/>
-    <repository component="emacs-21.3" distribution="cl"/>
-    <repository component="evolution-1.4" distribution="cl"/>
-    <repository component="flash-player" distribution="cl"/>
-    <repository component="gnome-2.6" distribution="cl"/>
-    <repository component="graphics" distribution="cl"/>
-    <repository component="j2re-1.4" distribution="cl"/>
-    <repository component="j2sdk-1.4" distribution="cl"/>
-    <repository component="kerberos" distribution="cl"/>
-    <repository component="linux-2.4" distribution="cl"/>
-    <repository component="linux-2.6" distribution="cl"/>
-    <repository component="lsb-2.0" distribution="cl"/>
-    <repository component="lsb-2.0-devel" distribution="cl"/>
-    <repository component="mono" distribution="cl"/>
-    <repository component="mozilla-1.6" distribution="cl"/>
-    <repository component="mozilla-firefox-0.8" distribution="cl"/>
-    <repository component="openoffice.org-1.1" distribution="cl"/>
-    <repository component="perl-5.8" distribution="cl"/>
-    <repository component="python-2.3" distribution="cl"/>
-    <repository component="tcl" distribution="cl"/>
-    <repository component="vim-6.2" distribution="cl"/>
-    <repository component="xfree86-4.3" distribution="cl"/>
-    <repository component="xml" distribution="cl"/>
+    <repository distribution="cl" component="lsb-2.0"/>
+    <repository distribution="cl" component="linux-2.6"/>
+    <repository distribution="cl" component="progeny"/>
+    <repository distribution="cl" component="audio"/>
+    <repository distribution="cl" component="cl-devel"/>
+    <repository distribution="cl" component="cups-1.1"/>
+    <repository distribution="cl" component="eclipse-2.1"/>
+    <repository distribution="cl" component="emacs-21.3"/>
+    <repository distribution="cl" component="evolution-1.4"/>
+    <repository distribution="cl" component="evolution-1.5"/>
+    <repository distribution="cl" component="gnome-2.6"/>
+    <repository distribution="cl" component="graphics"/>
+    <repository distribution="cl-unreleased" component="j2re-1.4"/>
+    <repository distribution="cl-unreleased" component="j2sdk-1.4"/>
+    <repository distribution="cl" component="kerberos"/>
+    <repository distribution="cl" component="lsb-2.0-devel"/>
+    <repository distribution="cl" component="mono"/>
+    <repository distribution="cl" component="mozilla-1.7"/>
+    <repository distribution="cl" component="mozilla-firefox-0.9"/>
+    <repository distribution="cl" component="openoffice.org-1.1"/>
+    <repository distribution="cl" component="perl-5.8"/>
+    <repository distribution="cl" component="python-2.3"/>
+    <repository distribution="cl" component="tcl"/>
+    <repository distribution="cl" component="vim-6.2"/>
+    <repository distribution="cl" component="xfree86-4.3"/>
+    <repository distribution="cl" component="xml"/>
 </picaxconfig>

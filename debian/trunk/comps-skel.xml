@@ -7,6 +7,7 @@
     <name>Base</name>
     <grouplist>
       <groupreq>lsb-2.0</groupreq>
+      <groupreq>linux-2.6</groupreq>
     </grouplist>
   </group>
   <group>
@@ -17,14 +18,13 @@
     <grouplist>
       <groupreq>lsb-2.0</groupreq>
       <groupreq>linux-2.6</groupreq>
+      <groupreq>progeny</groupreq>
       <groupreq>cups-1.1</groupreq>
       <groupreq>j2re-1.4</groupreq>
       <groupreq>xfree86-4.3</groupreq>
       <groupreq>gnome-2.6</groupreq>
-      <groupreq>crossover-3.0</groupreq>
       <groupreq>evolution-1.4</groupreq>
-      <groupreq>flash-player</groupreq>
-      <groupreq>mozilla-firefox-0.8</groupreq>
+      <groupreq>mozilla-firefox-0.9</groupreq>
       <groupreq>openoffice.org-1.1</groupreq>
     </grouplist>
   </group>
@@ -35,6 +35,7 @@
     <name>Development Tools</name>
     <grouplist>
       <groupreq>cl-devel</groupreq>
+      <groupreq>eclipse-2.1</groupreq>
       <groupreq>emacs-21.3</groupreq>
       <groupreq>j2sdk-1.4</groupreq>
       <groupreq>lsb-2.0-devel</groupreq>
