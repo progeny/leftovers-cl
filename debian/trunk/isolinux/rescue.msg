@@ -11,9 +11,5 @@ one to restore a system to a working state.
 To enter the rescue mode, boot your system from the installation
 CDROM or floppy and type 0flinux rescue <ENTER>07.
 
-
-
-
-
 02[F1-Main] [F2-Options] [F3-General] [F4-Kernel] [F5-Rescue]07
 

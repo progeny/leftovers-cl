@@ -21,6 +21,5 @@ installation, restart the installation adding the 'noprobe' option.  The
 There are a number of parameters that can be passed to the Linux kernel
 at boot time.  Press 0f<F4>07 for more information. 
 
-
 02[F1-Main] [F2-Options] [F3-General] [F4-Kernel] [F5-Rescue]07
 
