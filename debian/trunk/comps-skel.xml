@@ -19,14 +19,13 @@
       <groupreq>audio</groupreq>
       <groupreq>cups-1.1</groupreq>
       <groupreq>evolution-2.0</groupreq>
-      <groupreq>flash-player</groupreq>
       <groupreq>gnome-2.8</groupreq>
       <groupreq>graphics</groupreq>
       <groupreq>j2re-1.4</groupreq>
       <groupreq>linux-2.6</groupreq>
       <groupreq>lsb-2.0</groupreq>
       <groupreq>mono-1.0</groupreq>
-      <groupreq>mozilla-firefox-0.9</groupreq>
+      <groupreq>mozilla-firefox-1.0RC1</groupreq>
       <groupreq>openoffice.org-1.1</groupreq>
       <groupreq>progeny</groupreq>
       <groupreq>xfree86-4.3</groupreq>

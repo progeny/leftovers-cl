@@ -1,0 +1,2105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<comps>
+  <group>
+    <id>base</id>
+    <uservisible>false</uservisible>
+    <default>false</default>
+    <name>Base</name>
+    <grouplist>
+      <groupreq>lsb-2.0</groupreq>
+      <groupreq>linux-2.6</groupreq>
+    </grouplist>
+  </group>
+  <group>
+    <id>workstation-common</id>
+    <uservisible>false</uservisible>
+    <default>false</default>
+    <name>Workstation Common</name>
+    <grouplist>
+      <groupreq>audio</groupreq>
+      <groupreq>cups-1.1</groupreq>
+      <groupreq>evolution-2.0</groupreq>
+      <groupreq>gnome-2.8</groupreq>
+      <groupreq>graphics</groupreq>
+      <groupreq>j2re-1.4</groupreq>
+      <groupreq>linux-2.6</groupreq>
+      <groupreq>lsb-2.0</groupreq>
+      <groupreq>mono-1.0</groupreq>
+      <groupreq>mozilla-firefox-1.0RC1</groupreq>
+      <groupreq>openoffice.org-1.1</groupreq>
+      <groupreq>progeny</groupreq>
+      <groupreq>xfree86-4.3</groupreq>
+    </grouplist>
+  </group>
+  <group>
+    <id>development-tools</id>
+    <uservisible>false</uservisible>
+    <default>false</default>
+    <name>Development Tools</name>
+    <grouplist>
+      <groupreq>cl-devel</groupreq>
+      <groupreq>eclipse-2.1</groupreq>
+      <groupreq>eclipse-2.1-devel</groupreq>
+      <groupreq>emacs</groupreq>
+      <groupreq>evolution-2.0-devel</groupreq>
+      <groupreq>gimp-2.0</groupreq>
+      <groupreq>gnome-2.8-devel</groupreq>
+      <groupreq>j2sdk-1.4</groupreq>
+      <groupreq>java-devel</groupreq>
+      <groupreq>linux-2.6-devel</groupreq>
+      <groupreq>lsb-2.0-devel</groupreq>
+      <groupreq>mono-1.0-devel</groupreq>
+      <groupreq>mozilla-1.7-devel</groupreq>
+      <groupreq>perl-5.8</groupreq>
+      <groupreq>python-2.3</groupreq>
+      <groupreq>vim</groupreq>
+      <groupreq>xfree86-4.3-devel</groupreq>
+      <groupreq>xml</groupreq>
+    </grouplist>
+  </group>
+  <group>
+    <id>server</id>
+    <uservisible>false</uservisible>
+    <default>false</default>
+    <name>Server</name>
+    <grouplist>
+      <groupreq>lsb-2.0</groupreq>
+      <groupreq>linux-2.6</groupreq>
+    </grouplist>
+  </group>
+  <group>
+    <id>lsb-2.0</id>
+    <uservisible>true</uservisible>
+    <name>LSB 2.0</name>
+    <description>LSB 2.0 compatible runtime, plus additional features.</description>
+    <packagelist>
+      <packagereq type="mandatory">acpid</packagereq>
+      <packagereq type="mandatory">adduser</packagereq>
+      <packagereq type="mandatory">alien</packagereq>
+      <packagereq type="mandatory">apmd</packagereq>
+      <packagereq type="mandatory">apt</packagereq>
+      <packagereq type="mandatory">apt-utils</packagereq>
+      <packagereq type="mandatory">aptconf</packagereq>
+      <packagereq type="mandatory">aptitude</packagereq>
+      <packagereq type="mandatory">aspell</packagereq>
+      <packagereq type="mandatory">aspell-bin</packagereq>
+      <packagereq type="mandatory">aspell-en</packagereq>
+      <packagereq type="mandatory">at</packagereq>
+      <packagereq type="optional">autofs</packagereq>
+      <packagereq type="mandatory">base-files</packagereq>
+      <packagereq type="mandatory">base-passwd</packagereq>
+      <packagereq type="mandatory">bash</packagereq>
+      <packagereq type="mandatory">bc</packagereq>
+      <packagereq type="mandatory">bind9-host</packagereq>
+      <packagereq type="mandatory">binutils</packagereq>
+      <packagereq type="mandatory">bootsplash</packagereq>
+      <packagereq type="mandatory">bsdmainutils</packagereq>
+      <packagereq type="mandatory">bsdutils</packagereq>
+      <packagereq type="mandatory">bzip2</packagereq>
+      <packagereq type="mandatory">cdrecord</packagereq>
+      <packagereq type="mandatory">cl-tools</packagereq>
+      <packagereq type="mandatory">console-common</packagereq>
+      <packagereq type="mandatory">console-data</packagereq>
+      <packagereq type="mandatory">console-tools</packagereq>
+      <packagereq type="mandatory">coreutils</packagereq>
+      <packagereq type="mandatory">cpio</packagereq>
+      <packagereq type="mandatory">cpp</packagereq>
+      <packagereq type="mandatory">cpp-3.3</packagereq>
+      <packagereq type="mandatory">cramfsprogs</packagereq>
+      <packagereq type="mandatory">cron</packagereq>
+      <packagereq type="mandatory">dash</packagereq>
+      <packagereq type="mandatory">debconf</packagereq>
+      <packagereq type="mandatory">debconf-i18n</packagereq>
+      <packagereq type="mandatory">debconf-utils</packagereq>
+      <packagereq type="mandatory">debhelper</packagereq>
+      <packagereq type="mandatory">debianutils</packagereq>
+      <packagereq type="mandatory">dhcp-client</packagereq>
+      <packagereq type="mandatory">dictionaries-common</packagereq>
+      <packagereq type="mandatory">diff</packagereq>
+      <packagereq type="mandatory">discover</packagereq>
+      <packagereq type="mandatory">discover-data</packagereq>
+      <packagereq type="mandatory">dnsutils</packagereq>
+      <packagereq type="mandatory">dosfstools</packagereq>
+      <packagereq type="mandatory">dpkg</packagereq>
+      <packagereq type="mandatory">dpkg-dev</packagereq>
+      <packagereq type="mandatory">dselect</packagereq>
+      <packagereq type="mandatory">e2fslibs</packagereq>
+      <packagereq type="mandatory">e2fsprogs</packagereq>
+      <packagereq type="mandatory">ed</packagereq>
+      <packagereq type="mandatory">eject</packagereq>
+      <packagereq type="mandatory">etherconf</packagereq>
+      <packagereq type="mandatory">fam</packagereq>
+      <packagereq type="mandatory">fbset</packagereq>
+      <packagereq type="mandatory">fdutils</packagereq>
+      <packagereq type="mandatory">file</packagereq>
+      <packagereq type="mandatory">findutils</packagereq>
+      <packagereq type="mandatory">ftp</packagereq>
+      <packagereq type="optional">gawk</packagereq>
+      <packagereq type="mandatory">gcc-3.3-base</packagereq>
+      <packagereq type="mandatory">gettext</packagereq>
+      <packagereq type="mandatory">gettext-base</packagereq>
+      <packagereq type="mandatory">gnupg</packagereq>
+      <packagereq type="mandatory">grep</packagereq>
+      <packagereq type="mandatory">groff-base</packagereq>
+      <packagereq type="mandatory">grub</packagereq>
+      <packagereq type="mandatory">gzip</packagereq>
+      <packagereq type="mandatory">hdparm</packagereq>
+      <packagereq type="mandatory">hostname</packagereq>
+      <packagereq type="mandatory">hotplug</packagereq>
+      <packagereq type="mandatory">html2text</packagereq>
+      <packagereq type="mandatory">ifupdown</packagereq>
+      <packagereq type="mandatory">info</packagereq>
+      <packagereq type="mandatory">initrd-tools</packagereq>
+      <packagereq type="mandatory">initscripts</packagereq>
+      <packagereq type="mandatory">intltool-debian</packagereq>
+      <packagereq type="mandatory">iptables</packagereq>
+      <packagereq type="mandatory">iputils-ping</packagereq>
+      <packagereq type="mandatory">jfsutils</packagereq>
+      <packagereq type="mandatory">klogd</packagereq>
+      <packagereq type="mandatory">language-env</packagereq>
+      <packagereq type="mandatory">less</packagereq>
+      <packagereq type="mandatory">libacl1</packagereq>
+      <packagereq type="mandatory">libao2</packagereq>
+      <packagereq type="mandatory">libapm1</packagereq>
+      <packagereq type="mandatory">libaspell15</packagereq>
+      <packagereq type="mandatory">libattr1</packagereq>
+      <packagereq type="mandatory">libblkid1</packagereq>
+      <packagereq type="mandatory">libbz2-1.0</packagereq>
+      <packagereq type="mandatory">libc6</packagereq>
+      <packagereq type="mandatory">libc6-dev</packagereq>
+      <packagereq type="mandatory">libc6-i686</packagereq>
+      <packagereq type="mandatory">libcap1</packagereq>
+      <packagereq type="mandatory">libcomerr2</packagereq>
+      <packagereq type="mandatory">libconfhelper-perl</packagereq>
+      <packagereq type="mandatory">libconsole</packagereq>
+      <packagereq type="mandatory">libcurl2</packagereq>
+      <packagereq type="mandatory">libcurl3</packagereq>
+      <packagereq type="mandatory">libdb1-compat</packagereq>
+      <packagereq type="mandatory">libdb2</packagereq>
+      <packagereq type="mandatory">libdb3</packagereq>
+      <packagereq type="mandatory">libdb4.1</packagereq>
+      <packagereq type="mandatory">libdb4.2</packagereq>
+      <packagereq type="mandatory">libdb4.2++</packagereq>
+      <packagereq type="mandatory">libdevmapper1.00</packagereq>
+      <packagereq type="mandatory">libdiscover2</packagereq>
+      <packagereq type="mandatory">libdns11</packagereq>
+      <packagereq type="mandatory">libfam0c102</packagereq>
+      <packagereq type="mandatory">libfreetype6</packagereq>
+      <packagereq type="mandatory">libgcc1</packagereq>
+      <packagereq type="mandatory">libgcrypt1</packagereq>
+      <packagereq type="mandatory">libgcrypt7</packagereq>
+      <packagereq type="mandatory">libgcrypt11</packagereq>
+      <packagereq type="mandatory">libgdbm3</packagereq>
+      <packagereq type="mandatory">libgnutls7</packagereq>
+      <packagereq type="mandatory">libgnutls10</packagereq>
+      <packagereq type="mandatory">libgnutls11</packagereq>
+      <packagereq type="mandatory">libgpg-error0</packagereq>
+      <packagereq type="mandatory">libgpmg1</packagereq>
+      <packagereq type="mandatory">libhtml-parser-perl</packagereq>
+      <packagereq type="mandatory">libhtml-tagset-perl</packagereq>
+      <packagereq type="mandatory">libhtml-tree-perl</packagereq>
+      <packagereq type="mandatory">libident</packagereq>
+      <packagereq type="mandatory">libidn11</packagereq>
+      <packagereq type="mandatory">libisc7</packagereq>
+      <packagereq type="mandatory">libiw27</packagereq>
+      <packagereq type="mandatory">libkadm55</packagereq>
+      <packagereq type="mandatory">libkrb53</packagereq>
+      <packagereq type="mandatory">libldap2</packagereq>
+      <packagereq type="mandatory">liblocale-gettext-perl</packagereq>
+      <packagereq type="mandatory">liblockfile1</packagereq>
+      <packagereq type="mandatory">liblogfile-rotate-perl</packagereq>
+      <packagereq type="mandatory">libltdl3</packagereq>
+      <packagereq type="mandatory">liblwres1</packagereq>
+      <packagereq type="mandatory">liblzo1</packagereq>
+      <packagereq type="mandatory">libmagic1</packagereq>
+      <packagereq type="mandatory">libncurses5</packagereq>
+      <packagereq type="mandatory">libnewt0.51</packagereq>
+      <packagereq type="mandatory">libnss-ldap</packagereq>
+      <packagereq type="mandatory">libopencdk8</packagereq>
+      <packagereq type="mandatory">libpam-devperm</packagereq>
+      <packagereq type="mandatory">libpam-ldap</packagereq>
+      <packagereq type="mandatory">libpam-modules</packagereq>
+      <packagereq type="mandatory">libpam-runtime</packagereq>
+      <packagereq type="mandatory">libpam0g</packagereq>
+      <packagereq type="mandatory">libparted1.6-0</packagereq>
+      <packagereq type="mandatory">libparted1.6a-12</packagereq>
+      <packagereq type="mandatory">libpcap0.7</packagereq>
+      <packagereq type="mandatory">libpcap0.8</packagereq>
+      <packagereq type="mandatory">libpcre3</packagereq>
+      <packagereq type="mandatory">libpopt0</packagereq>
+      <packagereq type="mandatory">libreadline4</packagereq>
+      <packagereq type="mandatory">libreadline5</packagereq>
+      <packagereq type="mandatory">libreadline-common</packagereq>
+      <packagereq type="mandatory">librpm4</packagereq>
+      <packagereq type="mandatory">libsasl2</packagereq>
+      <packagereq type="mandatory">libsasl2-modules</packagereq>
+      <packagereq type="mandatory">libselinux1</packagereq>
+      <packagereq type="mandatory">libsigc++-1.2-5c102</packagereq>
+      <packagereq type="mandatory">libsmbclient</packagereq>
+      <packagereq type="mandatory">libss2</packagereq>
+      <packagereq type="mandatory">libssl0.9.7</packagereq>
+      <packagereq type="mandatory">libstdc++5</packagereq>
+      <packagereq type="mandatory">libtasn1-0</packagereq>
+      <packagereq type="mandatory">libtasn1-2</packagereq>
+      <packagereq type="mandatory">libtext-charwidth-perl</packagereq>
+      <packagereq type="mandatory">libtext-iconv-perl</packagereq>
+      <packagereq type="mandatory">libtext-wrapi18n-perl</packagereq>
+      <packagereq type="mandatory">libtextwrap1</packagereq>
+      <packagereq type="mandatory">liburi-perl</packagereq>
+      <packagereq type="mandatory">libusb-0.1-4</packagereq>
+      <packagereq type="mandatory">libuuid1</packagereq>
+      <packagereq type="mandatory">libwrap0</packagereq>
+      <packagereq type="mandatory">libwww-perl</packagereq>
+      <packagereq type="mandatory">libxml-grove-perl</packagereq>
+      <packagereq type="mandatory">libxml-perl</packagereq>
+      <packagereq type="mandatory">lilo</packagereq>
+      <packagereq type="mandatory">linux-kernel-headers</packagereq>
+      <packagereq type="mandatory">localeconf</packagereq>
+      <packagereq type="mandatory">locales</packagereq>
+      <packagereq type="mandatory">login</packagereq>
+      <packagereq type="mandatory">logrotate</packagereq>
+      <packagereq type="mandatory">lsb</packagereq>
+      <packagereq type="mandatory">lsb-defaults</packagereq>
+      <packagereq type="mandatory">lsb-release</packagereq>
+      <packagereq type="mandatory">lsof</packagereq>
+      <packagereq type="mandatory">lvm-common</packagereq>
+      <packagereq type="mandatory">lvm2</packagereq>
+      <packagereq type="mandatory">m4</packagereq>
+      <packagereq type="mandatory">mailx</packagereq>
+      <packagereq type="mandatory">make</packagereq>
+      <packagereq type="mandatory">makedev</packagereq>
+      <packagereq type="mandatory">man-db</packagereq>
+      <packagereq type="mandatory">manpages</packagereq>
+      <packagereq type="mandatory">manpages-dev</packagereq>
+      <packagereq type="mandatory">mawk</packagereq>
+      <packagereq type="mandatory">mdetect</packagereq>
+      <packagereq type="mandatory">mime-support</packagereq>
+      <packagereq type="mandatory">mkisofs</packagereq>
+      <packagereq type="mandatory">modconf</packagereq>
+      <packagereq type="mandatory">module-init-tools</packagereq>
+      <packagereq type="mandatory">modutils</packagereq>
+      <packagereq type="mandatory">mount</packagereq>
+      <packagereq type="mandatory">nano</packagereq>
+      <packagereq type="mandatory">ncurses-base</packagereq>
+      <packagereq type="mandatory">ncurses-bin</packagereq>
+      <packagereq type="mandatory">ncurses-term</packagereq>
+      <packagereq type="mandatory">net-tools</packagereq>
+      <packagereq type="mandatory">netbase</packagereq>
+      <packagereq type="mandatory">netcat</packagereq>
+      <packagereq type="mandatory">netkit-inetd</packagereq>
+      <packagereq type="mandatory">nfs-common</packagereq>
+      <packagereq type="mandatory">ntp</packagereq>
+      <packagereq type="mandatory">ntp-server</packagereq>
+      <packagereq type="mandatory">ntp-simple</packagereq>
+      <packagereq type="mandatory">ntpdate</packagereq>
+      <packagereq type="mandatory">nvi</packagereq>
+      <packagereq type="mandatory">openssl</packagereq>
+      <packagereq type="mandatory">parted</packagereq>
+      <packagereq type="mandatory">passwd</packagereq>
+      <packagereq type="mandatory">patch</packagereq>
+      <packagereq type="mandatory">pax</packagereq>
+      <packagereq type="mandatory">pciutils</packagereq>
+      <packagereq type="mandatory">pcmcia-cs</packagereq>
+      <packagereq type="mandatory">po-debconf</packagereq>
+      <packagereq type="mandatory">portmap</packagereq>
+      <packagereq type="mandatory">postfix</packagereq>
+      <packagereq type="mandatory">powermgmt-base</packagereq>
+      <packagereq type="mandatory">ppp</packagereq>
+      <packagereq type="mandatory">pppconfig</packagereq>
+      <packagereq type="mandatory">pppoe</packagereq>
+      <packagereq type="mandatory">pppoeconf</packagereq>
+      <packagereq type="mandatory">procps</packagereq>
+      <packagereq type="mandatory">psmisc</packagereq>
+      <packagereq type="mandatory">python-apt</packagereq>
+      <packagereq type="mandatory">python-newt</packagereq>
+      <packagereq type="mandatory">raidtools2</packagereq>
+      <packagereq type="mandatory">read-edid</packagereq>
+      <packagereq type="mandatory">reiserfsprogs</packagereq>
+      <packagereq type="mandatory">rpm</packagereq>
+      <packagereq type="mandatory">rsync</packagereq>
+      <packagereq type="mandatory">sed</packagereq>
+      <packagereq type="mandatory">setserial</packagereq>
+      <packagereq type="mandatory">sharutils</packagereq>
+      <packagereq type="mandatory">slang1</packagereq>
+      <packagereq type="mandatory">slang1a-utf8</packagereq>
+      <packagereq type="mandatory">ssh</packagereq>
+      <packagereq type="mandatory">strace</packagereq>
+      <packagereq type="mandatory">sudo</packagereq>
+      <packagereq type="mandatory">sysklogd</packagereq>
+      <packagereq type="mandatory">syslinux</packagereq>
+      <packagereq type="mandatory">sysv-rc</packagereq>
+      <packagereq type="mandatory">sysvinit</packagereq>
+      <packagereq type="mandatory">tar</packagereq>
+      <packagereq type="mandatory">tasksel</packagereq>
+      <packagereq type="mandatory">tcpd</packagereq>
+      <packagereq type="mandatory">tcpdump</packagereq>
+      <packagereq type="mandatory">tcsh</packagereq>
+      <packagereq type="mandatory">telnet</packagereq>
+      <packagereq type="mandatory">time</packagereq>
+      <packagereq type="mandatory">timezoneconf</packagereq>
+      <packagereq type="mandatory">traceroute</packagereq>
+      <packagereq type="mandatory">udev</packagereq>
+      <packagereq type="mandatory">unzip</packagereq>
+      <packagereq type="mandatory">usbutils</packagereq>
+      <packagereq type="mandatory">util-linux</packagereq>
+      <packagereq type="mandatory">util-linux-locales</packagereq>
+      <packagereq type="mandatory">wamerican</packagereq>
+      <packagereq type="mandatory">wget</packagereq>
+      <packagereq type="mandatory">whiptail</packagereq>
+      <packagereq type="mandatory">whois</packagereq>
+      <packagereq type="mandatory">wireless-tools</packagereq>
+      <packagereq type="mandatory">xfsprogs</packagereq>
+      <packagereq type="mandatory">zip</packagereq>
+      <packagereq type="mandatory">zlib1g</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-devel</id>
+    <uservisible>true</uservisible>
+    <name>LSB 2.0 development support</name>
+    <description>A software development environment suitable for building applications for the LSB 2.0 component or any environment compatible with LSB 2.0. This component contains the GNU compiler collection (GCC) version 3.3, the GNU debugger (GDB) version 5.3, and many other GNU development tools.</description>
+    <packagelist>
+      <packagereq type="mandatory">autoconf</packagereq>
+      <packagereq type="mandatory">automake1.4</packagereq>
+      <packagereq type="mandatory">automake1.7</packagereq>
+      <packagereq type="mandatory">autotools-dev</packagereq>
+      <packagereq type="mandatory">binutils-dev</packagereq>
+      <packagereq type="mandatory">bison</packagereq>
+      <packagereq type="mandatory">byacc</packagereq>
+      <packagereq type="mandatory">comerr-dev</packagereq>
+      <packagereq type="mandatory">console-tools-dev</packagereq>
+      <packagereq type="mandatory">cvs</packagereq>
+      <packagereq type="mandatory">db4.2-util</packagereq>
+      <packagereq type="mandatory">e2fslibs-dev</packagereq>
+      <packagereq type="mandatory">flex</packagereq>
+      <packagereq type="mandatory">g++</packagereq>
+      <packagereq type="mandatory">g++-3.3</packagereq>
+      <packagereq type="mandatory">gcc</packagereq>
+      <packagereq type="mandatory">gcc-3.3</packagereq>
+      <packagereq type="mandatory">gdb</packagereq>
+      <packagereq type="mandatory">glibc-doc</packagereq>
+      <packagereq type="mandatory">indent</packagereq>
+      <packagereq type="mandatory">iptables-dev</packagereq>
+      <packagereq type="mandatory">libacl1-dev</packagereq>
+      <packagereq type="mandatory">libao-dev</packagereq>
+      <packagereq type="mandatory">libapm-dev</packagereq>
+      <packagereq type="mandatory">libapt-pkg-dev</packagereq>
+      <packagereq type="mandatory">libapt-pkg-doc</packagereq>
+      <packagereq type="mandatory">libaspell-dev</packagereq>
+      <packagereq type="mandatory">libattr1-dev</packagereq>
+      <packagereq type="mandatory">libblkid-dev</packagereq>
+      <packagereq type="mandatory">libbz2-dev</packagereq>
+      <packagereq type="mandatory">libcap-dev</packagereq>
+      <packagereq type="mandatory">libcurl2-dev</packagereq>
+      <packagereq type="mandatory">libdb4.2-dev</packagereq>
+      <packagereq type="mandatory">libdb4.2++-dev</packagereq>
+      <packagereq type="mandatory">libdevmapper-dev</packagereq>
+      <packagereq type="mandatory">libdiscover-dev</packagereq>
+      <packagereq type="mandatory">libfam-dev</packagereq>
+      <packagereq type="mandatory">libfreetype6-dev</packagereq>
+      <packagereq type="mandatory">libgcrypt11-dev</packagereq>
+      <packagereq type="mandatory">libgdbm-dev</packagereq>
+      <packagereq type="mandatory">libgnutls11-dev</packagereq>
+      <packagereq type="mandatory">libgpg-error-dev</packagereq>
+      <packagereq type="mandatory">libgpmg1-dev</packagereq>
+      <packagereq type="mandatory">libident-dev</packagereq>
+      <packagereq type="mandatory">libidn11-dev</packagereq>
+      <packagereq type="mandatory">libiw-dev</packagereq>
+      <packagereq type="mandatory">libkrb5-dev</packagereq>
+      <packagereq type="mandatory">libldap2-dev</packagereq>
+      <packagereq type="mandatory">liblockfile-dev</packagereq>
+      <packagereq type="mandatory">liblzo-dev</packagereq>
+      <packagereq type="mandatory">libmagic-dev</packagereq>
+      <packagereq type="mandatory">libncurses5-dev</packagereq>
+      <packagereq type="mandatory">libneon23</packagereq>
+      <packagereq type="mandatory">libneon24</packagereq>
+      <packagereq type="optional">libneon24-dev</packagereq>
+      <packagereq type="mandatory">libnewt-dev</packagereq>
+      <packagereq type="mandatory">libopencdk8-dev</packagereq>
+      <packagereq type="mandatory">libpam0g-dev</packagereq>
+      <packagereq type="mandatory">libparted1.6a-dev</packagereq>
+      <packagereq type="mandatory">libpcap0.8-dev</packagereq>
+      <packagereq type="mandatory">libpcre3-dev</packagereq>
+      <packagereq type="mandatory">libpopt-dev</packagereq>
+      <packagereq type="mandatory">libpspell-dev</packagereq>
+      <packagereq type="mandatory">libreadline4-dev</packagereq>
+      <packagereq type="mandatory">libsasl2-dev</packagereq>
+      <packagereq type="mandatory">libselinux1-dev</packagereq>
+      <packagereq type="mandatory">libsigc++-1.2-dev</packagereq>
+      <packagereq type="mandatory">libsmbclient-dev</packagereq>
+      <packagereq type="mandatory">libssl-dev</packagereq>
+      <packagereq type="mandatory">libstdc++5-3.3-dev</packagereq>
+      <packagereq type="mandatory">libsvn0</packagereq>
+      <packagereq type="optional">libsvn0-dev</packagereq>
+      <packagereq type="mandatory">libswig1.3.21</packagereq>
+      <packagereq type="mandatory">libtasn1-2-dev</packagereq>
+      <packagereq type="mandatory">libtextwrap-dev</packagereq>
+      <packagereq type="mandatory">libtool</packagereq>
+      <packagereq type="mandatory">libusb-dev</packagereq>
+      <packagereq type="mandatory">libwrap0-dev</packagereq>
+      <packagereq type="mandatory">pciutils-dev</packagereq>
+      <packagereq type="mandatory">postfix-dev</packagereq>
+      <packagereq type="mandatory">ppp-dev</packagereq>
+      <packagereq type="mandatory">slang1-utf8-dev</packagereq>
+      <packagereq type="mandatory">ss-dev</packagereq>
+      <packagereq type="mandatory">subversion</packagereq>
+      <packagereq type="mandatory">uuid-dev</packagereq>
+      <packagereq type="mandatory">zlib1g-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>linux-2.6</id>
+    <uservisible>true</uservisible>
+    <name>Linux 2.6</name>
+    <description>The Linux kernel, version 2.6.</description>
+    <packagelist>
+      <packagereq type="mandatory">kernel-image-2.6.8</packagereq>
+      <packagereq type="mandatory">kernel-image-scripts</packagereq>
+      <packagereq type="mandatory">nvidia-glx</packagereq>
+      <packagereq type="mandatory">nvidia-kernel-2.6.8</packagereq>
+      <packagereq type="mandatory">nvidia-kernel-common</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>progeny</id>
+    <uservisible>true</uservisible>
+    <name>Progeny Debian support</name>
+    <description>Progeny Debian branding and configuration defaults.</description>
+    <packagelist>
+      <packagereq type="mandatory">progeny-branding</packagereq>
+      <packagereq type="mandatory">progeny-defaults</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>audio</id>
+    <uservisible>true</uservisible>
+    <name>Audio support</name>
+    <description>Support for audio devices and file formats.</description>
+    <packagelist>
+      <packagereq type="mandatory">alsa-base</packagereq>
+      <packagereq type="mandatory">alsa-utils</packagereq>
+      <packagereq type="mandatory">esound</packagereq>
+      <packagereq type="mandatory">esound-clients</packagereq>
+      <packagereq type="mandatory">esound-common</packagereq>
+      <packagereq type="optional">jackd</packagereq>
+      <packagereq type="mandatory">libasound2</packagereq>
+      <packagereq type="mandatory">libaudio2</packagereq>
+      <packagereq type="optional">libasound2-plugins</packagereq>
+      <packagereq type="mandatory">libaudiofile0</packagereq>
+      <packagereq type="mandatory">libcdparanoia0</packagereq>
+      <packagereq type="mandatory">libesd-alsa0</packagereq>
+      <packagereq type="mandatory">libflac4</packagereq>
+      <packagereq type="mandatory">libid3tag0</packagereq>
+      <packagereq type="optional">libjack0.80.0-0</packagereq>
+      <packagereq type="mandatory">libmad0</packagereq>
+      <packagereq type="mandatory">libmikmod2</packagereq>
+      <packagereq type="mandatory">libmusicbrainz4</packagereq>
+      <packagereq type="mandatory">libogg0</packagereq>
+      <packagereq type="mandatory">liboggflac1</packagereq>
+      <packagereq type="optional">libraw1394-5</packagereq>
+      <packagereq type="optional">libsndfile1</packagereq>
+      <packagereq type="optional">libspeex1</packagereq>
+      <packagereq type="mandatory">libvorbis0a</packagereq>
+      <packagereq type="mandatory">libvorbisenc2</packagereq>
+      <packagereq type="mandatory">libvorbisfile3</packagereq>
+      <packagereq type="mandatory">vorbis-tools</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>cups-1.1</id>
+    <uservisible>true</uservisible>
+    <name>CUPS printing support</name>
+    <description>The Common UNIX Printing System (CUPS).</description>
+    <packagelist>
+      <packagereq type="mandatory">cupsys</packagereq>
+      <packagereq type="mandatory">cupsys-bsd</packagereq>
+      <packagereq type="mandatory">cupsys-client</packagereq>
+      <packagereq type="mandatory">cupsys-driver-gimpprint</packagereq>
+      <packagereq type="mandatory">cupsys-driver-gimpprint-data</packagereq>
+      <packagereq type="mandatory">enscript</packagereq>
+      <packagereq type="mandatory">foomatic-db</packagereq>
+      <packagereq type="mandatory">foomatic-db-engine</packagereq>
+      <packagereq type="mandatory">foomatic-db-gimp-print</packagereq>
+      <packagereq type="mandatory">foomatic-db-hpijs</packagereq>
+      <packagereq type="mandatory">foomatic-filters</packagereq>
+      <packagereq type="mandatory">foomatic-filters-ppds</packagereq>
+      <packagereq type="mandatory">gimpprint-locales</packagereq>
+      <packagereq type="mandatory">gs-common</packagereq>
+      <packagereq type="mandatory">gs-esp</packagereq>
+      <packagereq type="mandatory">gs-gpl</packagereq>
+      <packagereq type="mandatory">gsfonts</packagereq>
+      <packagereq type="mandatory">hpijs</packagereq>
+      <packagereq type="mandatory">ijsgimpprint</packagereq>
+      <packagereq type="mandatory">libcupsimage2</packagereq>
+      <packagereq type="mandatory">libcupsys2-gnutls10</packagereq>
+      <packagereq type="mandatory">libgimpprint1</packagereq>
+      <packagereq type="mandatory">libijs-0.35</packagereq>
+      <packagereq type="mandatory">libpaper1</packagereq>
+      <packagereq type="mandatory">libpaper-utils</packagereq>
+      <packagereq type="mandatory">libslp1</packagereq>
+      <packagereq type="mandatory">psutils</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>graphics</id>
+    <uservisible>true</uservisible>
+    <name>Graphics file format support</name>
+    <description>Support for a variety of graphics file formats.</description>
+    <packagelist>
+      <packagereq type="mandatory">aalib1</packagereq>
+      <packagereq type="mandatory">libart-2.0-2</packagereq>
+      <packagereq type="mandatory">libexif10</packagereq>
+      <packagereq type="mandatory">libgd2</packagereq>
+      <packagereq type="mandatory">libgd2-xpm</packagereq>
+      <packagereq type="mandatory">libimlib2</packagereq>
+      <packagereq type="mandatory">libjasper-1.701-1</packagereq>
+      <packagereq type="mandatory">libjpeg62</packagereq>
+      <packagereq type="mandatory">liblcms1</packagereq>
+      <packagereq type="mandatory">libmagick6</packagereq>
+      <packagereq type="mandatory">libmng1</packagereq>
+      <packagereq type="mandatory">libpixman1</packagereq>
+      <packagereq type="mandatory">libpng12-0</packagereq>
+      <packagereq type="mandatory">libt1-5</packagereq>
+      <packagereq type="optional">libtiff3g</packagereq>
+      <packagereq type="mandatory">libtiff4</packagereq>
+      <packagereq type="mandatory">libungif4g</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>kerberos</id>
+    <uservisible>true</uservisible>
+    <name>Kerberos client support</name>
+    <description>Client support for the Kerberos authentication system.</description>
+    <packagelist>
+      <packagereq type="mandatory">libasn1-6-heimdal</packagereq>
+      <packagereq type="optional">libedit2</packagereq>
+      <packagereq type="mandatory">libgssapi1-heimdal</packagereq>
+      <packagereq type="optional">libhdb7-heimdal</packagereq>
+      <packagereq type="optional">libkadm1-kerberos4kth</packagereq>
+      <packagereq type="optional">libkadm5srv7-heimdal</packagereq>
+      <packagereq type="optional">libkadm5clnt4-heimdal</packagereq>
+      <packagereq type="optional">libkafs0-heimdal</packagereq>
+      <packagereq type="optional">libkafs0-kerberos4kth</packagereq>
+      <packagereq type="optional">libkdb-1-kerberos4kth</packagereq>
+      <packagereq type="optional">libkthacl1-kerberos4kth</packagereq>
+      <packagereq type="mandatory">libkrb-1-kerberos4kth</packagereq>
+      <packagereq type="mandatory">libkrb5-17-heimdal</packagereq>
+      <packagereq type="optional">libotp0-kerberos4kth</packagereq>
+      <packagereq type="mandatory">libroken16-kerberos4kth</packagereq>
+      <packagereq type="optional">libsl0-kerberos4kth</packagereq>
+      <packagereq type="optional">libss0-kerberos4kth</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>perl-5.8</id>
+    <uservisible>true</uservisible>
+    <name>Perl 5.8</name>
+    <description>Perl, the Practical Extraction and Report Language, version 5.8.</description>
+    <packagelist>
+      <packagereq type="mandatory">libdigest-sha1-perl</packagereq>
+      <packagereq type="mandatory">libdbi-perl</packagereq>
+      <packagereq type="mandatory">libnet-daemon-perl</packagereq>
+      <packagereq type="mandatory">libperl5.8</packagereq>
+      <packagereq type="mandatory">libplrpc-perl</packagereq>
+      <packagereq type="optional">libperl-dev</packagereq>
+      <packagereq type="mandatory">perl</packagereq>
+      <packagereq type="mandatory">perl-base</packagereq>
+      <packagereq type="mandatory">perl-doc</packagereq>
+      <packagereq type="mandatory">perl-modules</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>python-2.3</id>
+    <uservisible>true</uservisible>
+    <name>Python 2.3</name>
+    <description>The Python interpreted, interactive, object-oriented programming language, version 2.3.</description>
+    <packagelist>
+      <packagereq type="mandatory">python</packagereq>
+      <packagereq type="mandatory">python-dev</packagereq>
+      <packagereq type="mandatory">python-doc</packagereq>
+      <packagereq type="mandatory">python-examples</packagereq>
+      <packagereq type="optional">python-mode</packagereq>
+      <packagereq type="mandatory">python-numeric</packagereq>
+      <packagereq type="mandatory">python2.3</packagereq>
+      <packagereq type="mandatory">python2.3-dev</packagereq>
+      <packagereq type="mandatory">python2.3-doc</packagereq>
+      <packagereq type="mandatory">python2.3-examples</packagereq>
+      <packagereq type="mandatory">python2.3-numeric</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>xml</id>
+    <uservisible>true</uservisible>
+    <name>XML tools and libraries</name>
+    <description>XML tools and libraries.</description>
+    <packagelist>
+      <packagereq type="mandatory">docbook</packagereq>
+      <packagereq type="mandatory">docbook-dsssl</packagereq>
+      <packagereq type="mandatory">docbook-to-man</packagereq>
+      <packagereq type="mandatory">docbook-xml</packagereq>
+      <packagereq type="mandatory">docbook-xsl</packagereq>
+      <packagereq type="mandatory">expat</packagereq>
+      <packagereq type="mandatory">jade</packagereq>
+      <packagereq type="mandatory">libexpat1</packagereq>
+      <packagereq type="mandatory">libexpat1-dev</packagereq>
+      <packagereq type="mandatory">libosp4</packagereq>
+      <packagereq type="mandatory">libosp-dev</packagereq>
+      <packagereq type="mandatory">libostyle1</packagereq>
+      <packagereq type="mandatory">libostyle-dev</packagereq>
+      <packagereq type="mandatory">libsp1</packagereq>
+      <packagereq type="mandatory">libsp1-dev</packagereq>
+      <packagereq type="mandatory">libxml-parser-perl</packagereq>
+      <packagereq type="mandatory">libxml1</packagereq>
+      <packagereq type="mandatory">libxml2</packagereq>
+      <packagereq type="mandatory">libxml2-dev</packagereq>
+      <packagereq type="mandatory">libxml2-python2.3</packagereq>
+      <packagereq type="mandatory">libxml2-utils</packagereq>
+      <packagereq type="mandatory">libxslt1.1</packagereq>
+      <packagereq type="mandatory">libxslt1-dev</packagereq>
+      <packagereq type="mandatory">openjade</packagereq>
+      <packagereq type="mandatory">opensp</packagereq>
+      <packagereq type="mandatory">python-xml</packagereq>
+      <packagereq type="mandatory">python2.3-xml</packagereq>
+      <packagereq type="mandatory">sgml-base</packagereq>
+      <packagereq type="mandatory">sgml-data</packagereq>
+      <packagereq type="mandatory">sp</packagereq>
+      <packagereq type="mandatory">symlinks</packagereq>
+      <packagereq type="mandatory">xsltproc</packagereq>
+      <packagereq type="mandatory">xml-core</packagereq>
+      <packagereq type="mandatory">xmlto</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>xfree86-4.3</id>
+    <uservisible>true</uservisible>
+    <name>XFree86 4.3</name>
+    <description>An open-source, X Window System based desktop infrastructure.</description>
+    <packagelist>
+      <packagereq type="mandatory">defoma</packagereq>
+      <packagereq type="mandatory">desktop-base</packagereq>
+      <packagereq type="mandatory">fontconfig</packagereq>
+      <packagereq type="mandatory">hicolor-icon-theme</packagereq>
+      <packagereq type="mandatory">libcairo1</packagereq>
+      <packagereq type="mandatory">libdps1</packagereq>
+      <packagereq type="mandatory">libfontconfig1</packagereq>
+      <packagereq type="mandatory">libice6</packagereq>
+      <packagereq type="mandatory">libsm6</packagereq>
+      <packagereq type="mandatory">libx11-6</packagereq>
+      <packagereq type="mandatory">libxaw7</packagereq>
+      <packagereq type="mandatory">libxcursor1</packagereq>
+      <packagereq type="mandatory">libxext6</packagereq>
+      <packagereq type="mandatory">libxft1</packagereq>
+      <packagereq type="mandatory">libxft2</packagereq>
+      <packagereq type="mandatory">libxi6</packagereq>
+      <packagereq type="mandatory">libxmu6</packagereq>
+      <packagereq type="mandatory">libxmuu1</packagereq>
+      <packagereq type="mandatory">libxp6</packagereq>
+      <packagereq type="mandatory">libxpm4</packagereq>
+      <packagereq type="mandatory">libxrandr2</packagereq>
+      <packagereq type="mandatory">libxrender1</packagereq>
+      <packagereq type="mandatory">libxt6</packagereq>
+      <packagereq type="mandatory">libxtrap6</packagereq>
+      <packagereq type="mandatory">libxtst6</packagereq>
+      <packagereq type="mandatory">libxv1</packagereq>
+      <packagereq type="optional">numlockx</packagereq>
+      <packagereq type="mandatory">shared-mime-info</packagereq>
+      <packagereq type="mandatory">ttf-arphic-bkai00mp</packagereq>
+      <packagereq type="mandatory">ttf-arphic-bsmi00lp</packagereq>
+      <packagereq type="mandatory">ttf-arphic-gbsn00lp</packagereq>
+      <packagereq type="mandatory">ttf-arphic-gkai00mp</packagereq>
+      <packagereq type="mandatory">ttf-baekmuk</packagereq>
+      <packagereq type="mandatory">ttf-bitstream-vera</packagereq>
+      <packagereq type="mandatory">ttf-freefont</packagereq>
+      <packagereq type="mandatory">ttf-kochi-gothic</packagereq>
+      <packagereq type="mandatory">ttf-kochi-mincho</packagereq>
+      <packagereq type="mandatory">ucf</packagereq>
+      <packagereq type="mandatory">x-ttcidfont-conf</packagereq>
+      <packagereq type="mandatory">xaw3dg</packagereq>
+      <packagereq type="mandatory">xbase-clients</packagereq>
+      <packagereq type="mandatory">xfree86-common</packagereq>
+      <packagereq type="mandatory">xfonts-100dpi</packagereq>
+      <packagereq type="mandatory">xfonts-75dpi</packagereq>
+      <packagereq type="mandatory">xfonts-base</packagereq>
+      <packagereq type="mandatory">xfonts-scalable</packagereq>
+      <packagereq type="mandatory">xfree86-defaults</packagereq>
+      <packagereq type="mandatory">xfs</packagereq>
+      <packagereq type="mandatory">xlibmesa-dri</packagereq>
+      <packagereq type="mandatory">xlibmesa-gl</packagereq>
+      <packagereq type="mandatory">xlibmesa-glu</packagereq>
+      <packagereq type="mandatory">xlibs</packagereq>
+      <packagereq type="mandatory">xlibs-data</packagereq>
+      <packagereq type="mandatory">xserver-common</packagereq>
+      <packagereq type="mandatory">xserver-xfree86</packagereq>
+      <packagereq type="mandatory">xutils</packagereq>
+      <packagereq type="mandatory">xterm</packagereq>
+      <packagereq type="mandatory">xvfb</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>gnome-2.8</id>
+    <uservisible>true</uservisible>
+    <name>GNOME 2.8</name>
+    <description>The GNOME desktop environment, version 2.8.</description>
+    <packagelist>
+      <packagereq type="mandatory">at-spi</packagereq>
+      <packagereq type="mandatory">capplets</packagereq>
+      <packagereq type="mandatory">capplets-data</packagereq>
+      <packagereq type="mandatory">dbus-1</packagereq>
+      <packagereq type="mandatory">dbus-glib-1</packagereq>
+      <packagereq type="mandatory">desktop-file-utils</packagereq>
+      <packagereq type="mandatory">eog</packagereq>
+      <packagereq type="mandatory">file-roller</packagereq>
+      <packagereq type="mandatory">gaim</packagereq>
+      <packagereq type="mandatory">gcalctool</packagereq>
+      <packagereq type="mandatory">gconf-editor</packagereq>
+      <packagereq type="mandatory">gconf2</packagereq>
+      <packagereq type="mandatory">gdm</packagereq>
+      <packagereq type="mandatory">gedit</packagereq>
+      <packagereq type="mandatory">gedit-common</packagereq>
+      <packagereq type="mandatory">gksu</packagereq>
+      <packagereq type="mandatory">gnome-applets</packagereq>
+      <packagereq type="mandatory">gnome-applets-data</packagereq>
+      <packagereq type="mandatory">gnome-audio</packagereq>
+      <packagereq type="mandatory">gnome-common</packagereq>
+      <packagereq type="mandatory">gnome-control-center</packagereq>
+      <packagereq type="mandatory">gnome-cups-manager</packagereq>
+      <packagereq type="mandatory">gnome-defaults</packagereq>
+      <packagereq type="mandatory">gnome-desktop-data</packagereq>
+      <packagereq type="mandatory">gnome-doc-tools</packagereq>
+      <packagereq type="mandatory">gnome-games</packagereq>
+      <packagereq type="mandatory">gnome-games-data</packagereq>
+      <packagereq type="mandatory">gnome-gv</packagereq>
+      <packagereq type="mandatory">gnome-icon-theme</packagereq>
+      <packagereq type="mandatory">gnome-extra-icons</packagereq>
+      <packagereq type="mandatory">gnome-keyring</packagereq>
+      <packagereq type="mandatory">gnome-media</packagereq>
+      <packagereq type="mandatory">gnome-mime-data</packagereq>
+      <packagereq type="mandatory">gnome-panel</packagereq>
+      <packagereq type="mandatory">gnome-panel-data</packagereq>
+      <packagereq type="mandatory">gnome-session</packagereq>
+      <packagereq type="mandatory">gnome-spell</packagereq>
+      <packagereq type="mandatory">gnome-system-monitor</packagereq>
+      <packagereq type="mandatory">gnome-system-tools</packagereq>
+      <packagereq type="mandatory">gnome-terminal</packagereq>
+      <packagereq type="mandatory">gnome-themes-extras</packagereq>
+      <packagereq type="mandatory">gnome-utils</packagereq>
+      <packagereq type="mandatory">gnome-volume-manager</packagereq>
+      <packagereq type="mandatory">gpdf</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-audiofile</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-alsa</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-cdparanoia</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-flac</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-gnomevfs</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-mad</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-misc</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-oss</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-plugin-apps</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-tools</packagereq>
+      <packagereq type="mandatory">gstreamer0.8-vorbis</packagereq>
+      <packagereq type="mandatory">gthumb</packagereq>
+      <packagereq type="mandatory">gtk-engines-industrial</packagereq>
+      <packagereq type="mandatory">gtk2-engines-industrial</packagereq>
+      <packagereq type="mandatory">gtk2-engines-pixbuf</packagereq>
+      <packagereq type="mandatory">gtk2-engines-smooth</packagereq>
+      <packagereq type="mandatory">gtk2-engines-spherecrystal</packagereq>
+      <packagereq type="mandatory">gucharmap</packagereq>
+      <packagereq type="mandatory">guile-1.6-libs</packagereq>
+      <packagereq type="mandatory">hal</packagereq>
+      <packagereq type="mandatory">intltool</packagereq>
+      <packagereq type="mandatory">libatk1.0-0</packagereq>
+      <packagereq type="mandatory">libatspi1.0-0</packagereq>
+      <packagereq type="mandatory">libbonobo2-0</packagereq>
+      <packagereq type="mandatory">libbonobo2-common</packagereq>
+      <packagereq type="mandatory">libbonoboui2-0</packagereq>
+      <packagereq type="mandatory">libbonoboui2-common</packagereq>
+      <packagereq type="mandatory">libcroco3</packagereq>
+      <packagereq type="mandatory">libeel2-2</packagereq>
+      <packagereq type="mandatory">libeel2-data</packagereq>
+      <packagereq type="mandatory">libgail17</packagereq>
+      <packagereq type="mandatory">libgail-common</packagereq>
+      <packagereq type="mandatory">libgal2.0-6</packagereq>
+      <packagereq type="mandatory">libgal2.0-common</packagereq>
+      <packagereq type="mandatory">libgda2-1</packagereq>
+      <packagereq type="mandatory">libgda2-common</packagereq>
+      <packagereq type="mandatory">libgconf2-4</packagereq>
+      <packagereq type="mandatory">libgdkcardimage0</packagereq>
+      <packagereq type="mandatory">libgksu1.2-0</packagereq>
+      <packagereq type="mandatory">libgksuui1.0-0</packagereq>
+      <packagereq type="mandatory">libglade2-0</packagereq>
+      <packagereq type="mandatory">libgle3</packagereq>
+      <packagereq type="mandatory">libglib1.2</packagereq>
+      <packagereq type="mandatory">libglib2.0-0</packagereq>
+      <packagereq type="mandatory">libgnome-desktop-2</packagereq>
+      <packagereq type="mandatory">libgnome-keyring0</packagereq>
+      <packagereq type="mandatory">libgnome2-0</packagereq>
+      <packagereq type="mandatory">libgnome2-common</packagereq>
+      <packagereq type="mandatory">libgnomecanvas2-0</packagereq>
+      <packagereq type="mandatory">libgnomecanvas2-common</packagereq>
+      <packagereq type="mandatory">libgnomecups1.0-1</packagereq>
+      <packagereq type="mandatory">libgnomecupsui1.0-1</packagereq>
+      <packagereq type="mandatory">libgnomedb2-3</packagereq>
+      <packagereq type="mandatory">libgnomedb2-common</packagereq>
+      <packagereq type="mandatory">libgnomeprint2.2-0</packagereq>
+      <packagereq type="mandatory">libgnomeprint2.2-data</packagereq>
+      <packagereq type="mandatory">libgnomeprintui2.2-0</packagereq>
+      <packagereq type="mandatory">libgnomeprintui2.2-common</packagereq>
+      <packagereq type="mandatory">libgnomeui-0</packagereq>
+      <packagereq type="mandatory">libgnomeui-common</packagereq>
+      <packagereq type="mandatory">libgnomevfs2-0</packagereq>
+      <packagereq type="mandatory">libgnomevfs2-common</packagereq>
+      <packagereq type="mandatory">libgphoto2-2</packagereq>
+      <packagereq type="mandatory">libgphoto2-port0</packagereq>
+      <packagereq type="mandatory">libgsf-1</packagereq>
+      <packagereq type="mandatory">libgstreamer0.8-0</packagereq>
+      <packagereq type="mandatory">libgstreamer-gconf0.8-0</packagereq>
+      <packagereq type="mandatory">libgstreamer-plugins0.8-0</packagereq>
+      <packagereq type="mandatory">libgtk1.2</packagereq>
+      <packagereq type="mandatory">libgtk1.2-common</packagereq>
+      <packagereq type="mandatory">libgtk2.0-0</packagereq>
+      <packagereq type="mandatory">libgtk2.0-bin</packagereq>
+      <packagereq type="mandatory">libgtk2.0-common</packagereq>
+      <packagereq type="mandatory">libgtkhtml2-0</packagereq>
+      <packagereq type="mandatory">libgtkhtml3.0-4</packagereq>
+      <packagereq type="mandatory">libgtksourceview1.0-0</packagereq>
+      <packagereq type="mandatory">libgtksourceview-common</packagereq>
+      <packagereq type="mandatory">libgtkspell0</packagereq>
+      <packagereq type="mandatory">libgtop2-2</packagereq>
+      <packagereq type="mandatory">libgucharmap4</packagereq>
+      <packagereq type="mandatory">libguile-ltdl-1</packagereq>
+      <packagereq type="mandatory">libhal0</packagereq>
+      <packagereq type="mandatory">libidl0</packagereq>
+      <packagereq type="mandatory">liblinc1</packagereq>
+      <packagereq type="mandatory">liblircclient0</packagereq>
+      <packagereq type="mandatory">libmetacity0</packagereq>
+      <packagereq type="mandatory">libnautilus2-2</packagereq>
+      <packagereq type="mandatory">liborbit2</packagereq>
+      <packagereq type="mandatory">libpanel-applet2-0</packagereq>
+      <packagereq type="mandatory">libpango1.0-0</packagereq>
+      <packagereq type="mandatory">libpango1.0-common</packagereq>
+      <packagereq type="mandatory">libqthreads-12</packagereq>
+      <packagereq type="mandatory">librsvg2-2</packagereq>
+      <packagereq type="mandatory">librsvg2-common</packagereq>
+      <packagereq type="mandatory">libscrollkeeper0</packagereq>
+      <packagereq type="mandatory">libstartup-notification0</packagereq>
+      <packagereq type="mandatory">libvte4</packagereq>
+      <packagereq type="mandatory">libvte-common</packagereq>
+      <packagereq type="mandatory">libwnck4</packagereq>
+      <packagereq type="mandatory">libwnck-common</packagereq>
+      <packagereq type="mandatory">libxine1</packagereq>
+      <packagereq type="mandatory">libxklavier8</packagereq>
+      <packagereq type="mandatory">libzvt2.0-0</packagereq>
+      <packagereq type="mandatory">metacity</packagereq>
+      <packagereq type="mandatory">nautilus</packagereq>
+      <packagereq type="mandatory">nautilus-cd-burner</packagereq>
+      <packagereq type="mandatory">nautilus-data</packagereq>
+      <packagereq type="mandatory">nautilus-media</packagereq>
+      <packagereq type="mandatory">pkg-config</packagereq>
+      <packagereq type="mandatory">python-glade2</packagereq>
+      <packagereq type="mandatory">python-gnome2</packagereq>
+      <packagereq type="mandatory">python-gtk2</packagereq>
+      <packagereq type="mandatory">python-pyorbit</packagereq>
+      <packagereq type="mandatory">python2.3-dbus</packagereq>
+      <packagereq type="mandatory">python2.3-glade2</packagereq>
+      <packagereq type="mandatory">python2.3-gnome2</packagereq>
+      <packagereq type="mandatory">python2.3-gtk2</packagereq>
+      <packagereq type="mandatory">python2.3-pyorbit</packagereq>
+      <packagereq type="mandatory">rdesktop</packagereq>
+      <packagereq type="mandatory">rhythmbox</packagereq>
+      <packagereq type="mandatory">scrollkeeper</packagereq>
+      <packagereq type="mandatory">sound-juicer</packagereq>
+      <packagereq type="mandatory">ssh-askpass-gnome</packagereq>
+      <packagereq type="mandatory">tcl8.4</packagereq>
+      <packagereq type="mandatory">totem</packagereq>
+      <packagereq type="mandatory">totem-xine</packagereq>
+      <packagereq type="mandatory">tsclient</packagereq>
+      <packagereq type="mandatory">vino</packagereq>
+      <packagereq type="mandatory">vnc-common</packagereq>
+      <packagereq type="mandatory">xchat</packagereq>
+      <packagereq type="mandatory">xchat-common</packagereq>
+      <packagereq type="optional">xmms</packagereq>
+      <packagereq type="mandatory">xscreensaver</packagereq>
+      <packagereq type="mandatory">xscreensaver-gl</packagereq>
+      <packagereq type="mandatory">xvncviewer</packagereq>
+      <packagereq type="mandatory">yelp</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-1.7</id>
+    <uservisible>true</uservisible>
+    <name>Mozilla 1.7</name>
+    <description>The Mozilla browser suite.</description>
+    <packagelist>
+      <packagereq type="mandatory">libnspr4</packagereq>
+      <packagereq type="mandatory">libnss3</packagereq>
+      <packagereq type="mandatory">mozilla</packagereq>
+      <packagereq type="mandatory">mozilla-browser</packagereq>
+      <packagereq type="mandatory">mozilla-mailnews</packagereq>
+      <packagereq type="mandatory">mozilla-psm</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>j2re-1.4</id>
+    <uservisible>true</uservisible>
+    <name>Java 2 Standard Edition 1.4 runtime</name>
+    <description>The Java 2 Standard Edition (J2SE) runtime, version 1.4.</description>
+    <packagelist>
+      <packagereq type="mandatory">j2re1.4</packagereq>
+      <packagereq type="mandatory">java-common</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mono-1.0</id>
+    <uservisible>true</uservisible>
+    <name>Mono</name>
+    <description>An open source implementation of the .NET framework.</description>
+    <packagelist>
+      <packagereq type="mandatory">binfmt-support</packagereq>
+      <packagereq type="mandatory">freeglut3</packagereq>
+      <packagereq type="mandatory">libgdiplus</packagereq>
+      <packagereq type="mandatory">libglut3</packagereq>
+      <packagereq type="mandatory">libicu28</packagereq>
+      <packagereq type="mandatory">libmono0</packagereq>
+      <packagereq type="mandatory">libwine</packagereq>
+      <packagereq type="mandatory">mono-assemblies-arch</packagereq>
+      <packagereq type="mandatory">mono-assemblies-base</packagereq>
+      <packagereq type="mandatory">mono-common</packagereq>
+      <packagereq type="mandatory">mono-jit</packagereq>
+      <packagereq type="mandatory">mono-utils</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>evolution-2.0</id>
+    <uservisible>true</uservisible>
+    <name>Evolution 2.0</name>
+    <description>Evolution is an information management solution for individuals and workgroups, integrating email, calendaring, meeting scheduling, and contact management.</description>
+    <packagelist>
+      <packagereq type="mandatory">bonobo-activation</packagereq>
+      <packagereq type="mandatory">contact-lookup-applet</packagereq>
+      <packagereq type="mandatory">evolution</packagereq>
+      <packagereq type="mandatory">evolution-data-server</packagereq>
+      <packagereq type="mandatory">evolution-defaults</packagereq>
+      <packagereq type="mandatory">evolution-exchange</packagereq>
+      <packagereq type="mandatory">evolution-webcal</packagereq>
+      <packagereq type="mandatory">gnome-pilot</packagereq>
+      <packagereq type="mandatory">gnome-pilot-conduits</packagereq>
+      <packagereq type="mandatory">gtkhtml3.2</packagereq>
+      <packagereq type="mandatory">libbonobo-activation4</packagereq>
+      <packagereq type="mandatory">libcompfaceg1</packagereq>
+      <packagereq type="mandatory">libebook8</packagereq>
+      <packagereq type="mandatory">libecal6</packagereq>
+      <packagereq type="mandatory">libedata-book1</packagereq>
+      <packagereq type="mandatory">libedata-cal5</packagereq>
+      <packagereq type="mandatory">libedataserver3</packagereq>
+      <packagereq type="mandatory">libegroupwise6</packagereq>
+      <packagereq type="mandatory">libgal2.2-1</packagereq>
+      <packagereq type="mandatory">libgal2.2-common</packagereq>
+      <packagereq type="mandatory">libgnome-pilot2</packagereq>
+      <packagereq type="mandatory">libgtkhtml3.2-11</packagereq>
+      <packagereq type="mandatory">libpisock8</packagereq>
+      <packagereq type="mandatory">libpisock++0</packagereq>
+      <packagereq type="mandatory">libpisync0</packagereq>
+      <packagereq type="mandatory">libsoup2.2-7</packagereq>
+      <packagereq type="mandatory">spamassassin</packagereq>
+      <packagereq type="mandatory">spamc</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-firefox-1.0RC1</id>
+    <uservisible>true</uservisible>
+    <name>Mozilla Firefox 1.0RC1</name>
+    <description>Mozilla Firefox is a preview release of the next generation of the Mozilla browser.</description>
+    <packagelist>
+      <packagereq type='mandatory'>mozilla-firefox</packagereq>
+      <packagereq type='mandatory'>mozilla-firefox-defaults</packagereq>
+      <packagereq type='mandatory'>mozilla-firefox-gnome-support</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1</id>
+    <uservisible>true</uservisible>
+    <name>OpenOffice.org 1.1</name>
+    <description>OpenOffice.org is a multi-platform office productivity suite (word processor, spreadsheet, and presentation software) compatible with all major file formats.</description>
+    <packagelist>
+      <packagereq type="mandatory">libmyspell3</packagereq>
+      <packagereq type="optional">libmyspell-dev</packagereq>
+      <packagereq type="mandatory">libstlport4.6</packagereq>
+      <packagereq type="optional">libstlport4.6-dev</packagereq>
+      <packagereq type="mandatory">myspell-en-us</packagereq>
+      <packagereq type="mandatory">openoffice.org</packagereq>
+      <packagereq type="mandatory">openoffice.org-bin</packagereq>
+      <packagereq type="mandatory">openoffice.org-debian-files</packagereq>
+      <packagereq type="mandatory">openoffice.org-defaults</packagereq>
+      <packagereq type="mandatory">openoffice.org-help-en</packagereq>
+      <packagereq type="mandatory">openoffice.org-l10n-en</packagereq>
+      <packagereq type="mandatory">ttf-opensymbol</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>cl-devel</id>
+    <uservisible>true</uservisible>
+    <name>Componentized Linux tools</name>
+    <description>Support for package, component, and custom distribution development.</description>
+    <packagelist>
+      <packagereq type="mandatory">anaconda</packagereq>
+      <packagereq type="mandatory">anaconda-help</packagereq>
+      <packagereq type="mandatory">bogl-bterm</packagereq>
+      <packagereq type="mandatory">build-essential</packagereq>
+      <packagereq type="mandatory">busybox-source</packagereq>
+      <packagereq type="mandatory">cl-tools-dev</packagereq>
+      <packagereq type="mandatory">cvs-buildpackage</packagereq>
+      <packagereq type="mandatory">debootstrap</packagereq>
+      <packagereq type="mandatory">devscripts</packagereq>
+      <packagereq type="mandatory">dh-make</packagereq>
+      <packagereq type="mandatory">diffstat</packagereq>
+      <packagereq type="mandatory">dpatch</packagereq>
+      <packagereq type="mandatory">fakeroot</packagereq>
+      <packagereq type="mandatory">hwdata</packagereq>
+      <packagereq type="mandatory">kudzu</packagereq>
+      <packagereq type="optional">kudzu-dev</packagereq>
+      <packagereq type="mandatory">linda</packagereq>
+      <packagereq type="mandatory">lintian</packagereq>
+      <packagereq type="mandatory">libc6-pic</packagereq>
+      <packagereq type="optional">libqt3c102-mt</packagereq>
+      <packagereq type="mandatory">mime-codecs</packagereq>
+      <packagereq type="mandatory">mklibs</packagereq>
+      <packagereq type="mandatory">picax</packagereq>
+      <packagereq type="optional">poxml</packagereq>
+      <packagereq type="mandatory">python-booty</packagereq>
+      <packagereq type="mandatory">python-parted-rh</packagereq>
+      <packagereq type="mandatory">python-xf86config</packagereq>
+      <packagereq type="mandatory">python-rhpl</packagereq>
+      <packagereq type="mandatory">python2.3-booty</packagereq>
+      <packagereq type="mandatory">python2.3-parted-rh</packagereq>
+      <packagereq type="mandatory">python2.3-xf86config</packagereq>
+      <packagereq type="mandatory">python2.3-rhpl</packagereq>
+      <packagereq type="mandatory">system-config-keyboard</packagereq>
+      <packagereq type="mandatory">wlite-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>linux-2.6-devel</id>
+    <uservisible>true</uservisible>
+    <name>Linux 2.6 development support</name>
+    <description>The Linux kernel, version 2.6. This component contains support for kernel development and building custom kernels.</description>
+    <packagelist>
+      <packagereq type="mandatory">kernel-headers-2.6.8</packagereq>
+      <packagereq type="mandatory">kernel-kbuild-2.6-3</packagereq>
+      <packagereq type="mandatory">kernel-package</packagereq>
+      <packagereq type="mandatory">kernel-source-2.6.8</packagereq>
+      <packagereq type="mandatory">nvidia-glx-dev</packagereq>
+      <packagereq type="mandatory">nvidia-kernel-source</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>xfree86-4.3-devel</id>
+    <uservisible>true</uservisible>
+    <name>XFree86 4.3 development support</name>
+    <description>An open-source, X Window System based desktop infrastructure. This component contains the software development support.</description>
+    <packagelist>
+      <packagereq type="mandatory">libcairo1-dev</packagereq>
+      <packagereq type="mandatory">libdps-dev</packagereq>
+      <packagereq type="mandatory">libfontconfig1-dev</packagereq>
+      <packagereq type="mandatory">libice-dev</packagereq>
+      <packagereq type="mandatory">libsm-dev</packagereq>
+      <packagereq type="mandatory">libx11-dev</packagereq>
+      <packagereq type="mandatory">libxaw7-dev</packagereq>
+      <packagereq type="mandatory">libxcursor-dev</packagereq>
+      <packagereq type="mandatory">libxext-dev</packagereq>
+      <packagereq type="mandatory">libxft-dev</packagereq>
+      <packagereq type="mandatory">libxi-dev</packagereq>
+      <packagereq type="mandatory">libxmu-dev</packagereq>
+      <packagereq type="mandatory">libxmuu-dev</packagereq>
+      <packagereq type="mandatory">libxp-dev</packagereq>
+      <packagereq type="mandatory">libxpm-dev</packagereq>
+      <packagereq type="mandatory">libxrandr-dev</packagereq>
+      <packagereq type="mandatory">libxrender-dev</packagereq>
+      <packagereq type="mandatory">libxt-dev</packagereq>
+      <packagereq type="mandatory">libxtrap-dev</packagereq>
+      <packagereq type="mandatory">libxtst-dev</packagereq>
+      <packagereq type="mandatory">libxv-dev</packagereq>
+      <packagereq type="mandatory">render-dev</packagereq>
+      <packagereq type="mandatory">pm-dev</packagereq>
+      <packagereq type="mandatory">x-dev</packagereq>
+      <packagereq type="mandatory">xaw3dg-dev</packagereq>
+      <packagereq type="mandatory">xlibmesa-dev</packagereq>
+      <packagereq type="mandatory">xlibmesa-gl-dev</packagereq>
+      <packagereq type="mandatory">xlibmesa-glu-dev</packagereq>
+      <packagereq type="mandatory">xlibs-dev</packagereq>
+      <packagereq type="mandatory">xlibs-static-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>gnome-2.8-devel</id>
+    <uservisible>true</uservisible>
+    <name>GNOME 2.8 development support</name>
+    <description>The GNOME desktop environment, version 2.8. This component contains the software development support.</description>
+    <packagelist>
+      <packagereq type="mandatory">dbus-1-dev</packagereq>
+      <packagereq type="mandatory">dbus-glib-1-dev</packagereq>
+      <packagereq type="mandatory">glade-2</packagereq>
+      <packagereq type="mandatory">glade-common-2</packagereq>
+      <packagereq type="mandatory">gnome-applets-dev</packagereq>
+      <packagereq type="mandatory">gnome-dev-doc</packagereq>
+      <packagereq type="mandatory">gtk-doc-tools</packagereq>
+      <packagereq type="mandatory">libatk1.0-dev</packagereq>
+      <packagereq type="mandatory">libatspi-dev</packagereq>
+      <packagereq type="mandatory">libbonobo2-dev</packagereq>
+      <packagereq type="mandatory">libbonoboui2-dev</packagereq>
+      <packagereq type="mandatory">libcroco3-dev</packagereq>
+      <packagereq type="mandatory">libeel2-dev</packagereq>
+      <packagereq type="mandatory">libgail-dev</packagereq>
+      <packagereq type="mandatory">libgal2.0-dev</packagereq>
+      <packagereq type="mandatory">libgda2-dev</packagereq>
+      <packagereq type="mandatory">libgconf2-dev</packagereq>
+      <packagereq type="mandatory">libgdkcardimage-dev</packagereq>
+      <packagereq type="mandatory">libgksu1.2-dev</packagereq>
+      <packagereq type="mandatory">libgksuui1.0-dev</packagereq>
+      <packagereq type="mandatory">libglade2-dev</packagereq>
+      <packagereq type="mandatory">libgle3-dev</packagereq>
+      <packagereq type="mandatory">libglib2.0-dev</packagereq>
+      <packagereq type="mandatory">libgnome-desktop-dev</packagereq>
+      <packagereq type="mandatory">libgnome-keyring-dev</packagereq>
+      <packagereq type="mandatory">libgnome2-dev</packagereq>
+      <packagereq type="mandatory">libgnomecanvas2-dev</packagereq>
+      <packagereq type="mandatory">libgnomecups1.0-dev</packagereq>
+      <packagereq type="mandatory">libgnomecupsui1.0-dev</packagereq>
+      <packagereq type="mandatory">libgnomedb2-dev</packagereq>
+      <packagereq type="mandatory">libgnomeprint2.2-dev</packagereq>
+      <packagereq type="mandatory">libgnomeprintui2.2-dev</packagereq>
+      <packagereq type="mandatory">libgnomeui-dev</packagereq>
+      <packagereq type="mandatory">libgnomevfs2-dev</packagereq>
+      <packagereq type="mandatory">libgphoto2-2-dev</packagereq>
+      <packagereq type="mandatory">libgsf-1-dev</packagereq>
+      <packagereq type="mandatory">libgstreamer0.8-dev</packagereq>
+      <packagereq type="mandatory">libgstreamer-gconf0.8-dev</packagereq>
+      <packagereq type="mandatory">libgstreamer-plugins0.8-dev</packagereq>
+      <packagereq type="mandatory">libgtk2.0-dev</packagereq>
+      <packagereq type="mandatory">libgtkhtml2-dev</packagereq>
+      <packagereq type="mandatory">libgtkhtml3.0-dev</packagereq>
+      <packagereq type="mandatory">libgtksourceview-dev</packagereq>
+      <packagereq type="mandatory">libgtksourceview-doc</packagereq>
+      <packagereq type="mandatory">libgtkspell-dev</packagereq>
+      <packagereq type="mandatory">libgtop2-dev</packagereq>
+      <packagereq type="mandatory">libgucharmap4-dev</packagereq>
+      <packagereq type="mandatory">libhal-dev</packagereq>
+      <packagereq type="mandatory">libidl-dev</packagereq>
+      <packagereq type="mandatory">liblircclient-dev</packagereq>
+      <packagereq type="mandatory">libmetacity-dev</packagereq>
+      <packagereq type="mandatory">libnautilus2-dev</packagereq>
+      <packagereq type="mandatory">liborbit2-dev</packagereq>
+      <packagereq type="mandatory">libpanel-applet2-dev</packagereq>
+      <packagereq type="mandatory">libpango1.0-dev</packagereq>
+      <packagereq type="mandatory">librsvg2-dev</packagereq>
+      <packagereq type="mandatory">libscrollkeeper-dev</packagereq>
+      <packagereq type="mandatory">libstartup-notification0-dev</packagereq>
+      <packagereq type="mandatory">libvte-dev</packagereq>
+      <packagereq type="mandatory">libwnck-dev</packagereq>
+      <packagereq type="mandatory">libxklavier-dev</packagereq>
+      <packagereq type="mandatory">libzvt2.0-dev</packagereq>
+      <packagereq type="mandatory">python-gnome2-dev</packagereq>
+      <packagereq type="mandatory">python-gtk2-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-1.7-devel</id>
+    <uservisible>true</uservisible>
+    <name>Mozilla 1.7 development support</name>
+    <description>The Mozilla browser suite. This component contains the software development support.</description>
+    <packagelist>
+      <packagereq type="mandatory">libnspr-dev</packagereq>
+      <packagereq type="mandatory">libnss-dev</packagereq>
+      <packagereq type="mandatory">mozilla-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>j2sdk-1.4</id>
+    <uservisible>true</uservisible>
+    <name>Java 2 Standard Edition 1.4 SDK</name>
+    <description>The Java 2 Standard Edition (J2SE) software development kit, version 1.4.</description>
+    <packagelist>
+      <packagereq type="mandatory">j2sdk1.4</packagereq>
+      <packagereq type="mandatory">java-common</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>java-devel</id>
+    <uservisible>true</uservisible>
+    <name>Java development support</name>
+    <description>A software development environment suitable for building applications for the Java platform. This component contains software from the Apache project (http://www.apache.org/), the Apache Jakarta project (http://jakarta.apache.org/), and other sources.</description>
+    <packagelist>
+      <packagereq type="mandatory">ant</packagereq>
+      <packagereq type="mandatory">junit</packagereq>
+      <packagereq type="mandatory">libant1.6-java</packagereq>
+      <packagereq type="mandatory">libbcel-java</packagereq>
+      <packagereq type="mandatory">libcommons-beanutils-java</packagereq>
+      <packagereq type="mandatory">libcommons-cli-java</packagereq>
+      <packagereq type="mandatory">libcommons-codec-java</packagereq>
+      <packagereq type="mandatory">libcommons-collections-java</packagereq>
+      <packagereq type="mandatory">libcommons-dbcp-java</packagereq>
+      <packagereq type="mandatory">libcommons-digester-java</packagereq>
+      <packagereq type="mandatory">libcommons-discovery-java</packagereq>
+      <packagereq type="mandatory">libcommons-fileupload-java</packagereq>
+      <packagereq type="mandatory">libcommons-httpclient-java</packagereq>
+      <packagereq type="mandatory">libcommons-jexl-java</packagereq>
+      <packagereq type="mandatory">libcommons-lang-java</packagereq>
+      <packagereq type="mandatory">libcommons-logging-java</packagereq>
+      <packagereq type="mandatory">libcommons-modeler-java</packagereq>
+      <packagereq type="mandatory">libcommons-net-java</packagereq>
+      <packagereq type="mandatory">libcommons-pool-java</packagereq>
+      <packagereq type="mandatory">libjaxp1.2-java</packagereq>
+      <packagereq type="mandatory">liblog4j1.2-java</packagereq>
+      <packagereq type="mandatory">liblucene-java</packagereq>
+      <packagereq type="mandatory">liblucene-java-doc</packagereq>
+      <packagereq type="mandatory">libmx4j-java</packagereq>
+      <packagereq type="mandatory">liboro-java</packagereq>
+      <packagereq type="mandatory">libregexp-java</packagereq>
+      <packagereq type="mandatory">libxerces2-java</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mono-1.0-devel</id>
+    <uservisible>true</uservisible>
+    <name>Mono development support</name>
+    <description>An open source implementation of the .NET framework. This component contains the software development support.</description>
+    <packagelist>
+      <packagereq type="mandatory">freeglut3-dev</packagereq>
+      <packagereq type="mandatory">libgconf-cil</packagereq>
+      <packagereq type="mandatory">libgecko-cil</packagereq>
+      <packagereq type="mandatory">libglade-cil</packagereq>
+      <packagereq type="mandatory">libglib-cil</packagereq>
+      <packagereq type="mandatory">libglut3-dev</packagereq>
+      <packagereq type="mandatory">libgnome-cil</packagereq>
+      <packagereq type="mandatory">libgtk-cil</packagereq>
+      <packagereq type="mandatory">libgtksourceview-cil</packagereq>
+      <packagereq type="mandatory">libicu28-dev</packagereq>
+      <packagereq type="mandatory">libmono-dev</packagereq>
+      <packagereq type="mandatory">libwine-cil</packagereq>
+      <packagereq type="mandatory">libwine-dev</packagereq>
+      <packagereq type="mandatory">mono-mcs</packagereq>
+      <packagereq type="mandatory">monodevelop</packagereq>
+      <packagereq type="mandatory">monodoc-base</packagereq>
+      <packagereq type="mandatory">monodoc-manual</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>evolution-2.0-devel</id>
+    <uservisible>true</uservisible>
+    <name>Evolution 2.0 development support</name>
+    <description>Evolution is an information management solution for individuals and workgroups, integrating email, calendaring, meeting scheduling, and contact management. This component contains the software development support.</description>
+    <packagelist>
+      <packagereq type="mandatory">evolution-dev</packagereq>
+      <packagereq type="mandatory">evolution-data-server-dev</packagereq>
+      <packagereq type="mandatory">libebook-dev</packagereq>
+      <packagereq type="mandatory">libecal-dev</packagereq>
+      <packagereq type="mandatory">libedata-book-dev</packagereq>
+      <packagereq type="mandatory">libedata-cal-dev</packagereq>
+      <packagereq type="mandatory">libedataserver-dev</packagereq>
+      <packagereq type="mandatory">libegroupwise-dev</packagereq>
+      <packagereq type="mandatory">libgal2.2-dev</packagereq>
+      <packagereq type="mandatory">libgnome-pilot2-dev</packagereq>
+      <packagereq type="mandatory">libpisock-dev</packagereq>
+      <packagereq type="mandatory">libsoup2.2-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>emacs</id>
+    <uservisible>true</uservisible>
+    <name>GNU Emacs 21.3</name>
+    <description>GNU Emacs is the extensible, self-documenting, real-time display editor.</description>
+    <packagelist>
+      <packagereq type="mandatory">emacs-defaults</packagereq>
+      <packagereq type="mandatory">emacs21</packagereq>
+      <packagereq type="mandatory">emacs21-bin-common</packagereq>
+      <packagereq type="mandatory">emacs21-common</packagereq>
+      <packagereq type="mandatory">emacs21-el</packagereq>
+      <packagereq type="mandatory">emacsen-common</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>vim</id>
+    <uservisible>true</uservisible>
+    <name>VIM 6.3</name>
+    <description>VI iMproved, an enhanced, vi-compatible editor.</description>
+    <packagelist>
+      <packagereq type="mandatory">vim</packagereq>
+      <packagereq type="mandatory">vim-common</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>eclipse-2.1</id>
+    <uservisible>true</uservisible>
+    <name>Eclipse 2.1</name>
+    <description>The Eclipse open, extensible IDE.</description>
+    <packagelist>
+      <packagereq type='mandatory'>eclipse-defaults</packagereq>
+      <packagereq type="mandatory">eclipse-javac</packagereq>
+      <packagereq type="mandatory">eclipse-jdt</packagereq>
+      <packagereq type="mandatory">eclipse-nls-sdk</packagereq>
+      <packagereq type="mandatory">eclipse-platform</packagereq>
+      <packagereq type="mandatory">eclipse-webdav-ftp</packagereq>
+      <packagereq type="mandatory">libeclipse-jni</packagereq>
+      <packagereq type="mandatory">libswt2.1-gtk2-java</packagereq>
+      <packagereq type="mandatory">libswt2.1-gtk2-jni</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>eclipse-2.1-devel</id>
+    <uservisible>true</uservisible>
+    <name>Eclipse 2.1 development support</name>
+    <description>The Eclipse open, extensible IDE. This component contains the software development support.</description>
+    <packagelist>
+      <packagereq type="mandatory">eclipse-pde</packagereq>
+      <packagereq type="mandatory">eclipse-sdk</packagereq>
+      <packagereq type="mandatory">eclipse-source</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>gimp-2.0</id>
+    <uservisible>true</uservisible>
+    <name>GIMP 2.0</name>
+    <description>The GIMP (GNU Image Manipulation Program is a powerful image editor for such tasks as image authoring, image composition, and photo retouching.</description>
+    <packagelist>
+      <packagereq type="mandatory">dcraw</packagereq>
+      <packagereq type="mandatory">gimp</packagereq>
+      <packagereq type="mandatory">gimp-data</packagereq>
+      <packagereq type="mandatory">gimp-dcraw</packagereq>
+      <packagereq type="mandatory">gimp-help-common</packagereq>
+      <packagereq type="mandatory">gimp-help-en</packagereq>
+      <packagereq type="mandatory">gimp-helpbrowser</packagereq>
+      <packagereq type="mandatory">gimp-svg</packagereq>
+      <packagereq type="optional">gtkam-gimp</packagereq>
+      <packagereq type="optional">libexif-gtk4</packagereq>
+      <packagereq type="mandatory">libgimp2.0</packagereq> 
+      <packagereq type="mandatory">libwmf0.2-7</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>apache-1.3</id>
+    <uservisible>true</uservisible>
+    <name>Apache 1.3</name>
+    <description>The Apache web server, version 1.3.</description>
+    <packagelist>
+      <packagereq type="mandatory">apache</packagereq>
+      <packagereq type="mandatory">apache-common</packagereq>
+      <packagereq type="optional">apache-doc</packagereq>
+      <packagereq type="mandatory">apache-utils</packagereq>
+      <packagereq type="mandatory">libapache-mod-ssl</packagereq>
+      <packagereq type="optional">libapache-mod-ssl-doc</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>apache-2.0</id>
+    <uservisible>true</uservisible>
+    <name>Apache 2.0</name>
+    <description>The Apache web server, version 2.0.</description>
+    <packagelist>
+      <packagereq type="mandatory">apache2-mpm-prefork</packagereq>
+      <packagereq type="mandatory">apache2-common</packagereq>
+      <packagereq type="optional">apache2-doc</packagereq>
+      <packagereq type="mandatory">libapr0</packagereq>
+      <packagereq type="optional">libapr0-dev</packagereq>
+      <packagereq type="mandatory">ssl-cert</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mysql-4.0</id>
+    <uservisible>true</uservisible>
+    <name>MySQL 4.0</name>
+    <description>The MySQL database server, version 4.0.</description>
+    <packagelist>
+      <packagereq type="mandatory">libdbd-mysql-perl</packagereq>
+      <packagereq type="optional">libgtkmm2.0-1c102</packagereq>
+      <packagereq type="mandatory">libmyodbc</packagereq>
+      <packagereq type="mandatory">libmysqlclient10</packagereq>
+      <packagereq type="mandatory">libmysqlclient12</packagereq>
+      <packagereq type="optional">libmysqlclient-dev</packagereq>
+      <packagereq type="optional">mysql-admin</packagereq>
+      <packagereq type="optional">mysql-admin-common</packagereq>
+      <packagereq type="mandatory">mysql-client</packagereq>
+      <packagereq type="mandatory">mysql-common</packagereq>
+      <packagereq type="mandatory">mysql-server</packagereq>
+      <packagereq type="mandatory">odbcinst1</packagereq>
+      <packagereq type="mandatory">unixodbc</packagereq>
+      <packagereq type="optional">eskuel</packagereq>
+      <packagereq type="optional">phpmyadmin</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>php-4.3</id>
+    <uservisible>true</uservisible>
+    <name>PHP 4.3</name>
+    <description>The server-side, HTML-embedded scripting language, version 4.3.</description>
+    <packagelist>
+      <packagereq type="mandatory">libapache-mod-php4</packagereq>
+      <packagereq type="mandatory">libapache2-mod-php4</packagereq>
+      <packagereq type="mandatory">php4</packagereq>
+      <packagereq type="mandatory">php4-common</packagereq>
+      <packagereq type="optional">php4-dev</packagereq>
+      <packagereq type="mandatory">php4-pear</packagereq>
+      <packagereq type="optional">phpdoc</packagereq>
+      <packagereq type="optional">php-auth</packagereq>
+      <packagereq type="optional">php-cgiwrap</packagereq>
+      <packagereq type="optional">php-date</packagereq>
+      <packagereq type="optional">php-file</packagereq>
+      <packagereq type="optional">php-fpdf</packagereq>
+      <packagereq type="optional">php-imlib</packagereq>
+      <packagereq type="optional">php-mail-mime</packagereq>
+      <packagereq type="optional">php4-cgi</packagereq>
+      <packagereq type="optional">php4-cli</packagereq>
+      <packagereq type="optional">php4-domxml</packagereq>
+      <packagereq type="optional">php4-gd</packagereq>
+      <packagereq type="optional">php4-imagick</packagereq>
+      <packagereq type="optional">php4-imap</packagereq>
+      <packagereq type="optional">php4-ldap</packagereq>
+      <packagereq type="optional">php4-mysql</packagereq>
+      <packagereq type="optional">php4-odbc</packagereq>
+      <packagereq type="optional">php4-pgsql</packagereq>
+      <packagereq type="optional">libc-client2002edebian</packagereq>
+      <packagereq type="optional">mlock</packagereq>
+      <packagereq type="optional">smarty</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>postgresql-7.4</id>
+    <uservisible>true</uservisible>
+    <name>PostgreSQL 7.4</name>
+    <description>The PostgreSQL database server, version 7.4.</description>
+    <packagelist>
+      <packagereq type="mandatory">libdbd-pg-perl</packagereq>
+      <packagereq type="mandatory">libecpg4</packagereq>
+      <packagereq type="optional">libecpg-dev</packagereq>
+      <packagereq type="mandatory">libpq3</packagereq>
+      <packagereq type="mandatory">libpg-perl</packagereq>
+      <packagereq type="mandatory">odbc-postgresql</packagereq>
+      <packagereq type="mandatory">odbcinst1</packagereq>
+      <packagereq type="mandatory">postgresql</packagereq>
+      <packagereq type="mandatory">postgresql-client</packagereq>
+      <packagereq type="mandatory">postgresql-contrib</packagereq>
+      <packagereq type="optional">postgresql-dev</packagereq>
+      <packagereq type="optional">postgresql-doc</packagereq>
+      <packagereq type="mandatory">unixodbc</packagereq>
+      <packagereq type="optional">phppgadmin</packagereq>
+      <packagereq type="optional">wwwconfig-common</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>tomcat-4.1</id>
+    <uservisible>true</uservisible>
+    <name>Tomcat 4.1</name>
+    <description>Tomcat is the servlet container that is used in the official Reference Implementation for the Java Servlet and JavaServer Pages technologies. The Java Servlet and JavaServer Pages specifications are developed by Sun under the Java Community Process.</description>
+    <packagelist>
+      <packagereq type="mandatory">libservlet2.3-java</packagereq>
+      <packagereq type="mandatory">libtomcat4-java</packagereq>
+      <packagereq type="mandatory">tomcat4</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>audio-devel</id>
+    <uservisible>false</uservisible>
+    <name>Audio development support</name>
+    <description>Support for audio devices and file formats. This component contains the software development support.</description>
+    <packagelist>
+      <packagereq type="mandatory">alsa-headers</packagereq>
+      <packagereq type="mandatory">libasound2-dev</packagereq>
+      <packagereq type="mandatory">libaudio-dev</packagereq>
+      <packagereq type="mandatory">libaudiofile-dev</packagereq>
+      <packagereq type="mandatory">libcdparanoia0-dev</packagereq>
+      <packagereq type="mandatory">libesd0-dev</packagereq>
+      <packagereq type="mandatory">libflac-dev</packagereq>
+      <packagereq type="mandatory">libid3tag0-dev</packagereq>
+      <packagereq type="mandatory">libmad0-dev</packagereq>
+      <packagereq type="mandatory">libmikmod2-dev</packagereq>
+      <packagereq type="mandatory">libmusicbrainz4-dev</packagereq>
+      <packagereq type="mandatory">libogg-dev</packagereq>
+      <packagereq type="mandatory">liboggflac-dev</packagereq>
+      <packagereq type="mandatory">libvorbis-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>cups-1.1-devel</id>
+    <uservisible>false</uservisible>
+    <name>Common UNIX Printing System (CUPS) development support</name>
+    <description>The Common UNIX Printing System (CUPS). This component contains the software development support.</description>
+    <packagelist>
+      <packagereq type="mandatory">libcupsimage2-dev</packagereq>
+      <packagereq type="mandatory">libcupsys2-dev</packagereq>
+      <packagereq type="mandatory">libgimpprint1-dev</packagereq>
+      <packagereq type="mandatory">libijs-dev</packagereq>
+      <packagereq type="mandatory">libpaper-dev</packagereq>
+      <packagereq type="mandatory">libslp-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>graphics-devel</id>
+    <uservisible>false</uservisible>
+    <name>Graphics file format development support</name>
+    <description>Support for a variety of graphics file formats. This component contains the software development support.</description>
+    <packagelist>
+      <packagereq type="mandatory">libart-2.0-dev</packagereq>
+      <packagereq type="mandatory">libexif-dev</packagereq>
+      <packagereq type="mandatory">libgd2-dev</packagereq>
+      <packagereq type="mandatory">libgd2-xpm-dev</packagereq>
+      <packagereq type="mandatory">libimlib2-dev</packagereq>
+      <packagereq type="mandatory">libjasper-1.701-dev</packagereq>
+      <packagereq type="mandatory">libjpeg62-dev</packagereq>
+      <packagereq type="mandatory">liblcms1-dev</packagereq>
+      <packagereq type="mandatory">libmagick6-dev</packagereq>
+      <packagereq type="mandatory">libmng-dev</packagereq>
+      <packagereq type="mandatory">libpixman1-dev</packagereq>
+      <packagereq type="mandatory">libpng12-dev</packagereq>
+      <packagereq type="mandatory">libt1-dev</packagereq>
+      <packagereq type="mandatory">libtiff4-dev</packagereq>
+      <packagereq type="mandatory">libungif4-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>kerberos-devel</id>
+    <uservisible>false</uservisible>
+    <name>Kerberos development support</name>
+    <description>Software development support for Kerberos.</description>
+    <packagelist>
+      <packagereq type="mandatory">heimdal-dev</packagereq>
+      <packagereq type="mandatory">kerberos4kth-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>gimp-2.0-devel</id>
+    <uservisible>false</uservisible>
+    <name>GIMP 2.0 development support</name>
+    <description>The GIMP (GNU Image Manipulation Program is a powerful image editor for such tasks as image authoring, image composition, and photo retouching. This component contains the software development support.</description>
+    <packagelist>
+      <packagereq type="mandatory">libgimp2.0-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-de</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 German support (de)</name>
+    <description>LSB 2.0 German support (de)</description>
+    <langonly>de</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">aspell-de</packagereq>
+      <packagereq requires="lsb" type="optional">manpages-de</packagereq>
+      <packagereq requires="lsb" type="optional">manpages-de-dev</packagereq>
+      <packagereq requires="lsb" type="optional">wngerman</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-de_CH</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 Swiss German support (de_CH)</name>
+    <description>LSB 2.0 Swiss German support (de_CH)</description>
+    <langonly>de_CH</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">wswiss</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-en_CA</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 Canadian English support (en_CA)</name>
+    <description>LSB 2.0 Canadian English support (en_CA)</description>
+    <langonly>en_CA</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">wcanadian</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-en_GB</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 British English support (en_GB)</name>
+    <description>LSB 2.0 British English support (en_GB)</description>
+    <langonly>en_GB</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">wbritish</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-es</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 Spanish support (es)</name>
+    <description>LSB 2.0 Spanish support (es)</description>
+    <langonly>es</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">aspell-es</packagereq>
+      <packagereq requires="lsb" type="optional">manpages-es</packagereq>
+      <packagereq requires="lsb" type="optional">wspanish</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-fr</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 French support (fr)</name>
+    <description>LSB 2.0 French support (fr)</description>
+    <langonly>fr</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">aspell-fr</packagereq>
+      <packagereq requires="lsb" type="optional">manpages-fr</packagereq>
+      <packagereq requires="lsb" type="optional">wfrench</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-it</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 Italian support (it)</name>
+    <description>LSB 2.0 Italian support (it)</description>
+    <langonly>it</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">aspell-it</packagereq>
+      <packagereq requires="lsb" type="optional">manpages-it</packagereq>
+      <packagereq requires="lsb" type="optional">witalian</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-ja</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 Japanese support (ja)</name>
+    <description>LSB 2.0 Japanese support (ja)</description>
+    <langonly>ja</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">canna</packagereq>
+      <packagereq requires="lsb" type="optional">libcanna1g</packagereq>
+      <packagereq requires="lsb" type="optional">manpages-ja</packagereq>
+      <packagereq requires="lsb" type="optional">manpages-ja-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-ko</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 Korean support (ko)</name>
+    <description>LSB 2.0 Korean support (ko)</description>
+    <langonly>ko</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">manpages-ko</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-pt_BR</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 Brazilian Portuguese support (pt_BR)</name>
+    <description>LSB 2.0 Brazilian Portuguese support (pt_BR)</description>
+    <langonly>pt_BR</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">aspell-pt-br</packagereq>
+      <packagereq requires="lsb" type="optional">manpages-pt</packagereq>
+      <packagereq requires="lsb" type="optional">manpages-pt-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-ru</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 Russian support (ru)</name>
+    <description>LSB 2.0 Russian support (ru)</description>
+    <langonly>ru</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">manpages-ru</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-sv</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 Swedish support (sv)</name>
+    <description>LSB 2.0 Swedish support (sv)</description>
+    <langonly>sv</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">aspell-sv</packagereq>
+      <packagereq requires="lsb" type="optional">wswedish</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsb-2.0-i18n-zh</id>
+    <uservisible>false</uservisible>
+    <name>LSB 2.0 Chinese support (zh)</name>
+    <description>LSB 2.0 Chinese support (zh)</description>
+    <langonly>zh</langonly>
+    <packagelist>
+      <packagereq requires="lsb" type="optional">manpages-zh</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>xfree86-4.3-i18n-ja</id>
+    <uservisible>false</uservisible>
+    <name>XFree86 4.3 Japanese support (ja)</name>
+    <description>XFree86 4.3 Japanese support (ja)</description>
+    <langonly>ja</langonly>
+    <packagelist>
+      <packagereq requires="libx11-6" type="optional">kinput2-canna</packagereq>
+      <packagereq requires="libx11-6" type="optional">kinput2-common</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-1.7-i18n-de</id>
+    <uservisible>false</uservisible>
+    <name>Mozilla 1.7 German support (de)</name>
+    <description>Mozilla 1.7 German support (de)</description>
+    <langonly>de</langonly>
+    <packagelist>
+      <packagereq requires="mozilla-browser" type="optional">mozilla-locale-de-at</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-1.7-i18n-es</id>
+    <uservisible>false</uservisible>
+    <name>Mozilla 1.7 Spanish support (es)</name>
+    <description>Mozilla 1.7 Spanish support (es)</description>
+    <langonly>es</langonly>
+    <packagelist>
+      <packagereq requires="mozilla-browser" type="optional">mozilla-locale-es-es</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-1.7-i18n-fr</id>
+    <uservisible>false</uservisible>
+    <name>Mozilla 1.7 French support (fr)</name>
+    <description>Mozilla 1.7 French support (fr)</description>
+    <langonly>fr</langonly>
+    <packagelist>
+      <packagereq requires="mozilla-browser" type="optional">mozilla-locale-fr</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-1.7-i18n-it</id>
+    <uservisible>false</uservisible>
+    <name>Mozilla 1.7 Italian support (it)</name>
+    <description>Mozilla 1.7 Italian support (it)</description>
+    <langonly>it</langonly>
+    <packagelist>
+      <packagereq requires="mozilla-browser" type="optional">mozilla-locale-it</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-1.7-i18n-ja</id>
+    <uservisible>false</uservisible>
+    <name>Mozilla 1.7 Japanese support (ja)</name>
+    <description>Mozilla 1.7 Japanese support (ja)</description>
+    <langonly>ja</langonly>
+    <packagelist>
+      <packagereq requires="mozilla-browser" type="optional">mozilla-locale-ja</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-1.7-i18n-pt_BR</id>
+    <uservisible>false</uservisible>
+    <name>Mozilla 1.7 Brazilian Portuguese support (pt_BR)</name>
+    <description>Mozilla 1.7 Brazilian Portuguese support (pt_BR)</description>
+    <langonly>pt_BR</langonly>
+    <packagelist>
+      <packagereq requires="mozilla-browser" type="optional">mozilla-locale-ptbr</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-1.7-i18n-zh_CN</id>
+    <uservisible>false</uservisible>
+    <name>Mozilla 1.7 Simplified Chinese support (zh_CN)</name>
+    <description>Mozilla 1.7 Simplified Chinese support (zh_CN)</description>
+    <langonly>zh_CN</langonly>
+    <packagelist>
+      <packagereq requires="mozilla-browser" type="optional">mozilla-locale-zh-cn</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-1.7-i18n-zh_TW</id>
+    <uservisible>false</uservisible>
+    <name>Mozilla 1.7 Traditional Chinese support (zh_TW)</name>
+    <description>Mozilla 1.7 Traditional Chinese support (zh_TW)</description>
+    <langonly>zh_TW</langonly>
+    <packagelist>
+      <packagereq requires="mozilla-browser" type="optional">mozilla-locale-zh-tw</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-firefox-1.0RC1-i18n-de</id>
+    <uservisible>false</uservisible>
+    <name>Mozilla Firefox 1.0RC1 German support (de)</name>
+    <description>Mozilla Firefox 1.0RC1 German support (de)</description>
+    <langonly>de</langonly>
+    <packagelist>
+      <packagereq type='optional' requires='mozilla-firefox'>mozilla-firefox-locale-de</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>mozilla-firefox-1.0RC1-i18n-fr</id>
+    <uservisible>false</uservisible>
+    <name>Mozilla Firefox 1.0RC1 French support (fr)</name>
+    <description>Mozilla Firefox 1.0RC1 French support (fr)</description>
+    <langonly>fr</langonly>
+    <packagelist>
+      <packagereq type='optional' requires='mozilla-firefox'>mozilla-firefox-locale-fr</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-de</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 German support (de)</name>
+    <description>OpenOffice.org 1.1 German support (de)</description>
+    <langonly>de</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-help-de</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-de</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-de_AT</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Austrian German support (de_AT)</name>
+    <description>OpenOffice.org 1.1 Austrian German support (de_AT)</description>
+    <langonly>de_AT</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">myspell-de-at</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-de_CH</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Swiss German support (de_CH)</name>
+    <description>OpenOffice.org 1.1 Swiss German support (de_CH)</description>
+    <langonly>de_CH</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">myspell-de-ch</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-de_DE</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 German support (de_DE)</name>
+    <description>OpenOffice.org 1.1 German support (de_DE)</description>
+    <langonly>de_DE</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">myspell-de-de</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-en_GB</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 British English support (en_GB)</name>
+    <description>OpenOffice.org 1.1 British English support (en_GB)</description>
+    <langonly>en_GB</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">myspell-en-gb</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-es</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Spanish support (es)</name>
+    <description>OpenOffice.org 1.1 Spanish support (es)</description>
+    <langonly>es</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">myspell-es</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-help-es</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-es</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-fr</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 French support (fr)</name>
+    <description>OpenOffice.org 1.1 French support (fr)</description>
+    <langonly>fr</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">myspell-fr</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-help-fr</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-fr</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-it</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Italian support (it)</name>
+    <description>OpenOffice.org 1.1 Italian support (it)</description>
+    <langonly>it</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">myspell-it</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-help-it</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-it</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-ja</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Japanese support (ja)</name>
+    <description>OpenOffice.org 1.1 Japanese support (ja)</description>
+    <langonly>ja</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-help-ja</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-ja</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-ko</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Korean support (ko)</name>
+    <description>OpenOffice.org 1.1 Korean support (ko)</description>
+    <langonly>ko</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-help-ko</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-ko</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-pt_BR</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Brazilian Portuguese support (pt_BR)</name>
+    <description>OpenOffice.org 1.1 Brazilian Portuguese support (pt_BR)</description>
+    <langonly>pt_BR</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">myspell-pt-br</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-pt-br</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-ru</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Russian support (ru)</name>
+    <description>OpenOffice.org 1.1 Russian support (ru)</description>
+    <langonly>ru</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">myspell-ru</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-ru</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-sv</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Swedish support (sv)</name>
+    <description>OpenOffice.org 1.1 Swedish support (sv)</description>
+    <langonly>sv</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-help-sv</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-sv</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-sv_SE</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Swedish support (sv_SE)</name>
+    <description>OpenOffice.org 1.1 Swedish support (sv_SE)</description>
+    <langonly>sv_SE</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">myspell-sv-se</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-zh_CN</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Simplified Chinese support (zh_CN)</name>
+    <description>OpenOffice.org 1.1 Simplified Chinese support (zh_CN)</description>
+    <langonly>zh_CN</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-help-zh-cn</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-zh-cn</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>openoffice.org-1.1-i18n-zh_TW</id>
+    <uservisible>false</uservisible>
+    <name>OpenOffice.org 1.1 Traditional Chinese support (zh_TW)</name>
+    <description>OpenOffice.org 1.1 Traditional Chinese support (zh_TW)</description>
+    <langonly>zh_TW</langonly>
+    <packagelist>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-help-zh-tw</packagereq>
+      <packagereq requires="openoffice.org" type="optional">openoffice.org-l10n-zh-tw</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>gimp-2.0-i18n-de</id>
+    <uservisible>false</uservisible>
+    <name>GIMP 2.0 1.1 German support (de)</name>
+    <description>GIMP 2.0 German support (de)</description>
+    <langonly>de</langonly>
+    <packagelist>
+      <packagereq requires="gimp" type="optional">gimp-help-de</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>gimp-2.0-i18n-fr</id>
+    <uservisible>false</uservisible>
+    <name>GIMP 2.0 French support (fr)</name>
+    <description>GIMP 2.0 French support (fr)</description>
+    <langonly>fr</langonly>
+    <packagelist>
+      <packagereq requires="gimp" type="optional">gimp-help-fr</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>gimp-2.0-i18n-sv</id>
+    <uservisible>false</uservisible>
+    <name>GIMP 2.0 Swedish support (sv)</name>
+    <description>GIMP 2.0 Swedish support (sv)</description>
+    <langonly>sv</langonly>
+    <packagelist>
+      <packagereq requires="gimp" type="optional">gimp-help-sv</packagereq>
+    </packagelist>
+  </group>
+  <grouphierarchy>
+    <category>
+      <name>Core</name>
+      <subcategories>
+        <subcategory>lsb-2.0</subcategory>
+        <subcategory>linux-2.6</subcategory>
+        <subcategory>progeny</subcategory>
+        <subcategory>audio</subcategory>
+        <subcategory>cups-1.1</subcategory>
+        <subcategory>graphics</subcategory>
+        <subcategory>kerberos</subcategory>
+        <subcategory>j2re-1.4</subcategory>
+        <subcategory>mono-1.0</subcategory>
+      </subcategories>
+    </category>
+    <category>
+      <name>Desktop</name>
+      <subcategories>
+        <subcategory>xfree86-4.3</subcategory>
+        <subcategory>gnome-2.8</subcategory>
+        <subcategory>evolution-2.0</subcategory>
+        <subcategory>mozilla-1.7</subcategory>
+        <subcategory>mozilla-firefox-1.0RC1</subcategory>
+        <subcategory>openoffice.org-1.1</subcategory>
+      </subcategories>
+    </category>
+    <category>
+      <name>Graphics</name>
+      <subcategories>
+        <subcategory>gimp-2.0</subcategory>
+      </subcategories>
+    </category>
+    <category>
+      <name>Software Development</name>
+      <subcategories>
+        <subcategory>lsb-2.0-devel</subcategory>
+        <subcategory>linux-2.6-devel</subcategory>
+        <subcategory>audio-devel</subcategory>
+        <subcategory>cl-devel</subcategory>
+        <subcategory>cups-1.1-devel</subcategory>
+        <subcategory>eclipse-2.1</subcategory>
+        <subcategory>eclipse-2.1-devel</subcategory>
+        <subcategory>emacs</subcategory>
+        <subcategory>evolution-2.0-devel</subcategory>
+        <subcategory>gnome-2.8-devel</subcategory>
+        <subcategory>graphics-devel</subcategory>
+        <subcategory>j2sdk-1.4</subcategory>
+        <subcategory>java-devel</subcategory>
+        <subcategory>kerberos-devel</subcategory>
+        <subcategory>mono-1.0-devel</subcategory>
+        <subcategory>mozilla-1.7-devel</subcategory>
+        <subcategory>openoffice.org-1.1-devel</subcategory>
+        <subcategory>perl-5.8</subcategory>
+        <subcategory>python-2.3</subcategory>
+        <subcategory>vim</subcategory>
+        <subcategory>xfree86-4.3-devel</subcategory>
+        <subcategory>xml</subcategory>
+      </subcategories>
+    </category>
+    <category>
+      <name>Server</name>
+      <subcategories>
+        <subcategory>apache-1.3</subcategory>
+        <subcategory>apache-2.0</subcategory>
+        <subcategory>mysql-4.0</subcategory>
+        <subcategory>php-4.3</subcategory>
+        <subcategory>postgresql-7.4</subcategory>
+        <subcategory>tomcat-4.1</subcategory>
+      </subcategories>
+    </category>
+  </grouphierarchy>
+</comps>

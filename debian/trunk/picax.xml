@@ -53,7 +53,12 @@
             /home/imurdock/progeny/debian/template
         </inst-template-path>
     </installer_options>
-    <media_options/>
+    <media_options>
+        <media-label>
+            Progeny Debian
+        </media-label>
+    </media_options>
+    <repository distribution="cl" component="apache-1.3"/>
     <repository distribution="cl" component="apache-2.0"/>
     <repository distribution="cl" component="audio"/>
     <repository distribution="cl" component="cl-devel"/>
@@ -61,7 +66,6 @@
     <repository distribution="cl" component="eclipse-2.1"/>
     <repository distribution="cl" component="emacs"/>
     <repository distribution="cl" component="evolution-2.0"/>
-    <repository distribution="cl" component="flash-player"/>
     <repository distribution="cl" component="gimp-2.0"/>
     <repository distribution="cl" component="gnome-2.8"/>
     <repository distribution="cl" component="graphics"/>
@@ -73,13 +77,15 @@
     <repository distribution="cl" component="lsb-2.0"/>
     <repository distribution="cl" component="mono-1.0"/>
     <repository distribution="cl" component="mozilla-1.7"/>
-    <repository distribution="cl" component="mozilla-firefox-0.9"/>
+    <repository distribution="cl" component="mozilla-firefox-1.0RC1"/>
     <repository distribution="cl" component="mysql-4.0"/>
     <repository distribution="cl" component="openoffice.org-1.1"/>
     <repository distribution="cl" component="perl-5.8"/>
+    <repository distribution="cl" component="php-4.3"/>
     <repository distribution="cl" component="postgresql-7.4"/>
     <repository distribution="cl" component="progeny"/>
     <repository distribution="cl" component="python-2.3"/>
+    <repository distribution="cl" component="tomcat-4.1"/>
     <repository distribution="cl" component="vim"/>
     <repository distribution="cl" component="xfree86-4.3"/>
     <repository distribution="cl" component="xml"/>
