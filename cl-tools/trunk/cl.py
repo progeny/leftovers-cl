@@ -18,13 +18,36 @@
 #         and Jeff Licquia <licquia@progeny.com>.
 
 import apt_pkg
+import rhpl.comps
+
+cachedir = "/var/lib/cl-tools"
+compsdir = cachedir + "/comps"
+availabledir = compsdir + "/available"
+installeddir = compsdir + "/installed"
 
 def init(argv):
+    global cachedir
+    global compsdir
+    global availabledir
+    global installeddir
+
     apt_pkg.InitConfig()
     args = apt_pkg.ParseCommandLine(apt_pkg.Config, [], argv)
     apt_pkg.InitSystem()
 
     return args
+
+# Use a callback system to report status.
+
+status_cb = None
+
+def register_status_cb(cb):
+    global status_cb
+    status_cb = cb
+
+def status(s):
+    if status_cb:
+        status_cb(s)
 
 # XXX apt_pkg should provide some mechanism for iterating over
 # the lines in sources.list. It's pretty silly that we have to
@@ -49,3 +72,60 @@ def parse_sources_list(path = None):
 
     return tuple(repos)
 
+def update_apt():
+    os.system("aptitude update")
+
+def update_available():
+    for (fmt, uri, dist, comps) in cl.parse_sources_list():
+        if fmt == "deb":
+            # For each (APT) component, construct a URL to
+            # the comps.xml file and check if it exists in
+            # a protocol-specific way.
+            for comp in comps:
+                status("  Checking %s/%s..." % (dist, comp))
+
+                url = "%s/dists/%s/%s/comps.xml" % (uri, dist, comp)
+                (proto, host, path, x, y, z) = urlparse.urlparse(url)
+                if proto == "http":
+                    # Connect to the HTTP server to verify that
+                    # comps.xml exists:
+                    h = httplib.HTTP(host)
+                    h.putrequest("GET", path)
+                    h.putheader("Host", host)
+                    h.putheader("Accept", "application/xml")
+                    h.endheaders()
+                    (code, message, headers) = h.getreply()
+                    if code != 200:
+                        status("not a component.")
+                        continue
+                elif proto == "file":
+                    # Check the file system to verify that comps.xml
+                    # exists:
+                    if not os.path.exists(path):
+                        status("not a component.")
+                        continue
+                else:
+                    status("protocol `%s' not supported." % proto)
+                    continue
+
+                # Download the comps.xml and save it to COMPSDIR:
+                comps_xml = "%s/%s.xml" % (compsdir, comp)
+                comps_xml_tmp = "%s/.%s.xml" % (compsdir, comp)
+                urllib.urlretrieve(url, comps_xml_tmp)
+                if os.path.exists(comps_xml):
+                    if filecmp.cmp(comps_xml, comps_xml_tmp):
+                        os.unlink(comps_xml_tmp)
+                        status("up-to-date.")
+                        continue
+                os.rename(comps_xml_tmp, comps_xml)
+
+                # Create links to the downloaded comps.xml in
+                # AVAILABLEDIR using each of the subcomponent names,
+                # so they can be manipulated using the names:
+                comp = rhpl.comps.Comps(comps_xml)
+                for group in comp.groups.values():
+                    comps_xml_sub = "%s/%s.xml" % (availabledir, group.id)
+                    if not os.path.exists(comps_xml_sub):
+                        os.symlink(comps_xml, comps_xml_sub)
+
+                status("updated.")
