@@ -7,14 +7,14 @@ Standards-Version: 3.6.0
 
 Package: cl-tools
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, python
 Description: Componentized Linux end-user tools
  This package contains tools for end users of Componentized Linux
  and Componentized Linux-based distributions.
 
 Package: cl-tools-dev
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, cl-tools (>= 1.4)
+Depends: ${shlibs:Depends}, ${misc:Depends}, cl-tools (>= 1.4), python
 Conflicts: debootstrap-script-cl, cl-tools (<= 1.3.1)
 Provides: debootstrap-script-cl
 Replaces: debootstrap-script-cl, cl-tools (<= 1.3.1)
