@@ -49,6 +49,9 @@
         <inst-pixmap-path>
             /usr/share/anaconda/pixmaps
         </inst-pixmap-path>
+        <inst-template-path>
+            /home/imurdock/progeny/debian/template
+        </inst-template-path>
     </installer_options>
     <media_options/>
     <repository distribution="cl" component="lsb-2.0"/>
