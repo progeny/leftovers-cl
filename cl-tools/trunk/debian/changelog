@@ -1,3 +1,14 @@
+cl-tools (1.5.1) unstable; urgency=low
+
+  * Fix a place where an interim version of the new status system
+    was still being used, which broke.
+  * In the status system, check that the callback is valid before
+    calling it, and call a default if not.
+  * Register the status callback before initializing the cl module
+    in comp-get.
+
+ -- Jeff Licquia <licquia@progeny.com>  Tue, 18 Jan 2005 11:48:26 -0500
+
 cl-tools (1.5.0) unstable; urgency=low
 
   * Create new module ("cl") to hold most of the functionality, so

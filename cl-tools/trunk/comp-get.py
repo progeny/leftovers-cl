@@ -96,6 +96,8 @@ Commands are:
         sys.exit(status)
 
     # parse command line
+    cl.register_status_cb(status_cb)
+
     purge = False
     options = [ ('p', 'purge', "APT::Get::Purge") ]
     args = cl.init(options, sys.argv)
@@ -105,8 +107,6 @@ Commands are:
     action = args.pop(0)
     if action not in action_list.keys():
         usage(1)
-
-    cl.register_status_cb(status_cb)
 
     (action_call, param) = action_list[action]
     if (param and len(args) < 1) or (not param and len(args) > 0):

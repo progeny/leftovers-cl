@@ -113,7 +113,7 @@ def init(options, argv):
         _istatus = pickle.load(istatus_f)
         istatus_f.close()
     else:
-        status("No installed status file found; creating one.")
+        _quick_status("No installed status file found; creating one.")
         update_installed()
 
     return args
@@ -128,8 +128,14 @@ class StatusItem:
             self.current_message = init_msg
             self.do_callback()
 
+    def _default_callback(self):
+        print self.current_message
+
     def do_callback(self):
-        self.callback(self)
+        if self.callback:
+            self.callback(self)
+        else:
+            self._default_callback()
 
     def message(self, message, percent = None):
         self.current_message = message
