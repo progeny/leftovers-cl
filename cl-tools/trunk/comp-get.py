@@ -241,10 +241,14 @@ Commands are:
     (action_call, param) = action_list[action]
     if (param and len(args) < 1) or (not param and len(args) > 0):
         usage(1)
-    if param:
-        action_call(args[0])
-    else:
-        action_call()
+
+    try:
+        if param:
+            action_call(args[0])
+        else:
+            action_call()
+    except e:
+        print e.str()
 
 if __name__ == "__main__":
     main()
