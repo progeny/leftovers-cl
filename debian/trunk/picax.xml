@@ -3,66 +3,33 @@
     <apt-repo-path>
         deb http://hackers.progeny.com/~imurdock/anaconda/ debian/
     </apt-repo-path>
-    <arch>
-        i386
-    </arch>
-    <cd-label>
-        Progeny Debian
-    </cd-label>
-    <installer>
-        anaconda
-    </installer>
-    <media>
-        cd
-    </media>
-    <num-parts>
-        0
-    </num-parts>
-    <part-size>
-        0
-    </part-size>
-    <source>
-        separate
-    </source>
+    <arch>i386</arch>
+    <cd-label>Progeny Debian</cd-label>
+    <installer>anaconda</installer>
+    <media>cd</media>
+    <source>immediate</source>
     <installer_options>
-        <inst-base-tarball-dist>
-            cl
-        </inst-base-tarball-dist>
-        <inst-comps>
-            /scratch/imurdock/pd/comps.xml
-        </inst-comps>
-        <inst-help-path>
-            /scratch/imurdock/pd/anaconda-help
-        </inst-help-path>
-        <inst-isolinux-config>
-            /scratch/imurdock/pd/isolinux
-        </inst-isolinux-config>
-        <inst-kernel-path>
-            /scratch/imurdock/pd/kernel
-        </inst-kernel-path>
-        <inst-package-list-path>
-            /scratch/imurdock/pd/pkglist.xml
-        </inst-package-list-path>
-        <inst-pixmap-path>
-            /scratch/imurdock/pd/pixmaps
-        </inst-pixmap-path>
+        <inst-base-tarball-dist>cl</inst-base-tarball-dist>
     </installer_options>
     <media_options/>
     <repository component="lsb-2.0" distribution="cl"/>
     <repository component="linux-2.4" distribution="cl"/>
     <repository component="linux-2.6" distribution="cl"/>
-    <repository component="anaconda-9.0" distribution="cl"/>
     <repository component="audio" distribution="cl"/>
     <repository component="cups-1.1" distribution="cl"/>
-    <repository component="evolution-1.4" distribution="cl"/>
-    <repository component="gnome-2.4" distribution="cl"/>
+    <repository component="xfree86-4.3" distribution="cl"/>
+    <repository component="gnome-2.6" distribution="cl"/>
     <repository component="graphics" distribution="cl"/>
-    <repository component="lsbdev-2.0" distribution="cl"/>
+    <repository component="evolution-1.4" distribution="cl"/>
     <repository component="mozilla-1.5" distribution="cl"/>
     <repository component="mozilla-firefox-0.8" distribution="cl"/>
     <repository component="openoffice.org-1.1" distribution="cl"/>
+    <repository component="lsb-2.0-devel" distribution="cl"/>
+    <repository component="perl-5.8" distribution="cl"/>
     <repository component="python-2.3" distribution="cl"/>
     <repository component="tcl" distribution="cl"/>
-    <repository component="xfree86-4.3" distribution="cl"/>
     <repository component="xml" distribution="cl"/>
+    <repository component="cl-devel" distribution="cl"/>
+    <repository component="kerberos" distribution="cl"/>
+    <repository component="corrections" distribution="cl"/>
 </picaxconfig>
