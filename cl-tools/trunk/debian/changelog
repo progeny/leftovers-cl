@@ -1,3 +1,18 @@
+cl-tools (1.5.0) unstable; urgency=low
+
+  * Create new module ("cl") to hold most of the functionality, so
+    it can be shared with other code.
+  * Moved nearly all the real code from comp-get into the cl module.
+  * Integrate better with apt; use apt's configuration system instead
+    of homegrown/getopt/whatever systems.
+  * Instead of keeping symlinks and copies of XML files to keep track
+    of status, use Python pickling to maintain a persistent status
+    dictionary for all state, recalculated when needed.
+  * Report information on packages outside the component system,
+    partially-installed components, and legacy components.
+
+ -- Jeff Licquia <licquia@progeny.com>  Thu,  6 Jan 2005 11:12:44 -0500
+
 cl-tools (1.4.3) unstable; urgency=low
 
   * debootstrap-script: Added libgcrypt11.

@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# preinst script for cl-tools
+# Copyright 2005 Progeny Linux Systems.
+
+# Remove old data from previous versions of cl-tools.
+if [ -d /var/lib/cl-tools/comps/installed ]; then
+    rm -f /var/lib/cl-tools/comps/installed/*
+fi
+
+if [ -d /var/lib/cl-tools/comps/available ]; then
+    rm -f /var/lib/cl-tools/comps/available/*
+fi
+
+#DEBHELPER#
+
