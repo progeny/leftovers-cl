@@ -1,1 +1,5 @@
+usr/bin
 usr/sbin
+var/cache/cl-tools
+var/cache/cl-tools/available
+var/cache/cl-tools/installed

@@ -3,6 +3,9 @@ cl-tools (1.4) unstable; urgency=low
   * Split cl-tools into two packages: cl-tools, for the end-user tools;
     and cl-tools-dev, for the development tools.
 
+  * Added comp-get, a very basic component management tool that supports
+    component installation, removal, and upgrades.
+
   * Added update-sources.list, a tool for updating /etc/apt/sources.list
     with sources.list fragments from /etc/apt/sources.list.d.
 
