@@ -291,9 +291,6 @@ def remove(id):
     if _istatus[id]["status"] == "none":
         raise ComponentError, "Component %s not installed." % id
 
-    # Parse comps.xml:
-    comp = rhpl.comps.Comps(comps_xml_installed)
-
     # Build the list of packages to remove:
     packages_to_remove = []
     for package in _istatus[id]["installed"]:
