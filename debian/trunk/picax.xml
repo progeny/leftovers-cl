@@ -41,7 +41,7 @@
             /home/imurdock/progeny/debian/isolinux
         </inst-isolinux-config>
         <inst-kernel-path>
-            /home/imurdock/progeny/debian/kernel-image-2.6.6-2-386_2.6.6-2_i386.deb
+            /home/imurdock/progeny/debian/kernel-image-2.6.6_install1_i386.deb
         </inst-kernel-path>
         <inst-package-list-path>
             /home/imurdock/progeny/debian/pkglist.xml
@@ -54,30 +54,33 @@
         </inst-template-path>
     </installer_options>
     <media_options/>
-    <repository distribution="cl" component="lsb-2.0"/>
-    <repository distribution="cl" component="linux-2.6"/>
-    <repository distribution="cl" component="progeny"/>
+    <repository distribution="cl" component="apache-2.0"/>
     <repository distribution="cl" component="audio"/>
     <repository distribution="cl" component="cl-devel"/>
     <repository distribution="cl" component="cups-1.1"/>
     <repository distribution="cl" component="eclipse-2.1"/>
-    <repository distribution="cl" component="emacs-21.3"/>
-    <repository distribution="cl" component="evolution-1.4"/>
-    <repository distribution="cl" component="evolution-1.5"/>
-    <repository distribution="cl" component="gnome-2.6"/>
+    <repository distribution="cl" component="emacs"/>
+    <repository distribution="cl" component="evolution-2.0"/>
+    <repository distribution="cl" component="flash-player"/>
+    <repository distribution="cl" component="gimp-2.0"/>
+    <repository distribution="cl" component="gnome-2.8"/>
     <repository distribution="cl" component="graphics"/>
-    <repository distribution="cl-unreleased" component="j2re-1.4"/>
-    <repository distribution="cl-unreleased" component="j2sdk-1.4"/>
+    <repository distribution="cl" component="j2re-1.4"/>
+    <repository distribution="cl" component="j2sdk-1.4"/>
+    <repository distribution="cl" component="java-devel"/>
     <repository distribution="cl" component="kerberos"/>
-    <repository distribution="cl" component="lsb-2.0-devel"/>
-    <repository distribution="cl" component="mono"/>
+    <repository distribution="cl" component="linux-2.6"/>
+    <repository distribution="cl" component="lsb-2.0"/>
+    <repository distribution="cl" component="mono-1.0"/>
     <repository distribution="cl" component="mozilla-1.7"/>
     <repository distribution="cl" component="mozilla-firefox-0.9"/>
+    <repository distribution="cl" component="mysql-4.0"/>
     <repository distribution="cl" component="openoffice.org-1.1"/>
     <repository distribution="cl" component="perl-5.8"/>
+    <repository distribution="cl" component="postgresql-7.4"/>
+    <repository distribution="cl" component="progeny"/>
     <repository distribution="cl" component="python-2.3"/>
-    <repository distribution="cl" component="tcl"/>
-    <repository distribution="cl" component="vim-6.2"/>
+    <repository distribution="cl" component="vim"/>
     <repository distribution="cl" component="xfree86-4.3"/>
     <repository distribution="cl" component="xml"/>
 </picaxconfig>

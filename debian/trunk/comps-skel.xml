@@ -16,18 +16,20 @@
     <default>false</default>
     <name>Workstation Common</name>
     <grouplist>
-      <groupreq>lsb-2.0</groupreq>
-      <groupreq>linux-2.6</groupreq>
       <groupreq>audio</groupreq>
-      <groupreq>graphics</groupreq>
-      <groupreq>progeny</groupreq>
       <groupreq>cups-1.1</groupreq>
+      <groupreq>evolution-2.0</groupreq>
+      <groupreq>flash-player</groupreq>
+      <groupreq>gnome-2.8</groupreq>
+      <groupreq>graphics</groupreq>
       <groupreq>j2re-1.4</groupreq>
-      <groupreq>xfree86-4.3</groupreq>
-      <groupreq>gnome-2.6</groupreq>
-      <groupreq>evolution-1.4</groupreq>
+      <groupreq>linux-2.6</groupreq>
+      <groupreq>lsb-2.0</groupreq>
+      <groupreq>mono-1.0</groupreq>
       <groupreq>mozilla-firefox-0.9</groupreq>
       <groupreq>openoffice.org-1.1</groupreq>
+      <groupreq>progeny</groupreq>
+      <groupreq>xfree86-4.3</groupreq>
     </grouplist>
   </group>
   <group>
@@ -38,13 +40,21 @@
     <grouplist>
       <groupreq>cl-devel</groupreq>
       <groupreq>eclipse-2.1</groupreq>
-      <groupreq>emacs-21.3</groupreq>
+      <groupreq>eclipse-2.1-devel</groupreq>
+      <groupreq>emacs</groupreq>
+      <groupreq>evolution-2.0-devel</groupreq>
+      <groupreq>gimp-2.0</groupreq>
+      <groupreq>gnome-2.8-devel</groupreq>
       <groupreq>j2sdk-1.4</groupreq>
+      <groupreq>java-devel</groupreq>
+      <groupreq>linux-2.6-devel</groupreq>
       <groupreq>lsb-2.0-devel</groupreq>
-      <groupreq>mono</groupreq>
+      <groupreq>mono-1.0-devel</groupreq>
+      <groupreq>mozilla-1.7-devel</groupreq>
       <groupreq>perl-5.8</groupreq>
       <groupreq>python-2.3</groupreq>
-      <groupreq>vim-6.2</groupreq>
+      <groupreq>vim</groupreq>
+      <groupreq>xfree86-4.3-devel</groupreq>
       <groupreq>xml</groupreq>
     </grouplist>
   </group>
@@ -66,7 +76,13 @@
       <name>Desktop</name>
     </category>
     <category>
+      <name>Graphics</name>
+    </category>
+    <category>
       <name>Software Development</name>
+    </category>
+    <category>
+      <name>Server</name>
     </category>
   </grouphierarchy>
 </comps>
