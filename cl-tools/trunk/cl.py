@@ -165,6 +165,9 @@ def update_available():
 
                 status("updated.")
 
+def update_installed():
+    pass
+
 def install(id):
     availabledir = _retrieve_config_dir_path("Dir::Comps::Available")
     installeddir = _retrieve_config_dir_path("Dir::Comps::Installed")

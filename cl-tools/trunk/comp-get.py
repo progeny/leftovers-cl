@@ -41,6 +41,9 @@ def comps_update():
     print "Updating component metadata:"
     cl.update_available()
 
+    print "Updating component status:"
+    cl.update_installed()
+
     print "Done."
 
 # List the components currently available.
