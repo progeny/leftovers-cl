@@ -18,6 +18,8 @@
     <grouplist>
       <groupreq>lsb-2.0</groupreq>
       <groupreq>linux-2.6</groupreq>
+      <groupreq>audio</groupreq>
+      <groupreq>graphics</groupreq>
       <groupreq>progeny</groupreq>
       <groupreq>cups-1.1</groupreq>
       <groupreq>j2re-1.4</groupreq>
