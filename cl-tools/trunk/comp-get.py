@@ -67,36 +67,12 @@ def comps_upgrade():
 
 # List the components currently available.
 def comps_list_available():
-    available = []
-    for file in os.listdir(availabledir):
-        m = re.search("\S+\\.xml", file)
-        if m is None:
-            # Eh?
-            continue
-        else:
-            id = file[m.start():m.end() - 4]
-        available.append(id)
-
-    available.sort()
-
-    for package in available:
+    for package in cl.get_available():
         print package
 
 # List the components currently installed.
 def comps_list_installed():
-    installed = []
-    for file in os.listdir(installeddir):
-        m = re.search("\S+\\.xml", file)
-        if m is None:
-            # Eh?
-            continue
-        else:
-            id = file[m.start():m.end() - 4]
-        installed.append(id)
-
-    installed.sort()
-
-    for package in installed:
+    for package in cl.get_installed():
         print package
 
 def status_cb(s):

@@ -330,3 +330,33 @@ def upgrade():
         comps_xml_installed = "%s/%s.xml" % (installeddir, id)
         # Update the comps.xml used during installation in INSTALLEDDIR:
         shutil.copy(comps_xml_available, comps_xml_installed)
+
+def get_available():
+    availabledir = _retrieve_config_dir_path("Dir::Comps::Available")
+    available = []
+    for file in os.listdir(availabledir):
+        m = re.search("\S+\\.xml", file)
+        if m is None:
+            # Eh?
+            continue
+        else:
+            id = file[m.start():m.end() - 4]
+        available.append(id)
+
+    available.sort()
+    return tuple(available)
+
+def get_installed():
+    installeddir = _retrieve_config_dir_path("Dir::Comps::Installed")
+    installed = []
+    for file in os.listdir(installeddir):
+        m = re.search("\S+\\.xml", file)
+        if m is None:
+            # Eh?
+            continue
+        else:
+            id = file[m.start():m.end() - 4]
+        installed.append(id)
+
+    installed.sort()
+    return tuple(installed)
