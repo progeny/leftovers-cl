@@ -1,3 +1,10 @@
+cl-tools (1.4.2) unstable; urgency=low
+
+  * Use /var/lib/cl-tools rather than /var/cache/cl-tools for storing
+    component information.
+
+ -- Ian Murdock <imurdock@progeny.com>  Fri,  5 Nov 2004 15:50:43 -0500
+
 cl-tools (1.4.1) unstable; urgency=low
 
   * New version.

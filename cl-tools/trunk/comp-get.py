@@ -30,7 +30,7 @@ import shutil
 import urllib
 import urlparse
 
-cachedir = "/var/cache/cl-tools"
+cachedir = "/var/lib/cl-tools"
 compsdir = cachedir + "/comps"
 availabledir = cachedir + "/comps/available"
 installeddir = cachedir + "/comps/installed"

@@ -1,6 +1,6 @@
 usr/bin
 usr/sbin
-var/cache/cl-tools
-var/cache/cl-tools/comps
-var/cache/cl-tools/comps/available
-var/cache/cl-tools/comps/installed
+var/lib/cl-tools
+var/lib/cl-tools/comps
+var/lib/cl-tools/comps/available
+var/lib/cl-tools/comps/installed
