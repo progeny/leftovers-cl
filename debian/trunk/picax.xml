@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<picaxconfig>
+    <apt-repo-path>
+        deb http://archive.progeny.com/progeny/anaconda/ debian/
+    </apt-repo-path>
+    <arch>
+        i386
+    </arch>
+    <cd-label>
+        Progeny Componentized Linux
+    </cd-label>
+    <installer>
+        anaconda
+    </installer>
+    <media>
+	cd
+    </media>
+    <source>
+        none
+    </source>
+    <installer_options>
+        <inst-comps>
+            /home/imurdock/progeny/cl/comps-cl.xml
+        </inst-comps>
+        <inst-help-path>
+            /home/imurdock/progeny/cl/anaconda-help
+        </inst-help-path>
+        <inst-isolinux-config>
+            /home/imurdock/progeny/cl/isolinux
+        </inst-isolinux-config>
+        <inst-kernel-path>
+            /home/imurdock/progeny/cl/kernel
+        </inst-kernel-path>
+        <inst-package-list-path>
+            /home/imurdock/progeny/cl/pkglist-cl.xml
+        </inst-package-list-path>
+        <inst-pixmap-path>
+            /home/imurdock/progeny/cl/pixmaps
+        </inst-pixmap-path>
+    </installer_options>
+    <repository distribution="cl" component="lsb-2.0"/>
+    <repository distribution="cl" component="anaconda-9.0"/>
+    <repository distribution="cl" component="gnome-2.4"/>
+    <repository distribution="cl" component="linux-2.4"/>
+    <repository distribution="cl" component="linux-2.6"/>
+    <repository distribution="cl" component="lsbdev-2.0"/>
+    <repository distribution="cl" component="xfree86-4.2"/>
+</picaxconfig>

@@ -1,0 +1,26 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Advanced Boot Loader Configuration</title><meta name="generator" content="DocBook XSL Stylesheets V1.58.1"><link rel="home" href="index.html" title="Install Help Screens"><link rel="up" href="s1-help-screens-lang.html" title=""><link rel="previous" href="s1-help-screens-bootloader.html" title="Boot Loader Configuration"><link rel="next" href="s1-help-screens-silo.html" title="SILO Configuration"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="sect1" lang="en"><div class="titlepage"><div><h2 class="title" style="clear: both"><a name="s1-help-screens-advbootloader"></a>Advanced Boot Loader Configuration</h2></div></div><p>
+        Select where you want the boot loader to be installed. If your system
+        will use only @RHL@, select the Master Boot Record (MBR). For
+        systems on which Win95/98 and @RHL@ will reside on a single hard drive,
+        you should also install the boot loader to the MBR.
+      </p><p>
+        If you have Windows NT (and you want a boot loader to be installed) you
+        should choose to install it on the first sector of the boot
+        partition. 
+      </p><p>Click <b>Change Drive Order</b> to rearrange the
+      drive order. Changing the drive order may be useful if you have multiple
+      SCSI adapters or both SCSI and IDE adapters and want to boot from the SCSI
+      device.</p><p>Select <b>Force LBA32</b> if you have experienced
+	problems with the system using LBA32 support during previous
+	installations; for example, the system may need to exceed the 1024
+	cylinder limit for the <tt>/boot</tt> partition. Only if you
+	have a system which supports the LBA32 extension for booting operating
+	systems above the 1024 cylinder limit, and you want to place your
+	<tt>/boot</tt> partition above cylinder 1024, should you
+	select this option. If you are unsure, do not select the <b>Force
+	LBA32</b> option.</p><p>
+        If you wish to add default options to the boot command, enter them into
+        the <b>General kernel parameters</b> field.  Any options
+        you enter will be passed to the Linux kernel every time it boots.
+      </p></div></body></html>

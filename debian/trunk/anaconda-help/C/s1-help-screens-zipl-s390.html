@@ -1,0 +1,18 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Boot Loader Configuration</title><meta name="generator" content="DocBook XSL Stylesheets V1.58.1"><link rel="home" href="index.html" title="Install Help Screens"><link rel="up" href="s1-help-screens-lang.html" title=""><link rel="previous" href="s1-help-screens-usefdasd-s390.html" title="Using fdasd"><link rel="next" href="s1-help-screens-dasd-s390.html" title="Partitions"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="sect1" lang="en"><div class="titlepage"><div><h2 class="title" style="clear: both"><a name="s1-help-screens-zipl-s390"></a>Boot Loader Configuration</h2></div></div><p>
+        z/IPL is a software boot loader that can be used to start @RHL@ on
+        your computer.
+      </p><p>
+        The z/IPL boot loader installs, by default, on the DASD containing the
+        <tt>/boot</tt> directory. You can add other kernel versions
+        by adding new target, image, and parameter lines to
+        <tt>/etc/zipl.conf</tt> and executing
+        <b>zipl</b>.
+      </p><p>
+        The default parameters are taken from the <tt>.parm</tt>
+        file or from user supplied data.
+      </p><p>
+        If you wish to add default options to the boot command, enter them into
+        the parameters field.  Any options you enter will be passed to
+        the Linux kernel every time it boots.
+      </p></div></body></html>

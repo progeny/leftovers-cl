@@ -1,0 +1,663 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<comps>
+  <group>
+    <id>lsb-2.0</id>
+    <uservisible>true</uservisible>
+    <default>true</default>
+    <name>LSB 2.0</name>
+    <description>LSB 2.0 runtime</description>
+    <packagelist>
+      <packagereq type='mandatory'>adduser</packagereq>
+      <packagereq type='mandatory'>alien</packagereq>
+      <packagereq type='mandatory'>apmd</packagereq>
+      <packagereq type='mandatory'>apt</packagereq>
+      <packagereq type='mandatory'>apt-utils</packagereq>
+      <packagereq type='mandatory'>aptitude</packagereq>
+      <packagereq type='mandatory'>aspell</packagereq>
+      <packagereq type='mandatory'>aspell-bin</packagereq>
+      <packagereq type='mandatory'>aspell-en</packagereq>
+      <packagereq type='mandatory'>at</packagereq>
+      <packagereq type='mandatory'>base-config</packagereq>
+      <packagereq type='mandatory'>base-files</packagereq>
+      <packagereq type='mandatory'>base-passwd</packagereq>
+      <packagereq type='mandatory'>bash</packagereq>
+      <packagereq type='mandatory'>bc</packagereq>
+      <packagereq type='mandatory'>bind9-host</packagereq>
+      <packagereq type='mandatory'>binutils</packagereq>
+      <packagereq type='mandatory'>bsdmainutils</packagereq>
+      <packagereq type='mandatory'>bsdutils</packagereq>
+      <packagereq type='mandatory'>bzip2</packagereq>
+      <packagereq type='mandatory'>console-common</packagereq>
+      <packagereq type='mandatory'>console-data</packagereq>
+      <packagereq type='mandatory'>console-tools</packagereq>
+      <packagereq type='mandatory'>coreutils</packagereq>
+      <packagereq type='mandatory'>cpio</packagereq>
+      <packagereq type='mandatory'>cpp</packagereq>
+      <packagereq type='mandatory'>cpp-3.2</packagereq>
+      <packagereq type='mandatory'>cpp-3.3</packagereq>
+      <packagereq type='mandatory'>cramfsprogs</packagereq>
+      <packagereq type='mandatory'>cron</packagereq>
+      <packagereq type='mandatory'>dash</packagereq>
+      <packagereq type='mandatory'>debconf</packagereq>
+      <packagereq type='mandatory'>debconf-i18n</packagereq>
+      <packagereq type='mandatory'>debconf-utils</packagereq>
+      <packagereq type='mandatory'>debhelper</packagereq>
+      <packagereq type='mandatory'>debianutils</packagereq>
+      <packagereq type='mandatory'>dhcp-client</packagereq>
+      <packagereq type='mandatory'>dictionaries-common</packagereq>
+      <packagereq type='mandatory'>diff</packagereq>
+      <packagereq type='mandatory'>discover</packagereq>
+      <packagereq type='mandatory'>discover-data</packagereq>
+      <packagereq type='mandatory'>dnsutils</packagereq>
+      <packagereq type='mandatory'>dpkg</packagereq>
+      <packagereq type='mandatory'>dpkg-dev</packagereq>
+      <packagereq type='mandatory'>dselect</packagereq>
+      <packagereq type='mandatory'>e2fslibs</packagereq>
+      <packagereq type='mandatory'>e2fsprogs</packagereq>
+      <packagereq type='mandatory'>ed</packagereq>
+      <packagereq type='mandatory'>fbset</packagereq>
+      <packagereq type='mandatory'>fdutils</packagereq>
+      <packagereq type='mandatory'>file</packagereq>
+      <packagereq type='mandatory'>findutils</packagereq>
+      <packagereq type='mandatory'>ftp</packagereq>
+      <packagereq type='mandatory'>gcc-3.2-base</packagereq>
+      <packagereq type='mandatory'>gcc-3.3-base</packagereq>
+      <packagereq type='mandatory'>gettext</packagereq>
+      <packagereq type='mandatory'>gettext-base</packagereq>
+      <packagereq type='mandatory'>grep</packagereq>
+      <packagereq type='mandatory'>groff-base</packagereq>
+      <packagereq type='mandatory'>grub</packagereq>
+      <packagereq type='mandatory'>gzip</packagereq>
+      <packagereq type='mandatory'>hostname</packagereq>
+      <packagereq type='mandatory'>hotplug</packagereq>
+      <packagereq type='mandatory'>html2text</packagereq>
+      <packagereq type='mandatory'>ifupdown</packagereq>
+      <packagereq type='mandatory'>info</packagereq>
+      <packagereq type='mandatory'>initrd-tools</packagereq>
+      <packagereq type='mandatory'>initscripts</packagereq>
+      <packagereq type='mandatory'>intltool-debian</packagereq>
+      <packagereq type='mandatory'>ipchains</packagereq>
+      <packagereq type='mandatory'>iptables</packagereq>
+      <packagereq type='mandatory'>iputils-ping</packagereq>
+      <packagereq type='mandatory'>klogd</packagereq>
+      <packagereq type='mandatory'>less</packagereq>
+      <packagereq type='mandatory'>libacl1</packagereq>
+      <packagereq type='mandatory'>libapm1</packagereq>
+      <packagereq type='mandatory'>libaspell15</packagereq>
+      <packagereq type='mandatory'>libattr1</packagereq>
+      <packagereq type='mandatory'>libblkid1</packagereq>
+      <packagereq type='mandatory'>libbz2-1.0</packagereq>
+      <packagereq type='mandatory'>libc6</packagereq>
+      <packagereq type='mandatory'>libc6-dev</packagereq>
+      <packagereq type='mandatory'>libcap1</packagereq>
+      <packagereq type='mandatory'>libcomerr2</packagereq>
+      <packagereq type='mandatory'>libconsole</packagereq>
+      <packagereq type='mandatory'>libdb1-compat</packagereq>
+      <packagereq type='mandatory'>libdb2</packagereq>
+      <packagereq type='mandatory'>libdb3</packagereq>
+      <packagereq type='mandatory'>libdb4.0</packagereq>
+      <packagereq type='mandatory'>libdb4.1</packagereq>
+      <packagereq type='mandatory'>libdb4.2</packagereq>
+      <packagereq type='mandatory'>libdevmapper1.00</packagereq>
+      <packagereq type='mandatory'>libdiscover2</packagereq>
+      <packagereq type='mandatory'>libdns11</packagereq>
+      <packagereq type='mandatory'>libfreetype6</packagereq>
+      <packagereq type='mandatory'>libgcc1</packagereq>
+      <packagereq type='mandatory'>libgcrypt1</packagereq>
+      <packagereq type='mandatory'>libgcrypt7</packagereq>
+      <packagereq type='mandatory'>libgdbm3</packagereq>
+      <packagereq type='mandatory'>libgdbmg1</packagereq>
+      <packagereq type='mandatory'>libgnutls7</packagereq>
+      <packagereq type='mandatory'>libgpg-error0</packagereq>
+      <packagereq type='mandatory'>libident</packagereq>
+      <packagereq type='mandatory'>libidn11</packagereq>
+      <packagereq type='mandatory'>libidn9</packagereq>
+      <packagereq type='mandatory'>libisc7</packagereq>
+      <packagereq type='mandatory'>libiw27</packagereq>
+      <packagereq type='mandatory'>liblocale-gettext-perl</packagereq>
+      <packagereq type='mandatory'>liblockfile1</packagereq>
+      <packagereq type='mandatory'>liblwres1</packagereq>
+      <packagereq type='mandatory'>liblzo1</packagereq>
+      <packagereq type='mandatory'>libmagic1</packagereq>
+      <packagereq type='mandatory'>libncurses5</packagereq>
+      <packagereq type='mandatory'>libnewt0.51</packagereq>
+      <packagereq type='mandatory'>libopencdk8</packagereq>
+      <packagereq type='mandatory'>libpam-modules</packagereq>
+      <packagereq type='mandatory'>libpam-runtime</packagereq>
+      <packagereq type='mandatory'>libpam0g</packagereq>
+      <packagereq type='mandatory'>libpcap0.7</packagereq>
+      <packagereq type='mandatory'>libpcre3</packagereq>
+      <packagereq type='mandatory'>libpopt0</packagereq>
+      <packagereq type='mandatory'>libreadline4</packagereq>
+      <packagereq type='mandatory'>librpm4</packagereq>
+      <packagereq type='mandatory'>libsigc++-1.2-5c102</packagereq>
+      <packagereq type='mandatory'>libss2</packagereq>
+      <packagereq type='mandatory'>libssl0.9.7</packagereq>
+      <packagereq type='mandatory'>libstdc++5</packagereq>
+      <packagereq type='mandatory'>libtasn1-0</packagereq>
+      <packagereq type='mandatory'>libtext-charwidth-perl</packagereq>
+      <packagereq type='mandatory'>libtext-iconv-perl</packagereq>
+      <packagereq type='mandatory'>libtext-wrapi18n-perl</packagereq>
+      <packagereq type='mandatory'>libtextwrap1</packagereq>
+      <packagereq type='mandatory'>libuuid1</packagereq>
+      <packagereq type='mandatory'>libwrap0</packagereq>
+      <packagereq type='mandatory'>lilo</packagereq>
+      <packagereq type='mandatory'>linux-kernel-headers</packagereq>
+      <packagereq type='mandatory'>locales</packagereq>
+      <packagereq type='mandatory'>login</packagereq>
+      <packagereq type='mandatory'>logrotate</packagereq>
+      <packagereq type='mandatory'>lpr</packagereq>
+      <packagereq type='mandatory'>lsb</packagereq>
+      <packagereq type='mandatory'>lsb-release</packagereq>
+      <packagereq type='mandatory'>lvm-common</packagereq>
+      <packagereq type='mandatory'>lvm10</packagereq>
+      <packagereq type='mandatory'>lvm2</packagereq>
+      <packagereq type='mandatory'>m4</packagereq>
+      <packagereq type='mandatory'>mailx</packagereq>
+      <packagereq type='mandatory'>make</packagereq>
+      <packagereq type='mandatory'>makedev</packagereq>
+      <packagereq type='mandatory'>man-db</packagereq>
+      <packagereq type='mandatory'>manpages</packagereq>
+      <packagereq type='mandatory'>mawk</packagereq>
+      <packagereq type='mandatory'>mime-support</packagereq>
+      <packagereq type='mandatory'>modconf</packagereq>
+      <packagereq type='mandatory'>module-init-tools</packagereq>
+      <packagereq type='mandatory'>modutils</packagereq>
+      <packagereq type='mandatory'>mount</packagereq>
+      <packagereq type='mandatory'>nano</packagereq>
+      <packagereq type='mandatory'>ncurses-base</packagereq>
+      <packagereq type='mandatory'>ncurses-bin</packagereq>
+      <packagereq type='mandatory'>ncurses-term</packagereq>
+      <packagereq type='mandatory'>net-tools</packagereq>
+      <packagereq type='mandatory'>netbase</packagereq>
+      <packagereq type='mandatory'>netcat</packagereq>
+      <packagereq type='mandatory'>netkit-inetd</packagereq>
+      <packagereq type='mandatory'>nfs-common</packagereq>
+      <packagereq type='mandatory'>ntp</packagereq>
+      <packagereq type='mandatory'>ntp-simple</packagereq>
+      <packagereq type='mandatory'>ntpdate</packagereq>
+      <packagereq type='mandatory'>nvi</packagereq>
+      <packagereq type='mandatory'>openssl</packagereq>
+      <packagereq type='mandatory'>passwd</packagereq>
+      <packagereq type='mandatory'>patch</packagereq>
+      <packagereq type='mandatory'>pax</packagereq>
+      <packagereq type='mandatory'>pciutils</packagereq>
+      <packagereq type='mandatory'>pcmcia-cs</packagereq>
+      <packagereq type='mandatory'>perl</packagereq>
+      <packagereq type='mandatory'>perl-base</packagereq>
+      <packagereq type='mandatory'>perl-modules</packagereq>
+      <packagereq type='mandatory'>po-debconf</packagereq>
+      <packagereq type='mandatory'>portmap</packagereq>
+      <packagereq type='mandatory'>postfix</packagereq>
+      <packagereq type='mandatory'>powermgmt-base</packagereq>
+      <packagereq type='mandatory'>ppp</packagereq>
+      <packagereq type='mandatory'>pppconfig</packagereq>
+      <packagereq type='mandatory'>pppoe</packagereq>
+      <packagereq type='mandatory'>pppoeconf</packagereq>
+      <packagereq type='mandatory'>procps</packagereq>
+      <packagereq type='mandatory'>psmisc</packagereq>
+      <packagereq type='mandatory'>python</packagereq>
+      <packagereq type='mandatory'>python2.3</packagereq>
+      <packagereq type='mandatory'>rpm</packagereq>
+      <packagereq type='mandatory'>rsync</packagereq>
+      <packagereq type='mandatory'>sed</packagereq>
+      <packagereq type='mandatory'>setserial</packagereq>
+      <packagereq type='mandatory'>slang1</packagereq>
+      <packagereq type='mandatory'>slang1a-utf8</packagereq>
+      <packagereq type='mandatory'>ssh</packagereq>
+      <packagereq type='mandatory'>strace</packagereq>
+      <packagereq type='mandatory'>sysklogd</packagereq>
+      <packagereq type='mandatory'>syslinux</packagereq>
+      <packagereq type='mandatory'>sysv-rc</packagereq>
+      <packagereq type='mandatory'>sysvinit</packagereq>
+      <packagereq type='mandatory'>tar</packagereq>
+      <packagereq type='mandatory'>tasksel</packagereq>
+      <packagereq type='mandatory'>tcpd</packagereq>
+      <packagereq type='mandatory'>tcpdump</packagereq>
+      <packagereq type='mandatory'>tcsh</packagereq>
+      <packagereq type='mandatory'>telnet</packagereq>
+      <packagereq type='mandatory'>time</packagereq>
+      <packagereq type='mandatory'>traceroute</packagereq>
+      <packagereq type='mandatory'>unzip</packagereq>
+      <packagereq type='mandatory'>util-linux</packagereq>
+      <packagereq type='mandatory'>wamerican</packagereq>
+      <packagereq type='mandatory'>wget</packagereq>
+      <packagereq type='mandatory'>whiptail</packagereq>
+      <packagereq type='mandatory'>whois</packagereq>
+      <packagereq type='mandatory'>wireless-tools</packagereq>
+      <packagereq type='mandatory'>xfree86-common</packagereq>
+      <packagereq type='mandatory'>xlibmesa3-gl</packagereq>
+      <packagereq type='mandatory'>xlibs</packagereq>
+      <packagereq type='mandatory'>zip</packagereq>
+      <packagereq type='mandatory'>zlib1g</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>linux-2.4</id>
+    <uservisible>true</uservisible>
+    <default>false</default>
+    <name>linux-2.4</name>
+    <description>Linux kernel 2.4</description>
+    <packagelist>
+      <packagereq type='mandatory'>kernel-image-2.4.23-1-386</packagereq>
+      <packagereq type='mandatory'>kernel-pcmcia-modules-2.4.23-1-386</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>linux-2.6</id>
+    <uservisible>true</uservisible>
+    <default>true</default>
+    <name>linux-2.6</name>
+    <description>Linux kernel 2.6</description>
+    <packagelist>
+      <packagereq type='mandatory'>kernel-image-2.6-386</packagereq>
+      <packagereq type='mandatory'>kernel-image-2.6.0-1-386</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>xfree86-4.2</id>
+    <uservisible>true</uservisible>
+    <default>true</default>
+    <name>xfree86-4.2</name>
+    <description>XFree86 4.2</description>
+    <packagelist>
+      <packagereq type='mandatory'>libdps1</packagereq>
+      <packagereq type='mandatory'>libxaw7</packagereq>
+      <packagereq type='mandatory'>xbase-clients</packagereq>
+      <packagereq type='mandatory'>xfonts-100dpi</packagereq>
+      <packagereq type='mandatory'>xfonts-75dpi</packagereq>
+      <packagereq type='mandatory'>xfonts-base</packagereq>
+      <packagereq type='mandatory'>xfonts-scalable</packagereq>
+      <packagereq type='mandatory'>xlibmesa3-glu</packagereq>
+      <packagereq type='mandatory'>xserver-common</packagereq>
+      <packagereq type='mandatory'>xserver-xfree86</packagereq>
+      <packagereq type='mandatory'>xutils</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>gnome-2.4</id>
+    <uservisible>true</uservisible>
+    <default>true</default>
+    <name>gnome-2.4</name>
+    <description>GNOME 2.4</description>
+    <packagelist>
+      <packagereq type='mandatory'>aalib1</packagereq>
+      <packagereq type='mandatory'>abiword-common</packagereq>
+      <packagereq type='mandatory'>abiword-gnome</packagereq>
+      <packagereq type='mandatory'>acme</packagereq>
+      <packagereq type='mandatory'>balsa</packagereq>
+      <packagereq type='mandatory'>bluefish</packagereq>
+      <packagereq type='mandatory'>bonobo-activation</packagereq>
+      <packagereq type='mandatory'>bonobo</packagereq>
+      <packagereq type='mandatory'>bug-buddy</packagereq>
+      <packagereq type='mandatory'>calctool</packagereq>
+      <packagereq type='mandatory'>cdrecord</packagereq>
+      <packagereq type='mandatory'>defoma</packagereq>
+      <packagereq type='mandatory'>dia-common</packagereq>
+      <packagereq type='mandatory'>dia-gnome</packagereq>
+      <packagereq type='mandatory'>docbook-dsssl</packagereq>
+      <packagereq type='mandatory'>docbook-xml</packagereq>
+      <packagereq type='mandatory'>docbook-xsl</packagereq>
+      <packagereq type='mandatory'>docbook</packagereq>
+      <packagereq type='mandatory'>eog</packagereq>
+      <packagereq type='mandatory'>epiphany-browser</packagereq>
+      <packagereq type='mandatory'>esound-common</packagereq>
+      <packagereq type='mandatory'>esound</packagereq>
+      <packagereq type='mandatory'>fam</packagereq>
+      <packagereq type='mandatory'>file-roller</packagereq>
+      <packagereq type='mandatory'>fontconfig</packagereq>
+      <packagereq type='mandatory'>gaim</packagereq>
+      <packagereq type='mandatory'>gconf-editor</packagereq>
+      <packagereq type='mandatory'>gconf2</packagereq>
+      <packagereq type='mandatory'>gdk-imlib1</packagereq>
+      <packagereq type='mandatory'>gdm</packagereq>
+      <packagereq type='mandatory'>gedit</packagereq>
+      <packagereq type='mandatory'>gimp1.2</packagereq>
+      <packagereq type='mandatory'>gksu</packagereq>
+      <packagereq type='mandatory'>gnome-about</packagereq>
+      <packagereq type='mandatory'>gnome-applets</packagereq>
+      <packagereq type='mandatory'>gnome-bin</packagereq>
+      <packagereq type='mandatory'>gnome-control-center</packagereq>
+      <packagereq type='mandatory'>gnome-core</packagereq>
+      <packagereq type='mandatory'>gnome-desktop-data</packagereq>
+      <packagereq type='mandatory'>gnome-desktop-environment</packagereq>
+      <packagereq type='mandatory'>gnome-doc-tools</packagereq>
+      <packagereq type='mandatory'>gnome-games-data</packagereq>
+      <packagereq type='mandatory'>gnome-games</packagereq>
+      <packagereq type='mandatory'>gnome-gv</packagereq>
+      <packagereq type='mandatory'>gnome-icon-theme</packagereq>
+      <packagereq type='mandatory'>gnome-libs-data</packagereq>
+      <packagereq type='mandatory'>gnome-media</packagereq>
+      <packagereq type='mandatory'>gnome-mime-data</packagereq>
+      <packagereq type='mandatory'>gnome-office</packagereq>
+      <packagereq type='mandatory'>gnome-panel-data</packagereq>
+      <packagereq type='mandatory'>gnome-panel</packagereq>
+      <packagereq type='mandatory'>gnome-session</packagereq>
+      <packagereq type='mandatory'>gnome-system-monitor</packagereq>
+      <packagereq type='mandatory'>gnome-terminal</packagereq>
+      <packagereq type='mandatory'>gnome-themes-common</packagereq>
+      <packagereq type='mandatory'>gnome-themes</packagereq>
+      <packagereq type='mandatory'>gnome-utils</packagereq>
+      <packagereq type='mandatory'>gnome2-user-guide</packagereq>
+      <packagereq type='mandatory'>gnome</packagereq>
+      <packagereq type='mandatory'>gnomemeeting</packagereq>
+      <packagereq type='mandatory'>gnucash</packagereq>
+      <packagereq type='mandatory'>gnumeric</packagereq>
+      <packagereq type='mandatory'>gnupg</packagereq>
+      <packagereq type='mandatory'>gpdf</packagereq>
+      <packagereq type='mandatory'>gs-common</packagereq>
+      <packagereq type='mandatory'>gs</packagereq>
+      <packagereq type='mandatory'>gsfonts</packagereq>
+      <packagereq type='mandatory'>gstreamer-audiofile</packagereq>
+      <packagereq type='mandatory'>gstreamer-flac</packagereq>
+      <packagereq type='mandatory'>gstreamer-gconf</packagereq>
+      <packagereq type='mandatory'>gstreamer-gnomevfs</packagereq>
+      <packagereq type='mandatory'>gstreamer-mad</packagereq>
+      <packagereq type='mandatory'>gstreamer-misc</packagereq>
+      <packagereq type='mandatory'>gstreamer-oss</packagereq>
+      <packagereq type='mandatory'>gstreamer-plugin-apps</packagereq>
+      <packagereq type='mandatory'>gstreamer-plugin-libs</packagereq>
+      <packagereq type='mandatory'>gstreamer-tools</packagereq>
+      <packagereq type='mandatory'>gstreamer-vorbis</packagereq>
+      <packagereq type='mandatory'>gtk2-engines-crux</packagereq>
+      <packagereq type='mandatory'>gtk2-engines-industrial</packagereq>
+      <packagereq type='mandatory'>gtk2-engines-lighthouseblue</packagereq>
+      <packagereq type='mandatory'>gtk2-engines-pixbuf</packagereq>
+      <packagereq type='mandatory'>gtk2-engines-redmond95</packagereq>
+      <packagereq type='mandatory'>gtk2-engines-thinice</packagereq>
+      <packagereq type='mandatory'>gucharmap</packagereq>
+      <packagereq type='mandatory'>guile-1.6-libs</packagereq>
+      <packagereq type='mandatory'>guile-1.6-slib</packagereq>
+      <packagereq type='mandatory'>guile-1.6</packagereq>
+      <packagereq type='mandatory'>imlib-base</packagereq>
+      <packagereq type='mandatory'>jade</packagereq>
+      <packagereq type='mandatory'>libao2</packagereq>
+      <packagereq type='mandatory'>libart-2.0-2</packagereq>
+      <packagereq type='mandatory'>libart2</packagereq>
+      <packagereq type='mandatory'>libasound2</packagereq>
+      <packagereq type='mandatory'>libatk1.0-0</packagereq>
+      <packagereq type='mandatory'>libaudiofile0</packagereq>
+      <packagereq type='mandatory'>libavc1394-0</packagereq>
+      <packagereq type='mandatory'>libbonobo-activation4</packagereq>
+      <packagereq type='mandatory'>libbonobo2-0</packagereq>
+      <packagereq type='mandatory'>libbonobo2-common</packagereq>
+      <packagereq type='mandatory'>libbonobo2</packagereq>
+      <packagereq type='mandatory'>libbonoboui2-0</packagereq>
+      <packagereq type='mandatory'>libbonoboui2-common</packagereq>
+      <packagereq type='mandatory'>libcupsys2</packagereq>
+      <packagereq type='mandatory'>libcurl2</packagereq>
+      <packagereq type='mandatory'>libdate-manip-perl</packagereq>
+      <packagereq type='mandatory'>libdc1394-9</packagereq>
+      <packagereq type='mandatory'>libdv2</packagereq>
+      <packagereq type='mandatory'>libeel2-2</packagereq>
+      <packagereq type='mandatory'>libeel2-data</packagereq>
+      <packagereq type='mandatory'>libefs1</packagereq>
+      <packagereq type='mandatory'>libenchant1</packagereq>
+      <packagereq type='mandatory'>libesd0</packagereq>
+      <packagereq type='mandatory'>libesmtp5</packagereq>
+      <packagereq type='mandatory'>libexpat1</packagereq>
+      <packagereq type='mandatory'>libfam0c102</packagereq>
+      <packagereq type='mandatory'>libfinance-quote-perl</packagereq>
+      <packagereq type='mandatory'>libflac4</packagereq>
+      <packagereq type='mandatory'>libfontconfig1</packagereq>
+      <packagereq type='mandatory'>libfribidi0</packagereq>
+      <packagereq type='mandatory'>libgail-common</packagereq>
+      <packagereq type='mandatory'>libgail17</packagereq>
+      <packagereq type='mandatory'>libgal2.0-5</packagereq>
+      <packagereq type='mandatory'>libgal23</packagereq>
+      <packagereq type='mandatory'>libgconf2-4</packagereq>
+      <packagereq type='mandatory'>libgda2-1</packagereq>
+      <packagereq type='mandatory'>libgda2-common</packagereq>
+      <packagereq type='mandatory'>libgdk-pixbuf-gnome2</packagereq>
+      <packagereq type='mandatory'>libgdk-pixbuf2</packagereq>
+      <packagereq type='mandatory'>libgdkcardimage0</packagereq>
+      <packagereq type='mandatory'>libghttp1</packagereq>
+      <packagereq type='mandatory'>libgimp1.2</packagereq>
+      <packagereq type='mandatory'>libgimpprint1</packagereq>
+      <packagereq type='mandatory'>libgksu0</packagereq>
+      <packagereq type='mandatory'>libglade-gnome0</packagereq>
+      <packagereq type='mandatory'>libglade0</packagereq>
+      <packagereq type='mandatory'>libglade2-0</packagereq>
+      <packagereq type='mandatory'>libglib1.2</packagereq>
+      <packagereq type='mandatory'>libglib2.0-0</packagereq>
+      <packagereq type='mandatory'>libgnome-desktop-2</packagereq>
+      <packagereq type='mandatory'>libgnome2-0</packagereq>
+      <packagereq type='mandatory'>libgnome2-common</packagereq>
+      <packagereq type='mandatory'>libgnome32</packagereq>
+      <packagereq type='mandatory'>libgnomecanvas2-0</packagereq>
+      <packagereq type='mandatory'>libgnomecanvas2-common</packagereq>
+      <packagereq type='mandatory'>libgnomedb2-3</packagereq>
+      <packagereq type='mandatory'>libgnomedb2-common</packagereq>
+      <packagereq type='mandatory'>libgnomeprint-bin</packagereq>
+      <packagereq type='mandatory'>libgnomeprint-data</packagereq>
+      <packagereq type='mandatory'>libgnomeprint15</packagereq>
+      <packagereq type='mandatory'>libgnomeprint2.2-0</packagereq>
+      <packagereq type='mandatory'>libgnomeprint2.2-data</packagereq>
+      <packagereq type='mandatory'>libgnomeprintui2.2-0</packagereq>
+      <packagereq type='mandatory'>libgnomeprintui2.2-common</packagereq>
+      <packagereq type='mandatory'>libgnomesupport0</packagereq>
+      <packagereq type='mandatory'>libgnomeui-0</packagereq>
+      <packagereq type='mandatory'>libgnomeui-common</packagereq>
+      <packagereq type='mandatory'>libgnomeui32</packagereq>
+      <packagereq type='mandatory'>libgnomevfs2-0</packagereq>
+      <packagereq type='mandatory'>libgnomevfs2-common</packagereq>
+      <packagereq type='mandatory'>libgnorba27</packagereq>
+      <packagereq type='mandatory'>libgnorbagtk0</packagereq>
+      <packagereq type='mandatory'>libgnutls5</packagereq>
+      <packagereq type='mandatory'>libgpg-error0</packagereq>
+      <packagereq type='mandatory'>libgpgme11</packagereq>
+      <packagereq type='mandatory'>libgpgme6</packagereq>
+      <packagereq type='mandatory'>libgpmg1</packagereq>
+      <packagereq type='mandatory'>libgsf-1</packagereq>
+      <packagereq type='mandatory'>libgsm1</packagereq>
+      <packagereq type='mandatory'>libgstreamer0.6-0</packagereq>
+      <packagereq type='mandatory'>libgtk1.2-common</packagereq>
+      <packagereq type='mandatory'>libgtk1.2</packagereq>
+      <packagereq type='mandatory'>libgtk2.0-0</packagereq>
+      <packagereq type='mandatory'>libgtk2.0-common</packagereq>
+      <packagereq type='mandatory'>libgtkhtml2-0</packagereq>
+      <packagereq type='mandatory'>libgtkhtml20</packagereq>
+      <packagereq type='mandatory'>libgtkhtml3.0-2</packagereq>
+      <packagereq type='mandatory'>libgtksourceview-common</packagereq>
+      <packagereq type='mandatory'>libgtksourceview1.0-0</packagereq>
+      <packagereq type='mandatory'>libgtkspell0</packagereq>
+      <packagereq type='mandatory'>libgtkxmhtml1</packagereq>
+      <packagereq type='mandatory'>libgtop2</packagereq>
+      <packagereq type='mandatory'>libgucharmap3</packagereq>
+      <packagereq type='mandatory'>libguile-ltdl-1</packagereq>
+      <packagereq type='mandatory'>libguppi16</packagereq>
+      <packagereq type='mandatory'>libgwrapguile1</packagereq>
+      <packagereq type='mandatory'>libhtml-parser-perl</packagereq>
+      <packagereq type='mandatory'>libhtml-tableextract-perl</packagereq>
+      <packagereq type='mandatory'>libhtml-tagset-perl</packagereq>
+      <packagereq type='mandatory'>libhtml-tree-perl</packagereq>
+      <packagereq type='mandatory'>libid3tag0</packagereq>
+      <packagereq type='mandatory'>libidl0</packagereq>
+      <packagereq type='mandatory'>libjpeg62</packagereq>
+      <packagereq type='mandatory'>libkrb53</packagereq>
+      <packagereq type='mandatory'>libldap2</packagereq>
+      <packagereq type='mandatory'>liblinc1</packagereq>
+      <packagereq type='mandatory'>libltdl3</packagereq>
+      <packagereq type='mandatory'>libmad0</packagereq>
+      <packagereq type='mandatory'>libmetacity0</packagereq>
+      <packagereq type='mandatory'>libmpeg1</packagereq>
+      <packagereq type='mandatory'>libnautilus2-2</packagereq>
+      <packagereq type='mandatory'>libnspr4</packagereq>
+      <packagereq type='mandatory'>libnss3</packagereq>
+      <packagereq type='mandatory'>liboaf0</packagereq>
+      <packagereq type='mandatory'>libofx0c102</packagereq>
+      <packagereq type='mandatory'>libogg0</packagereq>
+      <packagereq type='mandatory'>liboggflac1</packagereq>
+      <packagereq type='mandatory'>libopencdk4</packagereq>
+      <packagereq type='mandatory'>libopenh323-1.11.7</packagereq>
+      <packagereq type='mandatory'>liborbit0</packagereq>
+      <packagereq type='mandatory'>liborbit2</packagereq>
+      <packagereq type='mandatory'>libosp4</packagereq>
+      <packagereq type='mandatory'>libpanel-applet2-0</packagereq>
+      <packagereq type='mandatory'>libpango1.0-0</packagereq>
+      <packagereq type='mandatory'>libpango1.0-common</packagereq>
+      <packagereq type='mandatory'>libpaper1</packagereq>
+      <packagereq type='mandatory'>libperl5.8</packagereq>
+      <packagereq type='mandatory'>libpng10-0</packagereq>
+      <packagereq type='mandatory'>libpng12-0</packagereq>
+      <packagereq type='mandatory'>libpng2</packagereq>
+      <packagereq type='mandatory'>libpq3</packagereq>
+      <packagereq type='mandatory'>libpt-1.4.11</packagereq>
+      <packagereq type='mandatory'>libqthreads-12</packagereq>
+      <packagereq type='mandatory'>libraw1394-5</packagereq>
+      <packagereq type='mandatory'>librsvg2-2</packagereq>
+      <packagereq type='mandatory'>libsasl2</packagereq>
+      <packagereq type='mandatory'>libscrollkeeper0</packagereq>
+      <packagereq type='mandatory'>libsdl1.2debian-oss</packagereq>
+      <packagereq type='mandatory'>libsdl1.2debian</packagereq>
+      <packagereq type='mandatory'>libsp1</packagereq>
+      <packagereq type='mandatory'>libspeex1</packagereq>
+      <packagereq type='mandatory'>libstartup-notification0</packagereq>
+      <packagereq type='mandatory'>libtiff3g</packagereq>
+      <packagereq type='mandatory'>libungif4g</packagereq>
+      <packagereq type='mandatory'>liburi-perl</packagereq>
+      <packagereq type='mandatory'>libvorbis0a</packagereq>
+      <packagereq type='mandatory'>libvorbisenc2</packagereq>
+      <packagereq type='mandatory'>libvorbisfile3</packagereq>
+      <packagereq type='mandatory'>libvte-common</packagereq>
+      <packagereq type='mandatory'>libvte4</packagereq>
+      <packagereq type='mandatory'>libwnck-common</packagereq>
+      <packagereq type='mandatory'>libwnck4</packagereq>
+      <packagereq type='mandatory'>libwww-perl</packagereq>
+      <packagereq type='mandatory'>libxft2</packagereq>
+      <packagereq type='mandatory'>libxml1</packagereq>
+      <packagereq type='mandatory'>libxml2</packagereq>
+      <packagereq type='mandatory'>libxrender1</packagereq>
+      <packagereq type='mandatory'>libxslt1.1</packagereq>
+      <packagereq type='mandatory'>libxslt1</packagereq>
+      <packagereq type='mandatory'>libzvt2.0-0</packagereq>
+      <packagereq type='mandatory'>libzvt2</packagereq>
+      <packagereq type='mandatory'>mergeant</packagereq>
+      <packagereq type='mandatory'>metacity</packagereq>
+      <packagereq type='mandatory'>mkisofs</packagereq>
+      <packagereq type='mandatory'>mozilla-browser</packagereq>
+      <packagereq type='mandatory'>mozilla-psm</packagereq>
+      <packagereq type='mandatory'>mozilla-xft</packagereq>
+      <packagereq type='mandatory'>nautilus-cd-burner</packagereq>
+      <packagereq type='mandatory'>nautilus-data</packagereq>
+      <packagereq type='mandatory'>nautilus-media</packagereq>
+      <packagereq type='mandatory'>nautilus</packagereq>
+      <packagereq type='mandatory'>netspeed</packagereq>
+      <packagereq type='mandatory'>oaf</packagereq>
+      <packagereq type='mandatory'>pkg-config</packagereq>
+      <packagereq type='mandatory'>planner</packagereq>
+      <packagereq type='mandatory'>python-gtk2</packagereq>
+      <packagereq type='mandatory'>python2.3-gtk2</packagereq>
+      <packagereq type='mandatory'>python2.3-numeric</packagereq>
+      <packagereq type='mandatory'>rhythmbox</packagereq>
+      <packagereq type='mandatory'>scrollkeeper</packagereq>
+      <packagereq type='mandatory'>sgml-base</packagereq>
+      <packagereq type='mandatory'>sgml-data</packagereq>
+      <packagereq type='mandatory'>slib</packagereq>
+      <packagereq type='mandatory'>sodipodi</packagereq>
+      <packagereq type='mandatory'>symlinks</packagereq>
+      <packagereq type='mandatory'>synaptic</packagereq>
+      <packagereq type='mandatory'>ttf-bitstream-vera</packagereq>
+      <packagereq type='mandatory'>ucf</packagereq>
+      <packagereq type='mandatory'>vorbis-tools</packagereq>
+      <packagereq type='mandatory'>xml-core</packagereq>
+      <packagereq type='mandatory'>xscreensaver</packagereq>
+      <packagereq type='mandatory'>yelp</packagereq>
+      <packagereq type='mandatory'>zenity</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>lsbdev-2.0</id>
+    <uservisible>true</uservisible>
+    <default>false</default>
+    <name>lsbdev-2.0</name>
+    <description>LSB 2.0 software development environment</description>
+    <packagelist>
+      <packagereq type='mandatory'>autoconf</packagereq>
+      <packagereq type='mandatory'>automake1.4</packagereq>
+      <packagereq type='mandatory'>autotools-dev</packagereq>
+      <packagereq type='mandatory'>bison</packagereq>
+      <packagereq type='mandatory'>byacc</packagereq>
+      <packagereq type='mandatory'>cscope</packagereq>
+      <packagereq type='mandatory'>cvs</packagereq>
+      <packagereq type='mandatory'>flex</packagereq>
+      <packagereq type='mandatory'>g++-3.3</packagereq>
+      <packagereq type='mandatory'>g++</packagereq>
+      <packagereq type='mandatory'>gcc-3.3</packagereq>
+      <packagereq type='mandatory'>gcc</packagereq>
+      <packagereq type='mandatory'>gdb</packagereq>
+      <packagereq type='mandatory'>glibc-doc</packagereq>
+      <packagereq type='mandatory'>indent</packagereq>
+      <packagereq type='mandatory'>libstdc++5-3.3-dev</packagereq>
+      <packagereq type='mandatory'>libstdc++5</packagereq>
+      <packagereq type='mandatory'>libtool</packagereq>
+      <packagereq type='mandatory'>manpages-dev</packagereq>
+    </packagelist>
+  </group>
+  <group>
+    <id>firstboot</id>
+    <uservisible>false</uservisible>
+    <default>true</default>
+    <name>firstboot</name>
+    <description>firstboot</description>
+    <packagelist>
+      <packagereq type='mandatory'>firstboot</packagereq>
+      <packagereq type='mandatory'>configlet-frontends</packagereq>
+      <packagereq type='mandatory'>aptconf</packagereq>
+      <packagereq type='mandatory'>etherconf</packagereq>
+      <packagereq type='mandatory'>localeconf</packagereq>
+      <packagereq type='mandatory'>timezoneconf</packagereq>
+    </packagelist>
+  </group>
+  <!-- META GROUPS -->
+  <group>
+    <id>workstation-common</id>
+    <uservisible>false</uservisible>
+    <default>false</default>
+    <name>Workstation Common</name>
+    <grouplist>
+      <groupreq>lsb-2.0</groupreq>
+      <groupreq>linux-2.6</groupreq>
+      <groupreq>xfree86-4.2</groupreq>
+      <groupreq>gnome-2.4</groupreq>
+      <groupreq>firstboot</groupreq>
+    </grouplist>
+  </group>
+  <group>
+    <id>server</id>
+    <uservisible>false</uservisible>
+    <default>false</default>
+    <name>Server</name>
+    <grouplist>
+      <groupreq>lsb-2.0</groupreq>
+      <groupreq>linux-2.6</groupreq>
+      <groupreq>xfree86-4.2</groupreq>
+      <groupreq>gnome-2.4</groupreq>
+      <groupreq>firstboot</groupreq>
+    </grouplist>
+  </group>
+  <!-- group hierarchy -->
+  <grouphierarchy>
+    <category>
+      <name>Core</name>
+      <subcategories>
+        <subcategory>lsb-2.0</subcategory>
+        <subcategory>linux-2.4</subcategory>
+        <subcategory>linux-2.6</subcategory>
+      </subcategories>
+    </category>
+    <category>
+      <name>Desktop</name>
+      <subcategories>
+        <subcategory>xfree86-4.2</subcategory>
+        <subcategory>gnome-2.4</subcategory>
+      </subcategories>
+    </category>
+    <category>
+      <name>Software Development</name>
+      <subcategories>
+        <subcategory>lsbdev-2.0</subcategory>
+      </subcategories>
+    </category>
+  </grouphierarchy>
+</comps>

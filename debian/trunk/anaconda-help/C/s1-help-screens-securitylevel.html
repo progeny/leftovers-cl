@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Firewall Configuration</title><meta name="generator" content="DocBook XSL Stylesheets V1.58.1"><link rel="home" href="index.html" title="Install Help Screens"><link rel="up" href="s1-help-screens-lang.html" title=""><link rel="previous" href="s1-help-screens-netconf.html" title="Network Configuration"><link rel="next" href="s1-help-screens-timezone.html" title="Time Zone Selection"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="sect1" lang="en"><div class="titlepage"><div><h2 class="title" style="clear: both"><a name="s1-help-screens-securitylevel"></a>Firewall Configuration</h2></div></div><p>
+A firewall sits between your computer and the network, and determines which
+resources on your computer remote users on the network are able to access. A
+properly configured firewall can greatly increase the out-of-the-box security of
+your system.
+</p><p>
+Choose the appropriate security level for your system.
+</p><p><b>High Security</b> - By choosing <b>High
+	Security</b>, your system will not accept connections that are
+	not explicitly defined by you. By default, only the following
+	connections are allowed:</p><div class="itemizedlist"><ul type="disc"><li><p>DNS replies</p></li><li><p>DHCP - so any network interfaces that use DHCP can
+	    be properly configured.</p></li></ul></div><p>
+	Using this <b>High Security</b> will not allow the
+	following:</p><div class="itemizedlist"><ul type="disc"><li><p>Active mode FTP (Passive mode FTP, used by default in
+	      most clients, should work fine.)</p></li><li><p>IRC DCC file transfers</p></li><li><p>RealAudio(tm)</p></li><li><p>Remote X Window System clients</p></li></ul></div><p>If you are connecting your system to the Internet, but do not plan
+	to run a server, this is the safest choice. If additional services are
+	needed, you can choose <b>Customize</b> to allow
+	specific services through the firewall.
+      </p><p><b>Medium Security</b> - Choosing <b>Medium
+	  Security</b> will not allow your system to have access to certain
+	resources. By default, access to the following resources are not allowed:</p><div class="itemizedlist"><ul type="disc"><li><p>Ports lower than 1023 - these are the standard reserved ports,
+	    used by most system services, such as
+	    <b>FTP</b>, <b>SSH</b>,
+	    <b>telnet</b>, and
+	    <b>HTTP</b>.</p></li><li><p>NFS server port (2049)</p></li><li><p>The local X Window System display for remote X clients</p></li><li><p>The X Font server port (This is disabled by default in the
+	    font server.)</p></li></ul></div><p>If you want to allow resources such as
+	<b>RealAudio(tm)</b>, while still blocking access to
+	normal system services, choose <b>Medium
+	  Security</b>. You can choose <b>Customize</b> to
+	allow specific services through the firewall.
+      </p><p><b>No Firewall</b> - No firewall allows complete
+	access and does no security checking. It is recommended that this only
+	be selected if you are running on a trusted network (not the Internet),
+	or if you plan to do more detailed firewall configuration later.
+      </p><p>Unless you plan to customize your firewall, make sure
+      <b>Use default firewall rules</b> is selected.</p><p>Choose <b>Customize</b> to add trusted devices or to
+      allow additional incoming interfaces.</p><p><b>Trusted Devices</b> - Checking these for any of
+	your devices allows all traffic coming from that device to be allowed.
+      </p><p>It is not recommended to enable this for devices that are connected
+	to public networks, such as the Internet.</p><p><b>Allow Incoming</b> - Enabling these options allow
+	the specified services to pass through the firewall. Note, during a
+	workstation-class installation, the majority of these services are
+	<span class="emphasis"><em>not</em></span> present on the system.</p><div class="itemizedlist"><ul type="disc"><li><p><b>WWW (HTTP)</b> -
+	    <b>HTTP</b> is the protocol used by
+	    <b>Apache</b> to serve Web pages. If you plan on
+	    making your Web server publicly available, enable this option.
+	  </p></li><li><p><b>FTP</b> - <b>FTP</b> is a
+	    protocol used for remote file transfer. If you plan on making your
+	    <b>FTP</b> server publicly available, enable
+	    this option.</p></li><li><p><b>SSH</b> - Secure Shell
+	    (<b>SSH</b>) is a protocol for logging into and
+	    executing commands on remote machines. It provides secure encrypted
+	    communications.</p></li><li><p><b>DHCP</b> - This allows DHCP queries and
+	    replies, and allows any network interfaces that use DHCP determine
+	    their IP address. DHCP is normally enabled.</p></li><li><p><b>Mail (SMTP)</b> - This allows incoming SMTP
+	    mail delivery. If you need to allow remote hosts to connect directly
+	    to your machine to deliver mail, enable this option. Do not enable
+	    this if you collect your mail from your ISP's server by POP3 or
+	    IMAP, or if you use a tool such as
+	    <b>fetchmail</b>. Note that an improperly
+	    configured SMTP server can allow remote machines to use your server
+	    to send spam.</p></li><li><p><b>Telnet</b> -
+	    <b>Telnet</b> is a protocol for logging into
+	    remote machines. It is unencrypted, and provides little security
+	    from network snooping attacks.
+	  </p></li></ul></div><p><b>Other ports</b> - You can specify that other
+	ports not listed here be allowed through the firewall. The format to use
+	is 'port:protocol' (for example, nfs:udp for a single port or
+	nfs:udp,gopher:tcp for multiple ports).</p></div></body></html>

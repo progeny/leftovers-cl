@@ -1,0 +1,309 @@
+<?xml version="1.0"?>
+<packages>
+  <list>
+    <entry>apt</entry>
+    <entry>base-files</entry>
+    <entry>bash</entry>
+    <entry>bzip2</entry>
+    <entry>coreutils</entry>
+    <entry>debootstrap</entry>
+    <entry>debootstrap-script-cl</entry>
+    <entry>dosfstools</entry>
+    <entry>dpkg</entry>
+    <entry>e2fsprogs</entry>
+    <entry>expat</entry>
+    <entry>findutils</entry>
+    <entry>fontconfig</entry>
+    <entry>grep</entry>
+    <entry>grub-disk</entry>
+    <entry>gtk2-engines-industrial</entry>
+    <entry>gzip</entry>
+    <entry>hdparm</entry>
+    <entry>hostname</entry>
+    <entry>hwdata</entry>
+    <entry>krb5-clients</entry>
+    <entry>kudzu</entry>
+    <entry>less</entry>
+    <entry>libpam-cracklib</entry>
+    <entry>libpam-modules</entry>
+    <entry>libpam-runtime</entry>
+    <entry>locales</entry>
+    <entry>login</entry>
+    <entry>lvm10</entry>
+    <entry>lvm2</entry>
+    <entry>mawk</entry>
+    <entry>mdadm</entry>
+    <!--
+    <entry>module-init-tools</entry>
+    -->
+    <entry>modutils</entry>
+    <entry>mount</entry>
+    <entry>mtools</entry>
+    <entry>net-tools</entry>
+    <entry>netbase</entry>
+    <entry>parted</entry>
+    <entry>passwd</entry>
+    <entry>pciutils</entry>
+    <entry>pcmcia-cs</entry>
+    <entry>perl</entry>
+    <entry>procps</entry>
+    <entry>progsreiserfs</entry>
+    <entry>python</entry>
+    <entry>python-apt</entry>
+    <entry>python-gnome2</entry>
+    <entry>python-gtk2</entry>
+    <entry>python-newt</entry>
+    <entry>python-parted-rh</entry>
+    <entry>python-booty</entry>
+    <entry>python-rhpl</entry>
+    <entry>python-xf86config</entry>
+    <entry>python-xml</entry>
+    <entry>raidtools2</entry>
+    <entry>reiserfsprogs</entry>
+    <entry>rpm</entry>
+    <entry>sed</entry>
+    <entry>sg-utils</entry>
+    <entry>ssh</entry>
+    <entry>syslinux</entry>
+    <entry>tar</entry>
+    <entry>tcsh</entry>
+    <entry>ttf-bitstream-vera</entry>
+    <entry>ttf-freefont</entry>
+    <entry>util-linux</entry>
+    <entry>util-linux-locales</entry>
+    <entry>whiptail</entry>
+    <entry>xbase-clients</entry>
+    <entry>xfonts-100dpi</entry>
+    <entry>xfonts-75dpi</entry>
+    <entry>xfonts-base</entry>
+    <entry>xfonts-intl-chinese</entry>
+    <entry>xfonts-scalable</entry>
+    <entry>xfs</entry>
+    <entry>xserver-xfree86</entry>
+    <entry>xutils</entry>
+  </list>
+  <architecture type="all">
+    <package default="yes">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+    </package>
+    <package name="e2fsprogs">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+for prog in badblocks e2label mke2fs tune2fs; do
+  cp -a $PICAX_DEST/sbin/$prog $PICAX_DEST/usr/sbin
+done
+      </script>
+    </package>
+    <package name="gtk2-engines-industrial">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+ln -s /usr/share/themes/Industrial/gtk-2.0/gtkrc $PICAX_DEST/etc/gtk-2.0/gtkrc
+      </script>
+    </package>
+    <package name="libc6">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="python">
+import os
+ldconf = open("%s/etc/ld.so.conf" % (dest,), "w")
+ldconf.write("/usr/X11R6/lib\n/usr/local/lib\n")
+ldconf.close()
+os.system("sudo chroot %s ldconfig" % (dest,))
+      </script>
+    </package>
+    <package name="libgtk2.0-common">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+sudo chroot $PICAX_DEST /usr/sbin/update-gtk-immodules
+sudo chroot $PICAX_DEST /usr/sbin/update-gdkpixbuf-loaders
+      </script>
+    </package>
+    <package name="libpango1.0-common">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+sudo chroot $PICAX_DEST /usr/bin/pango-querymodules /usr/lib/pango/1.2.0/modules/*.so > $PICAX_DEST/etc/pango/pango.modules
+      </script>
+    </package>
+    <package name="lvm-common">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+ln -s lvm-10 $PICAX_DEST/lib/lvm-default
+      </script>
+    </package>
+    <package name="mawk">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+rm -f $PICAX_DEST/usr/bin/awk
+ln -s mawk $PICAX_DEST/usr/bin/awk
+      </script>
+    </package>
+    <package name="python2.3-gtk2">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+ln -s pygtk.py.python2.3-gtk2 $PICAX_DEST/usr/lib/python2.3/site-packages/pygtk.py
+      </script>
+    </package>
+    <package name="python2.2">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="python">
+import os
+site_path = "%s/usr/lib/python2.2/site.py" % (dest,)
+os.unlink(site_path)
+os.symlink("../../../etc/python2.2/site.py", site_path)
+      </script>
+    </package>
+    <package name="python2.3">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="python">
+import os
+site_path = "%s/usr/lib/python2.3/site.py" % (dest,)
+os.unlink(site_path)
+os.symlink("../../../etc/python2.3/site.py", site_path)
+      </script>
+    </package>
+    <package name="util-linux">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+cp -a $PICAX_DEST/sbin/mkswap $PICAX_DEST/usr/sbin
+      </script>
+    </package>
+    <package name="xfonts-100dpi">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+/usr/sbin/update-fonts-dir $PICAX_DEST/usr/X11R6/lib/X11/fonts/100dpi
+/usr/sbin/update-fonts-alias $PICAX_DEST/usr/X11R6/lib/X11/fonts/100dpi
+      </script>
+    </package>
+    <package name="xfonts-75dpi">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+/usr/sbin/update-fonts-dir $PICAX_DEST/usr/X11R6/lib/X11/fonts/75dpi
+/usr/sbin/update-fonts-alias $PICAX_DEST/usr/X11R6/lib/X11/fonts/75dpi
+      </script>
+    </package>
+    <package name="xfonts-75dpi-transcoded">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+/usr/sbin/update-fonts-dir $PICAX_DEST/usr/X11R6/lib/X11/fonts/75dpi
+/usr/sbin/update-fonts-alias $PICAX_DEST/usr/X11R6/lib/X11/fonts/75dpi
+      </script>
+    </package>
+    <package name="xfonts-base">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+/usr/sbin/update-fonts-dir $PICAX_DEST/usr/X11R6/lib/X11/fonts/misc
+/usr/sbin/update-fonts-alias $PICAX_DEST/usr/X11R6/lib/X11/fonts/misc
+      </script>
+    </package>
+    <package name="xfonts-base-transcoded">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+/usr/sbin/update-fonts-dir $PICAX_DEST/usr/X11R6/lib/X11/fonts/misc
+/usr/sbin/update-fonts-alias $PICAX_DEST/usr/X11R6/lib/X11/fonts/misc
+      </script>
+    </package>
+    <package name="xfonts-intl-chinese">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+/usr/sbin/update-fonts-dir $PICAX_DEST/usr/X11R6/lib/X11/fonts/misc
+/usr/sbin/update-fonts-alias $PICAX_DEST/usr/X11R6/lib/X11/fonts/misc
+      </script>
+    </package>
+    <package name="xfonts-scalable">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+/usr/sbin/update-fonts-dir $PICAX_DEST/usr/X11R6/lib/X11/fonts/Speedo
+/usr/sbin/update-fonts-dir $PICAX_DEST/usr/X11R6/lib/X11/fonts/Type1
+/usr/sbin/update-fonts-alias $PICAX_DEST/usr/X11R6/lib/X11/fonts/Speedo
+/usr/sbin/update-fonts-alias $PICAX_DEST/usr/X11R6/lib/X11/fonts/Type1
+/usr/X11R6/bin/xftcache $PICAX_DEST/usr/X11R6/lib/X11/fonts/Speedo
+/usr/X11R6/bin/xftcache $PICAX_DEST/usr/X11R6/lib/X11/fonts/Type1
+      </script>
+    </package>
+    <package name="xfree86-common">
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh">
+sudo cp $PICAX_DEST/etc/X11/rgb.txt $PICAX_DEST/usr/X11R6/lib/X11/rgb.txt
+      </script>
+    </package>
+  </architecture>
+</packages>
