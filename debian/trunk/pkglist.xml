@@ -76,6 +76,7 @@
     <entry>xfonts-scalable</entry>
     <entry>xfs</entry>
     <entry>xfsprogs</entry>
+    <entry>xlibs</entry>
     <entry>xserver-xfree86</entry>
     <entry>xutils</entry>
   </list>
@@ -269,6 +270,17 @@ cp -a $PICAX_DEST/sbin/mkswap $PICAX_DEST/usr/sbin
 sudo cp $PICAX_DEST/etc/X11/rgb.txt $PICAX_DEST/usr/X11R6/lib/X11/rgb.txt
       </script>
     </package>
+    <package name="xlibs"> 
+      <manidiff>
+        <exclude path="/usr/share/doc"/>
+        <exclude path="/usr/share/man"/>
+        <exclude path="/usr/include"/>
+      </manidiff>
+      <script interpreter="/bin/sh"> 
+ rm -rf $PICAX_DEST/usr/lib/X11/xkb 
+ ln -s /mnt/runtime/etc/X11/xkb $PICAX_DEST/usr/lib/X11/xkb 
+      </script> 
+    </package> 
     <package name="xserver-xfree86">
       <manidiff>
         <exclude path="/usr/share/doc"/>
