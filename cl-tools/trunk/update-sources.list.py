@@ -39,27 +39,31 @@ def main():
         print "%s: %s does not exist (exiting)" % (sys.argv[0], sources_list_d)
         sys.exit(1)
 
-    # Make a backup of SOURCES_LIST:
-    shutil.copy(sources_list, sources_list + ".bak")
-
     sources_list_new = tempfile.mktemp()
-
-    file_old = open(sources_list, "r")
     file_new = open(sources_list_new, "w")
 
-    # Copy SOURCES_LIST to SOURCES_LIST_NEW up to the point where
-    # MAGIC_VALUE_BEGIN is found:
-    line = file_old.readline()
+    # Check for a current sources.list.
+    old_sources_list_found = False
     magic_value_begin_found = False
-    while line:
-        if line[0:len(magic_value_begin)] == magic_value_begin:
-            magic_value_begin_found = True
-            break
-        file_new.write(line)
+    if os.path.exists(sources_list):
+        old_sources_list_found = True
+
+        # Make a backup of SOURCES_LIST:
+        shutil.copy(sources_list, sources_list + ".bak")
+
+        # Copy SOURCES_LIST to SOURCES_LIST_NEW up to the point where
+        # MAGIC_VALUE_BEGIN is found:
+        file_old = open(sources_list, "r")
         line = file_old.readline()
+        while line:
+            if line[0:len(magic_value_begin)] == magic_value_begin:
+                magic_value_begin_found = True
+                break
+            file_new.write(line)
+            line = file_old.readline()
 
     # If MAGIC_VALUE_BEGIN was never found, exit now:
-    if not magic_value_begin_found:
+    if not magic_value_begin_found and old_sources_list_found:
         file_old.close()
         file_new.close()
         os.unlink(sources_list_new)
@@ -96,20 +100,22 @@ def main():
     file_new.write(magic_value_end)
     file_new.write("\n")
 
-    # Read and discard the lines between MAGIC_VALUE_BEGIN and
-    # MAGIC_VALUE_END from SOURCES_LIST:
-    while line:
-        if line[0:len(magic_value_end)] == magic_value_end:
-            break
-        line = file_old.readline()
+    if old_sources_list_found:
+        # Read and discard the lines between MAGIC_VALUE_BEGIN and
+        # MAGIC_VALUE_END from SOURCES_LIST:
+        while line:
+            if line[0:len(magic_value_end)] == magic_value_end:
+                break
+            line = file_old.readline()
 
-    # Copy the remainder of SOURCES_LIST to SOURCES_LIST_NEW:
-    line = file_old.readline()
-    while line:
-        file_new.write(line)
+        # Copy the remainder of SOURCES_LIST to SOURCES_LIST_NEW:
         line = file_old.readline()
+        while line:
+            file_new.write(line)
+            line = file_old.readline()
 
-    file_old.close()
+        file_old.close()
+
     file_new.close()
 
     # Copy the new sources.list into place:
