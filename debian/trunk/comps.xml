@@ -1,6 +1,15 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <comps>
   <group>
+    <id>base</id>
+    <uservisible>false</uservisible>
+    <default>false</default>
+    <name>Base</name>
+    <grouplist>
+      <groupreq>lsb-2.0</groupreq>
+    </grouplist>
+  </group>
+  <group>
     <id>workstation-common</id>
     <uservisible>false</uservisible>
     <default>false</default>
@@ -9,13 +18,31 @@
       <groupreq>lsb-2.0</groupreq>
       <groupreq>linux-2.6</groupreq>
       <groupreq>cups-1.1</groupreq>
+      <groupreq>j2re-1.4</groupreq>
       <groupreq>xfree86-4.3</groupreq>
-      <groupreq>lsbdev-2.0</groupreq>
       <groupreq>gnome-2.6</groupreq>
+      <groupreq>crossover-3.0</groupreq>
       <groupreq>evolution-1.4</groupreq>
-      <groupreq>mozilla-1.5</groupreq>
+      <groupreq>flash-player</groupreq>
       <groupreq>mozilla-firefox-0.8</groupreq>
       <groupreq>openoffice.org-1.1</groupreq>
+    </grouplist>
+  </group>
+  <group>
+    <id>development-tools</id>
+    <uservisible>false</uservisible>
+    <default>false</default>
+    <name>Development Tools</name>
+    <grouplist>
+      <groupreq>cl-devel</groupreq>
+      <groupreq>emacs-21.3</groupreq>
+      <groupreq>j2sdk-1.4</groupreq>
+      <groupreq>lsb-2.0-devel</groupreq>
+      <groupreq>mono</groupreq>
+      <groupreq>perl-5.8</groupreq>
+      <groupreq>python-2.3</groupreq>
+      <groupreq>vim-6.2</groupreq>
+      <groupreq>xml</groupreq>
     </grouplist>
   </group>
   <group>
@@ -25,7 +52,18 @@
     <name>Server</name>
     <grouplist>
       <groupreq>lsb-2.0</groupreq>
-      <groupreq>linux-2.4</groupreq>
+      <groupreq>linux-2.6</groupreq>
     </grouplist>
   </group>
+  <grouphierarchy>
+    <category>
+      <name>Core</name>
+    </category>
+    <category>
+      <name>Desktop</name>
+    </category>
+    <category>
+      <name>Software Development</name>
+    </category>
+  </grouphierarchy>
 </comps>
