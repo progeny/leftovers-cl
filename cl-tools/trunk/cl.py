@@ -27,12 +27,26 @@ import httplib
 import urlparse
 import urllib
 
+import cPickle as pickle
+# import pickle
+
 import apt_pkg
 import rhpl.comps
 
-default_config = { "Dir::Comps": "var/lib/cl-tools/comps/",
-                   "Dir::Comps::Available": "available/",
-                   "Dir::Comps::Installed": "installed/" }
+_default_config = { "Dir::Comps": "var/lib/cl-tools/comps/",
+                    "Dir::Comps::InstalledState": "component.cache" }
+
+# Installed status is stored as a directory of dictionaries, indexed by
+# component ID, with each value corresponding to a component.  The
+# following fields are defined:
+#   id:        Component id
+#   follow:    Whether we should try to keep this component fully installed
+#   status:    Cached component status relative to the available list
+#     values: none, partial, complete
+#   installed: List of installed packages from this component
+#   missing:   List of packages not installed from this component
+
+_istatus = {}
 
 def _retrieve_config_dir_path(key):
     path = ""
@@ -43,16 +57,26 @@ def _retrieve_config_dir_path(key):
     return path
 
 def init(options, argv):
-    global default_config
+    global _default_config
+    global _istatus
 
     apt_pkg.InitConfig()
 
-    for key in default_config.keys():
-        apt_pkg.Config[key] = default_config[key]
+    for key in _default_config.keys():
+        apt_pkg.Config[key] = _default_config[key]
 
     args = apt_pkg.ParseCommandLine(apt_pkg.Config, options, argv)
 
     apt_pkg.InitSystem()
+
+    istatus_path = _retrieve_config_dir_path("Dir::Comps::InstalledState")
+    if os.path.exists(istatus_path):
+        istatus_f = open(istatus_path)
+        _istatus = pickle.load(istatus_f)
+        istatus_f.close()
+    else:
+        status("No installed cache found; creating one.")
+        update_installed()
 
     return args
 
@@ -109,7 +133,6 @@ def update_apt():
 
 def update_available():
     compsdir = _retrieve_config_dir_path("Dir::Comps")
-    availabledir = _retrieve_config_dir_path("Dir::Comps::Available")
 
     for (fmt, uri, dist, comps) in parse_sources_list():
         if fmt == "deb":
@@ -154,62 +177,118 @@ def update_available():
                         continue
                 os.rename(comps_xml_tmp, comps_xml)
 
-                # Create links to the downloaded comps.xml in
-                # AVAILABLEDIR using each of the subcomponent names,
-                # so they can be manipulated using the names:
-                comp = rhpl.comps.Comps(comps_xml)
-                for group in comp.groups.values():
-                    comps_xml_sub = "%s/%s.xml" % (availabledir, group.id)
-                    if not os.path.exists(comps_xml_sub):
-                        os.symlink(comps_xml, comps_xml_sub)
-
                 status("updated.")
 
 def update_installed():
-    pass
+    global _istatus
+
+    compsdir = _retrieve_config_dir_path("Dir::Comps")
+    status_path = _retrieve_config_dir_path("Dir::State::status")
+    istatus_path = _retrieve_config_dir_path("Dir::Comps::InstalledState")
+
+    # Get a list of installed packages.
+    installed_pkgs = []
+    status_f = open(status_path)
+
+    status_parser = apt_pkg.ParseTagFile(status_f)
+    while status_parser.Step():
+        if string.find(status_parser.Section["Status"], "not-installed") != -1:
+            continue
+        installed_pkgs.append(status_parser.Section["Package"])
+
+    status_f.close()
+
+    # Now look at each available component to see what's installed.
+    for file in os.listdir(compsdir):
+
+        # Parse the component comps.xml.
+        comps_xml = "%s/%s" % (compsdir, file)
+
+        m = re.search("\S+\\.xml", file)
+        if m is None:
+            continue
+        else:
+            file_id = file[m.start():m.end() - 4]
+
+        comp = rhpl.comps.Comps(comps_xml)
+
+        # Compare each group in the file.
+        for group in comp.groups.values():
+
+            # New component (or upgrading from old cl-tools).
+            if not _istatus.has_key(group.id):
+                _istatus[group.id] = { "id": group.id,
+                                       "follow": False,
+                                       "status": "new" }
+
+            # Clear out the old package lists.
+            _istatus[group.id]["missing"] = []
+            _istatus[group.id]["installed"] = []
+            missing_optional = []
+
+            # Look through the package list for missing and installed
+            # packages.
+            for (type, package) in group.packages.values():
+                if package not in installed_pkgs:
+                    if type in ("mandatory", "default"):
+                        _istatus[group.id]["missing"].append(package)
+                    else:
+                        # XXX: We don't use this yet, but we could.
+                        missing_optional.append(package)
+                else:
+                    _istatus[group.id]["installed"].append(package)
+
+            # Set the new status.
+            if len(_istatus[group.id]["missing"]):
+                if len(_istatus[group.id]["installed"]):
+                    new_status = "partial"
+                else:
+                    new_status = "none"
+            else:
+                new_status = "complete"
+
+                # If this is a new component and it's completely
+                # installed, assume it was installed explicitly.
+                if _istatus[group.id]["status"] == "new":
+                    _istatus[group.id]["follow"] = True
+
+            _istatus[group.id]["status"] = new_status
+
+    # We're done.  Save the installed status for next time.
+    istatus_f = open(istatus_path, "w")
+    pickle.dump(_istatus, istatus_f)
+    istatus_f.close()
 
 def install(id):
-    availabledir = _retrieve_config_dir_path("Dir::Comps::Available")
-    installeddir = _retrieve_config_dir_path("Dir::Comps::Installed")
-    comps_xml_available = "%s/%s.xml" % (availabledir, id)
-    comps_xml_installed = "%s/%s.xml" % (installeddir, id)
+    global _istatus
 
-    if os.path.exists(comps_xml_installed):
-        raise ComponentError, "Component %s already installed." % id
-
-    if not os.path.exists(comps_xml_available):
+    if not _istatus.has_key(id):
         raise ComponentError, "Component %s not found (did you run --update?)"\
               % id
 
-    # Parse comps.xml:
-    comp = rhpl.comps.Comps(comps_xml_available)
+    if _istatus[id]["status"] == "complete":
+        status("Component %s is up to date." % id)
+        return
 
     # Build the list of packages to install:
-    packages_to_install = []
-    for group in comp.groups.values():
-        # Only add the packages in the subcomponent ID, not the other
-        # subcomponents.
-        if group.id != id:
-            continue
-        for (type, package) in group.packages.values():
-            # Only add the "mandatory" and "default" packages:
-            if type == "mandatory" or type =="default":
-                packages_to_install.append(package)
-
-    packages = string.join(packages_to_install, " ")
+    packages = string.join(_istatus[id]["missing"], " ")
 
     # Call aptitude install to install PACKAGES_TO_INSTALL:
     os.system("aptitude install %s" % packages)
 
-    # Copy the comps.xml used during installation to INSTALLEDDIR for
-    # later use during upgrade and remove operations:
-    shutil.copy(comps_xml_available, comps_xml_installed)
+    # Update the installed list.
+    status("Updating list of installed components...")
+    _istatus[id]["follow"] = True
+    update_installed()
 
 def remove(id):
-    installeddir = _retrieve_config_dir_path("Dir::Comps::Installed")
-    comps_xml_installed = "%s/%s.xml" % (installeddir, id)
+    global _istatus
 
-    if not os.path.exists(comps_xml_installed):
+    if not _istatus.has_key(id):
+        raise ComponentError, "Component %s not found (did you run --update?)"\
+              % id
+
+    if _istatus[id]["status"] == "none":
         raise ComponentError, "Component %s not installed." % id
 
     # Parse comps.xml:
@@ -217,17 +296,12 @@ def remove(id):
 
     # Build the list of packages to remove:
     packages_to_remove = []
-    for group in comp.groups.values():
-        # Only remove the packages in the subcomponent ID, not the
-        # other subcomponents.
-        if group.id != id:
+    for package in _istatus[id]["installed"]:
+        # Verify that the package is actually installed before adding
+        # it to the list, to suppress spurious warnings:
+        if not os.path.exists("/var/lib/dpkg/info/%s.list" % package):
             continue
-        for (type, package) in group.packages.values():
-            # Verify that the package is actually installed before adding
-            # it to the list, to suppress spurious warnings:
-            if not os.path.exists("/var/lib/dpkg/info/%s.list" % package):
-                continue
-            packages_to_remove.append(package)
+        packages_to_remove.append(package)
 
     # XXX need to be smarter here about only removing packages that
     # aren't depended upon by a package in another component..
@@ -239,140 +313,53 @@ def remove(id):
     # check ("need to be smarter here...")
     os.system("dpkg --remove %s" % packages)
 
-    # Remove the comps.xml used during installation from INSTALLEDDIR:
-    os.unlink(comps_xml_installed)
+    # Update the installed list.
+    status("Updating list of installed components...")
+    _istatus[id]["follow"] = False
+    update_installed()
 
 def upgrade():
-    availabledir = _retrieve_config_dir_path("Dir::Comps::Available")
-    installeddir = _retrieve_config_dir_path("Dir::Comps::Installed")
+    global _istatus
 
-    components_updated = []
+    # Install each component we're following.  This will upgrade
+    # the packages in each component individually, install new
+    # packages, and so on.
     packages_to_install = []
-    packages_to_remove = []
+    for id in _istatus.keys():
+        if _istatus[id]["follow"]:
+            packages_to_install.extend(_istatus[id]["installed"])
 
-    for file in os.listdir(installeddir):
-        comps_xml_available = "%s/%s" % (availabledir, file)
-        comps_xml_installed = "%s/%s" % (installeddir, file)
-
-        m = re.search("\S+\\.xml", file)
-        if m is None:
-            # Eh?
-            continue
-        else:
-            id = file[m.start():m.end() - 4]
-
-        if not os.path.exists(comps_xml_available):
-            # No updated information for this component is available:
-            continue
-
-        if filecmp.cmp(comps_xml_installed, comps_xml_available):
-            # Component is unchanged:
-            continue
-
-        # Parse comps.xml:
-        comp_available = rhpl.comps.Comps(comps_xml_available)
-        comp_installed = rhpl.comps.Comps(comps_xml_installed)
-
-        # Build dictionaries of available and installed packages, for
-        # use in determining which packages have been added and which
-        # packages have been removed from the component:
-
-        packages_available = {}
-        for group in comp_available.groups.values():
-            # Only add the packages in the subcomponent ID, not the
-            # other subcomponents.
-            if group.id != id:
-                continue
-            for (type, package) in group.packages.values():
-                # Only add the "mandatory" and "default" packages:
-                if type == "mandatory" or type =="default":
-                    packages_available[package] = True
-
-        packages_installed = {}
-        for group in comp_installed.groups.values():
-            # Only add the packages in the subcomponent ID, not the
-            # other subcomponents.
-            if group.id != id:
-                continue
-            for (type, package) in group.packages.values():
-                # Only add the "mandatory" and "default" packages:
-                if type == "mandatory" or type =="default":
-                    packages_installed[package] = True
-
-        # Each package in the PACKAGES_AVAILABLE dictionary that is not
-        # in the PACKAGES_INSTALLED dictionary is a new package. Add it
-        # to the list of packages to be installed:
-        for package in packages_available.keys():
-            if not packages_installed.has_key(package):
-                packages_to_install.append(package)
-
-        # Each package in the PACKAGES_INSTALLED dictionary that
-        # is not in the PACKAGES_AVAILABLE dictionary is a package that
-        # has been removed. Add it to the list of packages to be
-        # removed.
-        for package in packages_installed.keys():
-            if not packages_available.has_key(package):
-                packages_to_remove.append(package)
-
-        components_updated.append(id)
-
-    # Deal with the case where a package has moved from one component
-    # to another (i.e., don't remove it):
-    for package in packages_to_remove:
-        try:
-            i = packages_to_install.index(package)
-        except ValueError, e:
-            continue
-        if i >= 0:
-            packages_to_remove.remove(package)
-            
-    os.system("aptitude upgrade")
-
-    # Install packages that have been added to a component:
     packages = string.join(packages_to_install, " ")
-    if packages != "":
-        os.system("aptitude install %s" % packages)
+
+    os.system("aptitude install " + packages)
 
     # Remove packages that have been removed from a component:
-    packages = string.join(packages_to_remove, " ")
-    if packages != "":
-        # XXX we always succeed here too (see comp_remove)
-        os.system("dpkg --remove %s" % packages)
+    # XXX: with the new system, we've lost this ability.  We need
+    #      to restore it.
 
+    # Take care of the rest of the packages upgrades that we may need.
+    status("Upgrading non-component packages...")
     os.system("aptitude upgrade")
 
-    for id in components_updated:
-        comps_xml_available = "%s/%s.xml" % (availabledir, id)
-        comps_xml_installed = "%s/%s.xml" % (installeddir, id)
-        # Update the comps.xml used during installation in INSTALLEDDIR:
-        shutil.copy(comps_xml_available, comps_xml_installed)
+    # Update the installed list.
+    status("Updating list of installed components...")
+    _istatus[id]["follow"] = False
+    update_installed()
 
 def get_available():
-    availabledir = _retrieve_config_dir_path("Dir::Comps::Available")
-    available = []
-    for file in os.listdir(availabledir):
-        m = re.search("\S+\\.xml", file)
-        if m is None:
-            # Eh?
-            continue
-        else:
-            id = file[m.start():m.end() - 4]
-        available.append(id)
+    global _istatus
 
+    available = list(_istatus.keys())
     available.sort()
     return tuple(available)
 
 def get_installed():
-    installeddir = _retrieve_config_dir_path("Dir::Comps::Installed")
+    global _istatus
+
     installed = []
-    for file in os.listdir(installeddir):
-        m = re.search("\S+\\.xml", file)
-        if m is None:
-            # Eh?
-            continue
-        else:
-            id = file[m.start():m.end() - 4]
-        installed.append(id)
+    for id in _istatus.keys():
+        if _istatus[id]["status"] == "complete":
+            installed.append(id)
 
     installed.sort()
     return tuple(installed)
