@@ -7,7 +7,7 @@ Standards-Version: 3.6.0
 
 Package: cl-tools
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, python, python-rhpl
+Depends: ${shlibs:Depends}, ${misc:Depends}, python, python-apt, python-rhpl
 Description: Componentized Linux end-user tools
  This package contains tools for end users of Componentized Linux
  and Componentized Linux-based distributions.
