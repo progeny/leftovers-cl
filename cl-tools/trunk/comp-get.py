@@ -24,17 +24,7 @@ import apt_pkg
 sys.path.append("/usr/share/cl-tools")
 import cl
 
-cachedir = "/var/lib/cl-tools"
-compsdir = cachedir + "/comps"
-availabledir = compsdir + "/available"
-installeddir = compsdir + "/installed"
-
-# For each source in SOURCES_LIST, check the source for a comps.xml,
-# and if one exists, download it and save it to COMPSDIR; then, for
-# each subcomponent, create a link to the comps.xml in
-# AVAILABLEDIR using the subcomponent name, so the user can
-# manipulate it using that name. Also call "aptitude update" so
-# the APT database is up to date with any component updates.
+# Update the component and package information.
 def comps_update():
     cl.update_apt()
 
