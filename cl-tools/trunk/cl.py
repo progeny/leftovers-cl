@@ -20,19 +20,27 @@
 import apt_pkg
 import rhpl.comps
 
-cachedir = "/var/lib/cl-tools"
-compsdir = cachedir + "/comps"
-availabledir = compsdir + "/available"
-installeddir = compsdir + "/installed"
+default_config = { "Dir::Comps": "var/lib/cl-tools/comps",
+                   "Dir::Comps::Available": "available",
+                   "Dir::Comps::Installed": "installed" }
+
+def _retrieve_config_dir_path(key):
+    path = ""
+    while len(path) < 1 or path[0] != "/":
+        path = apt_pkg.Config[config_key] + path
+        config_key = string.join(string.split(config_key, "::")[:-1], "::")
+    return path
 
 def init(options, argv):
-    global cachedir
-    global compsdir
-    global availabledir
-    global installeddir
+    global default_config
 
     apt_pkg.InitConfig()
+
+    for key in default_config.keys():
+        apt_pkg.Config[key] = default_config[key]
+
     args = apt_pkg.ParseCommandLine(apt_pkg.Config, options, argv)
+
     apt_pkg.InitSystem()
 
     return args
@@ -57,11 +65,7 @@ def parse_sources_list(path = None):
     recognized_repo_types = ("deb", "deb-src")
 
     if path is None:
-        config_key = "Dir::Etc::SourceList"
-        path = ""
-        while len(path) < 1 or path[0] != "/":
-            path = apt_pkg.Config[config_key] + path
-            config_key = string.join(string.split(config_key, "::")[:-1], "::")
+        path = _retrieve_config_dir_path("Dir::Etc::SourceList")
 
     repos = []
     f = open(path)
@@ -76,6 +80,9 @@ def update_apt():
     os.system("aptitude update")
 
 def update_available():
+    compsdir = _retrieve_config_dir_path("Dir::Comps")
+    availabledir = _retrieve_config_dir_path("Dir::Comps::Available")
+
     for (fmt, uri, dist, comps) in cl.parse_sources_list():
         if fmt == "deb":
             # For each (APT) component, construct a URL to
