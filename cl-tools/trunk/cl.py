@@ -42,7 +42,7 @@ _default_config = { "Dir::Comps": "var/lib/cl-tools/comps/",
 #   id:        Component id
 #   follow:    Whether we should try to keep this component fully installed
 #   status:    Cached component status relative to the available list
-#     values: none, partial, complete
+#     values: none, partial, complete, legacy
 #   installed: List of installed packages from this component
 #   missing:   List of packages not installed from this component
 #   obsolete:  List of packages no longer part of this component
@@ -258,6 +258,8 @@ def update_installed():
     status_path = _retrieve_config_dir_path("Dir::State::status")
     istatus_path = _retrieve_config_dir_path("Dir::Comps::InstalledState")
 
+    current_components = []
+
     # Get a list of installed packages.
     installed_pkgs = _get_installed_pkgs()
 
@@ -278,7 +280,10 @@ def update_installed():
         # Compare each group in the file.
         for group in comp.groups.values():
 
-            # New component (or upgrading from old cl-tools).
+            # Remember that we've seen this component.
+            current_components.append(group.id)
+
+            # Check for new component (or upgrading from old cl-tools).
             _check_istatus(group.id)
 
             # Clear out the old package lists.
@@ -327,6 +332,15 @@ def update_installed():
             _istatus[group.id]["missing"] = missing
             _istatus[group.id]["installed"] = installed
             _istatus[group.id]["obsolete"] = obsolete
+
+    # Now look for components that have disappeared, and remove
+    # them from the status file if they aren't important.
+    for component in _istatus.keys():
+        if component not in current_components:
+            if not _istatus[component]["follow"]:
+                del _istatus[component]
+            else:
+                _istatus[component]["status"] = "legacy"
 
     # We're done.  Save the installed status for next time.
     istatus_f = open(istatus_path, "w")
