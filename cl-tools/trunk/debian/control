@@ -1,0 +1,16 @@
+Source: cl-tools
+Section: base
+Priority: optional
+Maintainer: Ian Murdock <imurdock@progeny.com>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.0
+
+Package: cl-tools
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Conflicts: debootstrap-script-cl
+Provides: debootstrap-script-cl
+Replaces: debootstrap-script-cl
+Description: Componentized Linux tools
+ This package contains tools for developers of Componentized Linux
+ and Componentized Linux-based distributions.

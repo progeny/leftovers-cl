@@ -1,0 +1,49 @@
+cl-tools (1.1) unstable; urgency=low
+
+  * New version.
+
+  * Rename cl debootstrap script to "debootstrap-script".
+
+  * debootstrap-script: Applied patch from Jeff Licquia to remove
+    bogus Postfix configuration from base CL tarball.
+
+  * Added comp2repo from Progeny subversion. Main changes are:
+
+    - Rather than specifying the full sources.list on the command line
+    *every time*, comp2repo now identifies upstream repos by a string.
+    So, for example, you now say, simply, "comp2repo ./comps.xml sarge"
+    instead of "comp2repo ./comps.xml deb http://archive.progeny.com/debian
+    sarge main" when you update a component.
+
+    - comp2repo now stores the upstream Packages and Sources files in
+    /var/cache/cl-tools. So, "comp2repo --update sarge URI DIST COMP" will
+    download the Packages and Sources files associated with URI, DIST, and
+    COMP and store them in /var/cache/cl-tools. The cache file names
+    associate the URI, DIST, and COMP to the repo id, so you don't have to
+    specify it when updating the components themselves (e.g., comp2repo
+    --update sarge http://archive.progeny.com/debian sarge main results
+    in a cache files named
+
+        Packages.sarge.http%3A%2F%2Farchive.progeny.com%2Fdebian%2Fdists%2Fsarge%2Fmain
+
+    and
+
+        Sources.sarge.http%3A%2F%2Farchive.progeny.com%2Fdebian%2Fdists%2Fsarge%2Fmain
+
+    respectively.
+
+    - It is no longer required to specify "deb"--deb format is assumed.
+    Previous versions didn't do anything with this anyway. We'll add in
+    rpm support in a later version.
+
+  * Added merge-comps. Renamed merge-comps compsmerge, so all cl-tools
+    have a common prefix.
+
+ -- Ian Murdock <imurdock@progeny.com>  Thu, 19 Aug 2004 09:34:33 -0500
+
+cl-tools (1.0) unstable; urgency=low
+
+  * Initial release. Includes /usr/lib/debootstrap/scripts/cl (and, thus,
+    "Conflicts" with, "Provides" and "Replaces" debootstrap-script-cl.)
+
+ -- Ian Murdock <imurdock@progeny.com>  Fri, 13 Aug 2004 15:30:37 -0500
