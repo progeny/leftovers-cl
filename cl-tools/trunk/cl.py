@@ -17,3 +17,19 @@
 # Written by Ian Murdock <imurdock@progeny.com>
 #         and Jeff Licquia <licquia@progeny.com>.
 
+# XXX apt_pkg should provide some mechanism for iterating over
+# the lines in sources.list. It's pretty silly that we have to
+# parse it ourselves.
+
+def parse_sources_list(path):
+    recognized_repo_types = ("deb", "deb-src")
+
+    repos = []
+    f = open(path)
+    for line in f:
+        items = line.split()
+        if items[0] in recognized_repo_types:
+            repos.append((items[0], items[1], items[2], tuple(items[3:])))
+
+    return tuple(repos)
+
