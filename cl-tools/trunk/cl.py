@@ -34,14 +34,14 @@ import apt_pkg
 import rhpl.comps
 
 _default_config = { "Dir::Comps": "var/lib/cl-tools/comps/",
-                    "Dir::Comps::InstalledState": "component.cache" }
+                    "Dir::Comps::InstalledState": "component.status" }
 
 # Installed status is stored as a directory of dictionaries, indexed by
 # component ID, with each value corresponding to a component.  The
 # following fields are defined:
 #   id:        Component id
 #   follow:    Whether we should try to keep this component fully installed
-#   status:    Cached component status relative to the available list
+#   status:    Component status relative to the available list
 #     values: none, partial, complete, legacy
 #   installed: List of installed packages from this component
 #   missing:   List of packages not installed from this component
@@ -49,7 +49,7 @@ _default_config = { "Dir::Comps": "var/lib/cl-tools/comps/",
 
 _istatus = {}
 
-# This checks to make sure that there's a cache entry for a given
+# This checks to make sure that there's a status entry for a given
 # component, and creates it if not.  Callers of this function should
 # also check for the "new" status and set it appropriately.
 def _check_istatus(id):
@@ -109,7 +109,7 @@ def init(options, argv):
         _istatus = pickle.load(istatus_f)
         istatus_f.close()
     else:
-        status("No installed cache found; creating one.")
+        status("No installed status file found; creating one.")
         update_installed()
 
     return args
@@ -168,7 +168,7 @@ def update_apt():
 def update_available():
     global _istatus
 
-    do_cache_update = False
+    do_status_update = False
     compsdir = _retrieve_config_dir_path("Dir::Comps")
 
     for (fmt, uri, dist, comps) in parse_sources_list():
@@ -222,10 +222,10 @@ def update_available():
                     for group in comps.groups.values():
 
                         # If we find brand-new components, be sure to
-                        # do a cache update when we're done.
+                        # do a status update when we're done.
                         _check_istatus(group.id)
                         if _istatus[group.id]["status"] == "new":
-                            do_cache_update = True
+                            do_status_update = True
                             continue
 
                         # Don't bother with components we're not following.
@@ -247,7 +247,7 @@ def update_available():
 
                 status("updated.")
 
-    if do_cache_update:
+    if do_status_update:
         status("New components found, updating installed status...")
         update_installed()
 
