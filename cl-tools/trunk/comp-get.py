@@ -266,7 +266,7 @@ Commands are:
     if apt_pkg.Config.has_key("APT::Get::Purge"):
         purge = apt_pkg.Config["APT::Get::Purge"]
 
-    action = args[0]
+    action = args.pop(0)
     if action not in action_list.keys():
         usage(1)
 
