@@ -1,3 +1,18 @@
+cl-tools (1.2pre1.3) unstable; urgency=low
+
+  * New version.
+
+  * comp2repo.py: Store the cached Packages and Sources files in
+    $HOME/.cl-tools rather than /var/cache/cl-tools, to avoid
+    permission problems.
+
+  * comp2repo.py: Allow comps.xml to contain multiple "group"
+    elements. In essence, this allows a single component *repository*
+    to contain multiple components, and will be used to
+    provide optional development and internationalization components.
+
+ -- Ian Murdock <imurdock@progeny.com>  Wed, 29 Sep 2004 11:38:35 -0500
+
 cl-tools (1.2) unstable; urgency=low
 
   * New version.

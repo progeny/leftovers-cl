@@ -39,7 +39,7 @@ options = [ 'dry-run', 'update' ]
 dryrun = 0
 update = 0
 
-cachedir = "/var/cache/cl-tools"
+cachedir = os.environ["HOME"] + "/.cl-tools"
 
 # parse command line
 
@@ -63,12 +63,15 @@ else:
     comps_xml = args[0]
     upstream_id = args[1]
 
-# if we were passed the --update flag, download them from upstream
+# if we were passed the --update flag, download the Packages and
+# Sources files from upstream
 
 # XXX - need to enforce only one upstream source for a given upstream_id
 
 if update:
     if not dryrun:
+        if not os.path.exists(cachedir):
+            os.mkdir(cachedir)
         url_base = "%s/dists/%s/%s" \
               % (upstream_apt_uri, upstream_apt_dist, upstream_apt_comp)
         url = url_base + "/binary-i386/Packages.gz"
@@ -101,9 +104,6 @@ apt_pkg.init()
 # parse comps.xml using Red Hat's comps module
 comps = rhpl.comps.Comps(comps_xml)
 
-for group in comps.groups.values():
-    id = group.id; name = group.name
-
 # create binary-i386 and source directories if they don't already exist
 if not os.path.exists("./binary-i386"):
     os.mkdir("binary-i386")
@@ -112,10 +112,8 @@ if not os.path.exists("./source"):
 
 # determine the upstream uri given UPSTREAM_ID
 
-cache_packages = glob.glob("/var/cache/cl-tools/Packages.%s.*" \
-        % (upstream_id))[0]
-cache_sources = glob.glob("/var/cache/cl-tools/Sources.%s.*" \
-        % (upstream_id))[0]
+cache_packages = glob.glob(cachedir + "/Packages.%s.*" % (upstream_id))[0]
+cache_sources = glob.glob(cachedir + "/Sources.%s.*" % (upstream_id))[0]
 cache_packages_basename = os.path.basename(cache_packages)
 url_base = urllib.unquote_plus(cache_packages_basename[len(upstream_id) + 10:])
 m = re.search("dists", url_base)
@@ -308,6 +306,9 @@ for package in packages.keys():
 
 # XXX this is currently pretty inflexibile and assumes the
 # Progeny layout convention of dists/cl/COMPONENT/...
+
+# We assume the first group is the name of the component repository.
+id = comps.groups.values()[0].id; name = comps.groups.values()[0].name
 
 os.chdir("../../../")
 os.system("apt-ftparchive packages dists/cl/%s/binary-i386 " \
