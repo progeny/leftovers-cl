@@ -1,5 +1,7 @@
 cl-tools (1.4.1) unstable; urgency=low
 
+  * New version.
+
   * comp-get.py: Don't try to be intelligent about whether a call to
     aptitude succeeds or fails; we simply don't have enough information now
     to know for sure (e.g., if aptitude install returns non-zero, is
