@@ -136,3 +136,41 @@ def update_available():
                         os.symlink(comps_xml, comps_xml_sub)
 
                 status("updated.")
+
+def install(id):
+    availabledir = _retrieve_config_dir_path("Dir::Comps::Available")
+    installeddir = _retrieve_config_dir_path("Dir::Comps::Installed")
+    comps_xml_available = "%s/%s.xml" % (availabledir, id)
+    comps_xml_installed = "%s/%s.xml" % (installeddir, id)
+
+    if os.path.exists(comps_xml_installed):
+        status("Component %s already installed." % id)
+        return
+
+    if not os.path.exists(comps_xml_available):
+        status("Component %s not found (did you run --update?)" % id)
+        return
+
+    # Parse comps.xml:
+    comp = rhpl.comps.Comps(comps_xml_available)
+
+    # Build the list of packages to install:
+    packages_to_install = []
+    for group in comp.groups.values():
+        # Only add the packages in the subcomponent ID, not the other
+        # subcomponents.
+        if group.id != id:
+            continue
+        for (type, package) in group.packages.values():
+            # Only add the "mandatory" and "default" packages:
+            if type == "mandatory" or type =="default":
+                packages_to_install.append(package)
+
+    packages = string.join(packages_to_install, " ")
+
+    # Call aptitude install to install PACKAGES_TO_INSTALL:
+    os.system("aptitude install %s" % packages)
+
+    # Copy the comps.xml used during installation to INSTALLEDDIR for
+    # later use during upgrade and remove operations:
+    shutil.copy(comps_xml_available, comps_xml_installed)

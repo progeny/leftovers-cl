@@ -55,40 +55,7 @@ def comps_update():
 
 # Install the component ID.
 def comp_install(id):
-    comps_xml_available = "%s/%s.xml" % (availabledir, id)
-    comps_xml_installed = "%s/%s.xml" % (installeddir, id)
-
-    if os.path.exists(comps_xml_installed):
-        print "Component %s already installed." % id
-        sys.exit(1)
-
-    if not os.path.exists(comps_xml_available):
-        print "Component %s not found (did you run --update?)" % id
-        sys.exit(1)
-
-    # Parse comps.xml:
-    comp = rhpl.comps.Comps(comps_xml_available)
-
-    # Build the list of packages to install:
-    packages_to_install = []
-    for group in comp.groups.values():
-        # Only add the packages in the subcomponent ID, not the other
-        # subcomponents.
-        if group.id != id:
-            continue
-        for (type, package) in group.packages.values():
-            # Only add the "mandatory" and "default" packages:
-            if type == "mandatory" or type =="default":
-                packages_to_install.append(package)
-
-    packages = string.join(packages_to_install, " ")
-
-    # Call aptitude install to install PACKAGES_TO_INSTALL:
-    os.system("aptitude install %s" % packages)
-
-    # Copy the comps.xml used during installation to INSTALLEDDIR for
-    # later use during upgrade and remove operations:
-    shutil.copy(comps_xml_available, comps_xml_installed)
+    cl.install(id)
 
 # Remove the component ID.
 def comp_remove(id):
