@@ -77,7 +77,7 @@ if update:
         print "Downloading %s..." % url
         if not dryrun:
             urllib.urlretrieve(url, cache_packages + ".gz")
-            os.system("zcat %s >> %s" \
+            os.system("zcat %s > %s" \
                       % (cache_packages + ".gz", cache_packages))
             os.unlink(cache_packages + ".gz")
 
@@ -87,7 +87,7 @@ if update:
         print "Downloading %s..." % url
         if not dryrun:
             urllib.urlretrieve(url, cache_sources + ".gz")
-            os.system("zcat %s >> %s" \
+            os.system("zcat %s > %s" \
                       % (cache_sources + ".gz", cache_sources))
             os.unlink(cache_sources + ".gz")
 

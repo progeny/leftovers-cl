@@ -1,3 +1,15 @@
+cl-tools (1.2) unstable; urgency=low
+
+  * New version.
+
+  * comp2repo.py: Overwrite the cached Packages and Sources files
+    rather than append to them.
+
+  * debootstrap-script: Remove references to ipchains and libgdmg1,
+    which have been removed from the core component.
+
+ -- Ian Murdock <imurdock@progeny.com>  Mon, 30 Aug 2004 13:30:55 -0500
+
 cl-tools (1.1) unstable; urgency=low
 
   * New version.
