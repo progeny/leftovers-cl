@@ -31,7 +31,7 @@ magic_value_begin = "### begin-auto"
 magic_value_end = "### end-auto"
 
 def main():
-    if len(sys.argv) != 0:
+    if len(sys.argv) != 1:
         print "Usage: %s" % sys.argv[0]
         sys.exit(1)
 
@@ -80,6 +80,8 @@ def main():
     file_new.write("\n")
         
     # Concatenate the files in SOURCES_LIST_D to SOURCES_LIST_NEW:
+    # XXX this should make sure MAGIC_VALUE_BEGIN and MAGIC_VALUE_END
+    # are not present
     sources_list_d_files = os.listdir(sources_list_d)
     sources_list_d_files.sort()
     for file in sources_list_d_files:
