@@ -25,7 +25,7 @@
       <groupreq>linux-2.6</groupreq>
       <groupreq>lsb-2.0</groupreq>
       <groupreq>mono-1.0</groupreq>
-      <groupreq>mozilla-firefox-1.0RC1</groupreq>
+      <groupreq>mozilla-firefox-1.0</groupreq>
       <groupreq>openoffice.org-1.1</groupreq>
       <groupreq>progeny</groupreq>
       <groupreq>xfree86-4.3</groupreq>
@@ -38,14 +38,11 @@
     <name>Development Tools</name>
     <grouplist>
       <groupreq>cl-devel</groupreq>
-      <groupreq>eclipse-2.1</groupreq>
-      <groupreq>eclipse-2.1-devel</groupreq>
       <groupreq>emacs</groupreq>
       <groupreq>evolution-2.0-devel</groupreq>
       <groupreq>gimp-2.0</groupreq>
       <groupreq>gnome-2.8-devel</groupreq>
       <groupreq>j2sdk-1.4</groupreq>
-      <groupreq>java-devel</groupreq>
       <groupreq>linux-2.6-devel</groupreq>
       <groupreq>lsb-2.0-devel</groupreq>
       <groupreq>mono-1.0-devel</groupreq>
