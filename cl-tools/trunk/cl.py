@@ -475,3 +475,6 @@ def get_installed():
 
 def get_partial():
     return _get_by_status(("partial",))
+
+def get_legacy():
+    return _get_by_status(("legacy",))

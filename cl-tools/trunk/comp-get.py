@@ -65,6 +65,10 @@ def comps_list_extra():
     for package in cl.get_extra_packages():
         print package
 
+def comps_list_legacy():
+    for package in cl.get_legacy():
+        print package
+
 def status_cb(s):
     print s
 
@@ -76,7 +80,8 @@ def main():
                     "list-available": (comps_list_available, False),
                     "list-installed": (comps_list_installed, False),
                     "list-partial": (comps_list_partial, False),
-                    "list-extra": (comps_list_extra, False) }
+                    "list-extra": (comps_list_extra, False),
+                    "list-legacy": (comps_list_legacy, False) }
 
     def usage(status):
         print """Usage: %s [OPTIONS] COMMAND [COMPONENT]
@@ -93,7 +98,8 @@ Commands are:
   list-available     List the components currently available
   list-installed     List the components currently installed
   list-partial       List the components only partially installed
-  list-extra         List packages not part of any component""" % \
+  list-extra         List packages not part of any component
+  list-legacy        List installed components that are not available""" % \
         sys.exit(status)
 
     # parse command line
