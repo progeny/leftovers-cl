@@ -54,6 +54,7 @@ class VersionControlError(StandardError):
     '''Raised when there are version control problems.'''
     pass
 
+
 def _shell_command(command_string, stdin = None, debug = False):
     """
     run a shell command
@@ -74,126 +75,6 @@ def _shell_command(command_string, stdin = None, debug = False):
     return output
 
 
-def create():
-    """
-    Initialize version control
-    """
-    start_path = os.getcwd()
-    vc_path = start_path + '/VC'
-    work_path = start_path + '/work'
-    os.mkdir(work_path)
-    os.chdir(work_path)
-    _shell_command('git-init-db')
-    git_path = work_path + '/.git'
-    os.symlink(git_path, vc_path)
-    os.chdir(start_path)
-
-
-def init(product_URL, branch_name, local_head_name, remote_head_name):
-    """
-    call git commands to create local workspace
-    """
-    git_path = '.git/'
-    _shell_command([('git-init-db')])
-
-    curl_source = product_URL + 'snap.tar'
-    curl_command = 'curl -s ' + curl_source + ' | (tar Cx %s)' % git_path
-    _shell_command(curl_command)
-
-    branch_path = git_path + 'branches/'
-    os.mkdir(branch_path)
-
-    branch_filename = branch_path + branch_name
-    branch_file = file(branch_filename, 'w')
-    branch_file.write(product_URL + '/git/')
-    branch_file.close()
-
-    source = git_path + 'refs/heads/' + remote_head_name 
-    target = git_path + 'refs/heads/' + local_head_name
-    shutil.copy(source, target)
-    _shell_command('git-read-tree %s' % local_head_name)
-    _shell_command('git-checkout-cache -a')
-
-
-def checkout(product_URL, branch_name, local_head_name, remote_head_name):
-    """
-    call git commands to create local workspace from
-    depot at upstream url
-    """
-    needs_setup = False
-    if needs_setup:
-        git_path = '.git/'
-        _shell_command([('git-init-db')])
-
-    curl_source = product_URL + 'snap.tar'
-    curl_command = 'curl -s ' + curl_source + ' | (tar Cx %s)' % git_path
-    _shell_command(curl_command)
-
-    branch_path = git_path + 'branches/'
-    os.mkdir(branch_path)
-
-    branch_filename = branch_path + branch_name
-    branch_file = file(branch_filename, 'w')
-    branch_file.write(product_URL + '/git/')
-    branch_file.close()
-
-    source = git_path + 'refs/heads/' + remote_head_name 
-    target = git_path + 'refs/heads/' + local_head_name
-    shutil.copy(source, target)
-    _shell_command('git-read-tree %s' % local_head_name)
-    _shell_command('git-checkout-cache -a')
-
-
-def add(name):
-    """
-    Initialize version control
-    """
-    cmd = 'git-update-cache --add ' + name
-    return _shell_command(cmd)
-
-
-def commit(head_name, remark):
-    """
-    call git commands to commit local work
-    """
-    files = _shell_command('git-diff-files --name-only').split()
-    _shell_command('git-update-cache ' + ' '.join(files))
-    sha1 = _shell_command('git-write-tree').strip()
-
-    filename = '.git/refs/heads/' + head_name
-    comment_handle = StringIO(remark)
-    the_file = file(filename, 'w')
-    output = _shell_command('git-commit-tree ' + sha1, comment_handle)
-    the_file.write(str(output))
-    the_file.close()
-
-
-def update(upstream_name, remote_head_name):
-    """
-    update the version control
-    """
-    config_file_name = '.git/branches/' + upstream_name
-    config_file = file(config_file_name, 'r')
-    remote_URL = config_file.read().strip()
-    config_file.close()
-
-    curl_source = remote_URL + '/refs/heads/' + remote_head_name
-    remote_commit_id = _shell_command('curl -s  ' + curl_source).strip()
-
-    command_string = 'git-http-pull ' + remote_commit_id + ' ' + remote_URL
-    _shell_command(command_string)
-
-    command_string = 'git-read-tree ' + remote_commit_id
-    _shell_command(command_string)
-
-    command_string = 'git-merge-cache git-merge-one-file-script -a'
-    _shell_command(command_string)
-
-
-def mkdir(args):
-    """Perform a version control mkdir command"""
-    _shell_command('mkdir ' + str(args[0]) )
-
 def cat(filename):
     '''Get the unchanged version of the given filename.'''
     funny_git_line = _shell_command('git-diff-files ' + filename).strip()
@@ -204,4 +85,136 @@ def cat(filename):
                                        % git_blob_id))
     else:
         return open(filename)
+
+
+class VersionControl(object):
+    """
+    Library Interface to pdk version control
+    """
+
+    def __init__(self):
+        pass
+
+    def create(self):
+        """
+        Initialize version control
+        """
+        start_path = os.getcwd()
+        vc_path = start_path + '/VC'
+        work_path = start_path + '/work'
+        os.mkdir(work_path)
+        os.chdir(work_path)
+        _shell_command('git-init-db')
+        git_path = work_path + '/.git'
+        os.symlink(git_path, vc_path)
+        os.chdir(start_path)
+
+
+    def init(self, product_URL, branch_name, local_head_name, 
+             remote_head_name):
+        """
+        call git commands to create local workspace
+        """
+        git_path = '.git/'
+        _shell_command([('git-init-db')])
+
+        curl_source = product_URL + 'snap.tar'
+        curl_command = 'curl -s ' + curl_source + \
+                        ' | (tar Cx %s)' % git_path
+        _shell_command(curl_command)
+
+        branch_path = git_path + 'branches/'
+        os.mkdir(branch_path)
+
+        branch_filename = branch_path + branch_name
+        branch_file = file(branch_filename, 'w')
+        branch_file.write(product_URL + '/git/')
+        branch_file.close()
+
+        source = git_path + 'refs/heads/' + remote_head_name 
+        target = git_path + 'refs/heads/' + local_head_name
+        shutil.copy(source, target)
+        _shell_command('git-read-tree %s' % local_head_name)
+        _shell_command('git-checkout-cache -a')
+
+
+    def checkout(self, product_URL, branch_name, local_head_name, 
+                 remote_head_name):
+        """
+        call git commands to create local workspace from
+        depot at upstream url
+        """
+        needs_setup = True
+        if needs_setup:
+            git_path = '.git/'
+            _shell_command([('git-init-db')])
+
+        curl_source = product_URL + 'snap.tar'
+        curl_command = 'curl -s ' + curl_source + \
+                       ' | (tar Cx %s)' % git_path
+        _shell_command(curl_command)
+
+        branch_path = git_path + 'branches/'
+        os.mkdir(branch_path)
+
+        branch_filename = branch_path + branch_name
+        branch_file = file(branch_filename, 'w')
+        branch_file.write(product_URL + '/git/')
+        branch_file.close()
+
+        source = git_path + 'refs/heads/' + remote_head_name 
+        target = git_path + 'refs/heads/' + local_head_name
+        shutil.copy(source, target)
+        _shell_command('git-read-tree %s' % local_head_name)
+        _shell_command('git-checkout-cache -a')
+
+
+    def add(self, name):
+        """
+        Initialize version control
+        """
+        cmd = 'git-update-cache --add ' + name
+        return _shell_command(cmd)
+
+
+    def commit(self, head_name, remark):
+        """
+        call git commands to commit local work
+        """
+        files = _shell_command('git-diff-files --name-only').split()
+        _shell_command('git-update-cache ' + ' '.join(files))
+        sha1 = _shell_command('git-write-tree').strip()
+
+        filename = '.git/refs/heads/' + head_name
+        comment_handle = StringIO(remark)
+        the_file = file(filename, 'w')
+        output = _shell_command('git-commit-tree ' + sha1, comment_handle)
+        the_file.write(str(output))
+        the_file.close()
+
+
+    def update(self, upstream_name, remote_head_name):
+        """
+        update the version control
+        """
+        config_file_name = '.git/branches/' + upstream_name
+        config_file = file(config_file_name, 'r')
+        remote_URL = config_file.read().strip()
+        config_file.close()
+
+        curl_source = remote_URL + '/refs/heads/' + remote_head_name
+        remote_commit_id = _shell_command('curl -s  ' + curl_source).strip()
+
+        command_string = 'git-http-pull ' + remote_commit_id + \
+                         ' ' + remote_URL
+        _shell_command(command_string)
+
+        command_string = 'git-read-tree ' + remote_commit_id
+        _shell_command(command_string)
+
+        command_string = 'git-merge-cache git-merge-one-file-script -a'
+        _shell_command(command_string)
+
+
+
 # vim:ai:et:sts=4:sw=4:tw=0:

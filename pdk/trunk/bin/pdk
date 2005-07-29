@@ -70,28 +70,15 @@ class Pdk(cmd.Cmd):
     do_cachereceive = LazyModuleRef('pdk.cache', 'do_cachereceive')
     do_cachepull = LazyModuleRef('pdk.component', 'do_cachepull')
     do_add = LazyModuleRef('pdk.add','add')
-    do_init = LazyModuleRef('pdk.workspace', 'init')
+    do_init = LazyModuleRef('pdk.services', 'init')
     do_create = LazyModuleRef('pdk.workspace', 'create')
     do_update = LazyModuleRef('pdk.workspace', 'update')
     do_commit = LazyModuleRef('pdk.workspace', 'commit')
     #need to rename
     do_vcadd = LazyModuleRef('pdk.workspace', 'add')
-    do_checkout = LazyModuleRef('pdk.version_control', 'checkout')
-    do_checkin = LazyModuleRef('pdk.version_control', 'checkin')
-    do_copy = LazyModuleRef('pdk.version_control', 'copy')
-    ## fine-grained git stuff...
-    do_git_init_db = LazyModuleRef(
-        'pdk.version_control', 'git_init_db'
-        )
-    do_git_read_tree = LazyModuleRef(
-        'pdk.version_control', 'git_read_tree'
-        )
-    do_git_write_tree = LazyModuleRef(
-        'pdk.version_control', 'git_write_tree'
-        )
-    do_git_commit_tree = LazyModuleRef(
-        'pdk.version_control', 'git_commit_tree'
-        )
+    do_checkout = LazyModuleRef('pdk.workspace', 'checkout')
+    ##do_checkin = LazyModuleRef('pdk.version_control', 'checkin')
+    ##do_copy = LazyModuleRef('pdk.version_control', 'copy')
     do_repogen = LazyModuleRef('pdk.repogen','generate')
     do_pql = LazyModuleRef('pdk.pql','pql')
     do_dumpmeta = LazyModuleRef('pdk.component', 'do_dumpmeta')

@@ -29,11 +29,11 @@ import os
 from pdk import version_control
 
 
-def init(args):
+def checkout(args):
     """
     Create the standard product work area beneath pwd.
     Usage:
-    pdk init [source URL] [local name]
+    pdk checkout [source URL] [local name]
     """
     product_url = args[0]
     work_area = args[1]
@@ -41,7 +41,7 @@ def init(args):
     local_head_name = args[3]
     remote_head_name = args[4]
     ws = Workspace()
-    ws.init(
+    ws.checkout(
         product_url, 
         work_area,
         branch_name, 
@@ -52,7 +52,7 @@ def init(args):
 
 def create(args):
     """
-    create a local pdk working directory
+    #create a local pdk working directory
     """
     name = args[0]
     ws = Workspace()
@@ -93,10 +93,12 @@ class Workspace(object):
     Library interface to pdk workspace
     """
     def __init__(self):
-        pass
+#    def __init__(self, product_URL, work_area, branch_name, \
+#                 local_head_name, remote_head_name):
+        self.version_control = version_control.VersionControl()
 
 
-    def init(self, product_URL, work_area, branch_name, local_head_name,
+    def checkout(self, product_URL, work_area, branch_name, local_head_name,
              remote_head_name):
         """
         Create a local instance of the database
@@ -107,7 +109,8 @@ class Workspace(object):
         product_path = start_path + '/' + work_area
         os.mkdir(product_path)
         os.chdir(product_path)
-        version_control.init(
+        
+        self.version_control.checkout(
             product_URL,
             branch_name,
             local_head_name,
@@ -122,7 +125,7 @@ class Workspace(object):
         """
         Create an 'empty' local instance of the database
         """
-        return version_control.add(name)
+        return self.version_control.add(name)
 
 
     def create(self, name):
@@ -135,10 +138,7 @@ class Workspace(object):
         product_path = start_path + '/' + name
         os.mkdir(product_path)
         os.chdir(product_path)
-        version_control.create()
-        #this will get move to the cache class:
-        #cache = Cache(...)
-        #cache.create()
+        self.version_control.create()
         os.mkdir(product_path + '/cache')
         os.chdir(start_path)
 
@@ -147,14 +147,14 @@ class Workspace(object):
         """
         Commit changes to version control
         """
-        version_control.commit(head_name, remark)
+        self.version_control.commit(head_name, remark)
 
 
     def update(self, upstream_name, remote_head_name):
         """
         Get latest changes from version control
         """
-        version_control.update(upstream_name, remote_head_name)
+        self.version_control.update(upstream_name, remote_head_name)
 
 
 # vim:ai:et:sts=4:sw=4:tw=0:

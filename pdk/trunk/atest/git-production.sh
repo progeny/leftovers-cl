@@ -122,7 +122,7 @@ diff -u expected actual
 # Initial customer checkout.
 # -----------------------------------------------------------
 
-pdk init http://localhost:$SERVER_PORT/telco/ \
+pdk checkout http://localhost:$SERVER_PORT/telco/ \
     customer-work-area progeny.com local master
 
 cd customer-work-area
