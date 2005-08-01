@@ -28,19 +28,21 @@ import re
 import rfc822
 from cStringIO import StringIO as stringio
 
-# Obviously one of these two needs to work for PDK to be useful.
+# Obviously at least one of these two needs to work for PDK to be useful.
 try:
+    # for working with deb packages
     import apt_inst
+    import smart.backends.deb.debver as debver
+    from GnuPGInterface import GnuPG as gpg
 except ImportError:
     pass
 
 try:
+    # for working with rpm packages
     import rpm
 except ImportError:
     pass
 
-import smart.backends.deb.debver as debver
-from GnuPGInterface import GnuPG as gpg
 
 __revision__ = "$Progeny$"
 
