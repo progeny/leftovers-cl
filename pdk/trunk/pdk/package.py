@@ -27,7 +27,12 @@ packages.
 import re
 import rfc822
 from cStringIO import StringIO as stringio
-import apt_inst
+
+# Obviously one of these two needs to work for PDK to be useful.
+try:
+    import apt_inst
+except ImportError:
+    pass
 
 try:
     import rpm
