@@ -30,6 +30,7 @@ import inspect
 from cElementTree import ElementTree
 from elementtree.ElementTree import XMLTreeBuilder
 from xml.sax.writer import XmlWriter
+from pdk.progress import ConsoleProgress, CurlAdapter
 
 def caller():
     """Report the caller of the current function
@@ -178,12 +179,16 @@ def get_remote_file(remote_url, local_filename):
     curl.setopt(curl.NOPROGRESS, False)
     curl.setopt(curl.FAILONERROR, True)
     curl.setopt(curl.OPT_FILETIME, True)
+    progress = ConsoleProgress(remote_url)
+    adapter = CurlAdapter(progress)
+    curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
+
     curl.perform()
     handle.close()
     mtime = curl.getinfo(curl.INFO_FILETIME)
     curl.close()
     if mtime != -1:
-        print os.utime(local_filename, (mtime, mtime))
+        os.utime(local_filename, (mtime, mtime))
 
 def make_path_to(file_path):
     """Given a file path, create the directory up to the 

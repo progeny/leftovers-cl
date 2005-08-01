@@ -32,6 +32,7 @@ from md5 import md5
 from pdk.util import path, cpath, gen_file_fragments
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import get_package_type, UnknownPackageType
+from pdk.progress import ConsoleProgress, CurlAdapter
 
 def gen_apt_deb_control(handle):
     """Given a file like object, yield its deb control-like stanzas."""
@@ -116,6 +117,10 @@ def gen_apt_deb_slice(base_url, dist, component, arch):
     curl = pycurl.Curl()
     curl.setopt(curl.URL, url)
     curl.setopt(curl.WRITEFUNCTION, tag_file.write)
+    progress = ConsoleProgress(url)
+    adapter = CurlAdapter(progress)
+    curl.setopt(curl.NOPROGRESS, False)
+    curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
     curl.perform()
     tag_file.reset()
     gunzipped = GzipFile(fileobj = tag_file)

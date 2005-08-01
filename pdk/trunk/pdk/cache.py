@@ -48,6 +48,7 @@ from pdk.util import \
      ensure_directory_exists, \
      gen_fragments, gen_file_fragments, \
      find_cache_path, make_path_to, get_remote_file
+from pdk.progress import ConsoleProgress, CurlAdapter
 
 # Debugging aids
 import traceback
@@ -461,6 +462,9 @@ def cachepush(local_cache, remote_url):
         curl.setopt(curl.WRITEFUNCTION, response.write)
         curl.setopt(curl.NOPROGRESS, False)
         curl.setopt(curl.FAILONERROR, True)
+        progress = ConsoleProgress('push: ' + remote_url)
+        adapter = CurlAdapter(progress)
+        curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
         curl.perform()
 
         needed_blob_ids = response.getvalue().splitlines()
