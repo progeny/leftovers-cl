@@ -47,7 +47,10 @@ def build_tree(parent, element):
             build_tree(container, child)
             data = container
     else:
-        data = element.text.strip()
+        if element.text:
+            data = element.text.strip()
+        else:
+            data = ""
     if element.tag == '_':
         parent.append(data)
     else:
