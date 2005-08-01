@@ -80,7 +80,6 @@ class Pdk(cmd.Cmd):
     ##do_checkin = LazyModuleRef('pdk.version_control', 'checkin')
     ##do_copy = LazyModuleRef('pdk.version_control', 'copy')
     do_repogen = LazyModuleRef('pdk.repogen','generate')
-    do_pql = LazyModuleRef('pdk.pql','pql')
     do_dumpmeta = LazyModuleRef('pdk.component', 'do_dumpmeta')
     #obsolete
     do_mark = LazyModuleRef('pdk.mark','mark')

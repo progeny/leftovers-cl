@@ -79,18 +79,3 @@ check_file "48c0c56acbeb90f06be38da82f194c63d937b9a8" \
     "./repo/pool/main/i/ida/ida_2.01-1.2.diff.gz"
 check_file "000874ad1e2bbf975b5eb157e8d2e4dbe87cb006" \
     "./repo/pool/main/i/ida/ida_2.01.orig.tar.gz"
-
-pdk pql -i product.xml
-
-pdk pql >actual.txt <<EOF
-select blob_id, type, format, name, epoch, version, release, arch 
-  from packages 
-  order by blob_id
-EOF
-
-diff -u - actual.txt <<EOF
-sha-1:5758b8cd6b604e872d60a257777cc9d3018c84c8|dsc|deb|ida||2.01|1.2|any
-sha-1:9d26152e78ca33a3d435433c67644b52ae4c670c|dsc|deb|apache2||2.0.53|5|any
-sha-1:a5b9ebe5914fa4fa2583b1f5eb243ddd90e6fbbe|deb|deb|ida||2.01|1.2|arm
-sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b|deb|deb|apache2-common||2.0.53|5|i386
-EOF
