@@ -29,11 +29,11 @@ import os
 from pdk import version_control
 
 
-def checkout(args):
+def clone(args):
     """
     Create the standard product work area beneath pwd.
     Usage:
-    pdk checkout [source URL] [local name]
+    pdk clone [source URL] [local name]
     """
     product_url = args[0]
     work_area = args[1]
@@ -41,7 +41,7 @@ def checkout(args):
     local_head_name = args[3]
     remote_head_name = args[4]
     ws = Workspace()
-    ws.checkout(
+    ws.clone(
         product_url, 
         work_area,
         branch_name, 
@@ -98,7 +98,7 @@ class Workspace(object):
         self.version_control = version_control.VersionControl()
 
 
-    def checkout(self, product_URL, work_area, branch_name, local_head_name,
+    def clone(self, product_URL, work_area, branch_name, local_head_name,
              remote_head_name):
         """
         Create a local instance of the database
@@ -110,7 +110,7 @@ class Workspace(object):
         os.mkdir(product_path)
         os.chdir(product_path)
         
-        self.version_control.checkout(
+        self.version_control.clone(
             product_URL,
             branch_name,
             local_head_name,

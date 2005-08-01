@@ -138,7 +138,7 @@ class VersionControl(object):
         _shell_command('git-checkout-cache -a')
 
 
-    def checkout(self, product_URL, branch_name, local_head_name, 
+    def clone(self, product_URL, branch_name, local_head_name, 
                  remote_head_name):
         """
         call git commands to create local workspace from
