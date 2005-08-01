@@ -1,3 +1,4 @@
+#   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
 #
@@ -22,8 +23,6 @@ Library interface to pdk services
 """
 __revision__ = '$Progeny$'
 
-from pdk.util import assert_python_version
-assert_python_version()
 import sys
 
 
