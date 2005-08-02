@@ -29,6 +29,8 @@ from rfc822 import Message
 from cPickle import dump, load
 from gzip import GzipFile
 from md5 import md5
+from xml.parsers.expat import ExpatError
+from pdk.exceptions import InputError
 from pdk.util import path, cpath, gen_file_fragments
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import get_package_type, UnknownPackageType
@@ -151,7 +153,11 @@ class ChannelData(object):
     def rebuild_cached(channel_data_source = channel_data_source_global,
                        channel_data_cache = channel_data_cache_global):
         '''Download new metadata and rewrite the pickle file.'''
-        channels = parse_yaxml_file(channel_data_source)
+        try:
+            channels = parse_yaxml_file(channel_data_source)
+        except ExpatError, message:
+            raise InputError("In %s, %s" % (channel_data_source, message))
+
         type_lookup = {'dir': gen_package_dir, 'apt-deb': gen_apt_deb_dir}
 
         channel_data = ChannelData()

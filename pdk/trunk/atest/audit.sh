@@ -64,8 +64,8 @@ echo asdfasdfadsf >> $(cachepath 'sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b
 echo asdf >cache/duh
 
 pdk audit progeny.com/apache.xml progeny.com/emacs.xml \
-    >pdk_audit.raw.txt \
-    && fail 'pdk audit should exit non-zero.'
+    >pdk_audit.raw.txt && fail 'pdk audit should fail' || status=$?
+test "$status" = "1" || fail 'pdk audit should return exit code 1.'
 LANG=C sort <pdk_audit.raw.txt >pdk_audit.txt
 echo ""
 
@@ -78,11 +78,8 @@ md5:5acd04d4cc6e9d1530aad04accdc8eb5|md5:3d9189fb30f41480dec2d513dc800a70|checks
 sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b|sha-1:bbf4c316da08357663c706ecd0eec65e7c73a97a|checksum mismatch
 EOF
 
-echo "1111111111111111111111111111111111111111111111111111111111111111"
 cat pdk_audit.raw.txt
-echo "2222222222222222222222222222222222222222222222222222222222222222"
 cat pdk_audit.txt
-
 
 diff -u expected.txt pdk_audit.txt 
 

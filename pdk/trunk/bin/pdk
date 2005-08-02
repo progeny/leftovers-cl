@@ -28,8 +28,12 @@ __revision__ = '$Progeny$'
 import cmd
 import os
 import sys
+import traceback
 import pdk.log as log
 from warnings import filterwarnings
+from pdk.exceptions import CommandLineError, InputError, \
+                    SemanticError, ConfigurationError, \
+                    IntegrityFault
 logger = log.get_logger()
 
 ## pdk.py
@@ -104,7 +108,6 @@ class Pdk(cmd.Cmd):
 
     def _is_in_shell(self):
         """invoke to assure commands aren't being called from a script"""
-        import traceback
         ret_val = False
         stack = traceback.extract_stack()
         for entry in stack:
@@ -118,7 +121,7 @@ class Pdk(cmd.Cmd):
     def do_hist(self, args):
         """Print a list of commands that have been entered"""
         if args:
-            raise Exception, "hist command takes no arguments"
+            raise CommandLineError, "hist command takes no arguments"
         if self._is_in_shell():
             print self._hist
 
@@ -126,14 +129,14 @@ class Pdk(cmd.Cmd):
     def do_exit(self, args):
         """Exits from the pdk command shell"""
         if args:
-            raise Exception, "exit command takes no arguments"
+            raise CommandLineError, "exit command takes no arguments"
         return -1
 
 
     def do_quit(self, args):
         """Exits from the pdk command shell"""
         if args:
-            raise Exception, "quit command takes no arguments"
+            raise CommandLineError, "quit command takes no arguments"
         return -1
 
 
@@ -231,7 +234,29 @@ if __name__ == '__main__':
         pdk.cmdloop() 
     else:
         fn_name = 'do_%s' % main_args[1]
-        func = getattr(pdk, fn_name)
-        func(main_args[2:])
+        try:
+            func = getattr(pdk, fn_name)
+            func(main_args[2:])
+        except IntegrityFault, message:
+            logger.error("Integrity Fault Noted: %s" % message)
+            sys.exit(1)
+        except CommandLineError, message:
+            logger.error("Syntax Error: %s" % message)
+            pdk.do_help()
+            sys.exit(2)
+        except InputError, message:
+            logger.error("Invalid input: %s" % message)
+            sys.exit(3)
+        except SemanticError, message:
+            logger.error("Operation cannot be performed: %s" % message)
+            sys.exit(4)
+        except ConfigurationError, message:
+            logger.error("Configuration/setup error: %s" % message)
+            sys.exit(5)
+        except:
+            traceback.print_exc(sys.stderr)
+            logger.error("Unknown error")
+            sys.exit(6)
+
 
 # vim:ai:et:sts=4:sw=4:tw=0:

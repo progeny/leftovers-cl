@@ -24,7 +24,6 @@ cache Part of the PDK suite
 """
 __revision__ = '$Progeny$'
 
-import sys
 from sets import Set
 import sha
 import md5
@@ -32,6 +31,7 @@ import pdk.cache as cache
 from pdk.component import ComponentDescriptor
 import optparse
 import pdk.log as log
+from pdk.exceptions import IntegrityFault
 audit_logger = log.get_logger()
 
 
@@ -155,9 +155,7 @@ def audit(argv):
     arbiter.note_leftovers()
 
     if note_problem.called:
-        sys.exit(1)
-    else:
-        sys.exit(0)
+        raise IntegrityFault, "Audit detected fault(s)"
 
 def string_together(fields, separator):
     """Stringify fields and join them with separator.

@@ -21,55 +21,35 @@
 """
 
 import logging
+import threading
 import os
 
 __revision__ = "$Progeny$"
 
-if os.environ.has_key("PDKVERBOSE"):
-    verbose = os.environ["PDKVERBOSE"]
 
-
+lock = threading.Lock()
 def get_logger():
     """
     Return the default python logging channel.
     """
-    import sys
-    logger = logging.getLogger('myapp')
-    hdlr = logging.StreamHandler(sys.stderr)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr)
-    if os.environ.has_key("PDKDEBUG"):
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.WARNING)
-    return logger
-
-
-def get_file_logger():
-    """
-    Return the default python logging channel.
-    """
-    logger = logging.getLogger('myapp')
-    hdlr = logging.FileHandler('this_is_myapp.log')
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr) 
-    if os.environ.has_key("PDKDEBUG"):
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
-    return logger
-
-
-##We can use this logger object now to write entries to the log file:
-def test_log():
-    """
-    Provide example usage
-    """
-    logger = get_logger()
-    logger.error('We have a problem')
-    logger.info('While this is just chatty')
-
+    lock.acquire()
+    try:
+        if not get_logger.logger:
+            import sys
+            logger = get_logger.logger = logging.getLogger('pdk')
+            hdlr = logging.StreamHandler(sys.stderr)
+            formatter = logging.Formatter(
+                '%(asctime)s %(levelname)s %(message)s'
+                )
+            hdlr.setFormatter(formatter)
+            logger.addHandler(hdlr)
+            if os.environ.has_key("PDKDEBUG"):
+                logger.setLevel(logging.DEBUG)
+            else:
+                logger.setLevel(logging.WARNING)
+    finally:
+        lock.release()
+    return get_logger.logger
+get_logger.logger = None
 
 # vim:ai:et:sts=4:sw=4:tw=0:
