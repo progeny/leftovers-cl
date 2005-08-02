@@ -220,10 +220,13 @@ def find_cache_path(directory=None):
     if base:
         result = os.path.join(base, 'cache')
     else:
-        # This is so wrong:
+        # This is so wrong (until workspace is added)
         result = os.path.join(os.getcwd(), 'cache')
         # This would be more sensible
-        #raise IOError("No cache path found for %s" % directory)
+        #raise pdk.exceptions.ConfigurationError(
+        #    "Can't locate top of workspace from %s" 
+        #    % os.getcwd()
+        #    )
 
     ensure_directory_exists(result)
     return result
@@ -254,7 +257,7 @@ def find_base_dir(directory=os.getcwd()):
         result = None
         while parts:
             base_candidate = os.path.sep.join(parts)
-            for marker in 'cache', 'work':
+            for marker in 'cache', 'work', '.git':
                 mark_path = os.path.join(base_candidate, marker)
                 if os.path.isdir(mark_path):
                     result = base_candidate

@@ -31,7 +31,7 @@ from gzip import GzipFile
 from md5 import md5
 from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError
-from pdk.util import path, cpath, gen_file_fragments
+from pdk.util import path, cpath, gen_file_fragments, find_base_dir
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import get_package_type, UnknownPackageType
 from pdk.progress import ConsoleProgress, CurlAdapter
@@ -137,7 +137,10 @@ class ChannelError(StandardError):
     """Raise when an error is encountered while working with a channel."""
     pass
 
-channel_data_source_global = 'channels.xml'
+channel_data_source_global = os.path.join(
+    find_base_dir() or "."
+    , 'channels.xml'
+    )
 channel_data_cache_global = channel_data_source_global + '.cache'
 
 class ChannelData(object):

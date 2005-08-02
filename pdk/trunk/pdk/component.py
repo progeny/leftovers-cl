@@ -29,6 +29,8 @@ import pdk.cache
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, FieldMatchCondition
 from pdk.package import UnknownPackageType, get_package_type
+from pdk.exceptions import InputError
+from xml.parsers.expat import ExpatError
 
 def find_overlaps(packages):
     """Group packages by their names, 'newest' package first in a group."""
@@ -66,10 +68,17 @@ class ComponentDescriptor(object):
     def __init__(self, filename, handle = None):
         self.filename = filename
         if handle:
-            tree = parse_xml(handle)
+            try:
+                tree = parse_xml(handle)
+            except ExpatError, message:
+                raise InputError(message)
+
         else:
             if os.path.exists(filename):
-                tree = parse_xml(filename)
+                try:
+                    tree = parse_xml(filename)
+                except ExpatError, message:
+                    raise InputError(filename, message)
             else:
                 tree = ElementTree(element = Element('component'))
 

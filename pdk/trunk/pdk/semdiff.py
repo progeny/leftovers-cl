@@ -28,6 +28,7 @@ from pdk.cache import Cache
 from pdk.component import ComponentDescriptor
 from pdk.version_control import cat
 from pdk.channels import ChannelData
+from pdk.exceptions import CommandLineError
 
 def index_by_fields(packages, fields):
     """Scan packages, return a dict indexed by the given fields."""
@@ -127,6 +128,8 @@ def do_semdiff(argv):
         new_component = new_desc.load(cache)
         old_package_list = old_component.direct_packages
         new_package_list = new_component.direct_packages
+    else:
+        raise CommandLineError("Argument list is invalid")
 
     diffs = iter_diffs(old_package_list, new_package_list)
     for action, primary, secondary in diffs:
