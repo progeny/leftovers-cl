@@ -295,6 +295,18 @@ class Pdk(cmd.Cmd):
         pass
 
 
+# Plug-in interface
+# 
+# Configuration file has <path> <function> <cmdname>
+# to create a LazyModuleRef for a plugin command.  
+# path      is for __import__, where plugin is located
+# function  is name of function to call in plugin
+# cmdname   is the name of the local command
+#
+# ex:   
+#   pdk workspace create
+#
+# As-yet, there is no structure or comment marker for plug-ins
 for addin_file in [ x for x in ('~/.pdk_addins','.pdk_addins')
                     if os.path.exists(x) ]:
     for record in open(addin_file):
