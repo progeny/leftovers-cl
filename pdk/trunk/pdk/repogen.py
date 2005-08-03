@@ -33,6 +33,7 @@ from itertools import chain
 from pdk.util import path
 from pdk.cache import Cache
 from pdk.component import ComponentDescriptor
+from pdk.exceptions import SemanticError, InputError
 import pdk.log as log
 
 logger = log.get_logger()
@@ -584,7 +585,7 @@ class DebianReleaseWriter(object):
 
         if status:
             print status
-            raise StandardError, 'archiver returned %d' % status
+            raise SemanticError, 'archiver returned %d' % status
 
         print >> handle, 'Origin: %s' % self.origin
         print >> handle, 'Label: %s' % self.label
@@ -643,7 +644,7 @@ class Compiler:
             # an apt splittable component should not directly reference
             # packages
             if product.direct_packages:
-                raise RepoGenError, 'No direct package references ' + \
+                raise InputError, 'No direct package references ' + \
                       'allowed with split-components is in effect'
             packages_dict = {}
             # sort packages belonging to various apt_components in a dict
@@ -699,7 +700,3 @@ def generate(argv):
     logger.info(str(opts), str(args))
     product_file = args[0]
     compile_product(product_file)
-
-class RepoGenError(StandardError):
-    """Raised when the user has made an error defining a component."""
-    pass

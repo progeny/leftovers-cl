@@ -33,7 +33,7 @@ from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError, SemanticError, ConfigurationError
 from pdk.util import path, cpath, gen_file_fragments, find_base_dir
 from pdk.yaxml import parse_yaxml_file
-from pdk.package import get_package_type, UnknownPackageType
+from pdk.package import get_package_type, UnknownPackageTypeError
 from pdk.progress import ConsoleProgress, CurlAdapter
 
 def gen_apt_deb_control(handle):
@@ -58,7 +58,7 @@ def gen_package_dir(channel_data):
             full_path = path(root)[candidate]()
             try:
                 package_type = get_package_type(filename = candidate)
-            except UnknownPackageType:
+            except UnknownPackageTypeError:
                 # if we don't know the the file is, we skip it.
                 continue
             control = package_type.extract_header(full_path)
@@ -103,7 +103,7 @@ def gen_apt_deb_slice(base_url, dist, component, arch):
                 if filename.endswith('.dsc'):
                     base = base_url + fields['directory']
                     return base, filename, md5_sum
-            raise ChannelError, 'no dsc found'
+            raise SemanticError, 'no dsc found'
     else:
         target = 'Packages.gz'
         arch_specific = 'binary-%s' % arch
@@ -132,10 +132,6 @@ def gen_apt_deb_slice(base_url, dist, component, arch):
         base_uri, filename, blob_id = get_download_info(package)
         package.contents['blob-id'] = blob_id
         yield package, base_uri, filename
-
-class ChannelError(StandardError):
-    """Raise when an error is encountered while working with a channel."""
-    pass
 
 channel_data_source_global = os.path.join(
     find_base_dir() or "."

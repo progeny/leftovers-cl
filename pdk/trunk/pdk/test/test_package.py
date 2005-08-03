@@ -22,7 +22,7 @@ from cPickle import dumps, loads
 
 from pdk.package import \
      Package, get_package_type, Deb, Dsc, SRpm, Rpm, sanitize_deb_header, \
-     UnknownPackageType, synthesize_version_string, DebianVersion
+     UnknownPackageTypeError, synthesize_version_string, DebianVersion
 
 __revision__ = "$Progeny$"
 
@@ -206,14 +206,14 @@ class TestGetPackageType(Test):
 
         try:
             get_package_type(filename = 'a')
-        except UnknownPackageType:
+        except UnknownPackageTypeError:
             pass
         else:
             self.fail('"a" is an invalid filetype')
 
         try:
             get_package_type(format = 'a')
-        except UnknownPackageType:
+        except UnknownPackageTypeError:
             pass
         else:
             self.fail('"a" is an invalid package format')

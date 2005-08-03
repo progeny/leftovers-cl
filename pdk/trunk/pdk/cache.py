@@ -49,10 +49,9 @@ from pdk.util import \
      gen_fragments, gen_file_fragments, \
      find_cache_path, make_path_to, get_remote_file
 from pdk.progress import ConsoleProgress, CurlAdapter
-from pdk.exceptions import SemanticError
+from pdk.exceptions import SemanticError, ConfigurationError
 
 # Debugging aids
-import traceback
 import pdk.log
 
 log = pdk.log.get_logger()
@@ -75,11 +74,7 @@ def calculate_checksums(file_path):
     return 'sha-1:' + sha1_calc.hexdigest(), \
            'md5:' + md5_calc.hexdigest()
 
-class CacheImportError(StandardError):
-    """Generic error for trouble importing to cache"""
-    pass
-
-class CachePathError(StandardError):
+class CacheImportError(SemanticError):
     """Generic error for trouble importing to cache"""
     pass
 
@@ -113,7 +108,8 @@ class SimpleCache(object):
     def __init__(self, cache_path):
         self.path = os.path.abspath(cache_path)
         if os.path.exists(cache_path) and not os.path.isdir(cache_path):
-            raise Exception("%s is not a directory path" % cache_path)
+            raise ConfigurationError("%s is not a directory path"
+                                     % cache_path)
         # Check for a backing cache
         backing_path = os.path.join(cache_path, '.backing')
         if os.path.exists(backing_path):
@@ -330,12 +326,7 @@ class Cache(SimpleCache):
                     raise SemanticError, message
             self.add_header(header, blob_id)
 
-        try:
-            header = open(header_file).read()
-        except Exception, msg:
-            log.error("%s Could not open, read %s" % (msg, header_file))
-            traceback.print_exc()
-            raise
+        header = open(header_file).read()
         return package_type.parse(header, blob_id)
 
 ########################################################################

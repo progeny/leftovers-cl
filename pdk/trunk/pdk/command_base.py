@@ -26,13 +26,9 @@ __revision__ = '$Progeny$'
 
 import cmd
 import os
-#import sys
-#import getopt
 import pdk.log as log
+from pdk.exceptions import CommandLineError
 logger = log.get_logger()
-#from pdk.component import ComponentDescriptor
-#from pdk.cache import Cache
-#from pdk.yaxml import parse_yaxml_file
 
 ## command_base.py
 ## Author:  Glen Smith
@@ -95,7 +91,7 @@ class PdkBase(cmd.Cmd):
     def do_hist(self, args):
         """Print a list of commands that have been entered"""
         if args:
-            raise Exception, "hist command takes no arguments"
+            raise CommandLineError, "hist command takes no arguments"
         if self._is_in_shell():
             print self._hist
 
@@ -103,7 +99,7 @@ class PdkBase(cmd.Cmd):
     def do_exit(self, args):
         """Exits from the pdk command shell"""
         if args:
-            raise Exception, "exit command takes no arguments"
+            raise CommandLineError, "exit command takes no arguments"
         return -1
 
 

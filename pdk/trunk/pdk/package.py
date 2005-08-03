@@ -27,6 +27,7 @@ packages.
 import re
 import rfc822
 from cStringIO import StringIO as stringio
+from pdk.exceptions import InputError
 
 # Obviously at least one of these two needs to work for PDK to be useful.
 try:
@@ -351,9 +352,9 @@ def get_package_type(filename = '', format = ''):
     elif filename.endswith('.rpm') or format == 'rpm':
         return Rpm()
     else:
-        raise UnknownPackageType((filename, format))
+        raise UnknownPackageTypeError((filename, format))
 
-class UnknownPackageType(LookupError):
+class UnknownPackageTypeError(InputError):
     """Exception used when a package type cannot be determined."""
     pass
 

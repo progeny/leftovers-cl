@@ -28,8 +28,8 @@ from pdk.util import path, write_pretty_xml, parse_xml
 import pdk.cache 
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, FieldMatchCondition
-from pdk.package import UnknownPackageType, get_package_type
-from pdk.exceptions import InputError
+from pdk.package import UnknownPackageTypeError, get_package_type
+from pdk.exceptions import InputError, SemanticError
 from xml.parsers.expat import ExpatError
 
 def find_overlaps(packages):
@@ -113,7 +113,7 @@ class ComponentDescriptor(object):
                         message = 'Concrete package does not meet ' \
                                   'expected constraints: %s' \
                                   % ref.blob_id, package.name
-                        raise ComponentDescriptorError(message)
+                        raise SemanticError(message)
                 rule = ref.rule
             elif isinstance(ref, ComponentReference):
                 child_descriptor = ref.load()
@@ -446,10 +446,6 @@ class ComponentReference(object):
         '''Instantiate the ComponentDescriptor object for this reference.'''
         return ComponentDescriptor(self.filename)
 
-class ComponentDescriptorError(StandardError):
-    '''Raised when ComponentDescriptor class runs into errors.'''
-    pass
-
 def do_dumpmeta(component_refs):
     """Print all component metadata to standard out."""
     cache = pdk.cache.Cache()
@@ -460,7 +456,7 @@ def do_dumpmeta(component_refs):
             for key, value in meta_dict.items():
                 try:
                     name = cache.load_package(*ref).name
-                except UnknownPackageType:
+                except UnknownPackageTypeError:
                     name = ''
                 print '|'.join([ref[0], ref[1], name, key, value])
 

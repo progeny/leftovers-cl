@@ -31,6 +31,7 @@ from cElementTree import ElementTree
 from elementtree.ElementTree import XMLTreeBuilder
 from xml.sax.writer import XmlWriter
 from pdk.progress import ConsoleProgress, CurlAdapter
+from pdk.exceptions import ConfigurationError
 
 def caller():
     """Report the caller of the current function
@@ -156,7 +157,8 @@ def gen_fragments(handle, max_size = None, block_size = default_block_size):
 def assert_python_version():
     """single location to assure installed version of python"""
     if [2, 3] > sys.version_info[:2]:
-        raise Exception, "This program requires python 2.3 or greater"
+        raise ConfigurationError, \
+              "This program requires python 2.3 or greater"
 
 def ensure_directory_exists(the_path):
     '''Create the base cache directory if needed.'''
@@ -264,36 +266,6 @@ def find_base_dir(directory=os.getcwd()):
                     break
             parts.pop()
     return result
-
-
-# Design by contract (DBC) extensions
-class NotMet(Exception):
-    "An exception for PBC violations"
-    pass
-
-def precondition(function, invariant):
-    "Assert a precondition."
-    def _prewrapper(*args, **kwargs):
-        """Prepends a function with a precondition call"""
-        if not invariant(*args, **kwargs):
-            raise NotMet(invariant.__name__, args, kwargs)
-        return function(*args, **kwargs)
-    return _prewrapper
-
-def postcondition(function, invariant):
-    "Assert a post-condition"
-    def _postwrapper(*args, **kwargs):
-        """Appends a result check onto a function"""
-        result = function(*args, **kwargs)
-        if not invariant(result, *args, **kwargs):
-            raise NotMet(invariant.__name__, result, *args, **kwargs)
-        return result
-    return _postwrapper
-
-def notnull(*args):
-    """Returns true if none of the arguments are null"""
-    return None not in args
-
 
 class PrettyWriter(object):
     '''Handle low-level details of writing pretty indented xml.'''
