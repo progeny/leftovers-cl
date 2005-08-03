@@ -286,7 +286,10 @@ class RPMVersion(object):
     """A comparable RPM package version."""
     def __init__(self, header = None, version_tuple = None):
         if header:
-            self.epoch = header[rpm.RPMTAG_EPOCH]
+            if header[rpm.RPMTAG_EPOCH]:
+                self.epoch = str(header[rpm.RPMTAG_EPOCH])
+            else:
+                self.epoch = ''
             self.version = header[rpm.RPMTAG_VERSION]
             self.release = header[rpm.RPMTAG_RELEASE]
         else:

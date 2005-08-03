@@ -168,7 +168,19 @@ class ChannelData(object):
 
         channel_data = ChannelData()
         for name, data in channels.items():
-            channel_generator = type_lookup[data['type']]
+            type_value = None
+            channel_generator = None
+            try:
+                type_value = data['type']
+            except KeyError, message:
+                raise InputError('%s has no type' % name)
+            try:
+                channel_generator = type_lookup[type_value]
+            except KeyError, message:
+                raise InputError('%s unrecognized type %s'
+                                 % (name, type_value)
+                                 )
+
             channel_data.add(name, channel_generator(data))
         channel_data.dump(channel_data_cache)
     rebuild_cached = staticmethod(rebuild_cached)
