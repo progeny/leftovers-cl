@@ -28,6 +28,15 @@ test "$status" = "2" || {
     bail "Expected command-line error(2), got ${status}"
 }
 
+pdk resolve || status=$?
+test "$status" = "2" || {
+    bail "Expected command-line error(2), got ${status}"
+}
+
+pdk updatechannels z || status=$?
+test "$status" = "2" || {
+    bail "Expected command-line error(2), got ${status}"
+}
 
 #-----------------------------------------------------------------------
 # Process ill-formed channels file
@@ -39,6 +48,18 @@ cat > channels.xml << EOF
 EOF
 pdk updatechannels || status=$?
 test "$status" = "3" || bail "Incorrect/unexpected error return"
+
+#-----------------------------------------------------------------------
+# Missing channels.xml and channels.xml.cache
+cat >empty.xml <<EOF
+<?xml version="1.0"?>
+<component/>
+EOF
+rm -f channels.xml channels.xml.cache
+pdk updatechannels || status=$?
+test "$status" = "4" || bail "Incorrect/unexpected error return"
+pdk resolve empty.xml || status=$?
+test "$status" = "4" || bail "Incorrect/unexpected error return"
 
 
 #-----------------------------------------------------------------------

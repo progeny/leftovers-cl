@@ -25,15 +25,30 @@ Contains functionality for resolving abstract package references.
 from pdk.cache import Cache
 from pdk.component import ComponentDescriptor, PackageReference
 from pdk.channels import ChannelData
+from pdk.exceptions import CommandLineError
 
-def do_updatechannels(dummy):
-    '''Update all depot channels with their upstream metadata.'''
+def do_updatechannels(args):
+    '''Read channels.xml and update the remote channel data. (depot)'''
+    if len(args) > 0:
+        raise CommandLineError, 'updatechannels takes no arguments'
 
     ChannelData.rebuild_cached()
 
 def do_resolve(args):
-    """Command line entry point for the resolve command."""
+    """resolve resolves abstract package references
 
+    If the command succeeds, the component will be modified in place.
+    Abstract references will be rewritten to concrete references, and
+    missing constraint elements will be placed.
+
+    The command takes a single component descriptor followed by zero
+    or more channel names.
+
+    If not channel names are given, resolve uses all channels to
+    resolve references.
+    """
+    if len(args) < 1:
+        raise CommandLineError, 'component descriptor required'
     component_name = args[0]
     descriptor = ComponentDescriptor(component_name)
     channel_names = args[1:]
