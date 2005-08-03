@@ -30,10 +30,10 @@
 # -------------------
 
 #First, create the workspaces that we actually work in...
-pdk create remote1
-pdk create remote2
+pdk workspace create remote1
+pdk workspace create remote2
 #Then, create the workspace that we will "cachepull" to...
-pdk create local
+pdk workspace create local
 #Put the client in the place to do the descriptor work
 pushd remote1/work
 

@@ -29,9 +29,9 @@
 # -------------------
 
 #First, create the workspace that we actually work in...
-pdk create sim-source
+pdk workspace create sim-source
 #Then, create the workspace that we will "cachepush" to...
-pdk create sim-dest
+pdk workspace create sim-dest
 #Put the client in the place to do the descriptor work
 #in the source workspace
 cd sim-source/work

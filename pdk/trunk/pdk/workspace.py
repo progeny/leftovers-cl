@@ -26,6 +26,7 @@ __revision__ = '$Progeny$'
 from pdk.util import assert_python_version
 assert_python_version()
 import os
+import sys
 from pdk import version_control
 
 
@@ -52,11 +53,17 @@ def clone(args):
 
 def create(args):
     """
-    #create a local pdk working directory
+    Create a local pdk working directory.
+    Usage:
+    pdk workspace create [workspace name]
     """
-    name = args[0]
-    ws = Workspace()
-    ws.create(name)
+    if not args:
+        print sys.stderr, "requires an argument"
+        print __doc__
+    else:
+        name = args[0]
+        ws = Workspace()
+        ws.create(name)
 
 
 def add(args):

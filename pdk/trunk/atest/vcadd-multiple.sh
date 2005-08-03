@@ -78,7 +78,7 @@ do_production_pull() {
 # Bootstrap and do some "integration" work in the integration area.
 # -----------------------------------------------------------
 
-pdk create integration
+pdk workspace create integration
 cd integration/work
 
 #This needs to be resolved with the creation of

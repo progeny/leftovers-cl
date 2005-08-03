@@ -28,7 +28,7 @@
 # Setup
 # -------------------
 
-pdk create sim-progeny
+pdk workspace create sim-progeny
 cd sim-progeny/work
 # -----------------------------------------------------
 # Do it all with rpms.
