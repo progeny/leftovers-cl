@@ -72,11 +72,11 @@ cat >main.xml <<"EOF"
 EOF
 
 # Install all the packages into the local cache
-pdk add progeny.com/apache.xml \
+pdk package add progeny.com/apache.xml \
     packages/apache2-common_2.0.53-5_i386.deb \
     packages/apache2_2.0.53-5.dsc \
 
-pdk add progeny.com/ida.xml \
+pdk package add progeny.com/ida.xml \
     packages/ida_2.01-1.2_arm.deb \
     packages/ida_2.01-1.2.dsc
 

@@ -56,7 +56,7 @@ cat >main.xml <<EOF
 EOF
 
 # Add the emacs packagexs
-pdk add progeny.com/emacs.xml \
+pdk package add progeny.com/emacs.xml \
     packages/emacs-defaults_1.1_all.deb \
     packages/emacs-defaults_1.1.dsc
 
@@ -64,7 +64,7 @@ pdk add progeny.com/emacs.xml \
 # XXX: This is necessary because pdk gets confused when only arch:all
 # packages are present.
 
-pdk add progeny.com/emacs.xml \
+pdk package add progeny.com/emacs.xml \
     packages/apache2-common_2.0.53-5_i386.deb
 
 pdk repogen product.xml

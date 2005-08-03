@@ -52,7 +52,7 @@ cat >main.xml <<EOF
 EOF
 
 # Install all the packages into the local cache
-pdk add apache.xml \
+pdk package add apache.xml \
     packages/apache2-common_2.0.53-5_i386.deb \
     packages/apache2_2.0.53-5.dsc \
 

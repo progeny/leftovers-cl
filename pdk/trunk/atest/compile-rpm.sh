@@ -25,7 +25,7 @@
 . atest/test_lib.sh
 
 # Install all the packages into the local cache
-pdk add progeny.com/time.xml \
+pdk package add progeny.com/time.xml \
     packages/adjtimex-1.13-13.i386.rpm \
     packages/adjtimex-1.13-13.src.rpm
 

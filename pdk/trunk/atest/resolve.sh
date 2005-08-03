@@ -28,7 +28,7 @@
 umask 002
 
 # Load the cache with the ida package so we don't get errors later
-pdk add dummy.xml atest/packages/ida_2.01-1.2.dsc
+pdk package add dummy.xml atest/packages/ida_2.01-1.2.dsc
 
 # -----------------------------------------------------------
 # Resolve from a pile of packages on the local filesystem.

@@ -24,7 +24,7 @@
 
 . atest/test_lib.sh
 
-ls packages/apache2-*.deb | xargs pdk add apache.xml || fail
+ls packages/apache2-*.deb | xargs pdk package add apache.xml || fail
 
 pdk repogen apache.xml
 

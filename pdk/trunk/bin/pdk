@@ -91,7 +91,6 @@ class Pdk(cmd.Cmd):
     do_cachepush = LazyModuleRef('pdk.cache', 'do_cachepush')
     do_cachereceive = LazyModuleRef('pdk.cache', 'do_cachereceive')
     do_cachepull = LazyModuleRef('pdk.component', 'do_cachepull')
-    do_add = LazyModuleRef('pdk.add','add')
     do_init = LazyModuleRef('pdk.services', 'init')
     do_update = LazyModuleRef('pdk.workspace', 'update')
     do_commit = LazyModuleRef('pdk.workspace', 'commit')
@@ -191,6 +190,26 @@ class Pdk(cmd.Cmd):
         """
         from pdk import workspace
         self.module_command(workspace, args)
+
+    
+    def do_package(self, args):
+        """
+        Perform an action on a package
+        General usage:
+        pdk package command args
+        Specialized for
+        pdk package add
+        """
+        from pdk import package
+        if args:
+            arg_list = _get_args_as_list(args)
+            if arg_list[0] == "add":
+                from pdk import add
+                add.add(arg_list[1:])
+            else:
+                self.module_command(package, args)
+        else:
+            print "What do you want to do with a package?"
 
     
     def module_help(self, module, args):

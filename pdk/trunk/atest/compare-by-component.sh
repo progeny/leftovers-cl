@@ -27,7 +27,7 @@ cp packages/python_2.3.5-2_all.deb testrepo/dists/test/main/binary-i386
 (cd testrepo && apt-ftparchive packages dists) \
     > testrepo/dists/test/main/binary-i386/Packages
 
-pdk add progeny.com/python-2.3.xml packages/python_2.3.3-6_all.deb || fail "could not import package"
+pdk package add progeny.com/python-2.3.xml packages/python_2.3.3-6_all.deb || fail "could not import package"
 
 pdk compare progeny.com/python-2.3.xml file://`pwd`/testrepo,test,main \
     > test.out

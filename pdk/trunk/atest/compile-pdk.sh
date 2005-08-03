@@ -68,12 +68,10 @@ cat >main.xml <<"EOF"
 </component>
 EOF
 
-sh
-
 # Install all the packages into the local cache
-echo "add progeny.com/apache.xml packages/apache2-common_2.0.53-5_i386.deb packages/apache2_2.0.53-5.dsc"|pdk
+echo "package add progeny.com/apache.xml packages/apache2-common_2.0.53-5_i386.deb packages/apache2_2.0.53-5.dsc"|pdk
 
-echo "add progeny.com/ida.xml packages/ida_2.01-1.2_arm.deb packages/ida_2.01-1.2.dsc"|pdk
+echo "package add progeny.com/ida.xml packages/ida_2.01-1.2_arm.deb packages/ida_2.01-1.2.dsc"|pdk
 
 echo "repogen product.xml"|pdk
 

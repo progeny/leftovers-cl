@@ -24,8 +24,8 @@
 . atest/test_lib.sh
 
 # Create a component to build a repository from
-pdk add aptable.xml packages/apache*.deb packages/apache*.dsc
-pdk add aptable.xml packages/*xsok*.deb packages/*xsok*.dsc
+pdk package add aptable.xml packages/apache*.deb packages/apache*.dsc
+pdk package add aptable.xml packages/*xsok*.deb packages/*xsok*.dsc
 
 pdk repogen aptable.xml || bail "Cannot compile myrepo.xml"
 

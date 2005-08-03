@@ -19,7 +19,7 @@
 # vcadd-multiple.sh
 # $Progeny$
 #
-# test having git and pdk add multiple files at once
+# test having git and pdk package add multiple files at once
 
 # get Utility functions
 . atest/test_lib.sh
@@ -84,11 +84,11 @@ cd integration/work
 #This needs to be resolved with the creation of
 #a component with an abstract package,
 #followed by "pdk resolve (descr.)
-pdk add progeny.com/apache.xml \
+pdk package add progeny.com/apache.xml \
     $tmp_dir/packages/apache2_2.0.53-5.dsc \
     $tmp_dir/packages/apache2-common_2.0.53-5_i386.deb
 
-pdk add progeny.com/ethereal.xml \
+pdk package add progeny.com/ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny2.dsc \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny2_ia64.deb \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny2_ia64.deb \

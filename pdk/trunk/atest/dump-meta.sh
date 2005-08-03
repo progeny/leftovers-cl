@@ -21,7 +21,7 @@
 #
 # pdk dumpmeta compname should dump the metadata found in the component.
 
-pdk add python.xml \
+pdk package add python.xml \
     packages/python-defaults_2.3.3-6.dsc \
     packages/python_2.3.3-6_all.deb
 

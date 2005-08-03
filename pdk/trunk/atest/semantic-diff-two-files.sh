@@ -25,7 +25,7 @@
 . atest/test_lib.sh
 
 # Install old version of adjtimex
-pdk add time.xml \
+pdk package add time.xml \
     $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
     $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
 
@@ -41,7 +41,7 @@ EOF
 cp time.xml time-before.xml
 
 # Install new version of adjtimex
-pdk add -r time.xml \
+pdk package add -r time.xml \
     $tmp_dir/packages/adjtimex-1.13-13.src.rpm \
     $tmp_dir/packages/adjtimex-1.13-13.i386.rpm
 
@@ -54,7 +54,7 @@ EOF
 cp time.xml time-before.xml
 
 # Downgrade back to the older version
-pdk add -r time.xml \
+pdk package add -r time.xml \
     $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
     $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
 
@@ -67,7 +67,7 @@ EOF
 cp time.xml time-before.xml
 
 # Drop a package
-pdk add -r time.xml \
+pdk package add -r time.xml \
     $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
 
 pdk semdiff time-before.xml time.xml | grep -v ^unchanged \
@@ -79,7 +79,7 @@ EOF
 cp time.xml time-before.xml
 
 # Add it back
-pdk add -r time.xml \
+pdk package add -r time.xml \
     $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
     $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
 
@@ -94,7 +94,7 @@ EOF
 # -----------------------------------------------------
 
 # Install old version of ethereal.
-pdk add ethereal.xml \
+pdk package add ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
@@ -116,7 +116,7 @@ EOF
 cp ethereal.xml ethereal-before.xml
 
 # Install newer version of ethereal.
-pdk add -r ethereal.xml \
+pdk package add -r ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny2.dsc \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny2_ia64.deb \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny2_ia64.deb \
@@ -136,7 +136,7 @@ EOF
 cp ethereal.xml ethereal-before.xml
 
 # Downgrade to older version again.
-pdk add -r ethereal.xml \
+pdk package add -r ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
@@ -155,7 +155,7 @@ EOF
 cp ethereal.xml ethereal-before.xml
 
 # Drop a package.
-pdk add -r ethereal.xml \
+pdk package add -r ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
     $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
@@ -170,7 +170,7 @@ EOF
 cp ethereal.xml ethereal-before.xml
 
 # Add it back
-pdk add -r ethereal.xml \
+pdk package add -r ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \

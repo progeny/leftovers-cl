@@ -25,8 +25,6 @@ Part of the PDK suite
 __revision__ = '$Progeny$'
 
 import sys
-from pdk.util import assert_python_version
-assert_python_version()
 import optparse
 from pdk.cache import Cache, calculate_checksums
 from pdk.component import ComponentDescriptor, PackageReference

@@ -25,10 +25,10 @@
 . atest/test_lib.sh
 
 # Install all the packages into the local cache
-pdk add apache.xml packages/apache2-common_2.0.53-5_i386.deb
-pdk add apache.xml packages/apache2_2.0.53-5.dsc
-pdk add progeny.com/ida.xml packages/ida_2.01-1.2_arm.deb
-pdk add progeny.com/ida.xml packages/ida_2.01-1.2.dsc
+pdk package add apache.xml packages/apache2-common_2.0.53-5_i386.deb
+pdk package add apache.xml packages/apache2_2.0.53-5.dsc
+pdk package add progeny.com/ida.xml packages/ida_2.01-1.2_arm.deb
+pdk package add progeny.com/ida.xml packages/ida_2.01-1.2.dsc
 
 cat >product.xml <<EOF
 <?xml version="1.0"?>

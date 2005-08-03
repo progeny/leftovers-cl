@@ -37,7 +37,7 @@ assert_quiet() {
 }
 
 assert_quiet \
-    pdk add progeny.com/ethereal.xml \
+    pdk package add progeny.com/ethereal.xml \
     packages/ethereal_0.9.13-1.0progeny1.dsc \
     packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
     packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
@@ -45,7 +45,7 @@ assert_quiet \
     packages/tethereal_0.9.13-1.0progeny1_ia64.deb
 
 assert_quiet \
-    pdk add -r progeny.com/ethereal.xml \
+    pdk package add -r progeny.com/ethereal.xml \
     packages/ethereal_0.9.13-1.0progeny2.dsc \
     packages/ethereal_0.9.13-1.0progeny2_ia64.deb \
     packages/ethereal-common_0.9.13-1.0progeny2_ia64.deb \

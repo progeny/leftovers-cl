@@ -26,11 +26,11 @@
 
 
 # Install all the packages into the local cache
-pdk add progeny.com/apache.xml \
+pdk package add progeny.com/apache.xml \
     packages/apache2-common_2.0.53-5_i386.deb \
     packages/apache2_2.0.53-5.dsc \
 
-pdk add progeny.com/emacs.xml \
+pdk package add progeny.com/emacs.xml \
     packages/emacs-defaults_1.1.dsc \
     packages/emacs-defaults_1.1_all.deb
 
@@ -47,10 +47,10 @@ EOF
 rm -r cache/ progeny.com/
 
 # Reinstall emacs-defaults without it's source.
-pdk add progeny.com/emacs.xml \
+pdk package add progeny.com/emacs.xml \
     packages/emacs-defaults_1.1_all.deb
 
-pdk add progeny.com/apache.xml \
+pdk package add progeny.com/apache.xml \
     packages/apache2-common_2.0.53-5_i386.deb \
     packages/apache2_2.0.53-5.dsc \
 

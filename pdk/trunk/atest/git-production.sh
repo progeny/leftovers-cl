@@ -84,7 +84,7 @@ cd integration/work
 #This needs to be resolved with the creation of
 #a component with an abstract package,
 #followed by "pdk resolve (descr.)
-pdk add progeny.com/apache.xml \
+pdk package add progeny.com/apache.xml \
     $tmp_dir/packages/apache2_2.0.53-5.dsc \
     $tmp_dir/packages/apache2-common_2.0.53-5_i386.deb
 

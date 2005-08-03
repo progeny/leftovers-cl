@@ -35,7 +35,7 @@ cd sim-progeny/work
 # -----------------------------------------------------
 
 # Install old version of adjtimex
-pdk add progeny.com/time.xml \
+pdk package add progeny.com/time.xml \
     $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
     $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
 
@@ -49,7 +49,7 @@ unchanged|srpm|adjtimex|/1.13/12|/1.13/12|x86_64|progeny.com/time.xml
 EOF
 
 # Install new version of adjtimex
-pdk add -r progeny.com/time.xml \
+pdk package add -r progeny.com/time.xml \
     $tmp_dir/packages/adjtimex-1.13-13.src.rpm \
     $tmp_dir/packages/adjtimex-1.13-13.i386.rpm
 
@@ -62,7 +62,7 @@ EOF
 pdk commit master foo
 
 # Downgrade back to the older version
-pdk add -r progeny.com/time.xml \
+pdk package add -r progeny.com/time.xml \
     $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
     $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
 
@@ -75,7 +75,7 @@ EOF
 pdk commit master foo
 
 # Drop a package
-pdk add -r progeny.com/time.xml \
+pdk package add -r progeny.com/time.xml \
     $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
 
 pdk semdiff progeny.com/time.xml | grep -v ^unchanged \
@@ -87,7 +87,7 @@ EOF
 pdk commit master foo
 
 # Add it back
-pdk add -r progeny.com/time.xml \
+pdk package add -r progeny.com/time.xml \
     $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
     $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
 
@@ -104,7 +104,7 @@ pdk commit master foo
 # -----------------------------------------------------
 
 # Install old version of ethereal.
-pdk add progeny.com/ethereal.xml \
+pdk package add progeny.com/ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
@@ -125,7 +125,7 @@ unchanged|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|any|progeny.com/eth
 EOF
 
 # Install newer version of ethereal.
-pdk add -r progeny.com/ethereal.xml \
+pdk package add -r progeny.com/ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny2.dsc \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny2_ia64.deb \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny2_ia64.deb \
@@ -145,7 +145,7 @@ EOF
 pdk commit master foo
 
 # Downgrade to older version again.
-pdk add -r progeny.com/ethereal.xml \
+pdk package add -r progeny.com/ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
@@ -164,7 +164,7 @@ EOF
 pdk commit master foo
 
 # Drop a package.
-pdk add -r progeny.com/ethereal.xml \
+pdk package add -r progeny.com/ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
     $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
@@ -179,7 +179,7 @@ EOF
 pdk commit master foo
 
 # Add it back
-pdk add -r progeny.com/ethereal.xml \
+pdk package add -r progeny.com/ethereal.xml \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
     $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
     $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
