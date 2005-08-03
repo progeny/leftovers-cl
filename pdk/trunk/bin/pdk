@@ -95,7 +95,7 @@ class Pdk(cmd.Cmd):
     do_update = LazyModuleRef('pdk.workspace', 'update')
     do_commit = LazyModuleRef('pdk.workspace', 'commit')
     #need to rename
-    do_vcadd = LazyModuleRef('pdk.workspace', 'add')
+    do_add = LazyModuleRef('pdk.workspace', 'add')
     do_clone = LazyModuleRef('pdk.workspace', 'clone')
     ##do_checkin = LazyModuleRef('pdk.version_control', 'checkin')
     ##do_copy = LazyModuleRef('pdk.version_control', 'copy')

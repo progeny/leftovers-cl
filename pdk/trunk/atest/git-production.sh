@@ -88,7 +88,7 @@ pdk package add progeny.com/apache.xml \
     $tmp_dir/packages/apache2_2.0.53-5.dsc \
     $tmp_dir/packages/apache2-common_2.0.53-5_i386.deb
 
-pdk vcadd progeny.com/apache.xml
+pdk add progeny.com/apache.xml
 pdk commit master "this is a remark"
 cd ..
 

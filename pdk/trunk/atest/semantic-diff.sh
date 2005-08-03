@@ -39,7 +39,7 @@ pdk package add progeny.com/time.xml \
     $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
     $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
 
-pdk vcadd progeny.com/time.xml
+pdk add progeny.com/time.xml
 pdk commit master foo
 # nothing has changed yet
 pdk semdiff progeny.com/time.xml | LANG=C sort >semdiff.txt
@@ -111,7 +111,7 @@ pdk package add progeny.com/ethereal.xml \
     $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
     $tmp_dir/packages/tethereal_0.9.13-1.0progeny1_ia64.deb
 
-pdk vcadd progeny.com/ethereal.xml
+pdk add progeny.com/ethereal.xml
 pdk commit master foo
 
 # nothing has changed yet

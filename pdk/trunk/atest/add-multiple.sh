@@ -16,7 +16,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# vcadd-multiple.sh
+# add-multiple.sh
 # $Progeny$
 #
 # test having git and pdk package add multiple files at once
@@ -96,6 +96,6 @@ pdk package add progeny.com/ethereal.xml \
     $tmp_dir/packages/tethereal_0.9.13-1.0progeny2_ia64.deb
 
 
-pdk vcadd progeny.com/apache.xml progeny.com/ethereal.xml
+pdk add progeny.com/apache.xml progeny.com/ethereal.xml
 sh
 pdk commit master "this is a remark"

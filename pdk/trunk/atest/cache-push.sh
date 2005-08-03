@@ -51,7 +51,7 @@ cat >progeny.com/sim-product.xml <<"EOF"
   <component>progeny.com/apache.xml</component>
 </component>
 EOF
-pdk vcadd progeny.com/
+pdk add progeny.com/
 pdk commit master foo
 cd ..
 # -------------------
