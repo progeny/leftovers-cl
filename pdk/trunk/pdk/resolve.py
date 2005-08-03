@@ -58,6 +58,9 @@ def do_resolve(args):
 
 def do_download(args):
     '''Command line entry point to downloading missing packages.'''
+    if len(args) != 1:
+        raise CommandLineError, 'download takes a component descriptor'
+
     cache = Cache()
     channels = ChannelData.load_cached()
 

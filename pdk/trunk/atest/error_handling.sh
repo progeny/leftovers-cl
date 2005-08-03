@@ -38,6 +38,11 @@ test "$status" = "2" || {
     bail "Expected command-line error(2), got ${status}"
 }
 
+pdk download || status=$?
+test "$status" = "2" || {
+    bail "Expected command-line error(2), got ${status}"
+}
+
 #-----------------------------------------------------------------------
 # Process ill-formed channels file
 cat > channels.xml << EOF
