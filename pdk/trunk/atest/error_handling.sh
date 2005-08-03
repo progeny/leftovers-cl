@@ -98,5 +98,17 @@ EOF
 pdk semdiff ethereal.xml  || status=$?
 test "$status" = "3" || bail "Expected InputError(3) got ${status}"
 
+#-----------------------------------------------------------------------
+# Cache miss
 
+cat > cache-miss.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <deb ref="sha-1:cantpossiblyexist"/>
+  </contents>
+</component>
+EOF
 
+pdk semdiff cache-miss.xml empty.xml || status=$?
+test "$status" = "4" || bail "Incorrect/unexpected error return"

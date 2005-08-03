@@ -49,6 +49,7 @@ from pdk.util import \
      gen_fragments, gen_file_fragments, \
      find_cache_path, make_path_to, get_remote_file
 from pdk.progress import ConsoleProgress, CurlAdapter
+from pdk.exceptions import SemanticError
 
 # Debugging aids
 import traceback
@@ -318,7 +319,15 @@ class Cache(SimpleCache):
         if os.path.basename(header_file) not in self:
             # Suck the header out and install it
             blob_filename = self.file_path(blob_id)
-            header = package_type.extract_header(blob_filename)
+            try:
+                header = package_type.extract_header(blob_filename)
+            except IOError, error:
+                if error.errno == 2:
+                    message = "Missing package file in file cache\n"
+                    message += "ref = '%s'\n" % blob_id
+                    message += "Consider running pdk download on any new "
+                    message += "or recently modified components."
+                    raise SemanticError, message
             self.add_header(header, blob_id)
 
         try:
