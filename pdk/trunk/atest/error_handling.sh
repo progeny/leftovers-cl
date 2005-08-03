@@ -57,7 +57,7 @@ cat >empty.xml <<EOF
 EOF
 rm -f channels.xml channels.xml.cache
 pdk updatechannels || status=$?
-test "$status" = "4" || bail "Incorrect/unexpected error return"
+test "$status" = "5" || bail "Incorrect/unexpected error return"
 pdk resolve empty.xml || status=$?
 test "$status" = "4" || bail "Incorrect/unexpected error return"
 

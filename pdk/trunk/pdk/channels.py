@@ -30,7 +30,7 @@ from cPickle import dump, load
 from gzip import GzipFile
 from md5 import md5
 from xml.parsers.expat import ExpatError
-from pdk.exceptions import InputError, SemanticError
+from pdk.exceptions import InputError, SemanticError, ConfigurationError
 from pdk.util import path, cpath, gen_file_fragments, find_base_dir
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import get_package_type, UnknownPackageType
@@ -162,7 +162,7 @@ class ChannelData(object):
             raise InputError("In %s, %s" % (channel_data_source, message))
         except IOError, error:
             if error.errno == 2:
-                raise SemanticError("Missing channels.xml.")
+                raise ConfigurationError("Missing channels.xml.")
 
         type_lookup = {'dir': gen_package_dir, 'apt-deb': gen_apt_deb_dir}
 
@@ -179,7 +179,7 @@ class ChannelData(object):
             return load(open(channel_data_cache))
         except IOError, error:
             if error.errno == 2:
-                raise SemanticError("Missing channels.xml.")
+                raise SemanticError("Missing channels.xml.cache")
     load_cached = staticmethod(load_cached)
 
     def add(self, channel_name, channel_iterator):
