@@ -67,4 +67,3 @@ ls foo/work
 #   cleanup:
 rm -rf foo
 
-sh
