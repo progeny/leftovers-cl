@@ -33,7 +33,7 @@ from itertools import chain
 from pdk.util import path
 from pdk.cache import Cache
 from pdk.component import ComponentDescriptor
-from pdk.exceptions import SemanticError, InputError
+from pdk.exceptions import SemanticError, InputError, CommandLineError
 import pdk.log as log
 
 logger = log.get_logger()
@@ -779,6 +779,8 @@ def generate(argv):
     my_parser = optparse.OptionParser()
     opts, args = my_parser.parse_args(args=argv)
     logger.info(str(opts), str(args))
+    if not args:
+        raise CommandLineError("No product file name given")
     product_file = args[0]
     compile_product(product_file)
 

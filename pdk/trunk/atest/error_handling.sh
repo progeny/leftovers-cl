@@ -117,3 +117,9 @@ EOF
 
 pdk semdiff cache-miss.xml empty.xml || status=$?
 test "$status" = "4" || bail "Incorrect/unexpected error return"
+
+#-----------------------------------------------------------------------
+# Don't give necessary arguments -- command line error (2)
+pdk repogen  || status=$?
+test "${status}" = "2" || bail "Expected error 2, got $status"
+
