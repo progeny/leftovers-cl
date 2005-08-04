@@ -8,7 +8,7 @@ Standards-Version: 3.6.1
 Package: pdk
 Architecture: any
 Suggests: python2.3-pylint, openssl, subversion, curl, apache2, libapache2-svn, python-librpm4.4, rpm-4.4
-Depends: ${shlibs:Depends}, python2.3, python-gnupginterface, python2.3-xml, python2.3-pycurl, smartpm, freecdb, sqlite3, python-apsw, python2.3-pycurl, python-apt, python2.3-celementtree, git-core
+Depends: ${shlibs:Depends}, python2.3, python-gnupginterface, python2.3-xml, python2.3-pycurl, smartpm, python2.3-pycurl, python-apt, python2.3-celementtree, git-core
 Description: Componentized Linux Platform Development Kit (PDK)
  Simply put, Componentized Linux is a platform for building
  specialized Linux distributions. Componentized Linux provides
