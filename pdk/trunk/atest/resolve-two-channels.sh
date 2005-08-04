@@ -52,7 +52,7 @@ cat >channels.xml <<EOF
 </channels>
 EOF
 
-pdk updatechannels
+pdk channel update
 
 pdk resolve xsok.xml channel-1 channel-2
 

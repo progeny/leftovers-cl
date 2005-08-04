@@ -84,7 +84,7 @@ cat >channels.xml <<EOF
 EOF
 
 # update the channels
-pdk updatechannels
+pdk channel update
 [ -f channels.xml.cache ] \
     || fail 'channel cache file should have been created'
 
@@ -228,7 +228,7 @@ cat >channels.xml <<EOF
 </channels>
 EOF
 
-pdk updatechannels
+pdk channel update
 
 # Resolve the component against the apt-deb repo.
 pdk resolve apache.xml

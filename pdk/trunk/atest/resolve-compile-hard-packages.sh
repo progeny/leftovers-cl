@@ -39,7 +39,7 @@ plumb_files() {
     mkdir channel
     cp $files channel/
 
-    pdk updatechannels
+    pdk channel update
     cat >a.xml <<EOF
 <?xml version="1.0"?>
 <component>

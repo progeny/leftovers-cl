@@ -26,11 +26,50 @@ machine modifying components.
 import os
 from pdk.util import path, write_pretty_xml, parse_xml
 import pdk.cache 
+from pdk.channels import ChannelData
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, FieldMatchCondition
 from pdk.package import UnknownPackageTypeError, get_package_type
-from pdk.exceptions import InputError, SemanticError
+from pdk.exceptions import CommandLineError, InputError, SemanticError
 from xml.parsers.expat import ExpatError
+
+
+
+def resolve(args):
+    """resolve resolves abstract package references
+
+    *This needs a detailed usage message*
+
+    If the command succeeds, the component will be modified in place.
+    Abstract references will be rewritten to concrete references, and
+    missing constraint elements will be placed.
+
+    The command takes a single component descriptor followed by zero
+    or more channel names.
+
+    If not channel names are given, resolve uses all channels to
+    resolve references.
+    """
+    if len(args) < 1:
+        raise CommandLineError, 'component descriptor required'
+    component_name = args[0]
+    descriptor = ComponentDescriptor(component_name)
+    channel_names = args[1:]
+    channels = ChannelData.load_cached()
+    for channel in channels.get_channels(channel_names):
+        descriptor.resolve(channel)
+
+
+def download(args):
+    """
+    Command line entry point to downloading missing packages.
+    *This needs a detailed usage message*
+    """
+    if len(args) != 1:
+        raise CommandLineError, 'download takes a component descriptor'
+    descriptor = ComponentDescriptor(args[0])
+    descriptor.download()
+
 
 def find_overlaps(packages):
     """Group packages by their names, 'newest' package first in a group."""
@@ -45,6 +84,7 @@ def find_overlaps(packages):
             overlaps.append((sorted[0], sorted[1:]))
     return overlaps
 
+
 def collate_packages(packages):
     """Group packages into a sorted list by package name,type."""
     collated = {}
@@ -54,6 +94,7 @@ def collate_packages(packages):
     keys = collated.keys()
     keys.sort()
     return [ (k, collated[k]) for k in keys ]
+
 
 class ComponentDescriptor(object):
     """Represents a component descriptor object.
@@ -210,16 +251,54 @@ class ComponentDescriptor(object):
             os.makedirs(dirname)
         write_pretty_xml(tree, self.filename)
 
+
+    def resolve(self, channel):
+        """Resolve abstract references by searching the given path."""
+        refs = []
+        for index, ref in self.enumerate_package_refs():
+            refs.append((ref, index))
+
+        for channel_item in channel:
+            ghost_package = channel_item[0]
+            for ref_index, ref_tuple in enumerate(refs):
+                ref, contents_index = ref_tuple
+                if ref.rule.condition.evaluate(ghost_package):
+                    new_ref = PackageReference.from_package(ghost_package)
+                    new_ref.rule.predicates = ref.rule.predicates
+                    self.contents[contents_index] = new_ref
+                    del refs[ref_index]
+                    break
+        self.write()
+
+
+    def download(self):
+        """
+        Acquire the packages for this descriptor from known channels
+        """
+        cache = pdk.cache.Cache()
+        channels = ChannelData.load_cached()
+        for ref in self.iter_package_refs():
+            if ref.blob_id and ref.blob_id not in cache:
+                base_uri, filename = channels.find_by_blob_id(ref.blob_id)
+                cache.import_file(base_uri, filename, ref.blob_id)
+                package = ref.load(cache)
+                if hasattr(package, 'extra_file'):
+                    for blob_id, filename in package.extra_file:
+                        cache.import_file(base_uri, filename, blob_id)
+
+
     def iter_package_refs(self):
         '''Yield all package references in order.'''
         for dummy, ref in self.enumerate_package_refs():
             yield ref
+
 
     def enumerate_package_refs(self):
         '''Yield all index, package_reference pairs in self.contents.'''
         for index, ref in enumerate(self.contents):
             if isinstance(ref, PackageReference):
                 yield index, ref
+
 
     # These functions are only used when reading a descriptor in from
     # an xml handle. They roughly represent a recursive descent parser
@@ -479,3 +558,4 @@ def do_cachepull(args):
                     cache.import_file_from_sources(sources, rel_extra,
                                                    extra_blob_id)
 
+# vim:ai:et:sts=4:sw=4:tw=0:

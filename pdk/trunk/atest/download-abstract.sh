@@ -34,7 +34,7 @@ cat >channels.xml <<EOF
 </channels>
 EOF
 
-pdk updatechannels
+pdk channel update
 
 cat >a.xml <<EOF
 <?xml version="1.0"?>

@@ -33,7 +33,7 @@ test "$status" = "2" || {
     bail "Expected command-line error(2), got ${status}"
 }
 
-pdk updatechannels z || status=$?
+pdk channel update z || status=$?
 test "$status" = "2" || {
     bail "Expected command-line error(2), got ${status}"
 }
@@ -51,7 +51,7 @@ cat > channels.xml << EOF
   <blow-up-here>
 </channels>
 EOF
-pdk updatechannels || status=$?
+pdk channel update || status=$?
 test "$status" = "3" || bail "Incorrect/unexpected error return"
 
 #-----------------------------------------------------------------------
@@ -61,7 +61,7 @@ cat >empty.xml <<EOF
 <component/>
 EOF
 rm -f channels.xml channels.xml.cache
-pdk updatechannels || status=$?
+pdk channel update || status=$?
 test "$status" = "5" || bail "Incorrect/unexpected error return"
 pdk resolve empty.xml || status=$?
 test "$status" = "4" || bail "Incorrect/unexpected error return"
@@ -72,7 +72,7 @@ test "$status" = "4" || bail "Incorrect/unexpected error return"
 cat > channels.xml << EOF
 not ex emm ell at all
 EOF
-pdk updatechannels || status=$?
+pdk channel update || status=$?
 test "$status" = "3" || bail "Incorrect/unexpected error return"
 
 #-----------------------------------------------------------------------

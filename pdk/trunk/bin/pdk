@@ -104,9 +104,8 @@ class Pdk(cmd.Cmd):
     #obsolete
     do_mark = LazyModuleRef('pdk.mark','mark')
     do_semdiff = LazyModuleRef('pdk.semdiff', 'do_semdiff')
-    do_resolve = LazyModuleRef('pdk.resolve', 'do_resolve')
-    do_download = LazyModuleRef('pdk.resolve', 'do_download')
-    do_updatechannels = LazyModuleRef('pdk.resolve', 'do_updatechannels')
+    do_resolve = LazyModuleRef('pdk.component', 'resolve')
+    do_download = LazyModuleRef('pdk.component', 'download')
 
 
     def __init__(self):
@@ -191,7 +190,17 @@ class Pdk(cmd.Cmd):
         from pdk import workspace
         self.module_command(workspace, args)
 
-    
+ 
+    def do_channel(self, args):
+        """
+        Perform an action on channel(s)
+        General usage:
+        pdk channel command args
+        """
+        from pdk import channels
+        self.module_command(channels, args)
+
+ 
     def do_package(self, args):
         """
         Perform an action on a package

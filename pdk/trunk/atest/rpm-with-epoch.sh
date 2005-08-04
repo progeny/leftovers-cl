@@ -48,4 +48,4 @@ cat >rpms.xml <<EOF
 </component>
 EOF
 
-pdk updatechannels
+pdk channel update

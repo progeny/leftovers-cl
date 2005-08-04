@@ -31,6 +31,7 @@ from gzip import GzipFile
 from md5 import md5
 from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError, SemanticError, ConfigurationError
+from pdk.exceptions import CommandLineError
 from pdk.util import path, cpath, gen_file_fragments, find_base_dir
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import get_package_type, UnknownPackageTypeError
@@ -138,6 +139,15 @@ channel_data_source_global = os.path.join(
     , 'channels.xml'
     )
 channel_data_cache_global = channel_data_source_global + '.cache'
+
+
+def update(args):
+    '''Read channels.xml and update the remote channel data. (depot)'''
+    if len(args) > 0:
+        raise CommandLineError, 'update takes no arguments'
+
+    ChannelData.rebuild_cached()
+
 
 class ChannelData(object):
     '''This object holds the downloaded state of channels.

@@ -50,7 +50,7 @@ cat >ethereal.xml <<EOF
 </component>
 EOF
 
-pdk updatechannels
+pdk channel update
 pdk resolve ethereal.xml channel-1
 pdk download ethereal.xml
 pdk semdiff -c channel-2 ethereal.xml | LANG=C sort >semdiff.txt
