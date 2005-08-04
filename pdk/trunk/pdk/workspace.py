@@ -90,7 +90,7 @@ def create(args):
     pdk workspace create [workspace name]
     """
     if not args:
-        print sys.stderr, "requires an argument"
+        print >> sys.stderr, "requires an argument"
         print __doc__
     else:
         name = args[0]

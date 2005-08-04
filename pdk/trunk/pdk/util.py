@@ -413,5 +413,17 @@ def WithAccessLogging(instance, its_name):
             setattr(instance, name, value)
     return add_in()
 
+def moo(args):
+    """our one easter-egg, used primarily for plugin testing"""
+    print "This program has batcow powers"
+    print " ______  (__) "
+    print " }_    \ (oo) "
+    print "   /======\/ "
+    print "  / |    ||   "
+    print " *  /\---/\ "
+    print "    ~~   ~~   "
+    print "Have you mooed today?"
+    if args:
+        print "You said '%s'" % ' '.join([str(x) for x in args])
 
 # vim:ai:et:sts=4:sw=4:tw=0:

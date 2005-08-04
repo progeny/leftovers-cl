@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -26,14 +27,65 @@ __revision__ = '$Progeny$'
 
 import cmd
 import os
+import sys
+import traceback
+import types
 import pdk.log as log
-from pdk.exceptions import CommandLineError
+from pdk.exceptions import CommandLineError, InputError, \
+                    SemanticError, ConfigurationError, \
+                    IntegrityFault
 logger = log.get_logger()
 
 ## command_base.py
 ## Author:  Glen Smith
 ## Date:    16 June 2005
 ## Version: 0.0.1
+
+
+def _get_args_as_list(args):
+    """
+    If a command is invoked from the command line,
+    the args will be one string.
+    If the command is invoked from the pdk
+    command environment, the args will be a list.
+    This utility function returns a list for either
+    so you don't have to care
+    """
+    if isinstance(args, types.StringTypes):
+        return args.split()
+    elif type(args) == type([]):
+        return args
+    else:
+        raise Exception("unexpected args:" + str(type(args)) + str(args) )
+
+
+def load_addins(base, *config_files):
+    """
+    Load the configuration files and load
+    the command plugins that they define.
+    """
+    addin_list = []
+    for config_file in config_files:
+        for line in open(config_file):
+            # Strip comments
+            x = line.find('#')
+            if x >= 0:
+                line = line[:x]
+            # See if there's anything left
+            line.strip()
+            if not line:
+                continue
+            # We only do cmd.add_external_plugins now
+            try:
+                modpath, modfunc, local = line.split()
+                addin_list.append( (modpath, modfunc, local) )
+            except ValueError:
+                raise InputError("wrong number of fields: %s" % line)
+
+    base.add_external_plugins(addin_list)
+
+
+
 
 class LazyModuleRef(object):
     """Callable object that defers importing a package until it is 
@@ -51,15 +103,17 @@ class LazyModuleRef(object):
         #       modules to the fromlist (final argument to __import__)
         module = __import__(self.module, globals(), locals(), ["pdk"])
         fn = getattr(module, self.function)
-        return fn(*args, **kwargs)
+        real_args = _get_args_as_list(*args)
+        return fn(real_args, **kwargs)
     def getdoc(self):
         """Trick to get docstring from mapped fuction"""
         module = __import__(self.module, globals(), locals(), ["pdk"])
         fn = getattr(module, self.function)
         return fn.__doc__
     __doc__ = property(getdoc, None)
-        
-class PdkBase(cmd.Cmd):
+
+
+class CmdBase(cmd.Cmd):
     """This is the main command object"""
 
     
@@ -77,7 +131,6 @@ class PdkBase(cmd.Cmd):
 
     def _is_in_shell(self):
         """invoke to assure commands aren't being called from a script"""
-        import traceback
         ret_val = False
         stack = traceback.extract_stack()
         for entry in stack:
@@ -103,9 +156,16 @@ class PdkBase(cmd.Cmd):
         return -1
 
 
+    def do_quit(self, args):
+        """Exits from the pdk command shell"""
+        if args:
+            raise CommandLineError, "quit command takes no arguments"
+        return -1
+
     ## Command definitions to support Cmd object functionality ##
-    def do_eof(self, args):
+    def do_EOF(self, args):
         """Exit on system end of file character"""
+        print ""
         return self.do_exit(args)
 
 
@@ -161,12 +221,58 @@ class PdkBase(cmd.Cmd):
         """Do nothing on empty input line"""
         pass
 
+    def run_one_command(self, fn_name, args):
+        """Run one command, reporting errors in the standard way
 
-for addin_file in [ x for x in ('~/.pdk_addins','.pdk_addins')
-                    if os.path.exists(x) ]:
-    for record in open(addin_file):
-        path, function, localname  = record.split()
-        ref = LazyModuleRef(path, function)
-        setattr(PdkBase, localname, ref) 
+        Intended for use in command-line (one-shot) invocation of 
+        commands in the command base.
+        """
+        try:
+            func = getattr(self, fn_name)
+            fn_args = args[2:]
+            func(fn_args)
+        except IntegrityFault, message:
+            logger.error("Integrity Fault Noted: %s" % message)
+            sys.exit(1)
+        except CommandLineError, message:
+            logger.error("Syntax Error: %s" % message)
+            self.do_help(args[0])
+            sys.exit(2)
+        except InputError, message:
+            logger.error("Invalid input: %s" % message)
+            sys.exit(3)
+        except SemanticError, message:
+            logger.error("Operation cannot be performed: %s" % message)
+            sys.exit(4)
+        except ConfigurationError, message:
+            logger.error("Configuration/setup error: %s" % message)
+            sys.exit(5)
+        except:
+            traceback.print_exc(sys.stderr)
+            logger.error("Unknown error")
+            sys.exit(6)
+
+    def add_plugins(self, plugins):
+        """Add additional functions to this commandbase
+
+        'Plugins' is a list of (localname, function) tuples,
+        or equivalents.
+        """
+        for localname, function in plugins:
+            setattr(self, localname, function)
+
+    def add_external_plugins(self, plugins):
+        """Add plugins which are located in external modules
+
+        "plugins" is a list of three-tuples consisting of:
+              module_path - (dir.something for 'something' in 'dir')
+              module_function - name of the function in the module
+              localname - do_xxxxx where xxxxx is the command name
+        example:
+              doghouse.doggy bark4me  bark
+        """
+        for module_path, module_function, localname in plugins:
+            ref = LazyModuleRef(module_path, module_function)
+            setattr(self, localname, ref)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

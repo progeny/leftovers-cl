@@ -50,6 +50,7 @@ pdk workspace create
 pdk workspace create foo
 #   evaluation:
 ls foo/work
+
 #   cleanup:
 rm -rf foo
 
