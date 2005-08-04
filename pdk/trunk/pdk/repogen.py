@@ -62,6 +62,11 @@ def compile_product(component_name):
 
     cache = Cache()
     compiler = Compiler(cache)
+
+    repo_types = { 'report': compiler.dump_report,
+                   'apt-deb': compiler.create_debian_pool_repo,
+                   'raw': compiler.create_raw_package_dump_repo }
+
     product = ComponentDescriptor(component_name).load(cache)
     ref = (component_name, 'component')
     if ref in product.meta:
@@ -69,11 +74,21 @@ def compile_product(component_name):
     else:
         contents = {}
 
-    first_package = product.packages[0]
-    if first_package.format == 'deb':
-        compiler.create_debian_pool_repo(product, contents)
+    if 'repo-type' in contents:
+        repo_type_string = contents['repo-type']
     else:
-        compiler.create_raw_package_dump_repo(product)
+        first_package = product.packages[0]
+        if first_package.format == 'deb':
+            repo_type_string = 'apt-deb'
+        else:
+            repo_type_string = 'raw'
+
+    if repo_type_string not in repo_types:
+        message = 'invalid repo-type given for %s' % component_name
+        raise InputError, message
+    repo_type = repo_types[repo_type_string]
+
+    repo_type(product, contents)
 
 
 def is_hard_linked(path1, path2):
@@ -684,12 +699,78 @@ class Compiler:
         repo.write_repo()
         repo.write_releases(writer)
 
-    def create_raw_package_dump_repo(self, component):
+    def create_raw_package_dump_repo(self, component, dummy):
         """Link all the packages in the product to the repository."""
         os.mkdir('repo')
         for package in component.packages:
             os.link(self.cache.file_path(package.blob_id),
                     path('repo')[package.filename]())
+
+    def dump_report(self, component, contents):
+        """Instead of building a repo, dump a report of component contents.
+        """
+        packages = []
+        metas = []
+        joins = []
+
+        for ref in component.meta:
+            if ref[1] != 'component':
+                for predicate, target in component.meta[ref].iteritems():
+                    bindings = forgiving_dict(subject = ref[0],
+                                              predicate = predicate,
+                                              target = target)
+                    metas.append(bindings)
+
+        for package in component.packages:
+            bindings = forgiving_dict(package.get_bindings_dict())
+            cache_location = self.cache.file_path(package.blob_id)
+            bindings['cache_location'] = cache_location
+            packages.append(bindings)
+
+        for item in packages:
+            ref = (item['blob_id'], item['type'])
+            if ref in component.meta:
+                for predicate, target in component.meta[ref].iteritems():
+                    joined_item = forgiving_dict(item)
+                    joined_item['predicate'] = predicate
+                    joined_item['target'] = target
+                    joins.append(joined_item)
+            else:
+                joins.append(item)
+
+        packages.sort()
+        metas.sort()
+        joins.sort()
+
+        if 'package-format' in contents:
+            format = contents['package-format']
+            lines = []
+            for package in packages:
+                lines.append(format % package)
+            lines.sort()
+            for line in lines:
+                print line
+            print
+
+        if 'meta-format' in contents:
+            format = contents['meta-format']
+            lines = []
+            for meta in metas:
+                lines.append(format % meta)
+            lines.sort()
+            for line in lines:
+                print line
+            print
+
+        if 'combined-format' in contents:
+            format = contents['combined-format']
+            lines = []
+            for join in joins:
+                lines.append(format % join)
+            lines.sort()
+            for line in lines:
+                print line
+            print
 
 def generate(argv):
     """
@@ -700,3 +781,13 @@ def generate(argv):
     logger.info(str(opts), str(args))
     product_file = args[0]
     compile_product(product_file)
+
+class forgiving_dict(dict):
+    """A dict that returns '' for missing keys. fd['missing'] -> ''
+    """
+    def __getitem__(self, key):
+        value = self.get(key, '')
+        if value is None:
+            return ''
+        else:
+            return value
