@@ -23,11 +23,17 @@ Library interface to pdk workspace
 """
 __revision__ = '$Progeny$'
 
-from pdk.util import assert_python_version
-assert_python_version()
 import os
 import sys
 from pdk import version_control
+
+
+def find_current_workspace():
+    """
+    Return the current workspace instance based on pwd
+    """
+    whole_path = os.getcwd()
+    print whole_path
 
 
 def clone(args):
@@ -42,13 +48,39 @@ def clone(args):
     local_head_name = args[3]
     remote_head_name = args[4]
     ws = Workspace()
-    ws.clone(
-        product_url, 
-        work_area,
-        branch_name, 
-        local_head_name,
-        remote_head_name
-    )
+    ws.clone(product_url, work_area, branch_name, local_head_name,
+        remote_head_name)
+
+
+def pull(args):
+    """ 
+    Started from the shell script production_pull
+    Does a pull from one git directory to another.
+    """
+    remote_vc_path = args[0] + '/VC'
+    remote_head_name = args[1]
+    local_vc_path = args[2] + '/VC'
+    local_head_name = args[3]
+    
+    start_path = os.getcwd()
+
+    os.environ['GIT_DIR'] = local_vc_path
+
+    remote_file = file(remote_vc_path + '/refs/heads/' + \
+                       remote_head_name, 'r')
+    remote_commit_id = remote_file.read().strip()
+    remote_file.close()
+
+    version_control._shell_command('git-local-pull -a -l ' + \
+                                    remote_commit_id + ' ' + \
+                                    remote_vc_path)
+
+    local_head = local_vc_path + '/refs/heads/' + local_head_name
+    tmp_file = file(local_head, 'w')
+    tmp_file.write(remote_commit_id + '/git/')
+    tmp_file.close()
+
+    os.chdir(start_path)
 
 
 def create(args):
@@ -102,29 +134,24 @@ class Workspace(object):
     def __init__(self):
 #    def __init__(self, product_URL, work_area, branch_name, \
 #                 local_head_name, remote_head_name):
+        # look at the os.getcwd():
+        # If we are in an existing workspace,
+        # we should populate attributes accordingly
+  
         self.version_control = version_control.VersionControl()
 
 
-    def clone(self, product_URL, work_area, branch_name, local_head_name,
-             remote_head_name):
+    def clone(self, product_URL, work_area, branch_name,
+                 local_head_name, remote_head_name):
         """
-        Create a local instance of the database
+        Create a local instance of the workspace
         with a product from a remote URL
         """
-        
         start_path = os.getcwd()
-        product_path = start_path + '/' + work_area
-        os.mkdir(product_path)
-        os.chdir(product_path)
-        
-        self.version_control.clone(
-            product_URL,
-            branch_name,
-            local_head_name,
-            remote_head_name
-            )
-        os.mkdir(product_path + '/cache')
-        os.mkdir(product_path + '/work')
+        self.create(work_area)
+        os.chdir(work_area + '/work')
+        self.version_control.clone(product_URL, branch_name,
+            local_head_name, remote_head_name)
         os.chdir(start_path)
 
 
@@ -137,7 +164,7 @@ class Workspace(object):
 
     def create(self, name):
         """
-        Create an 'empty' local instance of the database
+        Create an 'empty' local instance of the workspace
         """
         if os.path.exists(name):
             raise Exception, "directory already exists"

@@ -30,6 +30,9 @@ import os
 import sys
 import traceback
 import pdk.log as log
+from pdk.util import assert_python_version
+assert_python_version()
+
 from warnings import filterwarnings
 from pdk.exceptions import CommandLineError, InputError, \
                     SemanticError, ConfigurationError, \
@@ -92,6 +95,7 @@ class Pdk(cmd.Cmd):
     do_cachereceive = LazyModuleRef('pdk.cache', 'do_cachereceive')
     do_cachepull = LazyModuleRef('pdk.component', 'do_cachepull')
     do_init = LazyModuleRef('pdk.services', 'init')
+    do_publish = LazyModuleRef('pdk.source', 'publish')
     do_update = LazyModuleRef('pdk.workspace', 'update')
     do_commit = LazyModuleRef('pdk.workspace', 'commit')
     #need to rename
@@ -106,6 +110,8 @@ class Pdk(cmd.Cmd):
     do_semdiff = LazyModuleRef('pdk.semdiff', 'do_semdiff')
     do_resolve = LazyModuleRef('pdk.component', 'resolve')
     do_download = LazyModuleRef('pdk.component', 'download')
+    #temporary utility
+    do_production_pull = LazyModuleRef('pdk.workspace', 'pull')
 
 
     def __init__(self):

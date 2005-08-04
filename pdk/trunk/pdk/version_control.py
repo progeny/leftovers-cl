@@ -29,10 +29,8 @@ import popen2
 import shutil
 import sys
 from cStringIO import StringIO
-from pdk.util import assert_python_version
-assert_python_version()
 
-## pdk-vc
+## version_control
 ## Author:  Glen Smith
 ## Date:    23 June 2005
 ## Version: 0.0.1
@@ -116,7 +114,7 @@ class VersionControl(object):
         call git commands to create local workspace
         """
         git_path = '.git/'
-        _shell_command([('git-init-db')])
+        _shell_command('git-init-db')
 
         curl_source = product_URL + 'snap.tar'
         curl_command = 'curl -s ' + curl_source + \
@@ -149,7 +147,7 @@ class VersionControl(object):
             git_path = '.git/'
             _shell_command([('git-init-db')])
 
-        curl_source = product_URL + 'snap.tar'
+        curl_source = product_URL + '/work/snap.tar'
         curl_command = 'curl -s ' + curl_source + \
                        ' | (tar Cx %s)' % git_path
         _shell_command(curl_command)
@@ -185,6 +183,8 @@ class VersionControl(object):
         _shell_command('git-update-cache ' + ' '.join(files))
         sha1 = _shell_command('git-write-tree').strip()
 
+        print sys.stdout, "foo1", sha1
+
         filename = '.git/refs/heads/' + head_name
         comment_handle = StringIO(remark)
         the_file = file(filename, 'w')
@@ -197,24 +197,40 @@ class VersionControl(object):
         """
         update the version control
         """
-        config_file_name = '.git/branches/' + upstream_name
-        config_file = file(config_file_name, 'r')
-        remote_URL = config_file.read().strip()
-        config_file.close()
+        #config_file_name = '.git/branches/' + upstream_name
+        #config_file = file(config_file_name, 'r')
+        #remote_URL = config_file.read().strip()
+        #config_file.close()
 
-        curl_source = remote_URL + '/refs/heads/' + remote_head_name
+
+        #just for pylint, just for now...
+        print sys.stderr, upstream_name
+
+        remote_URL = 'http://localhost:8100/telco/'
+
+        curl_source = remote_URL + 'VC/refs/heads/' + remote_head_name
         remote_commit_id = _shell_command('curl -s  ' + curl_source).strip()
 
-        command_string = 'git-http-pull ' + remote_commit_id + \
-                         ' ' + remote_URL
-        _shell_command(command_string)
+        os.chdir('work')
+        cmd_str = 'git-http-pull -c ' + remote_commit_id + \
+                  ' ' + remote_URL + 'VC/'
+        _shell_command(cmd_str)
 
         command_string = 'git-read-tree ' + remote_commit_id
         _shell_command(command_string)
 
         command_string = 'git-merge-cache git-merge-one-file-script -a'
         _shell_command(command_string)
+        os.chdir('..')
 
+
+def patch(args):
+    """Perform a version control patch command"""
+    file_name = args[0]
+    command_string = 'git-apply ' + file_name
+    _shell_command(command_string)
+##    git-update-cache progeny.com/apache.xml
+##    pdk commit master "Required commit remark"
 
 
 # vim:ai:et:sts=4:sw=4:tw=0:

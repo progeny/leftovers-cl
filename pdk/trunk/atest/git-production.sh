@@ -31,10 +31,10 @@ create_apache_conf $SERVER_PORT
 pdk_bin=$(which pdk)
 cat >etc/svn.apache2.conf <<EOF
 ScriptAlias /telco/upload $pdk_bin
-Alias /telco/ $tmp_dir/progeny-production/http/
+Alias /telco/ $tmp_dir/production/
 PassEnv PATH PYTHONPATH
 # Tell the cgi where its cache is.
-SetEnv PDK_CACHE_PATH $tmp_dir/progeny-production/http/cache
+SetEnv PDK_CACHE_PATH $tmp_dir/production/cache
 EOF
 
 $apache2_bin -t -f etc/apache2/apache2.conf
@@ -44,33 +44,14 @@ $apache2_bin -X -f etc/apache2/apache2.conf &
 # Common Functions
 # -----------------------------------------------------------
 
-do_production_pull() {
-    # Does a pull from one git directory to another.
-    # Unlike other commands, does not assume work/.git directory
-    # layout.
-    # Also creates snap.tar. In real production that part of the
+create_snapshot() {
+    # Creates snap.tar. In real production that part of the
     # process could be separated and done infrequently. (cron weekly)
+    local local_path=$1
+    local local_vc_path=$local_path/VC
 
-    local remote_path=$1
-    local remote_head_name=$2
-    local local_path=$3
-    local local_head_name=$4
-
-    GIT_DIR=$local_path
-    export GIT_DIR
-
-    if [ ! -e $GIT_DIR ]; then
-        mkdir -p $GIT_DIR
-        git-init-db
-    fi
-    remote_commit_id=$(cat $remote_path/refs/heads/$remote_head_name)
-    git-local-pull -a -l $remote_commit_id $remote_path
-    echo $remote_commit_id >$local_path/refs/heads/$local_head_name
-    # now update the snapshot
-    tar Cc $local_path . > $local_path/../snap.tar.tmp
-    mv $local_path/../snap.tar.tmp $local_path/../snap.tar
-    cd $tmp_dir
-    unset GIT_DIR
+    tar Cc $local_vc_path . > $local_vc_path/../snap.tar.tmp
+    mv $local_vc_path/../snap.tar.tmp $local_vc_path/../snap.tar
 }
 
 
@@ -79,61 +60,62 @@ do_production_pull() {
 # -----------------------------------------------------------
 
 pdk workspace create integration
-cd integration/work
+pushd integration/work
 
-#This needs to be resolved with the creation of
+#This needs to be replaced with the creation of
 #a component with an abstract package,
-#followed by "pdk resolve (descr.)
+#followed by "pdk resolve (descr.)":
 pdk package add progeny.com/apache.xml \
     $tmp_dir/packages/apache2_2.0.53-5.dsc \
     $tmp_dir/packages/apache2-common_2.0.53-5_i386.deb
 
 pdk add progeny.com/apache.xml
-pdk commit master "this is a remark"
-cd ..
+pdk commit master "git-production commit"
+popd
 
 # -----------------------------------------------------------
 # Set up production environment with initial production data
 # -----------------------------------------------------------
-mkdir -p $tmp_dir/progeny-production/http/cache
-mkdir -p $tmp_dir/progeny-production/http/docs
-mkdir -p $tmp_dir/progeny-production/http/install
-do_production_pull \
-    $tmp_dir/integration/work/.git \
-    master \
-    $tmp_dir/progeny-production/http/git \
-    master
+
+pdk workspace create production
+
+pdk production_pull $tmp_dir/integration master \
+    $tmp_dir/production master
+
+create_snapshot $tmp_dir/production
 
 # -----------------------------------------------------------
 # Push packages from integration to production.
 # -----------------------------------------------------------
-# Now I wish I had a complete cache pull, which does what cachepush does but
-# in reverse.
 
-cd integration
+pushd integration
+
 pdk cachepush http://localhost:$SERVER_PORT/telco/upload
+
 ls cache/ | grep -v .header$ >$tmp_dir/expected
 
-cd $tmp_dir
-ls progeny-production/http/cache >actual
+popd
+
+ls production/cache >actual
 diff -u expected actual
 
 # -----------------------------------------------------------
-# Initial customer checkout.
+# Initial customer product retrieval.
 # -----------------------------------------------------------
-
 pdk clone http://localhost:$SERVER_PORT/telco/ \
     customer-work-area progeny.com local master
 
-cd customer-work-area
+# -----------------------------------------------------------
+# Customer moves to work area and makes a local change.
+# -----------------------------------------------------------
+
+pushd customer-work-area/work
 
 echo >>progeny.com/apache.xml
 echo GARBAGE >>progeny.com/apache.xml
 
-
-git-update-cache progeny.com/*
 parent_id=$(cat .git/HEAD)
-echo -n | git-commit-tree $(git-write-tree) -p $parent_id >.git/HEAD
+pdk commit master "git-production testing"
 
 # -----------------------------------------------------------
 # Send change from customer to integration.
@@ -144,26 +126,27 @@ git-diff-tree -p -r $parent_id $(cat .git/HEAD) >patch.txt
 # really this file would be sent by email.
 cp patch.txt $tmp_dir/integration/work/patch.txt
 
-cd $tmp_dir
-cd integration/work
+popd
+
+# -----------------------------------------------------------
+# Apply change from customer to integration
+# -----------------------------------------------------------
+
+pushd integration/work
 git-apply patch.txt
-git-update-cache progeny.com/apache.xml
 pdk commit master "Required commit remark"
+popd
 # -----------------------------------------------------------
 # Pull from integration to production (again)
 # -----------------------------------------------------------
-cd $tmp_dir
-do_production_pull \
-    $tmp_dir/integration/work/.git \
-    master \
-    $tmp_dir/progeny-production/http/git \
-    master
+
+pdk production_pull $tmp_dir/integration master \
+    $tmp_dir/production master
 
 # -----------------------------------------------------------
 # Pull from production to customer (again)
 # -----------------------------------------------------------
 
-cd $tmp_dir
 cd customer-work-area
 pdk update progeny.com master
-grep GARBAGE progeny.com/apache.xml
+grep GARBAGE work/progeny.com/apache.xml
