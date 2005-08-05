@@ -26,14 +26,19 @@ __revision__ = '$Progeny$'
 import os
 import sys
 from pdk import version_control
+from pdk import util
 
 
 def find_current_workspace():
     """
     Return the current workspace instance based on pwd
+
+    If the current workspace can't be found, the current
+    working directory is considered to be the workspace
+    directory.
     """
-    whole_path = os.getcwd()
-    print whole_path
+    whole_path = util.find_base_dir() or os.getcwd()
+    return whole_path
 
 
 def clone(args):

@@ -134,6 +134,8 @@ def gen_apt_deb_slice(base_url, dist, component, arch):
         package.contents['blob-id'] = blob_id
         yield package, base_uri, filename
 
+
+# Locate the local channels config & cache location
 channel_data_source_global = os.path.join(
     find_base_dir() or "."
     , 'channels.xml'

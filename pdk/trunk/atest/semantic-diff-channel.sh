@@ -21,26 +21,34 @@
 #
 # Test pdk semdiff vs. a channel
 
+. atest/test_lib.sh
+
 mkdir channel-1
+dir_channel1=$(pwd)/channel-1
 cp packages/ethereal_0.9.13-1.0progeny1_ia64.deb channel-1/
 
 mkdir channel-2
+dir_channel2=$(pwd)/channel-2
 cp packages/ethereal_0.9.13-1.0progeny2_ia64.deb channel-2/
+
+pdk workspace create semdiff_workspace
+cd semdiff_workspace
 
 cat >channels.xml <<EOF
 <?xml version="1.0"?>
 <channel>
   <channel-1>
     <type>dir</type>
-    <path>channel-1</path>
+    <path>${dir_channel1}</path>
   </channel-1>
   <channel-2>
     <type>dir</type>
-    <path>channel-2</path>
+    <path>${dir_channel2}</path>
   </channel-2>
 </channel>
 EOF
 
+cd work
 cat >ethereal.xml <<EOF
 <?xml version="1.0"?>
 <component>

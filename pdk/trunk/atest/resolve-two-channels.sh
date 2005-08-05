@@ -20,7 +20,39 @@
 #
 # Catch regression of problem where resolving with two channels could result
 # in a type constraint being ignored.
+. atest/test_lib.sh
 
+# Setup channels
+mkdir channel-1
+dir_channel1=$(pwd)/channel-1
+cp atest/packages/xsok_1.02-9woody2.dsc channel-1/
+cp atest/packages/xsok_1.02-9woody2.diff.gz channel-1/
+cp atest/packages/xsok_1.02.orig.tar.gz channel-1/
+
+mkdir channel-2
+dir_channel2=$(pwd)/channel-1
+cp atest/packages/xsok_1.02-9woody2_i386.deb channel-2
+
+# Create workspace
+pdk workspace create workspace
+
+# Add channels file to workspace root
+cd workspace
+cat >channels.xml <<EOF
+<?xml version="1.0"?>
+<channels>
+  <channel-1>
+    <type>dir</type>
+    <path>${dir_channel1}</path>
+  </channel-1>
+  <channel-2>
+    <type>dir</type>
+    <path>${dir_channel2}</path>
+  </channel-2>
+</channels>
+EOF
+
+cd work
 cat >xsok.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -30,33 +62,10 @@ cat >xsok.xml <<EOF
 </component>
 EOF
 
-mkdir channel-1
-cp atest/packages/xsok_1.02-9woody2.dsc channel-1/
-cp atest/packages/xsok_1.02-9woody2.diff.gz channel-1/
-cp atest/packages/xsok_1.02.orig.tar.gz channel-1/
-
-mkdir channel-2
-cp atest/packages/xsok_1.02-9woody2_i386.deb channel-2
-
-cat >channels.xml <<EOF
-<?xml version="1.0"?>
-<channels>
-  <channel-1>
-    <type>dir</type>
-    <path>channel-1</path>
-  </channel-1>
-  <channel-2>
-    <type>dir</type>
-    <path>channel-2</path>
-  </channel-2>
-</channels>
-EOF
-
-pdk channel update
-
+pdk channel update 
 pdk resolve xsok.xml channel-1 channel-2
 
-diff -u - xsok.xml <<EOF
+cat >expected <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
   <contents>
@@ -67,3 +76,6 @@ diff -u - xsok.xml <<EOF
   </contents>
 </component>
 EOF
+
+diff -u expected xsok.xml  || bail "did not resolve as expected"
+

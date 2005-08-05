@@ -233,7 +233,7 @@ def find_cache_path(directory=None):
     ensure_directory_exists(result)
     return result
 
-def find_base_dir(directory=os.getcwd()):
+def find_base_dir(directory=None):
     """Locate the directory above the current directory, containing
     the work, cache, and svn directories.
 
@@ -250,21 +250,21 @@ def find_base_dir(directory=os.getcwd()):
     # 
     # We need a way to know for certain where the top of the 
     # workspace really is.
-    parts = directory.split(os.path.sep)
-    parts = list(parts)
-    try:
-        position = parts.index('work')
-        result = os.path.sep.join(parts[:position])
-    except ValueError:
-        result = None
-        while parts:
-            base_candidate = os.path.sep.join(parts)
-            for marker in 'cache', 'work', '.git':
-                mark_path = os.path.join(base_candidate, marker)
-                if os.path.isdir(mark_path):
-                    result = base_candidate
-                    break
-            parts.pop()
+    if directory is None:
+        directory = os.getcwd()
+    result = None
+    while not result:
+        # Look for our markers
+        for marker in 'cache', 'work', 'vc':
+            marker_path = os.path.join(directory, marker)
+            if os.path.isdir(marker_path):
+                result = directory
+                break
+        # Markers not found, trim down the path
+        directory, dummy = os.path.split(directory)
+        # If we run out of path, quit
+        if not dummy:
+            break
     return result
 
 class PrettyWriter(object):
