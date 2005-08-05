@@ -39,32 +39,3 @@ echo "help workspace create" |pdk
 pdk help workspace create foo
 echo "help workspace create foo" |pdk
 
-#   setup:
-#   execute:
-pdk workspace create
-#   evaluation:
-#   cleanup:
-
-#   setup:
-#   execute:
-pdk workspace create foo
-#   evaluation:
-ls foo/work
-
-#   cleanup:
-rm -rf foo
-
-#   setup:
-#   execute:
-echo "workspace create" |pdk
-#   evaluation:
-#   cleanup:
-
-#   setup:
-#   execute:
-echo "workspace create foo" |pdk
-#   evaluation:
-ls foo/work
-#   cleanup:
-rm -rf foo
-

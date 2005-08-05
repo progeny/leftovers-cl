@@ -44,3 +44,19 @@ ls -la foo|grep -q cache
 rm -rf foo
 
 
+#   setup:
+#   execute:
+echo "workspace create" |pdk
+#   evaluate:
+#   cleanup:
+
+#   setup:
+#   execute:
+echo "workspace create foo" |pdk
+#   evaluate:
+ls -la foo|grep -q VC
+ls -la foo|grep -q work
+ls -la foo|grep -q cache
+#   cleanup:
+rm -rf foo
+
