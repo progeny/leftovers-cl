@@ -27,7 +27,6 @@ __revision__ = '$Progeny$'
 
 import os
 import sys
-import traceback
 import pdk.log as log
 import pdk.command_base as command_base
 from pdk.util import assert_python_version
@@ -81,16 +80,6 @@ class Pdk(command_base.CmdBase):
         self._globals = {}
 
 
-    def _is_in_shell(self):
-        """invoke to assure commands aren't being called from a script"""
-        ret_val = False
-        stack = traceback.extract_stack()
-        for entry in stack:
-            if "cmdloop" in entry:
-                ret_val = True
-                break
-        return ret_val
-    
     ## Command definitions ##
     def do_compare(self, args):
         """
