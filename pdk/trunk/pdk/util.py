@@ -416,11 +416,12 @@ def WithAccessLogging(instance, its_name):
 def moo(args):
     """our one easter-egg, used primarily for plugin testing"""
     print "This program has batcow powers"
-    print " ______  (__) "
+    print " _____        "
+    print " }    \  (__) "
     print " }_    \ (oo) "
-    print "   /======\/ "
+    print "   / ---' lJ  "
     print "  / |    ||   "
-    print " *  /\---/\ "
+    print " *  /\---/\   "
     print "    ~~   ~~   "
     print "Have you mooed today?"
     if args:

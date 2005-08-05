@@ -26,7 +26,7 @@
 #########################################
 #   setup:
 cat > .pdk_plugins <<EOF
-pdk.util moo do_moo
+pdk.util moo moo
 EOF
 # pdk shell
 #   execute:
@@ -50,7 +50,7 @@ rm .pdk_plugins cowstuff.txt
 cat > .pdk_plugins <<EOF
 #
 # Add batcow powers to our fun pdk toy
-pdk.util moo do_moo # This makes us moo
+pdk.util moo moo # This makes us moo
 # I am the cow that moos in the night.
 # I am batcow
 EOF
@@ -95,7 +95,7 @@ EOF
 cat > .pdk_plugins <<EOF
 #
 # Add batcow powers to our fun pdk toy
-localfile moo do_moo # This makes us moo
+localfile moo moo # This makes us moo
 # I am the cow that moos in the night.
 # I am batcow
 EOF

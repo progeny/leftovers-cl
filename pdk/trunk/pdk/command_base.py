@@ -259,7 +259,7 @@ class CmdBase(cmd.Cmd):
         or equivalents.
         """
         for localname, function in plugins:
-            setattr(self, localname, function)
+            setattr(self, "do_%" % localname, function)
 
     def add_external_plugins(self, plugins):
         """Add plugins which are located in external modules
@@ -273,6 +273,6 @@ class CmdBase(cmd.Cmd):
         """
         for module_path, module_function, localname in plugins:
             ref = LazyModuleRef(module_path, module_function)
-            setattr(self, localname, ref)
+            setattr(self, "do_%s" % localname, ref)
 
 # vim:ai:et:sts=4:sw=4:tw=0:
