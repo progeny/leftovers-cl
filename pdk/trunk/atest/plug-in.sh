@@ -48,11 +48,18 @@ rm .pdk_plugins cowstuff.txt
 #########################################
 #   setup:
 cat > .pdk_plugins <<EOF
+# Add batcow powers to pdk 
 #
-# Add batcow powers to our fun pdk toy
+# Record is:
+#    module to import
+#    name of function to call (module.fn)
+#    desired command name
+#------------------------------------
 pdk.util moo moo # This makes us moo
+# -----------------------------------
 # I am the cow that moos in the night.
 # I am batcow
+#
 EOF
 # command line
 #   execute:
