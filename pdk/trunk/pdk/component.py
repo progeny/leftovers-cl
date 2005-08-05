@@ -32,7 +32,7 @@ from pdk.rules import Rule, CompositeRule, AndCondition, FieldMatchCondition
 from pdk.package import UnknownPackageTypeError, get_package_type
 from pdk.exceptions import CommandLineError, InputError, SemanticError
 from xml.parsers.expat import ExpatError
-
+from pdk.log import get_logger
 
 
 def resolve(args):
@@ -49,6 +49,8 @@ def resolve(args):
 
     If not channel names are given, resolve uses all channels to
     resolve references.
+
+    A warning is given if any unresolved references remain.
     """
     if len(args) < 1:
         raise CommandLineError, 'component descriptor required'
@@ -58,6 +60,15 @@ def resolve(args):
     channels = ChannelData.load_cached()
     for channel in channels.get_channels(channel_names):
         descriptor.resolve(channel)
+
+    logger = get_logger()
+    for reference in descriptor.contents:
+        if isinstance(reference, PackageReference):
+            if reference.is_abstract():
+                message = 'unresolved references remain in %s' \
+                          % component_name
+                logger.warn(message)
+                break
 
 
 def download(args):
@@ -253,7 +264,7 @@ class ComponentDescriptor(object):
 
 
     def resolve(self, channel):
-        """Resolve abstract references by searching the given path."""
+        """Resolve abstract references by searching the given channel."""
         refs = []
         for index, ref in self.enumerate_package_refs():
             refs.append((ref, index))
@@ -512,6 +523,10 @@ class PackageReference(object):
         '''Load the package associated with this ref.'''
         return cache.load_package(self.blob_id,
                                   self.package_type.type_string)
+
+    def is_abstract(self):
+        '''Return true if this package reference is abstact.'''
+        return not bool(self.blob_id)
 
 class ComponentReference(object):
     '''Represents a component reference.

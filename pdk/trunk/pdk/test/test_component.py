@@ -500,3 +500,11 @@ class TestPackageRef(Test):
         bad_cache.add(libc)
 
         assert not ref.verify(bad_cache)
+
+    def test_is_abstract(self):
+        concrete_ref = PackageReference(Deb(), 'sha-1:aaa', None)
+        assert not concrete_ref.is_abstract()
+
+        abstract_ref = PackageReference(Deb(), None, None)
+        assert abstract_ref.is_abstract()
+
