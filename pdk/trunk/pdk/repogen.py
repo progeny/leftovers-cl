@@ -88,6 +88,9 @@ def compile_product(component_name):
         raise InputError, message
     repo_type = repo_types[repo_type_string]
 
+    if os.path.exists('repo'):
+        os.system('rm -rf repo')
+
     repo_type(product, contents)
 
 
