@@ -18,10 +18,29 @@
 
 # workspace.sh
 #
-# Check that help system doesn't crash
+# Unit test the workspace commands
 
+#setup
+#execute
 pdk workspace
-pdk workspace create
-pdk workspace create foo
+#evaluate
+#cleanup
 
-sh
+
+#setup
+#execute
+pdk workspace create
+#evaluate
+#cleanup
+
+#setup
+#execute
+pdk workspace create foo
+#evaluate
+ls -la foo|grep -q VC
+ls -la foo|grep -q work
+ls -la foo|grep -q cache
+#cleanup
+rm -rf foo
+
+
