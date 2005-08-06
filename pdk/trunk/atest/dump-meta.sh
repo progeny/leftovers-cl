@@ -56,6 +56,6 @@ EOF
 pdk dumpmeta python.xml >metadump.txt
 
 diff -u - metadump.txt <<EOF
-python.xml|component||other|value
 sha-1:6d7cf6eeaa67da461a35ebfba9351a7c1a7720eb|deb|python|key|value
+python.xml|component||other|value
 EOF

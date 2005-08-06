@@ -90,9 +90,6 @@ class Package(object):
             raise KeyError(key)
         return self.contents.get(contents_key)
 
-    def __hash__(self):
-        return hash(tuple(self.contents.items() + [self.package_type]))
-
     def __setitem__(self, item, value):
         raise TypeError('object does not support item assignment')
 
@@ -133,6 +130,17 @@ class Package(object):
 
     def __len__(self):
         return len(self.contents)
+
+    def _get_values(self):
+        '''Return an immutable value representing the full identity.'''
+        return tuple(['package'] + self.contents.items()
+                     + [self.package_type])
+
+    def __hash__(self):
+        return hash(self._get_values())
+
+    def __cmp__(self, other):
+        return cmp(self._get_values(), other._get_values())
 
     def __getstate__(self):
         return (self.contents, self.package_type)

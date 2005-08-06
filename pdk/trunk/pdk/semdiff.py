@@ -24,10 +24,12 @@ Houses functionality used in calculating and outputting semantic diffs.
 
 import optparse
 from sets import Set
+from itertools import chain
 from pdk.cache import Cache
 from pdk.component import ComponentDescriptor
 from pdk.version_control import cat
 from pdk.channels import ChannelData
+from pdk.package import Package
 from pdk.exceptions import CommandLineError
 
 def index_by_fields(packages, fields):
@@ -84,8 +86,71 @@ def iter_diffs(old_package_list, new_package_list):
 
         yield action, old_package, new_package
 
+def list_merge(iter_old, iter_new):
+    """Perform a list merge on the two iterables.
+
+    Iterable; yields change, item
+    Change is one of ('add', 'drop')
+    """
+    old = list(iter_old)
+    new = list(iter_new)
+    old.sort()
+    new.sort()
+
+    if old and new:
+        left = old.pop(0)
+        right = new.pop(0)
+        while old and new:
+            if left == right:
+                left = old.pop(0)
+                right = new.pop(0)
+                continue
+            elif left < right:
+                yield ('drop', left)
+                left = old.pop(0)
+            else:
+                yield ('add', right)
+                right = new.pop(0)
+    for left in old:
+        yield('drop', left)
+    for right in new:
+        yield('add', right)
+
+def get_meta_key(package):
+    """Returns a tuple representing a key for merging meta elements.
+
+    Notably, it does not contain version.
+    """
+    return (package.name, package.type, package.arch)
+
+def get_joinable_meta_list(meta):
+    """Take meta and get an iterable suitable for feeding to list_merge."""
+    for package in meta:
+        if not isinstance(package, Package):
+            continue
+        predicates = meta[package]
+        new_key = get_meta_key(package)
+        for predicate, target in predicates.iteritems():
+            yield new_key, predicate, target
+
+def iter_diffs_meta(old_meta, new_meta):
+    """Detect additions and drops of metadata items.
+
+    Package versions are _not_ considered when comparing metadata.
+    """
+    old_joinable = get_joinable_meta_list(old_meta)
+    new_joinable = get_joinable_meta_list(new_meta)
+
+    old_joinable = list(old_joinable)
+    new_joinable = list(new_joinable)
+
+    event_names = {'add': 'meta-add', 'drop': 'meta-drop'}
+    for event_type, item in list_merge(old_joinable, new_joinable):
+        yield (event_names[event_type], item, None)
+
+
 def add_my_options(parser):
-    '''Set up the parser options for the add command.'''
+    '''Set up the parser options for the semdiff command.'''
     parser.add_option(
                          "-c"
                          , "--channel"
@@ -96,7 +161,20 @@ def add_my_options(parser):
                      )
 
 def do_semdiff(argv):
-    """Entry point from the command line."""
+    """Return bar separated lines representing meaningful component changes.
+
+    Diff works against version control, two arbitrary components, or a
+    component and a set of channels.
+
+    Usage: pdk semdiff [-c channel]* component [component]
+
+    Note: When comparing against version control, only the named
+    component is retrieved from version control. Sub components are
+    found in the work area.
+
+    -c can be specified multiple times to compare against a set of
+     channels.
+    """
     cache = Cache()
     parser = optparse.OptionParser()
     add_my_options(parser)
@@ -112,6 +190,8 @@ def do_semdiff(argv):
         for channel in channels.get_channels(opts.channels):
             package_list = [ t[0] for t in channel ]
             new_package_list.extend(package_list)
+        old_meta = {}
+        new_meta = {}
     elif len(args) == 1:
         ref = args[0]
         old_desc = ComponentDescriptor(ref, cat(ref))
@@ -120,6 +200,8 @@ def do_semdiff(argv):
         new_component = new_desc.load(cache)
         old_package_list = old_component.direct_packages
         new_package_list = new_component.direct_packages
+        old_meta = old_component.meta
+        new_meta = new_component.meta
     elif len(args) == 2:
         ref = args[1]
         old_desc = ComponentDescriptor(args[0])
@@ -128,11 +210,14 @@ def do_semdiff(argv):
         new_component = new_desc.load(cache)
         old_package_list = old_component.direct_packages
         new_package_list = new_component.direct_packages
+        old_meta = old_component.meta
+        new_meta = new_component.meta
     else:
         raise CommandLineError("Argument list is invalid")
 
     diffs = iter_diffs(old_package_list, new_package_list)
-    for action, primary, secondary in diffs:
+    diffs_meta = iter_diffs_meta(old_meta, new_meta)
+    for action, primary, secondary in chain(diffs, diffs_meta):
         if action in ('add', 'drop'):
             print '|'.join([action,
                             primary.type,
@@ -140,6 +225,15 @@ def do_semdiff(argv):
                             primary.version.full_version,
                             primary.arch,
                             ref])
+        elif action in ('meta-add', 'meta-drop'):
+            key, predicate, target = primary
+            name, type_str, arch = key
+            print '|'.join([action,
+                            type_str,
+                            name,
+                            arch,
+                            predicate,
+                            target])
         else:
             old_package, new_package = primary, secondary
             print '|'.join([action,

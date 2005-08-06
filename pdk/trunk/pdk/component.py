@@ -29,7 +29,7 @@ import pdk.cache
 from pdk.channels import ChannelData
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, FieldMatchCondition
-from pdk.package import UnknownPackageTypeError, get_package_type
+from pdk.package import get_package_type, Package
 from pdk.exceptions import CommandLineError, InputError, SemanticError
 from xml.parsers.expat import ExpatError
 from pdk.log import get_logger
@@ -183,15 +183,12 @@ class ComponentDescriptor(object):
         uber_rule = CompositeRule(component.rules)
         for package in component.packages:
             for package, key, value in uber_rule.fire(package):
-                component.meta.update({(package.blob_id, package.type):
-                                       {key: value}})
+                component.meta.update({package: {key: value}})
         for decendent_component in component.components:
             for found_component, key, value in \
                     uber_rule.fire(decendent_component):
-                component.meta.update({(found_component.ref, 'component'):
-                                       {key: value}})
-        component.meta.update({(self.filename, 'component'):
-                               dict(self.meta)})
+                component.meta.update({found_component: {key: value}})
+        component.meta.update({component: dict(self.meta)})
 
         return component
 
@@ -429,11 +426,19 @@ class ComponentDescriptor(object):
         self.provides = self.read_multifield(component_element, 'provides')
 
 class Component(object):
-    """Represents a logical PDK component."""
+    """Represents a logical PDK component.
+
+    Do not mutate the fields of Component objects. They are meant to
+    be used as hash 
+    """
     __slots__ = ('ref', 'type',
                  'id', 'name', 'description', 'requires', 'provides',
                  'packages', 'direct_packages',
                  'components', 'direct_components', 'meta', 'rules')
+    identity_fields = ('ref', 'type',
+                       'id', 'name', 'description', 'requires', 'provides',
+                       'direct_packages',
+                       'direct_components', 'meta')
 
     def __init__(self, ref):
         self.ref = ref
@@ -451,6 +456,21 @@ class Component(object):
         self.direct_components = []
         self.meta = ComponentMeta()
         self.rules = []
+
+    def _get_values(self):
+        '''Return an immutable value representing the full identity.'''
+        values = ['component']
+        for field in self.identity_fields:
+            value = getattr(self, field)
+            if isinstance(value, list):
+                value = tuple(value)
+        return tuple(values)
+
+    def __cmp__(self, other):
+        return cmp(self._get_values(), other._get_values())
+
+    def __hash__(self):
+        return hash(self._get_values())
 
 class ComponentMeta(object):
     """Represents overridable component metadata.
@@ -545,14 +565,18 @@ def do_dumpmeta(component_refs):
     cache = pdk.cache.Cache()
     for component_ref in component_refs:
         component = ComponentDescriptor(component_ref).load(cache)
-        for ref in component.meta:
-            meta_dict = component.meta[ref]
-            for key, value in meta_dict.items():
-                try:
-                    name = cache.load_package(*ref).name
-                except UnknownPackageTypeError:
+        for item in component.meta:
+            predicates = component.meta[item]
+            for key, value in predicates.iteritems():
+                if isinstance(item, Package):
+                    ref = item.blob_id
+                    name = item.name
+                    type_string = item.type
+                else:
+                    ref = item.ref
                     name = ''
-                print '|'.join([ref[0], ref[1], name, key, value])
+                    type_string = 'component'
+                print '|'.join([ref, type_string, name, key, value])
 
 def do_cachepull(args):
     """Pull needed cache entities from remote sources."""

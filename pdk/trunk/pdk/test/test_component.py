@@ -181,8 +181,7 @@ EOF
 ''')
         desc = ComponentDescriptor('a.xml')
         component = desc.load(None)
-        component_ref = ('a.xml', 'component')
-        self.assert_equals(component.meta[component_ref]['necessity'],
+        self.assert_equals(component.meta[component]['necessity'],
                            'optional')
 
     def test_load_fields(self):
@@ -275,8 +274,6 @@ cat >c.xml <<EOF
 EOF
 ''')
 
-        apache_ref = ('sha-1:aaa', 'deb')
-        libc_ref = ('sha-1:bbb', 'deb')
         apache = Package({'name': 'apache', 'version': '1',
                           'blob-id': 'sha-1:aaa'}, Deb())
         libc = Package({'name': 'libc6', 'version': '1',
@@ -297,9 +294,9 @@ EOF
         self.assert_equal(1, len(component_b.direct_components))
         self.assert_equal(1, len(component_b.components))
         self.assert_equal('optional',
-                          component_b.meta[libc_ref]['necessity'])
+                          component_b.meta[libc]['necessity'])
         self.assert_equal('optional',
-                          component_b.meta[apache_ref]['necessity'])
+                          component_b.meta[apache]['necessity'])
 
         desc_a = ComponentDescriptor('a.xml')
         component_a = desc_a.load(cache)
@@ -311,19 +308,19 @@ EOF
         self.assert_equal(1, len(component_a.direct_components))
         self.assert_equal(2, len(component_a.components))
         self.assert_equal('mandatory',
-                          component_a.meta[libc_ref]['necessity'])
+                          component_a.meta[libc]['necessity'])
         self.assert_equal('default',
-                          component_a.meta[apache_ref]['necessity'])
+                          component_a.meta[apache]['necessity'])
         self.assert_equal('42',
-                          component_a.meta[libc_ref]['some-random-key'])
+                          component_a.meta[libc]['some-random-key'])
 
         component_b_from_a = list(component_a.direct_components)[0]
         component_c = list(component_b_from_a.direct_components)[0]
         self.assert_equal('mandatory',
-                          component_c.meta[libc_ref]['necessity'])
+                          component_c.meta[libc]['necessity'])
         self.assert_equal('42',
-                          component_c.meta[libc_ref]['some-random-key'])
-        assert apache_ref not in component_c.meta
+                          component_c.meta[libc]['some-random-key'])
+        assert apache not in component_c.meta
 
     def test_empty_meta_element(self):
         open('test.xml', 'w').write('''<?xml version="1.0"?>
@@ -446,12 +443,12 @@ EOF
 </component>
 ''')
         cache = ShamCache()
-        cache.add(Package({'version': '1', 'blob-id': 'sha-1:aaa'}, Deb()))
+        package = Package({'version': '1', 'blob-id': 'sha-1:aaa'}, Deb())
+        cache.add(package)
         desc = ComponentDescriptor('test1.xml')
         comp = desc.load(cache)
-        ref = ('sha-1:aaa', 'deb')
-        assert ref in comp.meta
-        self.assert_equal("mandatory", comp.meta[ref]["necessity"])
+        assert package in comp.meta
+        self.assert_equal("mandatory", comp.meta[package]["necessity"])
 
     def test_meta_implicit_ref(self):
         """Check that implicit references in metadata are supported and
@@ -466,9 +463,8 @@ EOF
 ''')
         desc = ComponentDescriptor('test.xml')
         comp = desc.load(Cache())
-        ref = ('test.xml', 'component')
-        assert ref in comp.meta
-        self.assert_equal('mandatory', comp.meta[ref]['necessity'])
+        assert comp in comp.meta
+        self.assert_equal('mandatory', comp.meta[comp]['necessity'])
 
 class TestComponentMeta(Test):
     def test_component_meta(self):

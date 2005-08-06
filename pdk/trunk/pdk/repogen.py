@@ -33,6 +33,7 @@ from itertools import chain
 from pdk.util import path
 from pdk.cache import Cache
 from pdk.component import ComponentDescriptor
+from pdk.package import Package
 from pdk.exceptions import SemanticError, InputError, CommandLineError
 import pdk.log as log
 
@@ -68,9 +69,8 @@ def compile_product(component_name):
                    'raw': compiler.create_raw_package_dump_repo }
 
     product = ComponentDescriptor(component_name).load(cache)
-    ref = (component_name, 'component')
-    if ref in product.meta:
-        contents = dict(product.meta[ref])
+    if product in product.meta:
+        contents = dict(product.meta[product])
     else:
         contents = {}
 
@@ -716,10 +716,10 @@ class Compiler:
         metas = []
         joins = []
 
-        for ref in component.meta:
-            if ref[1] != 'component':
-                for predicate, target in component.meta[ref].iteritems():
-                    bindings = forgiving_dict(subject = ref[0],
+        for item in component.meta:
+            if isinstance(item, Package):
+                for predicate, target in component.meta[item].iteritems():
+                    bindings = forgiving_dict(subject = item.blob_id,
                                               predicate = predicate,
                                               target = target)
                     metas.append(bindings)
@@ -730,16 +730,15 @@ class Compiler:
             bindings['cache_location'] = cache_location
             packages.append(bindings)
 
-        for item in packages:
-            ref = (item['blob_id'], item['type'])
-            if ref in component.meta:
-                for predicate, target in component.meta[ref].iteritems():
-                    joined_item = forgiving_dict(item)
+            if package in component.meta:
+                predicates = component.meta[package].iteritems()
+                for predicate, target in predicates:
+                    joined_item = forgiving_dict(bindings)
                     joined_item['predicate'] = predicate
                     joined_item['target'] = target
                     joins.append(joined_item)
             else:
-                joins.append(item)
+                joins.append(bindings)
 
         packages.sort()
         metas.sort()
