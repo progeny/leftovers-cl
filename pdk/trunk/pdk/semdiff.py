@@ -22,6 +22,7 @@ semdiff.py
 Houses functionality used in calculating and outputting semantic diffs.
 """
 
+import os
 import optparse
 from sets import Set
 from itertools import chain
@@ -238,6 +239,8 @@ def do_semdiff(argv):
 
 def print_man(ref, data):
     """Write groff source '-mmandoc -t' for the diff."""
+    output = os.popen('groff -m mandoc -t -Tutf8', 'w')
+
     collater = {}
     for field in ('add', 'drop', 'meta-add', 'meta-drop',
                   'upgrade', 'downgrade', 'unchanged'):
@@ -249,51 +252,53 @@ def print_man(ref, data):
     for key in collater:
         collater[key].sort()
 
-    print '.\\" t'
-    print '.TH SEMDIFF X'
-    print '.SH COMPONENT'
-    print '.B', ref
+    print >> output, '.\\" t'
+    print >> output, '.TH SEMDIFF X'
+    print >> output, '.SH COMPONENT'
+    print >> output, '.B', ref
 
     for field in ('meta-add', 'meta-drop'):
         if collater[field]:
-            print '.SH', field.upper()
-            print '.TS H'
-            print 'lb lb lb lb lb.'
-            print 'format\tname\tarch\tpredicate\ttarget'
-            print '.T&'
-            print 'l l l l l.'
+            print >> output, '.SH', field.upper()
+            print >> output, '.TS H'
+            print >> output, 'lb lb lb lb lb.'
+            print >> output, 'format\tname\tarch\tpredicate\ttarget'
+            print >> output, '.T&'
+            print >> output, 'l l l l l.'
             for item in collater[field]:
-                print '\t'.join(get_meta_presence_fields(item[0]))
-            print '.TE'
+                fields = get_meta_presence_fields(item[0])
+                print >> output, '\t'.join(fields)
+            print >> output, '.TE'
         else:
             continue
 
     for field in ('add', 'drop'):
         if collater[field]:
-            print '.SH', field.upper()
-            print '.TS H'
-            print 'lb lb lb lb lb.'
-            print 'format\tname\told\tnew\tarch'
-            print '.T&'
-            print 'l l l l.'
+            print >> output, '.SH', field.upper()
+            print >> output, '.TS H'
+            print >> output, 'lb lb lb lb lb.'
+            print >> output, 'format\tname\told\tnew\tarch'
+            print >> output, '.T&'
+            print >> output, 'l l l l.'
             for item in collater[field]:
-                print '\t'.join(get_package_presence_fields(item[0], ref))
-            print '.TE'
+                fields = get_package_presence_fields(item[0], ref)
+                print >> output, '\t'.join(fields)
+            print >> output, '.TE'
         else:
             continue
 
     for field in ('upgrade', 'downgrade', 'unchanged'):
         if collater[field]:
-            print '.SH', field.upper()
-            print '.TS H'
-            print 'lb lb lb lb lb lb.'
-            print 'format\tname\told\tnew\tarch\treference'
-            print '.T&'
-            print 'l l l l l l.'
+            print >> output, '.SH', field.upper()
+            print >> output, '.TS H'
+            print >> output, 'lb lb lb lb lb lb.'
+            print >> output, 'format\tname\told\tnew\tarch\treference'
+            print >> output, '.T&'
+            print >> output, 'l l l l l l.'
             for item in collater[field]:
-                print '\t'.join(get_package_diff_fields(item[0], item[1],
-                                                        ref))
-            print '.TE'
+                fields = get_package_diff_fields(item[0], item[1], ref)
+                print >> output, '\t'.join(fields)
+            print >> output, '.TE'
         else:
             continue
 
