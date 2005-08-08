@@ -160,13 +160,22 @@ def add_my_options(parser):
                          , help="A channel name."
                      )
 
+    parser.add_option(
+                         "-m"
+                         , "--machine-readable"
+                         , action="store_true"
+                         , dest="machine_readable"
+                         , default=False
+                         , help="Make the output machine readable."
+                     )
+
 def do_semdiff(argv):
     """Return bar separated lines representing meaningful component changes.
 
     Diff works against version control, two arbitrary components, or a
     component and a set of channels.
 
-    Usage: pdk semdiff [-c channel]* component [component]
+    Usage: pdk semdiff [-m] [-c channel]* component [component]
 
     Note: When comparing against version control, only the named
     component is retrieved from version control. Sub components are
@@ -174,11 +183,18 @@ def do_semdiff(argv):
 
     -c can be specified multiple times to compare against a set of
      channels.
+
+    -m makes the output machine readable.
     """
     cache = Cache()
     parser = optparse.OptionParser()
     add_my_options(parser)
     opts, args = parser.parse_args(args=argv)
+
+    if opts.machine_readable:
+        printer = print_bar_separated
+    else:
+        printer = print_man
 
     if opts.channels:
         ref = args[0]
@@ -217,29 +233,104 @@ def do_semdiff(argv):
 
     diffs = iter_diffs(old_package_list, new_package_list)
     diffs_meta = iter_diffs_meta(old_meta, new_meta)
-    for action, primary, secondary in chain(diffs, diffs_meta):
+    data = chain(diffs, diffs_meta)
+    printer(ref, data)
+
+def print_man(ref, data):
+    """Write groff source '-mmandoc -t' for the diff."""
+    collater = {}
+    for field in ('add', 'drop', 'meta-add', 'meta-drop',
+                  'upgrade', 'downgrade', 'unchanged'):
+        collater[field] = []
+
+    for item in data:
+        collater[item[0]].append(item[1:])
+
+    for key in collater:
+        collater[key].sort()
+
+    print '.\\" t'
+    print '.TH SEMDIFF X'
+    print '.SH COMPONENT'
+    print '.B', ref
+
+    for field in ('meta-add', 'meta-drop'):
+        if collater[field]:
+            print '.SH', field.upper()
+            print '.TS H'
+            print 'lb lb lb lb lb.'
+            print 'format\tname\tarch\tpredicate\ttarget'
+            print '.T&'
+            print 'l l l l l.'
+            for item in collater[field]:
+                print '\t'.join(get_meta_presence_fields(item[0]))
+            print '.TE'
+        else:
+            continue
+
+    for field in ('add', 'drop'):
+        if collater[field]:
+            print '.SH', field.upper()
+            print '.TS H'
+            print 'lb lb lb lb lb.'
+            print 'format\tname\told\tnew\tarch'
+            print '.T&'
+            print 'l l l l.'
+            for item in collater[field]:
+                print '\t'.join(get_package_presence_fields(item[0], ref))
+            print '.TE'
+        else:
+            continue
+
+    for field in ('upgrade', 'downgrade', 'unchanged'):
+        if collater[field]:
+            print '.SH', field.upper()
+            print '.TS H'
+            print 'lb lb lb lb lb lb.'
+            print 'format\tname\told\tnew\tarch\treference'
+            print '.T&'
+            print 'l l l l l l.'
+            for item in collater[field]:
+                print '\t'.join(get_package_diff_fields(item[0], item[1],
+                                                        ref))
+            print '.TE'
+        else:
+            continue
+
+
+def print_bar_separated(ref, data):
+    """Write bar separated data for the diff."""
+    for action, primary, secondary in data:
         if action in ('add', 'drop'):
-            print '|'.join([action,
-                            primary.type,
-                            primary.name,
-                            primary.version.full_version,
-                            primary.arch,
-                            ref])
+            fields = get_package_presence_fields(primary, ref)
+            print '|'.join((action,) + fields)
         elif action in ('meta-add', 'meta-drop'):
-            key, predicate, target = primary
-            name, type_str, arch = key
-            print '|'.join([action,
-                            type_str,
-                            name,
-                            arch,
-                            predicate,
-                            target])
+            fields = get_meta_presence_fields(primary)
+            print '|'.join((action,) + fields)
         else:
             old_package, new_package = primary, secondary
-            print '|'.join([action,
-                            old_package.type,
-                            old_package.name,
-                            old_package.version.full_version,
-                            new_package.version.full_version,
-                            old_package.arch,
-                            ref])
+            fields = get_package_diff_fields(old_package, new_package, ref)
+            print '|'.join((action,) + fields)
+
+def get_meta_presence_fields(data):
+    """Get fields used for added and dropped metadata."""
+    key, predicate, target = data
+    name, type_str, arch = key
+    return(type_str, name, arch, predicate, target)
+
+def get_package_diff_fields(old_package, new_package, ref):
+    """Get fields used for package veresion changes."""
+    return (old_package.type,
+            old_package.name,
+            old_package.version.full_version,
+            new_package.version.full_version,
+            old_package.arch,
+            ref)
+
+def get_package_presence_fields(package, ref):
+    """Get fields used for added and dropped packages."""
+    return (package.type,
+            package.name,
+            package.version.full_version,
+            package.arch,
+            ref)

@@ -61,7 +61,7 @@ EOF
 pdk channel update
 pdk resolve ethereal.xml channel-1
 pdk download ethereal.xml
-pdk semdiff -c channel-2 ethereal.xml | LANG=C sort >semdiff.txt
+pdk semdiff -m -c channel-2 ethereal.xml | LANG=C sort >semdiff.txt
 
 diff -u - semdiff.txt <<EOF
 upgrade|deb|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
