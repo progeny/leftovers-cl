@@ -71,6 +71,9 @@ pdk package add progeny.com/apache.xml \
 
 pdk add progeny.com/apache.xml
 pdk commit master "git-production commit"
+
+pdk repogen progeny.com/apache.xml
+
 popd
 
 # -----------------------------------------------------------

@@ -25,7 +25,6 @@ machine modifying components.
 """
 import os
 from pdk.util import path, write_pretty_xml, parse_xml
-import pdk.cache 
 from pdk.channels import ChannelData
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, FieldMatchCondition
@@ -33,6 +32,27 @@ from pdk.package import get_package_type, Package
 from pdk.exceptions import CommandLineError, InputError, SemanticError
 from xml.parsers.expat import ExpatError
 from pdk.log import get_logger
+
+
+
+def dumpmeta(component_refs):
+    """Print all component metadata to standard out."""
+    from pdk import cache
+    cache = cache.Cache()
+    for component_ref in component_refs:
+        component = ComponentDescriptor(component_ref).load(cache)
+        for item in component.meta:
+            predicates = component.meta[item]
+            for key, value in predicates.iteritems():
+                if isinstance(item, Package):
+                    ref = item.blob_id
+                    name = item.name
+                    type_string = item.type
+                else:
+                    ref = item.ref
+                    name = ''
+                    type_string = 'component'
+                print '|'.join([ref, type_string, name, key, value])
 
 
 def resolve(args):
@@ -61,14 +81,7 @@ def resolve(args):
     for channel in channels.get_channels(channel_names):
         descriptor.resolve(channel)
 
-    logger = get_logger()
-    for reference in descriptor.contents:
-        if isinstance(reference, PackageReference):
-            if reference.is_abstract():
-                message = 'unresolved references remain in %s' \
-                          % component_name
-                logger.warn(message)
-                break
+    descriptor._assert_resolved()
 
 
 def download(args):
@@ -192,6 +205,7 @@ class ComponentDescriptor(object):
 
         return component
 
+
     def write(self):
         '''Write the potentially modified descriptor back to xml.
 
@@ -260,6 +274,20 @@ class ComponentDescriptor(object):
         write_pretty_xml(tree, self.filename)
 
 
+    def _assert_resolved(self):
+        """
+        Assert that the descriptor has no abstract references.
+        """
+        logger = get_logger()
+        for reference in self.contents:
+            if isinstance(reference, PackageReference):
+                if reference.is_abstract():
+                    message = 'unresolved references remain in %s' \
+                              % self.filename
+                    logger.warn(message)
+                    break
+
+
     def resolve(self, channel):
         """Resolve abstract references by searching the given channel."""
         refs = []
@@ -283,7 +311,8 @@ class ComponentDescriptor(object):
         """
         Acquire the packages for this descriptor from known channels
         """
-        cache = pdk.cache.Cache()
+        from pdk import cache
+        cache = cache.Cache()
         channels = ChannelData.load_cached()
         for ref in self.iter_package_refs():
             if ref.blob_id and ref.blob_id not in cache:
@@ -564,43 +593,5 @@ class ComponentReference(object):
         '''Instantiate the ComponentDescriptor object for this reference.'''
         return ComponentDescriptor(self.filename)
 
-
-def do_dumpmeta(component_refs):
-    """Print all component metadata to standard out."""
-    cache = pdk.cache.Cache()
-    for component_ref in component_refs:
-        component = ComponentDescriptor(component_ref).load(cache)
-        for item in component.meta:
-            predicates = component.meta[item]
-            for key, value in predicates.iteritems():
-                if isinstance(item, Package):
-                    ref = item.blob_id
-                    name = item.name
-                    type_string = item.type
-                else:
-                    ref = item.ref
-                    name = ''
-                    type_string = 'component'
-                print '|'.join([ref, type_string, name, key, value])
-
-
-def do_cachepull(args):
-    """Pull needed cache entities from remote sources."""
-    from pdk.yaxml import parse_yaxml_file
-    component_refs = args
-    cache = pdk.cache.Cache()
-    sources = parse_yaxml_file('cache-sources.conf.xml')
-    for comp_ref in component_refs:
-        desc = ComponentDescriptor(comp_ref)
-        for ref in desc.iter_package_refs():
-            rel_filename  = cache.make_relative_filename(ref.blob_id)
-            cache.import_file_from_sources(sources, rel_filename,
-                                           ref.blob_id)
-            package = ref.load(cache)
-            if hasattr(package, 'extra_file'):
-                for extra_blob_id, dummy in package.extra_file:
-                    rel_extra = cache.make_relative_filename(extra_blob_id)
-                    cache.import_file_from_sources(sources, rel_extra,
-                                                   extra_blob_id)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

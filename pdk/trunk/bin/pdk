@@ -48,7 +48,6 @@ class Pdk(command_base.CmdBase):
     do_audit = LazyModuleRef('pdk.audit','audit')
     do_cachepush = LazyModuleRef('pdk.cache', 'cachepush')
     do_cachereceive = LazyModuleRef('pdk.cache', 'cachereceive')
-    do_cachepull = LazyModuleRef('pdk.component', 'do_cachepull')
     do_init = LazyModuleRef('pdk.services', 'init')
     do_publish = LazyModuleRef('pdk.source', 'publish')
     do_update = LazyModuleRef('pdk.workspace', 'update')
@@ -58,10 +57,10 @@ class Pdk(command_base.CmdBase):
     ##do_checkin = LazyModuleRef('pdk.version_control', 'checkin')
     ##do_copy = LazyModuleRef('pdk.version_control', 'copy')
     do_repogen = LazyModuleRef('pdk.repogen','generate')
-    do_dumpmeta = LazyModuleRef('pdk.component', 'do_dumpmeta')
+    do_dumpmeta = LazyModuleRef('pdk.component', 'dumpmeta')
     #obsolete
     do_mark = LazyModuleRef('pdk.mark','mark')
-    do_semdiff = LazyModuleRef('pdk.semdiff', 'do_semdiff')
+    do_semdiff = LazyModuleRef('pdk.semdiff', 'semdiff')
     do_resolve = LazyModuleRef('pdk.component', 'resolve')
     do_download = LazyModuleRef('pdk.component', 'download')
     #temporary utility

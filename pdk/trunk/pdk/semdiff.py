@@ -170,7 +170,7 @@ def add_my_options(parser):
                          , help="Make the output machine readable."
                      )
 
-def do_semdiff(argv):
+def semdiff(argv):
     """Return bar separated lines representing meaningful component changes.
 
     Diff works against version control, two arbitrary components, or a

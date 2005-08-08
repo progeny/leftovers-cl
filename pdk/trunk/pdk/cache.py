@@ -348,6 +348,7 @@ class Cache(SimpleCache):
             # Get rid of the temp file
             os.unlink(temp_path)
 
+
     def load_package(self, blob_id, package_format):
         """Load the raw header data into memory from a package
         """
@@ -407,6 +408,7 @@ def gen_payloads(handle):
         # Consume the trailing blank line, presumably left behind
         # by the routine that called this one.
         line = handle.readline()
+
 
 class ReadAdapter(object):
     """Provide a file like read function over an iterator yielding strings.
@@ -494,6 +496,7 @@ class NetPush(object):
 
 ########################################################################
 # Entry point for pdk-cache commands.
+
 
 def cachepush(args):
     """Command line entry point to cache push."""
