@@ -278,10 +278,54 @@ class Cache(SimpleCache):
         SimpleCache.__init__(self, cache_path)
         ensure_directory_exists(self.path)
 
+
     def get_header_filename(self, blob_id):
         "Return the filename of a blob's header file"
         fname = self.file_path(blob_id) + '.header'
         return fname
+
+
+    def push(self, remote_url):
+        """Execute a cache push."""
+        if remote_url.startswith('http://'):
+            pusher = NetPush(self)
+            curl = pycurl.Curl()
+            curl.setopt(curl.URL, remote_url)
+            curl.setopt(curl.POST, True)
+            curl.setopt(curl.HTTPHEADER, ['Content-Type: application/x-pdk',
+                                          'Transfer-Encoding: chunked',
+                                          'Content-Length:'])
+            curl.setopt(curl.READFUNCTION, \
+                        ReadAdapter(pusher.gen_offer()).read)
+            response = StringIO()
+            curl.setopt(curl.WRITEFUNCTION, response.write)
+            curl.setopt(curl.NOPROGRESS, False)
+            curl.setopt(curl.FAILONERROR, True)
+            progress = ConsoleProgress('push: ' + remote_url)
+            adapter = CurlAdapter(progress)
+            curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
+            curl.perform()
+
+            needed_blob_ids = response.getvalue().splitlines()
+            uploads = []
+            for blob_id in needed_blob_ids:
+                if blob_id:
+                    uploads.append(pusher.gen_upload(blob_id))
+
+            iterator = chain(*uploads)
+            curl.setopt(curl.READFUNCTION, ReadAdapter(iterator).read)
+            curl.setopt(curl.WRITEFUNCTION, sys.stdout.write)
+            curl.perform()
+            curl.close()
+        else:
+            # Perform a local push
+            destination = Cache(remote_url)
+            rexpr = re.compile('sha-1:[a-fA-F0-9]+$')
+            for blob_id in self:
+                if rexpr.match(blob_id) and blob_id not in destination:
+                    local_filename = self.file_path(blob_id)
+                    destination.import_file('', local_filename, blob_id)
+
 
     def add_header(self, header, blob_id):
         """ write a header to a file, identified by blob_id"""
@@ -447,55 +491,18 @@ class NetPush(object):
                     os.unlink(temp_file)
         print
 
-def cachepush(local_cache, remote_url):
-    """Execute a cache push."""
-    if remote_url.startswith('http://'):
-        pusher = NetPush(local_cache)
-        curl = pycurl.Curl()
-        curl.setopt(curl.URL, remote_url)
-        curl.setopt(curl.POST, True)
-        curl.setopt(curl.HTTPHEADER, ['Content-Type: application/x-pdk',
-                                      'Transfer-Encoding: chunked',
-                                      'Content-Length:'])
-        curl.setopt(curl.READFUNCTION, ReadAdapter(pusher.gen_offer()).read)
-        response = StringIO()
-        curl.setopt(curl.WRITEFUNCTION, response.write)
-        curl.setopt(curl.NOPROGRESS, False)
-        curl.setopt(curl.FAILONERROR, True)
-        progress = ConsoleProgress('push: ' + remote_url)
-        adapter = CurlAdapter(progress)
-        curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
-        curl.perform()
-
-        needed_blob_ids = response.getvalue().splitlines()
-        uploads = []
-        for blob_id in needed_blob_ids:
-            if blob_id:
-                uploads.append(pusher.gen_upload(blob_id))
-
-        iterator = chain(*uploads)
-        curl.setopt(curl.READFUNCTION, ReadAdapter(iterator).read)
-        curl.setopt(curl.WRITEFUNCTION, sys.stdout.write)
-        curl.perform()
-        curl.close()
-    else:
-        # Perform a local push
-        destination = Cache(remote_url)
-        rexpr = re.compile('sha-1:[a-fA-F0-9]+$')
-        for blob_id in local_cache:
-            if rexpr.match(blob_id) and blob_id not in destination:
-                local_filename = local_cache.file_path(blob_id)
-                destination.import_file('', local_filename, blob_id)
-
 
 ########################################################################
 # Entry point for pdk-cache commands.
 
-def do_cachepush(args):
+def cachepush(args):
     """Command line entry point to cache push."""
-    cachepush(Cache(), args[0])
+    local_cache = Cache()
+    local_cache.push(args[0])
 
-def do_cachereceive(args):
+
+def cachereceive(args):
     """CGI entry poin to the receive side of cache push."""
     NetPush(Cache(args[0])).receive()
 
+# vim:ai:et:sts=4:sw=4:tw=0:

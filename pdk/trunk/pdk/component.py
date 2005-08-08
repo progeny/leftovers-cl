@@ -425,6 +425,7 @@ class ComponentDescriptor(object):
         self.requires = self.read_multifield(component_element, 'requires')
         self.provides = self.read_multifield(component_element, 'provides')
 
+
 class Component(object):
     """Represents a logical PDK component.
 
@@ -472,6 +473,7 @@ class Component(object):
     def __hash__(self):
         return hash(self._get_values())
 
+
 class ComponentMeta(object):
     """Represents overridable component metadata.
 
@@ -508,6 +510,7 @@ class ComponentMeta(object):
     def __repr__(self):
         """Return a string represntation of the underlying dict."""
         return repr(self.data)
+
 
 class PackageReference(object):
     '''Represents a package reference.'''
@@ -548,6 +551,7 @@ class PackageReference(object):
         '''Return true if this package reference is abstact.'''
         return not bool(self.blob_id)
 
+
 class ComponentReference(object):
     '''Represents a component reference.
 
@@ -559,6 +563,7 @@ class ComponentReference(object):
     def load(self):
         '''Instantiate the ComponentDescriptor object for this reference.'''
         return ComponentDescriptor(self.filename)
+
 
 def do_dumpmeta(component_refs):
     """Print all component metadata to standard out."""
@@ -577,6 +582,7 @@ def do_dumpmeta(component_refs):
                     name = ''
                     type_string = 'component'
                 print '|'.join([ref, type_string, name, key, value])
+
 
 def do_cachepull(args):
     """Pull needed cache entities from remote sources."""

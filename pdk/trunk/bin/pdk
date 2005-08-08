@@ -46,8 +46,8 @@ class Pdk(command_base.CmdBase):
 
     LazyModuleRef = command_base.LazyModuleRef
     do_audit = LazyModuleRef('pdk.audit','audit')
-    do_cachepush = LazyModuleRef('pdk.cache', 'do_cachepush')
-    do_cachereceive = LazyModuleRef('pdk.cache', 'do_cachereceive')
+    do_cachepush = LazyModuleRef('pdk.cache', 'cachepush')
+    do_cachereceive = LazyModuleRef('pdk.cache', 'cachereceive')
     do_cachepull = LazyModuleRef('pdk.component', 'do_cachepull')
     do_init = LazyModuleRef('pdk.services', 'init')
     do_publish = LazyModuleRef('pdk.source', 'publish')
