@@ -27,19 +27,38 @@ import os
 import sys
 from pdk import version_control
 from pdk import util
+from pdk.exceptions import ConfigurationError
 
-
-def find_current_workspace():
+def current_workspace():
     """
-    Return the current workspace instance based on pwd
+    Locate the current workspace and return the workspace object.
 
-    If the current workspace can't be found, the current
-    working directory is considered to be the workspace
-    directory.
+    This works on the assumption/presumption that you are in a
+    workspace currently.  It merely looks upward in the directory
+    tree until it finds its' marker files/dirs, and then instances
+    the Workspace object with that directory as its base.
     """
-    whole_path = util.find_base_dir() or os.getcwd()
-    return whole_path
+    whole_path = util.find_base_dir()
+    if not whole_path:
+        raise ConfigurationError("Not currently in a workspace")
+    return _Workspace(whole_path)
 
+
+def create_workspace(args):
+    """
+    Create a local pdk working directory.
+    Usage:
+    pdk workspace create [workspace name]
+    """
+    if not args:
+        print >> sys.stderr, "requires an argument"
+        print __doc__
+    else:
+        name = args[0]
+        ws = _Workspace(os.getcwd())
+        ws.create(name)
+# For external linkage
+create = create_workspace
 
 def clone(args):
     """
@@ -52,7 +71,7 @@ def clone(args):
     branch_name = args[2]
     local_head_name = args[3]
     remote_head_name = args[4]
-    ws = Workspace()
+    ws = _Workspace()
     ws.clone(product_url, work_area, branch_name, local_head_name,
         remote_head_name)
 
@@ -88,27 +107,12 @@ def pull(args):
     os.chdir(start_path)
 
 
-def create(args):
-    """
-    Create a local pdk working directory.
-    Usage:
-    pdk workspace create [workspace name]
-    """
-    if not args:
-        print >> sys.stderr, "requires an argument"
-        print __doc__
-    else:
-        name = args[0]
-        ws = Workspace()
-        ws.create(name)
-
-
 def add(args):
     """
     add a local working item under version control
     """
     name = args[0]
-    ws = Workspace()
+    ws = current_workspace()
     return ws.add(name)
 
 
@@ -118,7 +122,7 @@ def commit(args):
     """
     head_name = args[0]
     remark = args[1]
-    ws = Workspace()
+    ws = current_workspace()
     ws.commit(head_name, remark)
 
 
@@ -128,23 +132,22 @@ def update(args):
     """
     upstream_name = args[0]
     remote_head_name = args[1]
-    ws = Workspace()
+    ws = _Workspace()
     ws.update(upstream_name, remote_head_name)
 
 
-class Workspace(object):
+class _Workspace(object):
     """
     Library interface to pdk workspace
     """
-    def __init__(self):
 #    def __init__(self, product_URL, work_area, branch_name, \
 #                 local_head_name, remote_head_name):
         # look at the os.getcwd():
         # If we are in an existing workspace,
         # we should populate attributes accordingly
-  
+    def __init__(self, directory=None):
+        self.location = directory
         self.version_control = version_control.VersionControl()
-
 
     def clone(self, product_URL, work_area, branch_name,
                  local_head_name, remote_head_name):

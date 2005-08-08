@@ -93,11 +93,11 @@ class VersionControl(object):
     def __init__(self):
         pass
 
-    def create(self):
+    def create(self, path=None):
         """
         Initialize version control
         """
-        start_path = os.getcwd()
+        start_path = path or os.getcwd()  # questionable, but: baby steps!
         vc_path = start_path + '/VC'
         work_path = start_path + '/work'
         os.mkdir(work_path)
