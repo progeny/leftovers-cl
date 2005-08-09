@@ -21,12 +21,17 @@ import os
 from sets import Set
 from cStringIO import StringIO as stringio
 from pdk.test.utest_util import Test, TempDirTest, ShamCache, MockPackage
-from pdk.package import Package, Deb, Dsc
+from pdk.package import Package, Deb, Dsc, Rpm, SRpm, RPMVersion
 from pdk.cache import Cache
 from pdk.rules import FieldMatchCondition, Rule
 
 from pdk.component import find_overlaps, collate_packages, \
-     ComponentDescriptor, Component, ComponentMeta, PackageReference
+     ComponentDescriptor, Component, ComponentMeta, PackageReference, \
+     get_child_condition_fn, \
+     get_deb_child_condition_data, \
+     get_dsc_child_condition_data, \
+     get_rpm_child_condition_data, \
+     get_srpm_child_condition_data
 
 __revision__ = "$Progeny$"
 
@@ -487,7 +492,7 @@ class TestPackageRef(Test):
 
         condition = FieldMatchCondition('name', 'apache')
         rule = Rule(condition, [])
-        ref = PackageReference(Deb(), 'sha-1:aaa', rule, [])
+        ref = PackageReference(Deb(), 'sha-1:aaa', rule, [], None)
         good_cache = ShamCache()
         good_cache.add(apache)
         assert ref.verify(good_cache)
@@ -498,9 +503,73 @@ class TestPackageRef(Test):
         assert not ref.verify(bad_cache)
 
     def test_is_abstract(self):
-        concrete_ref = PackageReference(Deb(), 'sha-1:aaa', None, [])
+        concrete_ref = PackageReference(Deb(), 'sha-1:aaa', None, [], None)
         assert not concrete_ref.is_abstract()
 
-        abstract_ref = PackageReference(Deb(), None, None, [])
+        abstract_ref = PackageReference(Deb(), None, None, [], None)
         assert abstract_ref.is_abstract()
+
+    def test_get_child_condition_fn(self):
+        apache_deb = Package({'name': 'apache', 'version': '1',
+                              'blob-id': 'sha-1:aaa'}, Deb())
+        apache_rpm = Package({'name': 'apache', 'version': '1',
+                              'blob-id': 'sha-1:aaa'}, Rpm())
+        apache_dsc = Package({'name': 'apache', 'version': '1',
+                              'blob-id': 'sha-1:aaa'}, Dsc())
+        apache_srpm = Package({'name': 'apache', 'version': '1',
+                               'blob-id': 'sha-1:aaa'}, SRpm())
+
+        self.assert_equals(get_deb_child_condition_data,
+                           get_child_condition_fn(apache_deb))
+        self.assert_equals(get_dsc_child_condition_data,
+                           get_child_condition_fn(apache_dsc))
+        self.assert_equals(get_rpm_child_condition_data,
+                           get_child_condition_fn(apache_rpm))
+        self.assert_equals(get_srpm_child_condition_data,
+                           get_child_condition_fn(apache_srpm))
+
+    def test_get_deb_child_condition_data(self):
+        apache_deb = Package({'name': 'apache', 'version': '1',
+                              'blob-id': 'sha-1:aaa',
+                              'sp_name': 'one', 'sp_version': 'two'}, Deb())
+
+        expected = [ ('name', 'one'),
+                     ('version', 'two'),
+                     ('type', 'dsc') ]
+
+        self.assert_equals(expected,
+                           get_deb_child_condition_data(apache_deb))
+
+    def test_get_dsc_child_condition_data(self):
+        apache_dsc = Package({'name': 'apache', 'version': '1',
+                              'blob-id': 'sha-1:aaa'}, Dsc())
+
+        expected = [ ('sp_name', 'apache'),
+                     ('sp_version', '1'),
+                     ('type', 'deb') ]
+
+        self.assert_equals(expected,
+                           get_dsc_child_condition_data(apache_dsc))
+
+
+    def test_get_rpm_child_conditoin_data(self):
+        apache_rpm = Package({'name': 'apache', 'version': '1',
+                              'blob-id': 'sha-1:aaa',
+                              'source-rpm': 'apache-1.src.rpm'}, Rpm())
+        expected = [ ('filename', 'apache-1.src.rpm'),
+                     ('type', 'srpm') ]
+
+        self.assert_equals(expected,
+                           get_rpm_child_condition_data(apache_rpm))
+
+    def test_get_srpm_child_conditoin_data(self):
+        version = RPMVersion(version_tuple = (None, '1', '2'))
+        apache_srpm = Package({'name': 'apache',
+                               'version': version,
+                               'blob-id': 'sha-1:aaa'}, SRpm())
+        expected = [ ('sourcerpm', 'apache-1-2.src.rpm'),
+                     ('type', 'rpm') ]
+
+        self.assert_equals(expected,
+                           get_srpm_child_condition_data(apache_srpm))
 

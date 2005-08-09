@@ -27,7 +27,8 @@ import os
 from pdk.util import path, write_pretty_xml, parse_xml
 from pdk.channels import ChannelData
 from cElementTree import ElementTree, Element, SubElement
-from pdk.rules import Rule, CompositeRule, AndCondition, FieldMatchCondition
+from pdk.rules import Rule, CompositeRule, AndCondition, \
+     FieldMatchCondition, TrueCondition
 from pdk.package import get_package_type, Package
 from pdk.exceptions import CommandLineError, InputError, SemanticError
 from xml.parsers.expat import ExpatError
@@ -400,7 +401,9 @@ class ComponentDescriptor(object):
                     and_condition.conditions.append(inner_condition)
         and_condition.conditions.append(type_condition)
         rule = Rule(and_condition, predicates)
-        return PackageReference(package_type, blob_id, rule, inner_refs)
+        child_condition = TrueCondition()
+        return PackageReference(package_type, blob_id, rule, inner_refs,
+                                child_condition)
 
     def normalize_text(self, element, strip):
         '''Read a text string from an xml element.
@@ -552,29 +555,80 @@ class ComponentMeta(object):
         return repr(self.data)
 
 
+def get_deb_child_condition_data(package):
+    """Get child condition data for a deb."""
+    return [ ('name', package.sp_name),
+             ('version', package.sp_version),
+             ('type', 'dsc') ]
+
+def get_dsc_child_condition_data(package):
+    """Get child condition data for a dsc."""
+    return [ ('sp_name', package.name),
+             ('sp_version', package.version),
+             ('type', 'deb') ]
+
+def get_rpm_child_condition_data(package):
+    """Get child condition data for an rpm."""
+    return [ ('filename', package.source_rpm),
+             ('type', 'srpm') ]
+
+def get_srpm_child_condition_data(package):
+    """Get child condition data for an srpm."""
+    return [ ('sourcerpm', package.filename),
+             ('type', 'rpm') ]
+
+def get_general_condition_data(package):
+    """Get condition data for any package."""
+    condition_data = [ ('blob-id', package.blob_id),
+                       ('name', package.name),
+                       ('version', package.version.full_version) ]
+    if package.role == 'binary':
+        condition_data.append(('arch', package.arch))
+    condition_data.append(('type', package.type))
+    return condition_data
+
+def get_child_condition_data(package):
+    """Get child condition data for any package."""
+    condition_fn = get_child_condition_fn(package)
+    return condition_fn(package)
+
+child_condition_fn_map = {
+    'deb': get_deb_child_condition_data,
+    'dsc': get_dsc_child_condition_data,
+    'rpm': get_rpm_child_condition_data,
+    'srpm': get_srpm_child_condition_data }
+def get_child_condition_fn(package):
+    """Determine which child condition function to use on a package."""
+    return child_condition_fn_map[package.type]
+
+def build_condition(condition_data):
+    """Build an 'and' condition from a list of tuples."""
+    and_condition = AndCondition([])
+    conditions = and_condition.conditions
+    for name, value in condition_data:
+        conditions.append(FieldMatchCondition(name, value))
+    return and_condition
+
 class PackageReference(object):
     '''Represents a concrete package reference.'''
-    def __init__(self, package_type, blob_id, rule, children):
+    def __init__(self, package_type, blob_id, rule, children,
+                 child_condition):
         self.package_type = package_type
         self.blob_id = blob_id
         self.rule = rule
         self.children = children
+        self.child_condition = child_condition
 
     def from_package(package):
         '''Instantiate a reference for the given package.'''
-        and_condition = AndCondition([])
-        condition_data = [ ('blob-id', package.blob_id),
-                           ('name', package.name),
-                           ('version', package.version.full_version) ]
-        if package.role == 'binary':
-            condition_data.append(('arch', package.arch))
-        condition_data.append(('type', package.type))
-        conditions = and_condition.conditions
-        for name, value in condition_data:
-            conditions.append(FieldMatchCondition(name, value))
-        rule = Rule(and_condition, [])
+        condition_data = get_general_condition_data(package)
+        condition = build_condition(condition_data)
+        rule = Rule(condition, [])
+
+        child_condition = get_child_condition_data(package)
         return PackageReference(package.package_type, package.blob_id, rule,
-                                [])
+                                [], child_condition)
+
     from_package = staticmethod(from_package)
 
     def verify(self, cache):

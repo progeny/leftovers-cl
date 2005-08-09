@@ -325,6 +325,7 @@ class Rpm(object):
                          'name': header[rpm.RPMTAG_NAME],
                          'version': RPMVersion(header),
                          'arch': header[rpm.RPMTAG_ARCH],
+                         'source-rpm': header[rpm.RPMTAG_SOURCERPM],
                          'raw': raw_header }, self)
 
     def extract_header(self, filename):
