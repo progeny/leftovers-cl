@@ -241,29 +241,7 @@ class ComponentDescriptor(object):
         # last, write the contents element
         for reference in self.contents:
             if isinstance(reference, PackageReference):
-                attributes = {}
-                if reference.blob_id:
-                    attributes['ref'] = reference.blob_id
-                name = reference.package_type.type_string
-                ref_element = SubElement(contents_element, name, attributes)
-
-                assert hasattr(reference.rule.condition, 'conditions'), \
-                    'Package rules should always be flat AndConditions'
-                for condition in reference.rule.condition.conditions:
-                    if condition.field_name in ('blob-id', 'type'):
-                        continue
-                    condition_element = SubElement(ref_element,
-                                                   condition.field_name)
-                    condition_element.text = condition.target
-
-                predicates = reference.rule.predicates
-                if predicates:
-                    meta_element = SubElement(ref_element, 'meta')
-                    for predicate, target in predicates:
-                        predicate_element = SubElement(meta_element,
-                                                       predicate)
-                        predicate_element.text = target
-
+                self.write_package_reference(contents_element, reference)
             elif isinstance(reference, ComponentReference):
                 component_element = SubElement(contents_element,
                                                'component')
@@ -272,6 +250,35 @@ class ComponentDescriptor(object):
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         write_pretty_xml(tree, self.filename)
+
+    def write_package_reference(self, parent, reference):
+        """Build elements for a single package reference."""
+        attributes = {}
+        if reference.blob_id:
+            attributes['ref'] = reference.blob_id
+        name = reference.package_type.type_string
+        ref_element = SubElement(parent, name, attributes)
+
+        assert hasattr(reference.rule.condition, 'conditions'), \
+            'Package rules should always be flat AndConditions'
+        for condition in reference.rule.condition.conditions:
+            if condition.field_name in ('blob-id', 'type'):
+                continue
+            condition_element = SubElement(ref_element,
+                                           condition.field_name)
+            condition_element.text = condition.target
+
+        if reference.children:
+            for inner_ref in reference.children:
+                self.write_package_reference(ref_element, inner_ref)
+
+        predicates = reference.rule.predicates
+        if predicates:
+            meta_element = SubElement(ref_element, 'meta')
+            for predicate, target in predicates:
+                predicate_element = SubElement(meta_element,
+                                               predicate)
+                predicate_element.text = target
 
 
     def _assert_resolved(self):
@@ -374,6 +381,7 @@ class ComponentDescriptor(object):
                                              package_type.type_string)
 
         predicates = []
+        inner_refs = []
         if ref_element.text and ref_element.text.strip():
             target = ref_element.text.strip()
             name_condition = FieldMatchCondition('name', target)
@@ -382,6 +390,9 @@ class ComponentDescriptor(object):
             for element in ref_element:
                 if element.tag == 'meta':
                     predicates.extend(self.build_meta(element))
+                elif self.is_package_ref(element):
+                    inner_ref = self.build_package_ref(element)
+                    inner_refs.append(inner_ref)
                 else:
                     target = element.text.strip()
                     inner_condition = FieldMatchCondition(element.tag,
@@ -389,7 +400,7 @@ class ComponentDescriptor(object):
                     and_condition.conditions.append(inner_condition)
         and_condition.conditions.append(type_condition)
         rule = Rule(and_condition, predicates)
-        return PackageReference(package_type, blob_id, rule)
+        return PackageReference(package_type, blob_id, rule, inner_refs)
 
     def normalize_text(self, element, strip):
         '''Read a text string from an xml element.
@@ -542,11 +553,12 @@ class ComponentMeta(object):
 
 
 class PackageReference(object):
-    '''Represents a package reference.'''
-    def __init__(self, package_type, blob_id, rule):
+    '''Represents a concrete package reference.'''
+    def __init__(self, package_type, blob_id, rule, children):
         self.package_type = package_type
         self.blob_id = blob_id
         self.rule = rule
+        self.children = children
 
     def from_package(package):
         '''Instantiate a reference for the given package.'''
@@ -561,7 +573,8 @@ class PackageReference(object):
         for name, value in condition_data:
             conditions.append(FieldMatchCondition(name, value))
         rule = Rule(and_condition, [])
-        return PackageReference(package.package_type, package.blob_id, rule)
+        return PackageReference(package.package_type, package.blob_id, rule,
+                                [])
     from_package = staticmethod(from_package)
 
     def verify(self, cache):
@@ -579,7 +592,6 @@ class PackageReference(object):
     def is_abstract(self):
         '''Return true if this package reference is abstact.'''
         return not bool(self.blob_id)
-
 
 class ComponentReference(object):
     '''Represents a component reference.

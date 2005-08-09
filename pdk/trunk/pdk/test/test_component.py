@@ -487,7 +487,7 @@ class TestPackageRef(Test):
 
         condition = FieldMatchCondition('name', 'apache')
         rule = Rule(condition, [])
-        ref = PackageReference(Deb(), 'sha-1:aaa', rule)
+        ref = PackageReference(Deb(), 'sha-1:aaa', rule, [])
         good_cache = ShamCache()
         good_cache.add(apache)
         assert ref.verify(good_cache)
@@ -498,9 +498,9 @@ class TestPackageRef(Test):
         assert not ref.verify(bad_cache)
 
     def test_is_abstract(self):
-        concrete_ref = PackageReference(Deb(), 'sha-1:aaa', None)
+        concrete_ref = PackageReference(Deb(), 'sha-1:aaa', None, [])
         assert not concrete_ref.is_abstract()
 
-        abstract_ref = PackageReference(Deb(), None, None)
+        abstract_ref = PackageReference(Deb(), None, None, [])
         assert abstract_ref.is_abstract()
 
