@@ -50,6 +50,9 @@ class FieldMatchCondition(object):
         return hasattr(candidate, self.field_name) and \
             getattr(candidate, self.field_name) == self.target
 
+    def __repr__(self):
+        return 'cond fm (%s, %s)' % (self.field_name, self.target)
+
 class AndCondition(object):
     '''Check that the provided object meets all the provided conditions.'''
     def __init__(self, conditions):
@@ -61,6 +64,9 @@ class AndCondition(object):
                 return False
         return True
 
+    def __repr__(self):
+        return 'cond and %s' % self.conditions
+
 class OneMatchMetacondition(object):
     '''Check that the success_count attribute is 1.'''
     def evaluate(self, rule):
@@ -70,6 +76,9 @@ class TrueCondition(object):
     '''Always evaluate to true.'''
     def evaluate(self, dummy):
         return True
+
+    def __str__(self):
+        return 'cond true!'
 
 class Rule(object):
     '''A rule which can be applied to packages or other objects.
