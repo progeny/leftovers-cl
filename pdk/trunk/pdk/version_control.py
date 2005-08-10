@@ -108,36 +108,7 @@ class VersionControl(object):
         os.chdir(start_path)
 
 
-    def init(self, product_URL, branch_name, local_head_name, 
-             remote_head_name):
-        """
-        call git commands to create local workspace
-        """
-        git_path = '.git/'
-        _shell_command('git-init-db')
-
-        curl_source = product_URL + 'snap.tar'
-        curl_command = 'curl -s ' + curl_source + \
-                        ' | (tar Cx %s)' % git_path
-        _shell_command(curl_command)
-
-        branch_path = git_path + 'branches/'
-        os.mkdir(branch_path)
-
-        branch_filename = branch_path + branch_name
-        branch_file = file(branch_filename, 'w')
-        branch_file.write(product_URL + '/git/')
-        branch_file.close()
-
-        source = git_path + 'refs/heads/' + remote_head_name 
-        target = git_path + 'refs/heads/' + local_head_name
-        shutil.copy(source, target)
-        _shell_command('git-read-tree %s' % local_head_name)
-        _shell_command('git-checkout-cache -a')
-
-
-    def clone(self, product_URL, branch_name, local_head_name, 
-                 remote_head_name):
+    def clone(self, product_URL, branch_name, local_head_name):
         """
         call git commands to create local workspace from
         depot at upstream url
@@ -157,10 +128,10 @@ class VersionControl(object):
 
         branch_filename = branch_path + branch_name
         branch_file = file(branch_filename, 'w')
-        branch_file.write(product_URL + '/git/')
+        branch_file.write(product_URL) 
         branch_file.close()
 
-        source = git_path + 'refs/heads/' + remote_head_name 
+        source = git_path + 'HEAD'
         target = git_path + 'refs/heads/' + local_head_name
         shutil.copy(source, target)
         _shell_command('git-read-tree %s' % local_head_name)
@@ -193,22 +164,16 @@ class VersionControl(object):
         the_file.close()
 
 
-    def update(self, upstream_name, remote_head_name):
+    def update(self, upstream_name):
         """
         update the version control
         """
-        #config_file_name = '.git/branches/' + upstream_name
-        #config_file = file(config_file_name, 'r')
-        #remote_URL = config_file.read().strip()
-        #config_file.close()
+        config_file_name = 'work/.git/branches/' + upstream_name
+        config_file = file(config_file_name, 'r')
+        remote_URL = config_file.read().strip()
+        config_file.close()
 
-
-        #just for pylint, just for now...
-        print sys.stderr, upstream_name
-
-        remote_URL = 'http://localhost:8100/telco/'
-
-        curl_source = remote_URL + 'VC/refs/heads/' + remote_head_name
+        curl_source = remote_URL + 'VC/HEAD'
         remote_commit_id = _shell_command('curl -s  ' + curl_source).strip()
 
         os.chdir('work')

@@ -112,3 +112,4 @@ echo "moo" | pdk >cowstuff.txt
 #   cleanup:
 rm .pdk_plugins localfile.py cowstuff.txt
 
+sh

@@ -82,8 +82,7 @@ popd
 
 pdk workspace create production
 
-pdk production_pull $tmp_dir/integration master \
-    $tmp_dir/production master
+pdk production_pull $tmp_dir/integration $tmp_dir/production master
 
 create_snapshot $tmp_dir/production
 
@@ -106,7 +105,7 @@ diff -u expected actual
 # Initial customer product retrieval.
 # -----------------------------------------------------------
 pdk clone http://localhost:$SERVER_PORT/telco/ \
-    customer-work-area progeny.com local master
+    customer-work-area progeny.com local 
 
 # -----------------------------------------------------------
 # Customer moves to work area and makes a local change.
@@ -143,7 +142,7 @@ popd
 # Pull from integration to production (again)
 # -----------------------------------------------------------
 
-pdk production_pull $tmp_dir/integration master \
+pdk production_pull $tmp_dir/integration \
     $tmp_dir/production master
 
 # -----------------------------------------------------------
@@ -151,5 +150,6 @@ pdk production_pull $tmp_dir/integration master \
 # -----------------------------------------------------------
 
 cd customer-work-area
-pdk update progeny.com master
+sh
+pdk update progeny.com 
 grep GARBAGE work/progeny.com/apache.xml

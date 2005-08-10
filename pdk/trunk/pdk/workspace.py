@@ -70,10 +70,8 @@ def clone(args):
     work_area = args[1]
     branch_name = args[2]
     local_head_name = args[3]
-    remote_head_name = args[4]
     ws = _Workspace()
-    ws.clone(product_url, work_area, branch_name, local_head_name,
-        remote_head_name)
+    ws.clone(product_url, work_area, branch_name, local_head_name)
 
 
 def pull(args):
@@ -82,16 +80,14 @@ def pull(args):
     Does a pull from one git directory to another.
     """
     remote_vc_path = args[0] + '/VC'
-    remote_head_name = args[1]
-    local_vc_path = args[2] + '/VC'
-    local_head_name = args[3]
+    local_vc_path = args[1] + '/VC'
+    local_head_name = args[2]
     
     start_path = os.getcwd()
 
     os.environ['GIT_DIR'] = local_vc_path
 
-    remote_file = file(remote_vc_path + '/refs/heads/' + \
-                       remote_head_name, 'r')
+    remote_file = file(remote_vc_path + '/HEAD', 'r')
     remote_commit_id = remote_file.read().strip()
     remote_file.close()
 
@@ -101,7 +97,7 @@ def pull(args):
 
     local_head = local_vc_path + '/refs/heads/' + local_head_name
     tmp_file = file(local_head, 'w')
-    tmp_file.write(remote_commit_id + '/git/')
+    tmp_file.write(remote_commit_id)
     tmp_file.close()
 
     os.chdir(start_path)
@@ -131,9 +127,8 @@ def update(args):
     commit local changes
     """
     upstream_name = args[0]
-    remote_head_name = args[1]
     ws = _Workspace()
-    ws.update(upstream_name, remote_head_name)
+    ws.update(upstream_name)
 
 
 class _Workspace(object):
@@ -150,7 +145,7 @@ class _Workspace(object):
         self.version_control = version_control.VersionControl()
 
     def clone(self, product_URL, work_area, branch_name,
-                 local_head_name, remote_head_name):
+                 local_head_name):
         """
         Create a local instance of the workspace
         with a product from a remote URL
@@ -159,7 +154,7 @@ class _Workspace(object):
         self.create(work_area)
         os.chdir(work_area + '/work')
         self.version_control.clone(product_URL, branch_name,
-            local_head_name, remote_head_name)
+            local_head_name)
         os.chdir(start_path)
 
 
@@ -192,11 +187,11 @@ class _Workspace(object):
         self.version_control.commit(head_name, remark)
 
 
-    def update(self, upstream_name, remote_head_name):
+    def update(self, upstream_name):
         """
         Get latest changes from version control
         """
-        self.version_control.update(upstream_name, remote_head_name)
+        self.version_control.update(upstream_name)
 
 
 # vim:ai:et:sts=4:sw=4:tw=0:
