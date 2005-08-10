@@ -27,9 +27,6 @@
 # Set umask now in preparation for later permissions checking.
 umask 002
 
-# Load the cache with the ida package so we don't get errors later
-pdk package add dummy.xml atest/packages/ida_2.01-1.2.dsc
-
 # -----------------------------------------------------------
 # Resolve from a pile of packages on the local filesystem.
 # -----------------------------------------------------------
@@ -48,48 +45,62 @@ cat >apache.xml <<EOF
   <provides>c</provides>
   <provides>d</provides>
   <contents>
-    <!-- make sure this is left alone -->
-    <dsc ref="sha-1:5758b8cd6b604e872d60a257777cc9d3018c84c8">
-      <name>ida</name>
+    <!-- Ian's funny whitespace -->
+    <dsc>
+      <name>
+        ida
+      </name>
       <version>2.01-1.2</version>
+      <meta>
+        <predicate>object</predicate>
+      </meta>
     </dsc>
-    <!-- make sure this is also left alone -->
     <component>empty.xml</component>
     <!-- funny whitespace -->
     <deb>
       apache2-common
     </deb>
-    <!-- Ian's funny whitespace -->
-    <dsc>
-      <name>
-        apache2
-      </name>
-      <meta>
-        <predicate>object</predicate>
-      </meta>
-    </dsc>
   </contents>
 </component>
 EOF
+
+mkdir channel-1
+cp -a \
+    packages/ida_2.01-1.2_arm.deb \
+    packages/ida_2.01-1.2.diff.gz \
+    packages/ida_2.01-1.2.dsc \
+    packages/ida_2.01.orig.tar.gz \
+    channel-1
+
+mkdir channel-2
+cp -a \
+    packages/apache2_2.0.53-5.diff.gz \
+    packages/apache2_2.0.53-5.dsc \
+    packages/apache2_2.0.53.orig.tar.gz \
+    packages/apache2-common_2.0.53-5_i386.deb \
+    channel-2
 
 # Add a channel for the package directory
 cat >channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
-  <local>
+  <channel-1>
     <type>dir</type>
-    <path>atest/packages</path>
-  </local>
+    <path>channel-1</path>
+  </channel-1>
+  <channel-2>
+    <type>dir</type>
+    <path>channel-2</path>
+  </channel-2>
 </channels>
 EOF
 
-# update the channels
 pdk channel update
 [ -f channels.xml.cache ] \
     || fail 'channel cache file should have been created'
 
-# Run the resolve command.
-pdk resolve apache.xml
+pdk resolve apache.xml channel-1
+pdk resolve apache.xml channel-2
 
 # Check that the result is what we expect
 # Note, xml comments are not preseved.
@@ -106,23 +117,28 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
   <provides>c</provides>
   <provides>d</provides>
   <contents>
-    <dsc ref="sha-1:5758b8cd6b604e872d60a257777cc9d3018c84c8">
+    <dsc ref="md5:64863d0fde185cc7e572556729fa6f33">
       <name>ida</name>
       <version>2.01-1.2</version>
+      <deb ref="md5:fe2f5a4e8d4e7ae422e71b5bdfaa1e9c">
+        <name>ida</name>
+        <version>2.01-1.2</version>
+        <arch>arm</arch>
+      </deb>
+      <meta>
+        <predicate>object</predicate>
+      </meta>
     </dsc>
     <component>empty.xml</component>
     <deb ref="md5:5acd04d4cc6e9d1530aad04accdc8eb5">
       <name>apache2-common</name>
       <version>2.0.53-5</version>
       <arch>i386</arch>
+      <dsc ref="md5:d94c995bde2f13e04cdd0c21417a7ca5">
+        <name>apache2</name>
+        <version>2.0.53-5</version>
+      </dsc>
     </deb>
-    <dsc ref="md5:d94c995bde2f13e04cdd0c21417a7ca5">
-      <name>apache2</name>
-      <version>2.0.53-5</version>
-      <meta>
-        <predicate>object</predicate>
-      </meta>
-    </dsc>
   </contents>
 </component>
 EOF
@@ -194,22 +210,21 @@ cat >apache.xml <<EOF
   <provides>c</provides>
   <provides>d</provides>
   <contents>
-    <!-- make sure this is left alone -->
-    <dsc ref="sha-1:5758b8cd6b604e872d60a257777cc9d3018c84c8">
-      <name>ida</name>
-      <version>2.01-1.2</version>
-    </dsc>
-    <!-- make sure this is also left alone -->
-    <component>empty.xml</component>
-    <deb>
-      <name>apache2-common</name>
-    </deb>
+    <!-- Ian's funny whitespace -->
     <dsc>
-      <name>apache2</name>
+      <name>
+        ida
+      </name>
+      <version>2.01-1.2</version>
       <meta>
         <predicate>object</predicate>
       </meta>
     </dsc>
+    <component>empty.xml</component>
+    <!-- funny whitespace -->
+    <deb>
+      apache2-common
+    </deb>
   </contents>
 </component>
 EOF
@@ -221,7 +236,7 @@ cat >channels.xml <<EOF
   <local>
     <type>apt-deb</type>
     <path>http://localhost:$SERVER_PORT/</path>
-    <archs>i386 source</archs>
+    <archs>arm i386 source</archs>
     <dist>apache</dist>
     <components>main</components>
   </local>
@@ -247,23 +262,28 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
   <provides>c</provides>
   <provides>d</provides>
   <contents>
-    <dsc ref="sha-1:5758b8cd6b604e872d60a257777cc9d3018c84c8">
+    <dsc ref="md5:64863d0fde185cc7e572556729fa6f33">
       <name>ida</name>
       <version>2.01-1.2</version>
+      <deb ref="md5:fe2f5a4e8d4e7ae422e71b5bdfaa1e9c">
+        <name>ida</name>
+        <version>2.01-1.2</version>
+        <arch>arm</arch>
+      </deb>
+      <meta>
+        <predicate>object</predicate>
+      </meta>
     </dsc>
     <component>empty.xml</component>
     <deb ref="md5:5acd04d4cc6e9d1530aad04accdc8eb5">
       <name>apache2-common</name>
       <version>2.0.53-5</version>
       <arch>i386</arch>
+      <dsc ref="md5:d94c995bde2f13e04cdd0c21417a7ca5">
+        <name>apache2</name>
+        <version>2.0.53-5</version>
+      </dsc>
     </deb>
-    <dsc ref="md5:d94c995bde2f13e04cdd0c21417a7ca5">
-      <name>apache2</name>
-      <version>2.0.53-5</version>
-      <meta>
-        <predicate>object</predicate>
-      </meta>
-    </dsc>
   </contents>
 </component>
 EOF

@@ -472,6 +472,27 @@ EOF
         assert comp in comp.meta
         self.assert_equal('mandatory', comp.meta[comp]['necessity'])
 
+    def test_iter_package_refs(self):
+        class MockRef(PackageReference):
+            def __init__(self, label):
+                PackageReference.__init__(self, None, None, None, None,
+                                          None)
+                self.label = label
+                self.children = []
+
+            def __repr__(self):
+                return str(self.label)
+
+        desc = ComponentDescriptor('test.xml')
+        a = MockRef('a')
+        b = MockRef('b')
+        c = MockRef('c')
+        a.children = [b]
+        desc.contents = [ a, c ]
+
+        self.assert_equal([a, c], list(desc.iter_package_refs()))
+        self.assert_equal([a, b, c], list(desc.iter_full_package_refs()))
+
 class TestComponentMeta(Test):
     def test_component_meta(self):
         meta_deep = ComponentMeta()
@@ -556,17 +577,18 @@ class TestPackageRef(Test):
                            get_dsc_child_condition_data(apache_dsc))
 
 
-    def test_get_rpm_child_conditoin_data(self):
-        apache_rpm = Package({'name': 'apache', 'version': '1',
+    def test_get_rpm_child_condition_data(self):
+        version = RPMVersion(version_tuple = (None, '1', '2'))
+        apache_rpm = Package({'name': 'apache', 'version': version,
                               'blob-id': 'sha-1:aaa',
-                              'source-rpm': 'apache-1.src.rpm'}, Rpm())
-        expected = [ ('filename', 'apache-1.src.rpm'),
+                              'source-rpm': 'apache.src.rpm'}, Rpm())
+        expected = [ ('filename', 'apache.src.rpm'),
                      ('type', 'srpm') ]
 
         self.assert_equals(expected,
                            get_rpm_child_condition_data(apache_rpm))
 
-    def test_get_srpm_child_conditoin_data(self):
+    def test_get_srpm_child_condition_data(self):
         version = RPMVersion(version_tuple = (None, '1', '2'))
         apache_srpm = Package({'name': 'apache',
                                'version': version,

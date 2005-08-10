@@ -172,14 +172,16 @@ class ComponentDescriptor(object):
             rule = None
             if isinstance(ref, PackageReference):
                 if ref.blob_id:
-                    package = ref.load(cache)
-                    component.packages.append(package)
-                    component.direct_packages.append(package)
-                    if not ref.verify(cache):
-                        message = 'Concrete package does not meet ' \
-                                  'expected constraints: %s' \
-                                  % ref.blob_id, package.name
-                        raise SemanticError(message)
+                    refs = [ref] + ref.children
+                    for ref in refs:
+                        package = ref.load(cache)
+                        component.packages.append(package)
+                        component.direct_packages.append(package)
+                        if not ref.verify(cache):
+                            message = 'Concrete package does not meet ' \
+                                      'expected constraints: %s' \
+                                      % ref.blob_id, package.name
+                            raise SemanticError(message)
                 rule = ref.rule
             elif isinstance(ref, ComponentReference):
                 child_descriptor = ref.load()
@@ -269,9 +271,8 @@ class ComponentDescriptor(object):
                                            condition.field_name)
             condition_element.text = condition.target
 
-        if reference.children:
-            for inner_ref in reference.children:
-                self.write_package_reference(ref_element, inner_ref)
+        for inner_ref in reference.children:
+            self.write_package_reference(ref_element, inner_ref)
 
         predicates = reference.rule.predicates
         if predicates:
@@ -299,9 +300,11 @@ class ComponentDescriptor(object):
     def resolve(self, channel):
         """Resolve abstract references by searching the given channel."""
         refs = []
+        newly_resolved_refs = []
         for index, ref in self.enumerate_package_refs():
             refs.append((ref, index))
 
+        # first run the channel through base level package references.
         for channel_item in channel:
             ghost_package = channel_item[0]
             for ref_index, ref_tuple in enumerate(refs):
@@ -311,7 +314,24 @@ class ComponentDescriptor(object):
                     new_ref.rule.predicates = ref.rule.predicates
                     self.contents[contents_index] = new_ref
                     del refs[ref_index]
+                    newly_resolved_refs.append(new_ref)
                     break
+
+        # run through the whole channel again, this time using the
+        # child_conditions of new references.
+        for channel_item in channel:
+            ghost_package = channel_item[0]
+            for ref in newly_resolved_refs:
+                if ref.child_condition.evaluate(ghost_package):
+                    # watch out... this ref could be the same as the
+                    # base level reference.
+                    if ref.rule.condition.evaluate(ghost_package):
+                        continue
+                    new_child_ref = \
+                        PackageReference.from_package(ghost_package)
+                    ref.children.append(new_child_ref)
+                    break
+
         self.write()
 
 
@@ -322,7 +342,7 @@ class ComponentDescriptor(object):
         from pdk import cache
         cache = cache.Cache()
         channels = ChannelData.load_cached()
-        for ref in self.iter_package_refs():
+        for ref in self.iter_full_package_refs():
             if ref.blob_id and ref.blob_id not in cache:
                 base_uri, filename = channels.find_by_blob_id(ref.blob_id)
                 cache.import_file(base_uri, filename, ref.blob_id)
@@ -333,10 +353,20 @@ class ComponentDescriptor(object):
 
 
     def iter_package_refs(self):
-        '''Yield all package references in order.'''
+        '''Yield all base package references in order.'''
         for dummy, ref in self.enumerate_package_refs():
             yield ref
 
+
+    def iter_full_package_refs(self):
+        '''Yield all base and child package references.
+
+        The search is pre-order depth first.
+        '''
+        for ref in self.iter_package_refs():
+            yield ref
+            for child_ref in ref.children:
+                yield child_ref
 
     def enumerate_package_refs(self):
         '''Yield all index, package_reference pairs in self.contents.'''
@@ -564,7 +594,7 @@ def get_deb_child_condition_data(package):
 def get_dsc_child_condition_data(package):
     """Get child condition data for a dsc."""
     return [ ('sp_name', package.name),
-             ('sp_version', package.version),
+             ('sp_version', package.version.full_version),
              ('type', 'deb') ]
 
 def get_rpm_child_condition_data(package):
@@ -625,7 +655,8 @@ class PackageReference(object):
         condition = build_condition(condition_data)
         rule = Rule(condition, [])
 
-        child_condition = get_child_condition_data(package)
+        child_condition_data = get_child_condition_data(package)
+        child_condition = build_condition(child_condition_data)
         return PackageReference(package.package_type, package.blob_id, rule,
                                 [], child_condition)
 
