@@ -76,6 +76,23 @@ pdk channel update || status=$?
 test "$status" = "3" || bail "Incorrect/unexpected error return"
 
 #-----------------------------------------------------------------------
+# Bad path in apt-deb channel
+cat > channels.xml <<EOF
+<?xml version="1.0"?>
+<channels>
+  <foo>
+    <type>apt-deb</type>
+    <path>http://example.com/bar</path>
+    <archs>i386 source</archs>
+    <dist>foo</dist>
+    <components>main</components>
+  </foo>
+</channels>
+EOF
+pdk channel update || status=$?
+test "$status" = "3" || bail "Path element w/o trailing slash accepted"
+
+#-----------------------------------------------------------------------
 # Process an ill-formed component descriptor
 
 cat > bad_component.xml << EOF

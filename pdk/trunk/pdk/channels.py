@@ -83,6 +83,8 @@ def gen_apt_deb_dir(channel_data):
     sources.list. (except archs)
     '''
     base_url = channel_data['path']
+    if base_url[-1] != "/":
+        raise InputError, "path in channels.xml must end in a slash"
     dist = channel_data['dist']
     components = channel_data['components'].split()
     archs = channel_data['archs'].split()
