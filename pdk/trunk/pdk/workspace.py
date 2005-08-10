@@ -203,14 +203,16 @@ class _Workspace(object):
         with a product from a remote URL
         """
         start_path = os.getcwd()
-        self.create(work_area)
-        os.chdir(work_area + '/work')
-        self.version_control().clone(
-            product_URL
-            , branch_name
-            , local_head_name
-            )
-        os.chdir(start_path)
+        try:
+            self.create(work_area)
+            os.chdir(work_area + '/work')
+            self.version_control().clone(
+                product_URL
+                , branch_name
+                , local_head_name
+                )
+        finally:
+            os.chdir(start_path)
 
     def create(self, name):
         """
@@ -219,13 +221,16 @@ class _Workspace(object):
         vc_constructor = version_control.VersionControl
         if os.path.exists(name):
             raise Exception, "directory already exists"
+
         start_path = os.getcwd()
-        product_path = start_path + '/' + name
-        os.mkdir(product_path)
-        os.chdir(product_path)
-        self.its_version_control = vc_constructor(product_path).create()
-        os.mkdir(product_path + '/cache')
-        os.chdir(start_path)
+        try:
+            product_path = start_path + '/' + name
+            os.mkdir(product_path)
+            os.chdir(product_path)
+            self.its_version_control = vc_constructor(product_path).create()
+            os.mkdir(product_path + '/cache')
+        finally:
+            os.chdir(start_path)
 
     def add(self, name):
         """
