@@ -122,7 +122,9 @@ Description: abc
         self.assertEquals('3', package.version.release)
         self.assertEquals('i386', package.arch)
         self.assertEquals('name', package.sp_name)
-        self.assertEquals('2', package.sp_version)
+        self.assertEquals('0', package.sp_version.epoch)
+        self.assertEquals('2', package.sp_version.version)
+        self.assertEquals('3', package.sp_version.release)
         assert not 'filename' in package
         assert not 'summary' in package
         assert not 'description' in package
@@ -160,8 +162,9 @@ Description: asdf
 """
         package = Deb().parse(header, 'zzz')
         self.assertEquals('a', package['sp-name'])
-        self.assertEquals('0.24', package['sp-version'])
-        self.assertEquals('3.2', package['sp-release'])
+        self.assertEquals(None, package.sp_version.epoch)
+        self.assertEquals('0.24', package.sp_version.version)
+        self.assertEquals('3.2', package.sp_version.release)
 
 class TestDsc(Test):
     def test_parse(self):

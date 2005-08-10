@@ -92,15 +92,14 @@ def audit(argv):
         for package in set_of_packages:
             if package.role == 'binary':
                 fact = HasSource(package.format, package.sp_name,
-                                 package.sp_version, package.sp_release)
+                                 package.sp_version.full_version)
                 arbiter.predict(fact, True, component_name)
 
         # warrant source packages found
         for package in set_of_packages:
             if package.role == 'source':
                 fact = HasSource(package.format, package.name,
-                                 package.version.version,
-                                 package.version.release)
+                                 package.version.full_version)
                 arbiter.warrant(fact, True, component_name)
 
     # predict upcoming cache checksums
@@ -270,16 +269,15 @@ class InodeNeeded(FactType):
 
 class HasSource(FactType):
     """The given fields represent a source package in a component."""
-    __slots__ = 'format', 'name', 'version', 'release'
+    __slots__ = 'format', 'name', 'version'
     format = None
     name = None
     version = None
-    release = None
 
     def get_problem_description(self, *dummy):
         """Return data suitable for Arbiter.mismatch_handler."""
-        subject = string_together([self.format, self.name, self.version,
-                                  self.release], ',')
+        subject = string_together([self.format, self.name, self.version],
+                                  ',')
         return (subject, '', 'missing source')
 
 class ChecksumMatches(FactType):

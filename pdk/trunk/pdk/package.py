@@ -251,22 +251,19 @@ class Deb(object):
         version = DebianVersion(message['Version'])
 
         sp_name = name
-        sp_version = version.version
-        sp_release = version.release
+        sp_version = version
         if 'Source' in message:
             sp_name = message['Source']
             if re.search(r'\(', sp_name):
                 match = re.match(r'(\S+)\s*\((.*)\)', sp_name)
                 (sp_name, sp_raw_version) = match.groups()
-                (dummy, sp_version, sp_release) = \
-                    split_deb_version(sp_raw_version)
+                sp_version = DebianVersion(sp_raw_version)
 
         return Package({ 'blob-id': blob_id,
                          'name': name,
                          'version': version,
                          'sp-name' : sp_name,
                          'sp-version' : sp_version,
-                         'sp-release' : sp_release,
                          'arch': message['Architecture'],
                          'raw': control }, self)
 

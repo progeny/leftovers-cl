@@ -70,7 +70,7 @@ LANG=C sort <pdk_audit.raw.txt >pdk_audit.txt
 echo ""
 
 cat > expected.txt <<EOF
-deb,emacs-defaults,1.1,||missing source
+deb,emacs-defaults,1.1||missing source
 duh|('md5:', 'sha-1:')|unknown prefix
 duh||checksum mismatch
 md5:0d060d66b3a1e6ec0b9c58e995f7b9f7|progeny.com/apache.xml|missing from cache

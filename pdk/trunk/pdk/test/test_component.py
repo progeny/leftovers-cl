@@ -21,7 +21,8 @@ import os
 from sets import Set
 from cStringIO import StringIO as stringio
 from pdk.test.utest_util import Test, TempDirTest, ShamCache, MockPackage
-from pdk.package import Package, Deb, Dsc, Rpm, SRpm, RPMVersion
+from pdk.package import Package, Deb, Dsc, Rpm, SRpm, RPMVersion, \
+     DebianVersion
 from pdk.cache import Cache
 from pdk.rules import FieldMatchCondition, Rule
 
@@ -529,23 +530,26 @@ class TestPackageRef(Test):
                            get_child_condition_fn(apache_srpm))
 
     def test_get_deb_child_condition_data(self):
+        sp_version = DebianVersion('1-2')
         apache_deb = Package({'name': 'apache', 'version': '1',
                               'blob-id': 'sha-1:aaa',
-                              'sp_name': 'one', 'sp_version': 'two'}, Deb())
+                              'sp_name': 'one', 'sp_version': sp_version},
+                             Deb())
 
         expected = [ ('name', 'one'),
-                     ('version', 'two'),
+                     ('version', '1-2'),
                      ('type', 'dsc') ]
 
         self.assert_equals(expected,
                            get_deb_child_condition_data(apache_deb))
 
     def test_get_dsc_child_condition_data(self):
-        apache_dsc = Package({'name': 'apache', 'version': '1',
+        version = DebianVersion('1-2')
+        apache_dsc = Package({'name': 'apache', 'version': version,
                               'blob-id': 'sha-1:aaa'}, Dsc())
 
         expected = [ ('sp_name', 'apache'),
-                     ('sp_version', '1'),
+                     ('sp_version', '1-2'),
                      ('type', 'deb') ]
 
         self.assert_equals(expected,
