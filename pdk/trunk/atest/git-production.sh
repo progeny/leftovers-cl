@@ -24,7 +24,7 @@
 # get Utility functions
 . atest/test_lib.sh
 
-SERVER_PORT=$(unused_port 8100 8101 8102 8103 8104 8105 8106 8107 13847)
+SERVER_PORT=$(unused_port 8110 8111 8112 8113 8114 8115 8116 8117 13847)
 
 create_apache_conf $SERVER_PORT
 
