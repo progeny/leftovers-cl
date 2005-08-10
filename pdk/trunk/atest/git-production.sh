@@ -61,19 +61,17 @@ create_snapshot() {
 
 pdk workspace create integration
 pushd integration/work
+    #This needs to be replaced with the creation of
+    #a component with an abstract package,
+    #followed by "pdk resolve (descr.)":
+    pdk package add progeny.com/apache.xml \
+        ${PACKAGES}/apache2_2.0.53-5.dsc \
+        ${PACKAGES}/apache2-common_2.0.53-5_i386.deb
 
-#This needs to be replaced with the creation of
-#a component with an abstract package,
-#followed by "pdk resolve (descr.)":
-pdk package add progeny.com/apache.xml \
-    $tmp_dir/packages/apache2_2.0.53-5.dsc \
-    $tmp_dir/packages/apache2-common_2.0.53-5_i386.deb
+    pdk add progeny.com/apache.xml
+    pdk commit master "git-production commit"
 
-pdk add progeny.com/apache.xml
-pdk commit master "git-production commit"
-
-pdk repogen progeny.com/apache.xml
-
+    pdk repogen progeny.com/apache.xml
 popd
 
 # -----------------------------------------------------------
@@ -81,8 +79,13 @@ popd
 # -----------------------------------------------------------
 
 pdk workspace create production
+pushd production/work
+    pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pull failed"
+    create_snapshot $tmp_dir/production
+popd
 
-pdk production_pull $tmp_dir/integration $tmp_dir/production master
+echo "Where should this take place?"
+pdk production_pull $tmp_dir/integration $tmp_dir/production master 
 
 create_snapshot $tmp_dir/production
 
@@ -91,11 +94,8 @@ create_snapshot $tmp_dir/production
 # -----------------------------------------------------------
 
 pushd integration
-
-pdk cachepush http://localhost:$SERVER_PORT/telco/upload
-
-ls cache/ | grep -v .header$ >$tmp_dir/expected
-
+    pdk cachepush http://localhost:$SERVER_PORT/telco/upload
+    ls cache/ | grep -v .header$ >$tmp_dir/expected
 popd
 
 ls production/cache >actual
@@ -113,20 +113,17 @@ pdk clone http://localhost:$SERVER_PORT/telco/ \
 
 pushd customer-work-area/work
 
-echo >>progeny.com/apache.xml
-echo GARBAGE >>progeny.com/apache.xml
+    echo >>progeny.com/apache.xml
+    echo GARBAGE >>progeny.com/apache.xml
 
-parent_id=$(cat .git/HEAD)
-pdk commit master "git-production testing"
+    parent_id=$(cat .git/HEAD)
+    pdk commit master "git-production testing"
 
-# -----------------------------------------------------------
-# Send change from customer to integration.
-# -----------------------------------------------------------
+    # Send change from customer to integration.
+    git-diff-tree -p -r $parent_id $(cat .git/HEAD) >patch.txt
 
-git-diff-tree -p -r $parent_id $(cat .git/HEAD) >patch.txt
-
-# really this file would be sent by email.
-cp patch.txt $tmp_dir/integration/work/patch.txt
+    # really this file would be sent by email.
+    cp patch.txt $tmp_dir/integration/work/patch.txt
 
 popd
 
@@ -135,21 +132,19 @@ popd
 # -----------------------------------------------------------
 
 pushd integration/work
-git-apply patch.txt
-pdk commit master "Required commit remark"
+    git-apply patch.txt
+    pdk commit master "Required commit remark"
 popd
 # -----------------------------------------------------------
 # Pull from integration to production (again)
 # -----------------------------------------------------------
 
-pdk production_pull $tmp_dir/integration \
-    $tmp_dir/production master
+pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pulling from int->prod"
 
 # -----------------------------------------------------------
 # Pull from production to customer (again)
 # -----------------------------------------------------------
 
 cd customer-work-area
-sh
 pdk update progeny.com 
 grep GARBAGE work/progeny.com/apache.xml

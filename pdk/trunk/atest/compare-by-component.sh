@@ -22,14 +22,23 @@
 # Besides working on whole projects, compare should work on single
 # components.
 
-mkdir -p testrepo/dists/test/main/binary-i386
-cp packages/python_2.3.5-2_all.deb testrepo/dists/test/main/binary-i386
-(cd testrepo && apt-ftparchive packages dists) \
-    > testrepo/dists/test/main/binary-i386/Packages
+pdk workspace create testroot
+testrepo=$(pwd)/testrepo
+testroot=$(pwd)/testroot
+cachedir=${testroot}/cache
+workdir=${testroot}/work
+packages=$(pwd)/packages
 
-pdk package add progeny.com/python-2.3.xml packages/python_2.3.3-6_all.deb || fail "could not import package"
+# Create a pile of packages 
+mkdir -p ${testrepo}/dists/test/main/binary-i386
+cp ${packages}/python_2.3.5-2_all.deb ${testrepo}/dists/test/main/binary-i386
+(cd ${testrepo} && apt-ftparchive packages dists) \
+    > ${testrepo}/dists/test/main/binary-i386/Packages
 
-pdk compare progeny.com/python-2.3.xml file://`pwd`/testrepo,test,main \
+cd ${workdir}
+pdk package add progeny.com/python-2.3.xml ${packages}/python_2.3.3-6_all.deb || fail "could not import package"
+
+pdk compare progeny.com/python-2.3.xml file://${testrepo},test,main \
     > test.out
 
 echo 'progeny.com/python-2.3.xml|python|test-main|2.3.3-6|2.3.5-2' \

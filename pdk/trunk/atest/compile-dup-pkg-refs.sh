@@ -24,6 +24,9 @@
 
 . atest/test_lib.sh
 
+pdk workspace create "workspace"
+cd workspace/work
+
 cat >product.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -53,8 +56,8 @@ EOF
 
 # Install all the packages into the local cache
 pdk package add apache.xml \
-    packages/apache2-common_2.0.53-5_i386.deb \
-    packages/apache2_2.0.53-5.dsc \
+    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb \
+    ${PACKAGES}/apache2_2.0.53-5.dsc \
 
 cat >apache.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>

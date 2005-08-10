@@ -21,9 +21,12 @@
 #
 # pdk dumpmeta compname should dump the metadata found in the component.
 
+pdk workspace create 'workspace'
+cd workspace/work
+
 pdk package add python.xml \
-    packages/python-defaults_2.3.3-6.dsc \
-    packages/python_2.3.3-6_all.deb
+    ${PACKAGES}/python-defaults_2.3.3-6.dsc \
+    ${PACKAGES}/python_2.3.3-6_all.deb
 
 pdk dumpmeta python.xml | diff -u /dev/null -
 

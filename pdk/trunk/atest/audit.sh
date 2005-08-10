@@ -25,47 +25,60 @@
 . atest/test_lib.sh
 
 
+packages=$(pwd)/packages
+test_root=$(pwd)
+
+pdk workspace create audit
+work_root=$(pwd)/audit
+working_dir=${work_root}/work
+cache_base=${work_root}/cache
+
+
+cd ${working_dir}
+
 # Install all the packages into the local cache
 pdk package add progeny.com/apache.xml \
-    packages/apache2-common_2.0.53-5_i386.deb \
-    packages/apache2_2.0.53-5.dsc \
+    ${packages}/apache2-common_2.0.53-5_i386.deb \
+    ${packages}/apache2_2.0.53-5.dsc \
 
 pdk package add progeny.com/emacs.xml \
-    packages/emacs-defaults_1.1.dsc \
-    packages/emacs-defaults_1.1_all.deb
+    ${packages}/emacs-defaults_1.1.dsc \
+    ${packages}/emacs-defaults_1.1_all.deb
 
 pdk audit progeny.com/apache.xml progeny.com/emacs.xml \
     >pdk_audit.txt || {
     cat pdk_audit.txt
-    bail "Audit did not pass"
+    bail "Early audit did not pass"
 }
 
 diff -u - pdk_audit.txt <<EOF
 EOF
 
 # Start fresh.
-rm -r cache/ progeny.com/
+rm -r ${work_root}/cache/ ${working_dir}/progeny.com/
 
 # Reinstall emacs-defaults without it's source.
 pdk package add progeny.com/emacs.xml \
-    packages/emacs-defaults_1.1_all.deb
+    ${packages}/emacs-defaults_1.1_all.deb
 
 pdk package add progeny.com/apache.xml \
-    packages/apache2-common_2.0.53-5_i386.deb \
-    packages/apache2_2.0.53-5.dsc \
+    ${packages}/apache2-common_2.0.53-5_i386.deb \
+    ${packages}/apache2_2.0.53-5.dsc \
 
 # Make one file go AWOL.
+CACHE_BASE=${work_root}/cache/
 rm $(cachepath 'md5:0d060d66b3a1e6ec0b9c58e995f7b9f7')
 
 # Corrupt a file.
 echo asdfasdfadsf >> $(cachepath 'sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b')
 
 # Add an unknown file.
-echo asdf >cache/duh
+echo asdf >${cache_base}/duh
 
+cd ${work_root}/work
 pdk audit progeny.com/apache.xml progeny.com/emacs.xml \
-    >pdk_audit.raw.txt && fail 'pdk audit should fail' || status=$?
-test "$status" = "1" || fail 'pdk audit should return exit code 1.'
+    >pdk_audit.raw.txt && bail 'pdk audit should fail' || status=$?
+test "$status" = "1" || bail 'pdk audit should return exit code 1.'
 LANG=C sort <pdk_audit.raw.txt >pdk_audit.txt
 echo ""
 
@@ -81,5 +94,5 @@ EOF
 cat pdk_audit.raw.txt
 cat pdk_audit.txt
 
-diff -u expected.txt pdk_audit.txt 
+diff -u expected.txt pdk_audit.txt  || bail "unexpected diff results"
 

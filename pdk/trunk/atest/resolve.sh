@@ -27,6 +27,21 @@
 # Set umask now in preparation for later permissions checking.
 umask 002
 
+pdk workspace create resolve
+
+testroot=$(pwd)
+cachedir=${testroot}/resolve/cache
+channels=${testroot}/resolve/channels.xml
+project=${testroot}/resolve
+workdir=${project}/work
+etc=${testroot}/etc
+
+mkdir ${etc}
+cd ${workdir}
+
+# Load the cache with the ida package so we don't get errors later
+pdk package add dummy.xml ${PACKAGES}/ida_2.01-1.2.dsc
+
 # -----------------------------------------------------------
 # Resolve from a pile of packages on the local filesystem.
 # -----------------------------------------------------------
@@ -66,27 +81,27 @@ EOF
 
 mkdir channel-1
 cp -a \
-    packages/ida_2.01-1.2_arm.deb \
-    packages/ida_2.01-1.2.diff.gz \
-    packages/ida_2.01-1.2.dsc \
-    packages/ida_2.01.orig.tar.gz \
+    ${PACKAGES}/ida_2.01-1.2_arm.deb \
+    ${PACKAGES}/ida_2.01-1.2.diff.gz \
+    ${PACKAGES}/ida_2.01-1.2.dsc \
+    ${PACKAGES}/ida_2.01.orig.tar.gz \
     channel-1
 
 mkdir channel-2
 cp -a \
-    packages/apache2_2.0.53-5.diff.gz \
-    packages/apache2_2.0.53-5.dsc \
-    packages/apache2_2.0.53.orig.tar.gz \
-    packages/apache2-common_2.0.53-5_i386.deb \
+    ${PACKAGES}/apache2_2.0.53-5.diff.gz \
+    ${PACKAGES}/apache2_2.0.53-5.dsc \
+    ${PACKAGES}/apache2_2.0.53.orig.tar.gz \
+    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb \
     channel-2
 
 # Add a channel for the package directory
-cat >channels.xml <<EOF
+cat >${channels} <<EOF
 <?xml version="1.0"?>
 <channels>
   <channel-1>
     <type>dir</type>
-    <path>channel-1</path>
+    <path>${PACKAGES}</path>
   </channel-1>
   <channel-2>
     <type>dir</type>
@@ -96,7 +111,7 @@ cat >channels.xml <<EOF
 EOF
 
 pdk channel update
-[ -f channels.xml.cache ] \
+[ -f ${channels}.cache ] \
     || fail 'channel cache file should have been created'
 
 pdk resolve apache.xml channel-1
@@ -159,24 +174,24 @@ compare_timestamps() {
     fi
 }
 
-for file in $(find cache -type f); do
+for file in $(find ${cachedir} -type f); do
     perms=$(stat -c '%a' $file)
     [ 664 = "$perms" ] || fail "wrong permissions $perms for $file"
 done
 
 # Make sure the timestamps match the original files.
 compare_timestamps \
-    packages/apache2-common_2.0.53-5_i386.deb \
-    cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5
+    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb \
+    ${cachedir}/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5
 compare_timestamps \
-    packages/apache2_2.0.53-5.dsc \
-    cache/md5/d9/md5:d94c995bde2f13e04cdd0c21417a7ca5
+    ${PACKAGES}/apache2_2.0.53-5.dsc \
+    ${cachedir}/md5/d9/md5:d94c995bde2f13e04cdd0c21417a7ca5
 compare_timestamps \
-    packages/apache2_2.0.53-5.diff.gz \
-    cache/md5/0d/md5:0d060d66b3a1e6ec0b9c58e995f7b9f7
+    ${PACKAGES}/apache2_2.0.53-5.diff.gz \
+    ${cachedir}/md5/0d/md5:0d060d66b3a1e6ec0b9c58e995f7b9f7
 compare_timestamps \
-    packages/apache2_2.0.53.orig.tar.gz \
-    cache/md5/40/md5:40507bf19919334f07355eda2df017e5
+    ${PACKAGES}/apache2_2.0.53.orig.tar.gz \
+    ${cachedir}/md5/40/md5:40507bf19919334f07355eda2df017e5
 
 # -----------------------------------------------------------
 # Resolve from an apt-able repository via http.
@@ -184,19 +199,21 @@ compare_timestamps \
 
 pdk repogen apache.xml
 
-# set up apache.
-SERVER_PORT=$(unused_port 8100 8101 8102 8103 8104 8105 8106 8107 13847)
 
+# set up apache.
+cd ${testroot}
+SERVER_PORT=$(unused_port 8100 8101 8102 8103 8104 8105 8106 8107 13847)
 create_apache_conf $SERVER_PORT
 
-cat >etc/svn.apache2.conf <<EOF
-DocumentRoot $tmp_dir/repo/
+cat >${etc}/svn.apache2.conf <<EOF
+DocumentRoot ${workdir}/repo/
 EOF
 
-$apache2_bin -t -f etc/apache2/apache2.conf
-$apache2_bin -X -f etc/apache2/apache2.conf &
+$apache2_bin -t -f ${etc}/apache2/apache2.conf
+$apache2_bin -X -f ${etc}/apache2/apache2.conf &
 
 # Add some concrete and abstract package references to a new component.
+cd ${workdir}
 cat >apache.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -230,7 +247,7 @@ cat >apache.xml <<EOF
 EOF
 
 # start with a new channels file
-cat >channels.xml <<EOF
+cat >${channels} <<EOF
 <?xml version="1.0"?>
 <channels>
   <local>
@@ -289,26 +306,26 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
 EOF
 
 # Clear all md5 packages. Leave the sha-1 one for now.
-rm -r cache/md5/*
+rm -r ${cachedir}/md5/*
 
 # "Download" missing packages.
 pdk download apache.xml
 
-for file in $(find cache -type f); do
+for file in $(find ${cachedir} -type f); do
     perms=$(stat -c '%a' $file)
     [ 664 = "$perms" ] || fail "wrong permissions $perms for $file"
 done
 
 # Make sure the timestamps match the original files.
 compare_timestamps \
-    packages/apache2-common_2.0.53-5_i386.deb \
-    cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5
+    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb \
+    ${cachedir}/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5
 compare_timestamps \
-    packages/apache2_2.0.53-5.dsc \
-    cache/md5/d9/md5:d94c995bde2f13e04cdd0c21417a7ca5
+    ${PACKAGES}/apache2_2.0.53-5.dsc \
+    ${cachedir}/md5/d9/md5:d94c995bde2f13e04cdd0c21417a7ca5
 compare_timestamps \
-    packages/apache2_2.0.53-5.diff.gz \
-    cache/md5/0d/md5:0d060d66b3a1e6ec0b9c58e995f7b9f7
+    ${PACKAGES}/apache2_2.0.53-5.diff.gz \
+    ${cachedir}/md5/0d/md5:0d060d66b3a1e6ec0b9c58e995f7b9f7
 compare_timestamps \
-    packages/apache2_2.0.53.orig.tar.gz \
-    cache/md5/40/md5:40507bf19919334f07355eda2df017e5
+    ${PACKAGES}/apache2_2.0.53.orig.tar.gz \
+    ${cachedir}/md5/40/md5:40507bf19919334f07355eda2df017e5

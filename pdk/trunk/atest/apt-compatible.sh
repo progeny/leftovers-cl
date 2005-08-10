@@ -23,22 +23,32 @@
 
 . atest/test_lib.sh
 
-# Create a component to build a repository from
-pdk package add aptable.xml packages/apache*.deb packages/apache*.dsc
-pdk package add aptable.xml packages/*xsok*.deb packages/*xsok*.dsc
+test_root=$(pwd)
+packages=$(pwd)/packages
+apt_root=$(pwd)/apt-setup
+working=$(pwd)/apt-compatible/work
 
+# Create a component to build a repository from
+pdk workspace create apt-compatible
+cd apt-compatible/work
+pdk package add aptable.xml ${packages}/apache*.deb ${packages}/apache*.dsc
+pdk package add aptable.xml ${packages}/*xsok*.deb ${packages}/*xsok*.dsc
 pdk repogen aptable.xml || bail "Cannot compile myrepo.xml"
+cd -
 
 # -------------------------------------------
 # Setup  APT
 # -------------------------------------------
 # Set up the dir structures
-NEWROOT=$(pwd)/apt-setup
+cd ${test_root}
+NEWROOT=${apt_root}
 mkdir -p ${NEWROOT}/etc/apt 
 mkdir -p ${NEWROOT}/cachedir/archives/partial
 mkdir -p ${NEWROOT}/statedir/lists/partial
+
 touch ${NEWROOT}/statedir/dpkg
-# set up the overrides file
+
+# set up the apt overrides (config) file
 OVERRIDE=${NEWROOT}/overrides.conf
 (
     echo "Dir \"${NEWROOT}\""
@@ -51,10 +61,11 @@ OVERRIDE=${NEWROOT}/overrides.conf
     echo "};"
     echo ""
 ) > ${OVERRIDE}
+
 # Create the sources.list file
 SOURCESLIST=${NEWROOT}/etc/apt/sources.list
-echo deb file:$(pwd)/repo/ aptable main> ${SOURCESLIST}
-echo deb-src file:$(pwd)/repo/ aptable main >> ${SOURCESLIST}
+echo deb file:${working}/repo/ aptable main> ${SOURCESLIST}
+echo deb-src file:${working}/repo/ aptable main >> ${SOURCESLIST}
 cat $SOURCESLIST
 
 # Try to use apt on the current repository

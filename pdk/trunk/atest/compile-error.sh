@@ -25,6 +25,9 @@
 # get Utility functions
 . atest/test_lib.sh
 
+pdk workspace create "workspace"
+cd workspace/work
+
 # Create a component descriptor
 # XXX: This is done often enough in testing, it it worth a script or shell
 # function? 
@@ -62,15 +65,16 @@ EOF
 
 # Install all the packages into the local cache
 pdk package add progeny.com/apache.xml \
-    packages/apache2-common_2.0.53-5_i386.deb \
-    packages/apache2_2.0.53-5.dsc \
+    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb \
+    ${PACKAGES}/apache2_2.0.53-5.dsc \
 
 pdk package add progeny.com/ida.xml \
-    packages/ida_2.01-1.2_arm.deb \
-    packages/ida_2.01-1.2.dsc
+    ${PACKAGES}/ida_2.01-1.2_arm.deb \
+    ${PACKAGES}/ida_2.01-1.2.dsc
 
 # This is what will trigger the error.
 pdk package add product.xml \
-    packages/ida_2.01-1.2_arm.deb
+    ${PACKAGES}/ida_2.01-1.2_arm.deb
 
 pdk repogen product.xml && fail 'repogen should have failed'
+

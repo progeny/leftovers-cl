@@ -20,6 +20,8 @@
 #
 # Unit test the workspace commands
 
+. atest/test_lib.sh
+
 #setup
 #execute
 pdk workspace
@@ -29,7 +31,8 @@ pdk workspace
 
 #setup
 #execute
-pdk workspace create
+pdk workspace create || status=$?
+test "$status" == 2 || bail "Expected command line error"
 #evaluate
 #cleanup
 
@@ -46,8 +49,9 @@ rm -rf foo
 
 #   setup:
 #   execute:
-echo "workspace create" |pdk
+(echo "workspace create" |pdk ) || status=$?
 #   evaluate:
+test "${status}" == "0" && bail "cmd shell should have returned non-zero?"
 #   cleanup:
 
 #   setup:

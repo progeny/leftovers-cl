@@ -26,7 +26,8 @@ __revision__ = '$Progeny$'
 
 import sys
 import optparse
-from pdk.cache import Cache, calculate_checksums
+from pdk.workspace import current_workspace
+from pdk.cache import calculate_checksums
 from pdk.component import ComponentDescriptor, PackageReference
 from pdk.package import get_package_type
 from pdk.util import split_pipe, path
@@ -135,7 +136,8 @@ def add(argv):
     if len(data) == 0:
         bail('No component data given.')
 
-    cache = Cache()
+    workspace = current_workspace()
+    cache = workspace.cache()
 
     for component, files in data.iteritems():
         packages = []

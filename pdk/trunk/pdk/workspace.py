@@ -24,14 +24,15 @@ Library interface to pdk workspace
 __revision__ = '$Progeny$'
 
 import os
-import sys
 from pdk import version_control
 from pdk import util
-from pdk.exceptions import ConfigurationError
+from pdk.cache import Cache
+from pdk.exceptions import ConfigurationError, CommandLineError
 
 def current_workspace():
     """
     Locate the current workspace and return the workspace object.
+
 
     This works on the assumption/presumption that you are in a
     workspace currently.  It merely looks upward in the directory
@@ -43,6 +44,16 @@ def current_workspace():
         raise ConfigurationError("Not currently in a workspace")
     return _Workspace(whole_path)
 
+def info(ignore):
+    """Report information about the local workspace"""
+    ignore.pop() # stop pylint complaining about unused arg
+    try:
+        ws = current_workspace()
+        print 'Base Path: %s' % ws.location 
+        print 'Cache is: %s' % os.path.join(ws.location,'cache')
+    except ConfigurationError, message:
+        print message
+    
 
 def create_workspace(args):
     """
@@ -51,14 +62,22 @@ def create_workspace(args):
     pdk workspace create [workspace name]
     """
     if not args:
-        print >> sys.stderr, "requires an argument"
-        print __doc__
-    else:
-        name = args[0]
-        ws = _Workspace(os.getcwd())
-        ws.create(name)
+        raise CommandLineError("requires an argument")
+    name = args[0]
+    path = os.path.join(os.getcwd(), name)
+    os.mkdir(path)
+
+    # This flow seems wrong, should be version_control.create(), no?
+    vc = version_control.VersionControl(None)
+    vc = vc.create(path)
+
+    ws = _Workspace(path)
+    return ws
+
+    
 # For external linkage
 create = create_workspace
+
 
 def clone(args):
     """
@@ -70,8 +89,14 @@ def clone(args):
     work_area = args[1]
     branch_name = args[2]
     local_head_name = args[3]
-    ws = _Workspace()
-    ws.clone(product_url, work_area, branch_name, local_head_name)
+
+    ws = _Workspace(work_area)
+    ws.clone(
+        product_url
+        , work_area
+        , branch_name
+        , local_head_name
+        )
 
 
 def pull(args):
@@ -79,28 +104,37 @@ def pull(args):
     Started from the shell script production_pull
     Does a pull from one git directory to another.
     """
-    remote_vc_path = args[0] + '/VC'
-    local_vc_path = args[1] + '/VC'
+    remote_vc_path = os.path.join(args[0], 'VC')
+    local_vc_path = os.path.join(args[1], 'VC')
+    if not os.path.isdir(remote_vc_path):
+        raise CommandLineError(
+            "Remote directory %s does not exist" % remote_vc_path
+            )
+    if not os.path.isdir(local_vc_path):
+        raise CommandLineError(
+            "Local directory %s does not exist" % local_vc_path
+            )
+
     local_head_name = args[2]
     
     start_path = os.getcwd()
+    try:
+        os.environ['GIT_DIR'] = local_vc_path
 
-    os.environ['GIT_DIR'] = local_vc_path
+        remote_file = file(remote_vc_path + '/HEAD', 'r')
+        remote_commit_id = remote_file.read().strip()
+        remote_file.close()
 
-    remote_file = file(remote_vc_path + '/HEAD', 'r')
-    remote_commit_id = remote_file.read().strip()
-    remote_file.close()
+        version_control._shell_command('git-local-pull -a -l ' + \
+                                        remote_commit_id + ' ' + \
+                                        remote_vc_path)
 
-    version_control._shell_command('git-local-pull -a -l ' + \
-                                    remote_commit_id + ' ' + \
-                                    remote_vc_path)
-
-    local_head = local_vc_path + '/refs/heads/' + local_head_name
-    tmp_file = file(local_head, 'w')
-    tmp_file.write(remote_commit_id)
-    tmp_file.close()
-
-    os.chdir(start_path)
+        local_head = local_vc_path + '/refs/heads/' + local_head_name
+        tmp_file = file(local_head, 'w')
+        tmp_file.write(remote_commit_id)
+        tmp_file.close()
+    finally:
+        os.chdir(start_path)
 
 
 def add(args):
@@ -127,7 +161,7 @@ def update(args):
     commit local changes
     """
     upstream_name = args[0]
-    ws = _Workspace()
+    ws = current_workspace()
     ws.update(upstream_name)
 
 
@@ -140,9 +174,27 @@ class _Workspace(object):
         # look at the os.getcwd():
         # If we are in an existing workspace,
         # we should populate attributes accordingly
-    def __init__(self, directory=None):
-        self.location = directory
-        self.version_control = version_control.VersionControl()
+    def __init__(self, directory):
+        location = self.location = directory
+        if os.path.isdir(directory):
+            self.its_version_control = \
+                version_control.VersionControl(location)
+            self.its_cache = Cache(os.path.join(location,'cache'))
+        else:
+            self.its_version_control = None
+            self.its_cache = None
+
+    def cache(self):
+        """Return the current workspace's cache component"""
+        return self.its_cache
+
+    def version_control(self):
+        """Return the local workspace's version control component"""
+        if not self.its_version_control:
+            print "CREATING VC AT LOCATION %s" % self.location
+            ctor = version_control.VersionControl
+            self.its_version_control = ctor(self.location)
+        return self.its_version_control
 
     def clone(self, product_URL, work_area, branch_name,
                  local_head_name):
@@ -153,45 +205,47 @@ class _Workspace(object):
         start_path = os.getcwd()
         self.create(work_area)
         os.chdir(work_area + '/work')
-        self.version_control.clone(product_URL, branch_name,
-            local_head_name)
+        self.version_control().clone(
+            product_URL
+            , branch_name
+            , local_head_name
+            )
         os.chdir(start_path)
-
-
-    def add(self, name):
-        """
-        Create an 'empty' local instance of the database
-        """
-        return self.version_control.add(name)
-
 
     def create(self, name):
         """
         Create an 'empty' local instance of the workspace
         """
+        vc_constructor = version_control.VersionControl
         if os.path.exists(name):
             raise Exception, "directory already exists"
         start_path = os.getcwd()
         product_path = start_path + '/' + name
         os.mkdir(product_path)
         os.chdir(product_path)
-        self.version_control.create()
+        self.its_version_control = vc_constructor(product_path).create()
         os.mkdir(product_path + '/cache')
         os.chdir(start_path)
+
+    def add(self, name):
+        """
+        Create an 'empty' local instance of the database
+        """
+        return self.version_control().add(name)
 
 
     def commit(self, head_name, remark):
         """
         Commit changes to version control
         """
-        self.version_control.commit(head_name, remark)
+        self.version_control().commit(head_name, remark)
 
 
     def update(self, upstream_name):
         """
         Get latest changes from version control
         """
-        self.version_control.update(upstream_name)
+        self.version_control().update(upstream_name)
 
 
 # vim:ai:et:sts=4:sw=4:tw=0:

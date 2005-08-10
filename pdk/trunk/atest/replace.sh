@@ -36,21 +36,24 @@ assert_quiet() {
     return $status
 }
 
+pdk workspace create 'workspace'
+cd workspace/work
+
 assert_quiet \
     pdk package add progeny.com/ethereal.xml \
-    packages/ethereal_0.9.13-1.0progeny1.dsc \
-    packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
-    packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    packages/tethereal_0.9.13-1.0progeny1_ia64.deb
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny1.dsc \
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/tethereal_0.9.13-1.0progeny1_ia64.deb
 
 assert_quiet \
     pdk package add -r progeny.com/ethereal.xml \
-    packages/ethereal_0.9.13-1.0progeny2.dsc \
-    packages/ethereal_0.9.13-1.0progeny2_ia64.deb \
-    packages/ethereal-common_0.9.13-1.0progeny2_ia64.deb \
-    packages/ethereal-dev_0.9.13-1.0progeny2_ia64.deb \
-    packages/tethereal_0.9.13-1.0progeny2_ia64.deb
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny2.dsc \
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny2_ia64.deb \
+    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny2_ia64.deb \
+    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny2_ia64.deb \
+    ${PACKAGES}/tethereal_0.9.13-1.0progeny2_ia64.deb
 
 
 diff -u - progeny.com/ethereal.xml <<EOF || bail 'apache.xml differs'

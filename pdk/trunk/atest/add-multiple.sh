@@ -97,5 +97,5 @@ pdk package add progeny.com/ethereal.xml \
 
 
 pdk add progeny.com/apache.xml progeny.com/ethereal.xml
-sh
 pdk commit master "this is a remark"
+

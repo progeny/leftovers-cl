@@ -23,8 +23,16 @@
 # in the repo should be hard linked to the cache.
 
 . atest/test_lib.sh
+testroot=$(pwd)
+project=$(pwd)/idempotent
+cachedir=${project}/cache
+workroot=${project}/work
+packages=$(pwd)/packages
+pdk workspace create idempotent
+
 
 # Create a component descriptor
+cd ${workroot}
 cat >product.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -44,6 +52,7 @@ cat >product.xml <<EOF
 
 EOF
 
+
 cat >main.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -56,14 +65,14 @@ EOF
 
 # Install all the packages into the local cache
 pdk package add progeny.com/apache.xml \
-    packages/apache2-common_2.0.53-5_i386.deb \
-    packages/apache2_2.0.53-5.dsc \
+    ${packages}/apache2-common_2.0.53-5_i386.deb \
+    ${packages}/apache2_2.0.53-5.dsc \
 
 
 pdk repogen product.xml
 
 test -d './repo' || fail "mising repo directory"
-test -d './cache' || fail "missing cache directory"
+test -d ${cachedir} || fail "missing cache directory"
 
 # Copy information from the repo for comparison
 cp repo/dists/stable/Release MainRelease.hold
@@ -73,13 +82,13 @@ cp repo/dists/stable/main/source/Sources Sources.hold
 cp repo/dists/stable/main/binary-i386/Packages Packages.hold
 
 # copy cache information for comparison
-ls -R cache | sort > cachedir.hold
+ls -R ${cachedir} | sort > cachedir.hold
 rm -r repo
 
 echo Import it again, just to see what happens.
 pdk package add progeny.com/apache.xml \
-    packages/apache2-common_2.0.53-5_i386.deb \
-    packages/apache2_2.0.53-5.dsc \
+    ${packages}/apache2-common_2.0.53-5_i386.deb \
+    ${packages}/apache2_2.0.53-5.dsc \
 
 pdk repogen product.xml
 
@@ -102,7 +111,8 @@ diff -us repo/dists/stable/main/binary-i386/Release BinRelease.hold ||
 diff -us repo/dists/stable/main/source/Release SrcRelease.hold ||
     bail "source Release files differ"
 
-ls -R cache | sort | diff -s cachedir.hold -
+echo "Diffing ${cachedir}"
+ls -R ${cachedir} | sort | diff -s cachedir.hold -
 
 # Note that in this test, we don't care what the results are, just
 # that they are the same.

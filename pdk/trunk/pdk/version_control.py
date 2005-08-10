@@ -90,14 +90,20 @@ class VersionControl(object):
     Library Interface to pdk version control
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, path):
+        self.location = path
 
     def create(self, path=None):
         """
         Initialize version control
         """
-        start_path = path or os.getcwd()  # questionable, but: baby steps!
+        # A little tortured: We may have been called with
+        # no starting location (independent of Workspace)
+        # and need to pick a good starting path.
+        start_path = path or self.location or os.getcwd()
+        self.location = start_path
+
+        # Create vc/work space
         vc_path = start_path + '/VC'
         work_path = start_path + '/work'
         os.mkdir(work_path)
@@ -106,6 +112,7 @@ class VersionControl(object):
         git_path = work_path + '/.git'
         os.symlink(git_path, vc_path)
         os.chdir(start_path)
+        self.location = git_path
 
 
     def clone(self, product_URL, branch_name, local_head_name):

@@ -25,6 +25,9 @@
 # get Utility functions
 . atest/test_lib.sh
 
+pdk workspace create workspace
+cd workspace/work
+
 # Create a component descriptor
 # XXX: This is done often enough in testing, it it worth a script or shell
 # function? 
@@ -57,15 +60,15 @@ EOF
 
 # Add the emacs packagexs
 pdk package add progeny.com/emacs.xml \
-    packages/emacs-defaults_1.1_all.deb \
-    packages/emacs-defaults_1.1.dsc
+    ${PACKAGES}/emacs-defaults_1.1_all.deb \
+    ${PACKAGES}/emacs-defaults_1.1.dsc
 
 # Add an apache package
 # XXX: This is necessary because pdk gets confused when only arch:all
 # packages are present.
 
 pdk package add progeny.com/emacs.xml \
-    packages/apache2-common_2.0.53-5_i386.deb
+    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb
 
 pdk repogen product.xml
 

@@ -24,10 +24,13 @@
 # get Utility functions
 . atest/test_lib.sh
 
+pdk workspace create 'workspace'
+cd workspace/work
+
 # Install all the packages into the local cache
 pdk package add progeny.com/time.xml \
-    packages/adjtimex-1.13-13.i386.rpm \
-    packages/adjtimex-1.13-13.src.rpm
+    ${PACKAGES}/adjtimex-1.13-13.i386.rpm \
+    ${PACKAGES}/adjtimex-1.13-13.src.rpm
 
 pdk repogen progeny.com/time.xml
 

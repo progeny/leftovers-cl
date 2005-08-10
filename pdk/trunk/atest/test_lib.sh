@@ -61,20 +61,18 @@ inode_of() {
     stat --format='%i' $1
 }
 
-POOL_BASE=cache
-cache_dir="./${POOL_BASE}"
-
 # This is the only place we should have to maintain the 
 # algorithm for cache placement outside of PDK proper.
 # Use only this method to find files in cache
 cachepath() {
+    cache_dir=${CACHE_BASE:-"../cache"}
     if [ $(echo $1 | grep :) ]; then
         method=$(echo $1 | cut -f1 -d:)
         raw_cksum=$(echo $1 | cut -f2 -d:)
         shortpath=$(echo $raw_cksum | cut -c1-2)
-        echo ${POOL_BASE}/$method/$shortpath/$1
+        echo ${cache_dir}/$method/$shortpath/$1
     else
-        echo ${POOL_BASE}/$1
+        echo ${cache_dir}/$1
     fi
 }
 

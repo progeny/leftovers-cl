@@ -144,6 +144,7 @@ run_test() {
         echo " ${test_name} running in ${tmp_dir}"
 
         setup ${tmp_dir}
+        export PACKAGES=${tmp_dir}/packages
 
         PATH=${tmp_dir}/bin:$PATH
         PYTHONPATH=${tmp_dir}/lib/python2.3/site-packages:$PYTHONPATH

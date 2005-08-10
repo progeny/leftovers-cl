@@ -22,6 +22,9 @@
 # get Utility functions
 . atest/test_lib.sh
 
+pdk workspace create workspace
+cd workspace/work
+
 # Create a component descriptor
 # XXX: This is done often enough in testing, it it worth a script or shell
 # function? 
@@ -69,9 +72,9 @@ cat >main.xml <<"EOF"
 EOF
 
 # Install all the packages into the local cache
-echo "package add progeny.com/apache.xml packages/apache2-common_2.0.53-5_i386.deb packages/apache2_2.0.53-5.dsc"|pdk
+echo "package add progeny.com/apache.xml ${PACKAGES}/apache2-common_2.0.53-5_i386.deb ${PACKAGES}/apache2_2.0.53-5.dsc"|pdk
 
-echo "package add progeny.com/ida.xml packages/ida_2.01-1.2_arm.deb packages/ida_2.01-1.2.dsc"|pdk
+echo "package add progeny.com/ida.xml ${PACKAGES}/ida_2.01-1.2_arm.deb ${PACKAGES}/ida_2.01-1.2.dsc"|pdk
 
 echo "repogen product.xml"|pdk
 

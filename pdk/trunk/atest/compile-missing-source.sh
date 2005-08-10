@@ -24,12 +24,17 @@
 
 . atest/test_lib.sh
 
-ls packages/apache2-*.deb | xargs pdk package add apache.xml || fail
+pdk workspace create 'workspace'
+cd workspace/work
+
+
+ls ${PACKAGES}/apache2-*.deb | xargs pdk package add apache.xml || fail
 
 pdk repogen apache.xml
 
 [ -d './repo' ] || fail "mising repo directory"
 
+POOL_ROOT="../cache"
 check_file "b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b" \
     "./repo/pool/main/a/apache2/apache2-common_2.0.53-5_i386.deb"
 
@@ -44,4 +49,5 @@ assert_exists repo/dists/apache/main/binary-i386/Release
 assert_not_exists repo/dists/apache/main/source/Release
 
 grep apache repo/dists/apache/main/binary-i386/Packages
+
 

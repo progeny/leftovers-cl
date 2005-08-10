@@ -24,11 +24,14 @@
 # get Utility functions
 . atest/test_lib.sh
 
+pdk workspace create 'workspace'
+cd workspace/work
+
 # Install all the packages into the local cache
-pdk package add apache.xml packages/apache2-common_2.0.53-5_i386.deb
-pdk package add apache.xml packages/apache2_2.0.53-5.dsc
-pdk package add progeny.com/ida.xml packages/ida_2.01-1.2_arm.deb
-pdk package add progeny.com/ida.xml packages/ida_2.01-1.2.dsc
+pdk package add apache.xml ${PACKAGES}/apache2-common_2.0.53-5_i386.deb
+pdk package add apache.xml ${PACKAGES}/apache2_2.0.53-5.dsc
+pdk package add progeny.com/ida.xml ${PACKAGES}/ida_2.01-1.2_arm.deb
+pdk package add progeny.com/ida.xml ${PACKAGES}/ida_2.01-1.2.dsc
 
 cat >product.xml <<EOF
 <?xml version="1.0"?>

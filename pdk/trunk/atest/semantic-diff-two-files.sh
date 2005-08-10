@@ -24,10 +24,13 @@
 # get Utility functions
 . atest/test_lib.sh
 
+pdk workspace create 'workspace'
+cd workspace/work
+
 # Install old version of adjtimex
 pdk package add time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
+    ${PACKAGES}/adjtimex-1.13-12.src.rpm \
+    ${PACKAGES}/adjtimex-1.13-12.i386.rpm
 
 cp time.xml time-before.xml
 
@@ -42,8 +45,8 @@ cp time.xml time-before.xml
 
 # Install new version of adjtimex
 pdk package add -r time.xml \
-    $tmp_dir/packages/adjtimex-1.13-13.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-13.i386.rpm
+    ${PACKAGES}/adjtimex-1.13-13.src.rpm \
+    ${PACKAGES}/adjtimex-1.13-13.i386.rpm
 
 pdk semdiff -m time-before.xml time.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
@@ -55,8 +58,8 @@ cp time.xml time-before.xml
 
 # Downgrade back to the older version
 pdk package add -r time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
+    ${PACKAGES}/adjtimex-1.13-12.src.rpm \
+    ${PACKAGES}/adjtimex-1.13-12.i386.rpm
 
 pdk semdiff -m time-before.xml time.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
@@ -68,7 +71,7 @@ cp time.xml time-before.xml
 
 # Drop a package
 pdk package add -r time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
+    ${PACKAGES}/adjtimex-1.13-12.i386.rpm
 
 pdk semdiff -m time-before.xml time.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
@@ -80,8 +83,8 @@ cp time.xml time-before.xml
 
 # Add it back
 pdk package add -r time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
+    ${PACKAGES}/adjtimex-1.13-12.src.rpm \
+    ${PACKAGES}/adjtimex-1.13-12.i386.rpm
 
 pdk semdiff -m time-before.xml time.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
@@ -95,11 +98,11 @@ EOF
 
 # Install old version of ethereal.
 pdk package add ethereal.xml \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/tethereal_0.9.13-1.0progeny1_ia64.deb
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny1.dsc \
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/tethereal_0.9.13-1.0progeny1_ia64.deb
 
 cp ethereal.xml ethereal-before.xml
 
@@ -117,11 +120,11 @@ cp ethereal.xml ethereal-before.xml
 
 # Install newer version of ethereal.
 pdk package add -r ethereal.xml \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny2.dsc \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny2_ia64.deb \
-    $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny2_ia64.deb \
-    $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny2_ia64.deb \
-    $tmp_dir/packages/tethereal_0.9.13-1.0progeny2_ia64.deb
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny2.dsc \
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny2_ia64.deb \
+    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny2_ia64.deb \
+    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny2_ia64.deb \
+    ${PACKAGES}/tethereal_0.9.13-1.0progeny2_ia64.deb
 
 pdk semdiff -m ethereal-before.xml ethereal.xml | LANG=C sort >semdiff.txt
 
@@ -137,11 +140,11 @@ cp ethereal.xml ethereal-before.xml
 
 # Downgrade to older version again.
 pdk package add -r ethereal.xml \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/tethereal_0.9.13-1.0progeny1_ia64.deb
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny1.dsc \
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/tethereal_0.9.13-1.0progeny1_ia64.deb
 
 pdk semdiff -m ethereal-before.xml ethereal.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
@@ -156,10 +159,10 @@ cp ethereal.xml ethereal-before.xml
 
 # Drop a package.
 pdk package add -r ethereal.xml \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
-    $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/tethereal_0.9.13-1.0progeny1_ia64.deb
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny1.dsc \
+    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/tethereal_0.9.13-1.0progeny1_ia64.deb
 
 pdk semdiff -m ethereal-before.xml ethereal.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
@@ -171,11 +174,11 @@ cp ethereal.xml ethereal-before.xml
 
 # Add it back
 pdk package add -r ethereal.xml \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/tethereal_0.9.13-1.0progeny1_ia64.deb
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny1.dsc \
+    ${PACKAGES}/ethereal_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
+    ${PACKAGES}/tethereal_0.9.13-1.0progeny1_ia64.deb
 
 pdk semdiff -m ethereal-before.xml ethereal.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt

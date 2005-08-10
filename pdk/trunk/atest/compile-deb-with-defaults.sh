@@ -24,17 +24,20 @@
 
 # get Utility functions
 . atest/test_lib.sh
+packages=$(pwd)/packages
+
+pdk workspace create "workspace"
+cd workspace/work
 
 # Install all the packages into the local cache
 pdk package add progeny.com/apache.xml \
-    packages/apache2-common_2.0.53-5_i386.deb \
-    packages/apache2_2.0.53-5.dsc \
+    ${packages}/apache2-common_2.0.53-5_i386.deb \
+    ${packages}/apache2_2.0.53-5.dsc \
 
 pdk repogen progeny.com/apache.xml
 find repo
 
 [ -d './repo' ] || fail "mising repo directory"
-
 
 # Check that the cache contains the files (pre-calculated sha1)
 check_file "b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b" \
