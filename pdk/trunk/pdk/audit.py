@@ -27,7 +27,7 @@ __revision__ = '$Progeny$'
 from sets import Set
 import sha
 import md5
-import pdk.cache as cache
+import pdk.workspace as workspace
 from pdk.component import ComponentDescriptor
 import optparse
 import pdk.log as log
@@ -61,7 +61,7 @@ def audit(argv):
 
     note_problem.called = False
 
-    my_cache = cache.Cache()
+    my_cache = workspace.current_workspace().cache()
     arbiter = Arbiter(note_problem)
 
     for component_name in args:

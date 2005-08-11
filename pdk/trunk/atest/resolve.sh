@@ -202,7 +202,7 @@ pdk repogen apache.xml
 
 # set up apache.
 cd ${testroot}
-SERVER_PORT=$(unused_port 8100 8101 8102 8103 8104 8105 8106 8107 13847)
+SERVER_PORT=$(unused_port 8103 8104 8105 8106 8107 13847)
 create_apache_conf $SERVER_PORT
 
 cat >${etc}/svn.apache2.conf <<EOF

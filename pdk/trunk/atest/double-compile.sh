@@ -23,21 +23,33 @@
 
 . atest/test_lib.sh
 
+#Setup
+#create a local package "channel" and
+#populate it with package files
 mkdir channel
 cp packages/apache2*_2.0.53* channel
 
+#Create a workspace.  Always.
+pdk workspace create doublecompile
+cd doublecompile
+
+#create the channel configuration file
 cat >channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <local>
     <type>dir</type>
-    <path>channel</path>
+    <path>../channel</path>
   </local>
 </channels>
 EOF
 
+#instruct pdk to populate the local cache
+#from the configured channel
 pdk channel update
 
+#go the the vc directory and make a component
+cd work
 cat >apache.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
@@ -55,6 +67,7 @@ cat >apache.xml <<EOF
 </component>
 EOF
 
+#Acquire the package files for the component
 pdk download apache.xml
 
 pdk repogen apache.xml

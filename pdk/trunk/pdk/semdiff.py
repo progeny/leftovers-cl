@@ -26,8 +26,8 @@ import os
 import optparse
 from sets import Set
 from itertools import chain
-from pdk.cache import Cache
 from pdk.component import ComponentDescriptor
+from pdk import workspace
 from pdk.version_control import cat
 from pdk.channels import ChannelData
 from pdk.package import Package
@@ -187,7 +187,7 @@ def semdiff(argv):
 
     -m makes the output machine readable.
     """
-    cache = Cache()
+    cache = workspace.current_workspace().cache()
     parser = optparse.OptionParser()
     add_my_options(parser)
     opts, args = parser.parse_args(args=argv)

@@ -39,7 +39,9 @@ plumb_files() {
     mkdir channel
     cp $files channel/
 
+    cd rchp
     pdk channel update
+    cd work
     cat >a.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -57,7 +59,6 @@ plumb_files() {
 </component>
 EOF
     pdk resolve a.xml
-
     pdk download a.xml
 
     rm -rf repo
@@ -68,17 +69,22 @@ EOF
     for file in $files; do
         file_in_pool $file
     done
+    cd ../..
 }
 
+pdk workspace create rchp
+dir_channel=$(pwd)/channel
+cd rchp
 cat >channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <a>
     <type>dir</type>
-    <path>channel</path>
+    <path>${dir_channel}</path>
   </a>
 </channels>
 EOF
+cd ..
 
 file1=packages/ethereal_0.9.13-1.0progeny1.dsc
 file2=packages/ethereal_0.9.13-1.0progeny1.diff.gz

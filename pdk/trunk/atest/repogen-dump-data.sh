@@ -16,7 +16,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# resolve.sh
+# repogen-dump-data.sh
 # $Progeny$
 #
 # The resolve command should transform abstract references to concrete
@@ -25,9 +25,25 @@
 . atest/test_lib.sh
 
 mkdir channel
+dir_channel=$(pwd)/channel
 cp packages/apache2-common_2.0.53-5_i386.deb channel
 cp packages/passwd-0.68-10.i386.rpm channel
 
+pdk workspace create repogendumpdata
+cd repogendumpdata
+
+# Add a channel for the package directory
+cat >channels.xml <<EOF
+<?xml version="1.0"?>
+<channels>
+  <local>
+    <type>dir</type>
+    <path>${dir_channel}</path>
+  </local>
+</channels>
+EOF
+
+cd work
 # Add some concrete and abstract package references to a new component.
 cat >apache.xml <<EOF
 <?xml version="1.0"?>
@@ -72,34 +88,25 @@ cat >joined-report.xml <<EOF
 </component>
 EOF
 
-# Add a channel for the package directory
-cat >channels.xml <<EOF
-<?xml version="1.0"?>
-<channels>
-  <local>
-    <type>dir</type>
-    <path>channel</path>
-  </local>
-</channels>
-EOF
-
+cd ..
 pdk channel update
 [ -f channels.xml.cache ] \
     || fail 'channel cache file should have been created'
+cd work
 
 pdk resolve apache.xml local
-
 pdk download apache.xml
 
 pdk repogen separate-report.xml >report.txt
-diff -u - report.txt <<EOF
-apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5
-passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb
+
+cat >control.txt <<EOF
+apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5
+passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/repogendumpdata/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb
 
 md5:5acd04d4cc6e9d1530aad04accdc8eb5 one-more thing
-md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate object
+md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate objectEOF
 
-EOF
+diff -u report.txt control.txt
 
 pdk repogen joined-report.xml >report.txt
 diff -u - report.txt <<EOF

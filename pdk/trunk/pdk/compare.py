@@ -30,7 +30,7 @@ import tempfile
 import gzip
 import urllib2
 import apt_pkg
-import pdk.cache
+from pdk import workspace
 from pdk.component import ComponentDescriptor
 import pdk.log
 
@@ -204,7 +204,7 @@ def compare_to_debian_repo(product, repositories):
     # Load the packages.
 
     pdk_package_list = {}
-    cache = pdk.cache.Cache()
+    cache = workspace.current_workspace().cache()
 
     descriptor = ComponentDescriptor(product)
     component = descriptor.load(cache)

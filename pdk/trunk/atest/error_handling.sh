@@ -23,10 +23,14 @@
 
 #-----------------------------------------------------------------------
 # Ill-formed command line
+pdk workspace create foo
+pushd foo
 pdk semdiff  || status=$?
 test "$status" = "2" || { 
     bail "Expected command-line error(2), got ${status}"
 }
+popd
+rm -rf foo
 
 pdk resolve || status=$?
 test "$status" = "2" || {
@@ -95,17 +99,22 @@ test "$status" = "3" || bail "Path element w/o trailing slash accepted"
 #-----------------------------------------------------------------------
 # Process an ill-formed component descriptor
 
+pdk workspace create foo
+pushd foo
 cat > bad_component.xml << EOF
 <?xml version="1.0"?>
 EOF
 pdk semdiff ./bad_component.xml  || status=$?
 test "$status" = "3" || bail "Expected InputError(3) got ${status}"
-
+popd
+rm -rf foo
 
 #-----------------------------------------------------------------------
 # Process a more reasonable ill-formed component descriptor
 # Unclosed tag
 
+pdk workspace create foo
+pushd foo
 cat > ethereal.xml << EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
@@ -119,10 +128,14 @@ cat > ethereal.xml << EOF
 EOF
 pdk semdiff ethereal.xml  || status=$?
 test "$status" = "3" || bail "Expected InputError(3) got ${status}"
+popd
+rm -rf foo
 
 #-----------------------------------------------------------------------
 # Cache miss
 
+pdk workspace create foo
+pushd foo
 cat > cache-miss.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -134,6 +147,8 @@ EOF
 
 pdk semdiff cache-miss.xml empty.xml || status=$?
 test "$status" = "4" || bail "Incorrect/unexpected error return"
+popd
+rm -rf foo
 
 #-----------------------------------------------------------------------
 # Don't give necessary arguments -- command line error (2)

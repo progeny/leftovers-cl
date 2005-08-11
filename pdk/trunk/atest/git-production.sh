@@ -79,11 +79,12 @@ popd
 # -----------------------------------------------------------
 
 pdk workspace create production
+sh
 pushd production/work
     pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pull failed"
     create_snapshot $tmp_dir/production
 popd
-
+sh
 echo "Where should this take place?"
 pdk production_pull $tmp_dir/integration $tmp_dir/production master 
 

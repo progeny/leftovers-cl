@@ -21,21 +21,28 @@
 # Check for regression of problem where download would barf on components
 # containing abstract references.
 
+#create a local "channel" to retreive packages from
 mkdir channel/
 cp packages/apache2-common_2.0.53-5_i386.deb channel/
 
+pdk workspace create downloadabstract
+cd downloadabstract
+
+#create the default channel configuration
+#to point at the one created above
 cat >channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <channel>
     <type>dir</type>
-    <path>channel</path>
+    <path>..channel</path>
   </channel>
 </channels>
 EOF
 
 pdk channel update
 
+cd work
 cat >a.xml <<EOF
 <?xml version="1.0"?>
 <component>

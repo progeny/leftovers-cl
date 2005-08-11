@@ -26,8 +26,8 @@ __revision__ = '$Progeny$'
 
 import optparse
 from pdk.component import ComponentDescriptor
-from pdk.cache import Cache
 from pdk import log
+from pdk import workspace
 
 logger = log.get_logger()
 
@@ -42,7 +42,7 @@ def mark(argv):
     opts, args = my_parser.parse_args(args=argv)
     logger.debug("pdk mark argv, opts: " + " ".join(argv) + str(opts))
 
-    cache = Cache()
+    cache = workspace.current_workspace().cache()
 
     for component_uri in args:
         descriptor = ComponentDescriptor(component_uri)

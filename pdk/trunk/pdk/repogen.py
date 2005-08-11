@@ -31,7 +31,8 @@ import optparse
 from sets import Set
 from itertools import chain
 from pdk.util import path
-from pdk.cache import Cache
+from pdk import workspace
+#from pdk.cache import Cache
 from pdk.component import ComponentDescriptor
 from pdk.package import Package
 from pdk.exceptions import SemanticError, InputError, CommandLineError
@@ -61,7 +62,7 @@ source_field_order = [ "Package", "Source", "Binary", "Version", "Priority",
 def compile_product(component_name):
     """Compile the product described by the component."""
 
-    cache = Cache()
+    cache = workspace.current_workspace().cache()
     compiler = Compiler(cache)
 
     repo_types = { 'report': compiler.dump_report,
