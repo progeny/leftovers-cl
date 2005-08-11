@@ -151,6 +151,33 @@ popd
 rm -rf foo
 
 #-----------------------------------------------------------------------
+# Download non-existent package from channel
+pdk workspace create foo
+pushd foo
+cat > cache-miss.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <deb ref="sha-1:cantpossiblyexist"/>
+  </contents>
+</component>
+EOF
+cat > channels.xml <<EOF
+<?xml version="1.0"?>
+<channels>
+  <foo>
+    <type>dir</type>
+    <path>/tmp</path>
+  </foo>
+</channels>
+EOF
+pdk channel update
+pdk download cache-miss.xml || status=$?
+test "$status" = "4" || bail "Did not handle channel miss correctly"
+popd
+rm -rf foo
+
+#-----------------------------------------------------------------------
 # Don't give necessary arguments -- command line error (2)
 pdk repogen  || status=$?
 test "${status}" = "2" || bail "Expected error 2, got $status"

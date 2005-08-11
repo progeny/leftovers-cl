@@ -344,7 +344,12 @@ class ComponentDescriptor(object):
         channels = ChannelData.load_cached()
         for ref in self.iter_full_package_refs():
             if ref.blob_id and ref.blob_id not in cache:
-                base_uri, filename = channels.find_by_blob_id(ref.blob_id)
+                try:
+                    base_uri, filename = \
+                        channels.find_by_blob_id(ref.blob_id)
+                except KeyError:
+                    raise SemanticError, \
+                        "could not find %s in any channel" % (ref.blob_id,)
                 cache.import_file(base_uri, filename, ref.blob_id)
                 package = ref.load(cache)
                 if hasattr(package, 'extra_file'):
