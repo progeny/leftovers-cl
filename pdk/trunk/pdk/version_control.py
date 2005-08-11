@@ -91,7 +91,8 @@ class VersionControl(object):
     """
 
     def __init__(self, path):
-        self.location = path
+        gitpath = os.path.join(path, '.git')
+        self.location = gitpath
 
     def create(self, path=None):
         """
@@ -100,20 +101,21 @@ class VersionControl(object):
         # A little tortured: We may have been called with
         # no starting location (independent of Workspace)
         # and need to pick a good starting path.
-        start_path = path or self.location or os.getcwd()
-        self.location = start_path
+        workdir = os.path.dirname(self.location)
+        start_path = path or workdir or os.getcwd()
 
         # Create vc/work space
-        vc_path = start_path + '/VC'
-        work_path = start_path + '/work'
+        work_path = os.path.join(start_path,'work')
         os.mkdir(work_path)
-        os.chdir(work_path)
-        _shell_command('git-init-db')
-        git_path = work_path + '/.git'
-        os.symlink(git_path, vc_path)
-        os.chdir(start_path)
-        self.location = git_path
 
+        # Initialize the version control space
+        os.chdir(work_path)
+        try:
+            _shell_command('git-init-db')
+        finally:
+            os.chdir(start_path)
+        self.location = os.path.join(work_path, '.git')
+        return self
 
     def clone(self, product_URL, branch_name, local_head_name):
         """

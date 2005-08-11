@@ -81,6 +81,7 @@ popd
 pdk workspace create production
 sh
 pushd production/work
+    echo pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pull failed"
     pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pull failed"
     create_snapshot $tmp_dir/production
 popd

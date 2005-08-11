@@ -65,15 +65,13 @@ def create_workspace(args):
         raise CommandLineError("requires an argument")
     name = args[0]
     path = os.path.join(os.getcwd(), name)
-    os.mkdir(path)
+    #os.mkdir(path)
 
-    # This flow seems wrong, should be version_control.create(), no?
-    vc = version_control.VersionControl(None)
-    vc = vc.create(path)
+    #vc = version_control.VersionControl(None)
+    #vc = vc.create(path)
 
-    ws = _Workspace(path)
+    ws = _Workspace(path).create(path)
     return ws
-
     
 # For external linkage
 create = create_workspace
@@ -191,7 +189,6 @@ class _Workspace(object):
     def version_control(self):
         """Return the local workspace's version control component"""
         if not self.its_version_control:
-            print "CREATING VC AT LOCATION %s" % self.location
             ctor = version_control.VersionControl
             self.its_version_control = ctor(self.location)
         return self.its_version_control
@@ -224,11 +221,17 @@ class _Workspace(object):
 
         start_path = os.getcwd()
         try:
-            product_path = start_path + '/' + name
+            product_path = os.path.join(start_path, name)
             os.mkdir(product_path)
-            os.chdir(product_path)
-            self.its_version_control = vc_constructor(product_path).create()
-            os.mkdir(product_path + '/cache')
+            os.mkdir(os.path.join(product_path,'cache'))
+            symlink_dir = os.path.join(product_path, 'VC')
+
+            # Darned two-stage creation
+            vc = self.its_version_control = vc_constructor(product_path)
+            vc.create()
+            # Link to top VC dir, so workspace is a "source"
+            vc_dir = os.path.abspath(vc.location)
+            os.symlink(vc_dir, symlink_dir)
         finally:
             os.chdir(start_path)
 
