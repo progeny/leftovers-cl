@@ -318,4 +318,5 @@ if [ -n "${future_tests}" ] ; then
     column -t ${log}
 fi
 
+$DONE_ACTION 
 exit $status
