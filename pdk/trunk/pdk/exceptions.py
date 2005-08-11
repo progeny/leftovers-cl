@@ -25,13 +25,18 @@ This module defines the type of exceptions which the PDK executable
 """
 
 
-class CommandLineError(Exception):
+class PdkException(Exception):
+    """Base class for all PDK exception classes.
+    """
+    pass
+
+class CommandLineError(PdkException):
     """Type of exception to be raised (and caught by PDK) when 
     a command-line is ill-formed (parse error).
     """
     pass
 
-class InputError(Exception):
+class InputError(PdkException):
     """Type of exception to be raised (and caught) when the data provided
     to a command (xml files, list files, etc) are incorrect or ill-formed.
 
@@ -39,20 +44,20 @@ class InputError(Exception):
     or the message will be less-than-useful.
     """
 
-class SemanticError(Exception):
+class SemanticError(PdkException):
     """The exception type to raised (and caught by PDK) when a command
     was well-formed, but the operation is impossible due to the state
     or non-existence of other objects in the system.
     """
 
-class ConfigurationError(Exception):
+class ConfigurationError(PdkException):
     """The exception type to be raised (and caught by PDK) when the 
     local system is not correctly configured, even though the the 
     command was syntactically correct (and may have been semantically
     correct.
     """
 
-class IntegrityFault(Exception):
+class IntegrityFault(PdkException):
     """The exception type to be raised when the workspace is not 
     in a consistent state
     """
