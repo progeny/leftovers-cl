@@ -30,7 +30,8 @@ from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, \
      FieldMatchCondition, TrueCondition
 from pdk.package import get_package_type, Package
-from pdk.exceptions import CommandLineError, InputError, SemanticError
+from pdk.exceptions import PdkException, CommandLineError, InputError, \
+     SemanticError
 from xml.parsers.expat import ExpatError
 from pdk.log import get_logger
 
@@ -167,33 +168,44 @@ class ComponentDescriptor(object):
             value = getattr(self, field_name)
             setattr(component, field_name, value)
 
+        group_message = ""
         local_rules = []
         for ref in self.contents:
-            rule = None
-            if isinstance(ref, PackageReference):
-                if ref.blob_id:
-                    refs = [ref] + ref.children
-                    for ref in refs:
-                        package = ref.load(cache)
-                        component.packages.append(package)
-                        component.direct_packages.append(package)
-                        if not ref.verify(cache):
-                            message = 'Concrete package does not meet ' \
-                                      'expected constraints: %s' \
-                                      % ref.blob_id, package.name
-                            raise SemanticError(message)
-                rule = ref.rule
-            elif isinstance(ref, ComponentReference):
-                child_descriptor = ref.load()
-                child_component = child_descriptor.load(cache)
-                component.direct_components.append(child_component)
-                component.components.append(child_component)
-                component.components.extend(child_component.components)
-                component.packages.extend(child_component.packages)
-                component.rules.extend(child_component.rules)
+            try:
+                rule = None
+                if isinstance(ref, PackageReference):
+                    if ref.blob_id:
+                        refs = [ref] + ref.children
+                        for ref in refs:
+                            package = ref.load(cache)
+                            component.packages.append(package)
+                            component.direct_packages.append(package)
+                            if not ref.verify(cache):
+                                message = 'Concrete package does not ' \
+                                          'meet expected constraints: %s' \
+                                          % ref.blob_id, package.name
+                                raise SemanticError(message)
+                    rule = ref.rule
+                elif isinstance(ref, ComponentReference):
+                    child_descriptor = ref.load()
+                    child_component = child_descriptor.load(cache)
+                    component.direct_components.append(child_component)
+                    component.components.append(child_component)
+                    component.components.extend(child_component.components)
+                    component.packages.extend(child_component.packages)
+                    component.rules.extend(child_component.rules)
 
-            if rule:
-                local_rules.append(rule)
+                if rule:
+                    local_rules.append(rule)
+            except PdkException, local_message:
+                if group_message:
+                    group_message = group_message + "\n"
+                group_message = group_message + \
+                    "Problems found in %s:\n%s" % (self.filename,
+                                                   local_message)
+
+        if group_message:
+            raise SemanticError(group_message)
 
         component.rules.extend(local_rules)
         uber_rule = CompositeRule(component.rules)
