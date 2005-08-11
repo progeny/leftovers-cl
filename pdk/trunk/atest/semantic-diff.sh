@@ -40,7 +40,7 @@ pdk package add progeny.com/time.xml \
     $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
 
 pdk add progeny.com/time.xml
-pdk commit master foo
+pdk commit foo
 # nothing has changed yet
 pdk semdiff -m progeny.com/time.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
@@ -59,7 +59,7 @@ upgrade|rpm|adjtimex|/1.13/12|/1.13/13|i386|progeny.com/time.xml
 upgrade|srpm|adjtimex|/1.13/12|/1.13/13|x86_64|progeny.com/time.xml
 EOF
 
-pdk commit master foo
+pdk commit foo
 
 # Downgrade back to the older version
 pdk package add -r progeny.com/time.xml \
@@ -72,7 +72,7 @@ downgrade|rpm|adjtimex|/1.13/13|/1.13/12|i386|progeny.com/time.xml
 downgrade|srpm|adjtimex|/1.13/13|/1.13/12|x86_64|progeny.com/time.xml
 EOF
 
-pdk commit master foo
+pdk commit foo
 
 # Drop a package
 pdk package add -r progeny.com/time.xml \
@@ -84,7 +84,7 @@ diff -u - semdiff.txt <<EOF
 drop|srpm|adjtimex|/1.13/12|x86_64|progeny.com/time.xml
 EOF
 
-pdk commit master foo
+pdk commit foo
 
 # Add it back
 pdk package add -r progeny.com/time.xml \
@@ -97,7 +97,7 @@ diff -u - semdiff.txt <<EOF
 add|srpm|adjtimex|/1.13/12|x86_64|progeny.com/time.xml
 EOF
 
-pdk commit master foo
+pdk commit foo
 
 # -----------------------------------------------------
 # Do it all with debs.
@@ -112,7 +112,7 @@ pdk package add progeny.com/ethereal.xml \
     $tmp_dir/packages/tethereal_0.9.13-1.0progeny1_ia64.deb
 
 pdk add progeny.com/ethereal.xml
-pdk commit master foo
+pdk commit foo
 
 # nothing has changed yet
 pdk semdiff -m progeny.com/ethereal.xml | LANG=C sort >semdiff.txt
@@ -142,7 +142,7 @@ upgrade|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|progeny.com/eth
 upgrade|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|any|progeny.com/ethereal.xml
 EOF
 
-pdk commit master foo
+pdk commit foo
 
 # Downgrade to older version again.
 pdk package add -r progeny.com/ethereal.xml \
@@ -161,7 +161,7 @@ downgrade|deb|tethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|progeny.com/e
 downgrade|dsc|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|any|progeny.com/ethereal.xml
 EOF
 
-pdk commit master foo
+pdk commit foo
 
 # Drop a package.
 pdk package add -r progeny.com/ethereal.xml \
@@ -176,7 +176,7 @@ diff -u - semdiff.txt <<EOF
 drop|deb|ethereal|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
 EOF
 
-pdk commit master foo
+pdk commit foo
 
 # Add it back
 pdk package add -r progeny.com/ethereal.xml \
@@ -192,4 +192,4 @@ diff -u - semdiff.txt <<EOF
 add|deb|ethereal|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
 EOF
 
-pdk commit master foo
+pdk commit foo

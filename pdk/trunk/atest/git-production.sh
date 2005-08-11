@@ -69,7 +69,7 @@ pushd integration/work
         ${PACKAGES}/apache2-common_2.0.53-5_i386.deb
 
     pdk add progeny.com/apache.xml
-    pdk commit master "git-production commit"
+    pdk commit "git-production commit"
 
     pdk repogen progeny.com/apache.xml
 popd
@@ -79,13 +79,11 @@ popd
 # -----------------------------------------------------------
 
 pdk workspace create production
-sh
+
 pushd production/work
-    echo pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pull failed"
     pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pull failed"
     create_snapshot $tmp_dir/production
 popd
-sh
 echo "Where should this take place?"
 pdk production_pull $tmp_dir/integration $tmp_dir/production master 
 
@@ -119,7 +117,7 @@ pushd customer-work-area/work
     echo GARBAGE >>progeny.com/apache.xml
 
     parent_id=$(cat .git/HEAD)
-    pdk commit master "git-production testing"
+    pdk commit "git-production testing"
 
     # Send change from customer to integration.
     git-diff-tree -p -r $parent_id $(cat .git/HEAD) >patch.txt
@@ -135,7 +133,7 @@ popd
 
 pushd integration/work
     git-apply patch.txt
-    pdk commit master "Required commit remark"
+    pdk commit "Required commit remark"
 popd
 # -----------------------------------------------------------
 # Pull from integration to production (again)
@@ -150,3 +148,5 @@ pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pul
 cd customer-work-area
 pdk update progeny.com 
 grep GARBAGE work/progeny.com/apache.xml
+
+# vim:ai:et:sts=4:sw=4:tw=0:

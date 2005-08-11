@@ -148,10 +148,9 @@ def commit(args):
     """
     commit local changes
     """
-    head_name = args[0]
-    remark = args[1]
+    remark = args[0]
     ws = current_workspace()
-    ws.commit(head_name, remark)
+    ws.commit(remark)
 
 
 def update(args):
@@ -242,11 +241,11 @@ class _Workspace(object):
         return self.version_control().add(name)
 
 
-    def commit(self, head_name, remark):
+    def commit(self, remark):
         """
         Commit changes to version control
         """
-        self.version_control().commit(head_name, remark)
+        self.version_control().commit(remark)
 
 
     def update(self, upstream_name):

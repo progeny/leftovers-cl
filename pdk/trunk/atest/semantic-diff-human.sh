@@ -84,7 +84,7 @@ pdk download ethereal.xml
 
 pdk add ethereal.xml
 pdk add meta-info.xml
-pdk commit master 'Starting point for diff.'
+pdk commit 'Starting point for diff.'
 
 # Nothing should have changed yet.
 semdiff_report ethereal.xml
@@ -109,7 +109,7 @@ pdk download ethereal.xml
 
 semdiff_report ethereal.xml
 
-pdk commit master ''
+pdk commit ''
 
 rm -r channel
 mkdir channel

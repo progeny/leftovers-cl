@@ -155,20 +155,26 @@ class VersionControl(object):
         return _shell_command(cmd)
 
 
-    def commit(self, head_name, remark):
+    def commit(self, remark):
         """
         call git commands to commit local work
         """
         files = _shell_command('git-diff-files --name-only').split()
         _shell_command('git-update-cache ' + ' '.join(files))
         sha1 = _shell_command('git-write-tree').strip()
-
-        print sys.stdout, "foo1", sha1
-
-        filename = '.git/refs/heads/' + head_name
         comment_handle = StringIO(remark)
+        output = _shell_command('git-commit-tree ' + \
+                                 sha1, comment_handle)
+
+        filename = '.git/refs/heads/master'
+        if os.path.exists(filename):
+            the_file = file(filename, 'r')
+            old_content = the_file.read().strip()
+            the_file.close()
+            back_filename = '.git/refs/heads/' + old_content
+            os.rename(filename, back_filename)
+
         the_file = file(filename, 'w')
-        output = _shell_command('git-commit-tree ' + sha1, comment_handle)
         the_file.write(str(output))
         the_file.close()
 
