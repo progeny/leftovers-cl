@@ -29,6 +29,7 @@ import popen2
 import shutil
 import sys
 from cStringIO import StringIO
+from pdk.exceptions import IntegrityFault
 
 ## version_control
 ## Author:  Glen Smith
@@ -85,67 +86,83 @@ def cat(filename):
         return open(filename)
 
 
-class VersionControl(object):
+def create(working_path):
+    """Create a version control repo in the given work dir """
+    # Since we're porcelain, we have to set the stage for command-line
+    # tools -- saving the dir is "bread crumbs"
+    starting_path = os.getcwd() 
+    try:
+        # If we're not there already, go to our working path
+        if not starting_path.endswith(working_path):
+            os.chdir(working_path)
+        _shell_command('git-init-db')
+    finally:
+        # Follow the bread crumbs home
+        os.chdir(starting_path)
+    return _VersionControl(working_path)
+
+def clone(product_URL, branch_name, local_head_name, work_dir):
     """
-    Library Interface to pdk version control
+    call git commands to create local workspace from
+    depot at upstream url
     """
+    # localize a path function
+    pjoin = os.path.join
 
-    def __init__(self, path):
-        gitpath = os.path.join(path, '.git')
-        self.location = gitpath
+    # capture starting dir
+    start_dir = os.getcwd()
 
-    def create(self, path=None):
-        """
-        Initialize version control
-        """
-        # A little tortured: We may have been called with
-        # no starting location (independent of Workspace)
-        # and need to pick a good starting path.
-        workdir = os.path.dirname(self.location)
-        start_path = path or workdir or os.getcwd()
+    # Adjust for relative paths
+    if not os.path.isabs(work_dir):
+        if start_dir.endswith(work_dir):
+            work_dir = start_dir
+        else:
+            work_dir = os.path.abspath(work_dir)
+    os.chdir(work_dir)
+    try:
+        git_path = pjoin(work_dir, '.git')
 
-        # Create vc/work space
-        work_path = os.path.join(start_path,'work')
-        os.mkdir(work_path)
-
-        # Initialize the version control space
-        os.chdir(work_path)
-        try:
-            _shell_command('git-init-db')
-        finally:
-            os.chdir(start_path)
-        self.location = os.path.join(work_path, '.git')
-        return self
-
-    def clone(self, product_URL, branch_name, local_head_name):
-        """
-        call git commands to create local workspace from
-        depot at upstream url
-        """
-        needs_setup = True
-        if needs_setup:
-            git_path = '.git/'
-            _shell_command([('git-init-db')])
-
+        # Get a tar file and untar it locally
         curl_source = product_URL + '/work/snap.tar'
         curl_command = 'curl -s ' + curl_source + \
                        ' | (tar Cx %s)' % git_path
         _shell_command(curl_command)
 
-        branch_path = git_path + 'branches/'
+        # Make a branches directory in git
+        branch_path = pjoin(git_path, 'branches')
         os.mkdir(branch_path)
 
-        branch_filename = branch_path + branch_name
+        branch_filename = pjoin(branch_path, branch_name)
         branch_file = file(branch_filename, 'w')
         branch_file.write(product_URL) 
         branch_file.close()
 
-        source = git_path + 'HEAD'
-        target = git_path + 'refs/heads/' + local_head_name
+        source = pjoin(git_path, 'HEAD')
+        target = pjoin(git_path, 'refs', 'heads', local_head_name)
         shutil.copy(source, target)
         _shell_command('git-read-tree %s' % local_head_name)
         _shell_command('git-checkout-cache -a')
+    finally:
+        os.chdir(start_dir)
 
+
+class _VersionControl(object):
+    """
+    Library Interface to pdk version control
+    """
+
+    def __init__(self, work_path):
+        if not os.path.isdir(work_path):
+            raise IntegrityFault(
+                "%s is not a directory" % work_path
+                )
+        self.work_dir = work_path
+
+        self.vc_dir = os.path.join(work_path, '.git')
+        if not os.path.isdir(self.vc_dir):
+            raise IntegrityFault(
+                "%s is not a directory" % self.vc_dir
+                )
 
     def add(self, name):
         """
@@ -153,7 +170,6 @@ class VersionControl(object):
         """
         cmd = 'git-update-cache --add ' + name
         return _shell_command(cmd)
-
 
     def commit(self, remark):
         """
@@ -165,7 +181,6 @@ class VersionControl(object):
         comment_handle = StringIO(remark)
         output = _shell_command('git-commit-tree ' + \
                                  sha1, comment_handle)
-
         filename = '.git/refs/heads/master'
         if os.path.exists(filename):
             the_file = file(filename, 'r')

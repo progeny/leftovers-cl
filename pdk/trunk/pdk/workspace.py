@@ -27,7 +27,8 @@ import os
 from pdk import version_control
 from pdk import util
 from pdk.cache import Cache
-from pdk.exceptions import ConfigurationError, CommandLineError
+from pdk.exceptions import ConfigurationError, IntegrityFault, \
+          SemanticError, CommandLineError
 
 def current_workspace():
     """
@@ -44,6 +45,13 @@ def current_workspace():
         raise ConfigurationError("Not currently in a workspace")
     return _Workspace(whole_path)
 
+def currently_in_a_workspace():
+    """Determine if pwd is in a workspace """
+    result = False
+    if util.find_base_dir():
+        result = True
+    return result
+
 def info(ignore):
     """Report information about the local workspace"""
     ignore.pop() # stop pylint complaining about unused arg
@@ -55,46 +63,100 @@ def info(ignore):
         print message
     
 
-def create_workspace(args):
+def create_workspace(workspace_root):
     """
     Create a local pdk working directory.
     Usage:
-    pdk workspace create [workspace name]
+        pdk workspace create [workspace name]
     """
-    if not args:
-        raise CommandLineError("requires an argument")
-    name = args[0]
-    path = os.path.join(os.getcwd(), name)
-    #os.mkdir(path)
+    # Friends don't let friends nest workspaces.
+    if currently_in_a_workspace():
+        raise SemanticError(
+            "%s is Already in a workspace"
+            % os.getcwd()
+            )
 
-    #vc = version_control.VersionControl(None)
-    #vc = vc.create(path)
+    # localize some functions
+    pjoin = os.path.join 
+    absolute = os.path.abspath
 
-    ws = _Workspace(path).create(path)
-    return ws
+    # Plan the layout 
+    work_root = absolute(pjoin(os.getcwd(), workspace_root))
+    work_path = pjoin(work_root, 'work')
+    cache_path = pjoin(work_root, 'cache')
+    vc_link_path = pjoin(work_root, 'VC')
+
+    # Create empty workspace
+    print "Creating: %s, %s" % (work_path, cache_path)
+    os.makedirs(work_path)
+    os.makedirs(cache_path)
+    vc = version_control.create(work_path)
+    os.symlink(absolute(vc.vc_dir), absolute(vc_link_path))
+
+    # Return an object that wraps the workspace
+    return _Workspace(work_root)
     
 # For external linkage
-create = create_workspace
+def create(args):
+    """
+    cmd front-end for the workspace create function
 
+    args = [target_path]
+    """
+    # Friends don't let friends nest workspaces.
+    if currently_in_a_workspace():
+        raise SemanticError(
+            "%s is Already in a workspace"
+            % os.getcwd()
+            )
+
+    if not args:
+        raise CommandLineError("requires an argument")
+    create_workspace(args[0])
 
 def clone(args):
     """
     Create the standard product work area beneath pwd.
     Usage:
-    pdk clone [source URL] [local name]
+    pdk clone [remote_url] [local_dir] [src_branch] [local_head]
     """
-    product_url = args[0]
-    work_area = args[1]
+    # Friends don't let friends nest workspaces.
+    if currently_in_a_workspace():
+        raise SemanticError(
+            "%s is Already in a workspace"
+            % os.getcwd()
+            )
+    remote_product_url = args[0]
+    local_work_area = args[1]
     branch_name = args[2]
     local_head_name = args[3]
 
-    ws = _Workspace(work_area)
-    ws.clone(
-        product_url
-        , work_area
-        , branch_name
-        , local_head_name
-        )
+    # We want the work area to NOT already exist
+    if os.path.isdir(local_work_area):
+        raise SemanticError(
+            "%s is already a work area" % local_work_area
+            )
+
+    # Make the work directory
+    ws = create_workspace(local_work_area)
+    if not os.path.isdir(local_work_area):
+        raise IntegrityFault(
+            "%s does not exist after create" 
+            %  local_work_area
+            )
+
+    # Start cloning
+    start_path = os.getcwd()
+    try:
+        version_control.clone(
+            remote_product_url
+            , branch_name
+            , local_head_name
+            , ws.workdir
+            )
+    finally:
+        os.chdir(start_path)
+    return ws
 
 
 def pull(args):
@@ -173,13 +235,15 @@ class _Workspace(object):
         # we should populate attributes accordingly
     def __init__(self, directory):
         location = self.location = directory
-        if os.path.isdir(directory):
-            self.its_version_control = \
-                version_control.VersionControl(location)
-            self.its_cache = Cache(os.path.join(location,'cache'))
-        else:
-            self.its_version_control = None
-            self.its_cache = None
+        if not os.path.isdir(directory):
+            raise IntegrityFault(
+                "%s is not a workspace directory" 
+                % directory
+                )
+        self.workdir = workdir = os.path.join(location,'work')
+        self.its_version_control = \
+            version_control._VersionControl(workdir)
+        self.its_cache = Cache(os.path.join(location,'cache'))
 
     def cache(self):
         """Return the current workspace's cache component"""
@@ -192,23 +256,6 @@ class _Workspace(object):
             self.its_version_control = ctor(self.location)
         return self.its_version_control
 
-    def clone(self, product_URL, work_area, branch_name,
-                 local_head_name):
-        """
-        Create a local instance of the workspace
-        with a product from a remote URL
-        """
-        start_path = os.getcwd()
-        try:
-            self.create(work_area)
-            os.chdir(work_area + '/work')
-            self.version_control().clone(
-                product_URL
-                , branch_name
-                , local_head_name
-                )
-        finally:
-            os.chdir(start_path)
 
     def create(self, name):
         """

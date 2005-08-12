@@ -37,8 +37,8 @@ semdiff_report () {
     rm errors.txt
 }
 
-pdk workspace create work
-cd work/work
+pdk workspace create workspace
+cd workspace/work
 
 cat >../channels.xml <<EOF
 <?xml version="1.0"?>
@@ -50,8 +50,9 @@ cat >../channels.xml <<EOF
 </channels>
 EOF
 
-mkdir channel
-cp $tmp_dir/packages/ethereal_0.9.4-1woody2_i386.deb channel
+channel_dir=${tmp_dir}/channel
+mkdir ${channel_dir}
+cp $PACKAGES/ethereal_0.9.4-1woody2_i386.deb ${channel_dir}
 
 cat >ethereal.xml <<EOF
 <?xml version="1.0"?>
@@ -89,9 +90,9 @@ pdk commit 'Starting point for diff.'
 # Nothing should have changed yet.
 semdiff_report ethereal.xml
 
-rm -r channel
-mkdir channel
-cp $tmp_dir/packages/ethereal_0.9.4-1woody3_i386.deb channel
+rm -r ${channel_dir}
+mkdir ${channel_dir}
+cp $PACKAGES/ethereal_0.9.4-1woody3_i386.deb ${channel_dir}
 
 cat >ethereal.xml <<EOF
 <?xml version="1.0"?>
@@ -111,9 +112,9 @@ semdiff_report ethereal.xml
 
 pdk commit ''
 
-rm -r channel
-mkdir channel
-cp $tmp_dir/packages/ethereal_0.9.4-1woody2_i386.deb channel
+rm -r ${channel_dir}
+mkdir ${channel_dir}
+cp $PACKAGES/ethereal_0.9.4-1woody2_i386.deb ${channel_dir}
 
 cat >ethereal.xml <<EOF
 <?xml version="1.0"?>
@@ -130,13 +131,12 @@ pdk resolve ethereal.xml
 pdk download ethereal.xml
 
 semdiff_report ethereal.xml
-cd $tmp_dir
 
 
 # Install old version of adjtimex
 pdk package add time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
+    $PACKAGES/adjtimex-1.13-12.src.rpm \
+    $PACKAGES/adjtimex-1.13-12.i386.rpm
 
 cp time.xml time-before.xml
 
@@ -147,8 +147,8 @@ cp time.xml time-before.xml
 
 # Install new version of adjtimex
 pdk package add -r time.xml \
-    $tmp_dir/packages/adjtimex-1.13-13.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-13.i386.rpm
+    $PACKAGES/adjtimex-1.13-13.src.rpm \
+    $PACKAGES/adjtimex-1.13-13.i386.rpm
 
 semdiff_report time-before.xml time.xml
 
@@ -156,8 +156,8 @@ cp time.xml time-before.xml
 
 # Downgrade back to the older version
 pdk package add -r time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
+    $PACKAGES/adjtimex-1.13-12.src.rpm \
+    $PACKAGES/adjtimex-1.13-12.i386.rpm
 
 semdiff_report time-before.xml time.xml
 
@@ -165,7 +165,7 @@ cp time.xml time-before.xml
 
 # Drop a package
 pdk package add -r time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
+    $PACKAGES/adjtimex-1.13-12.i386.rpm
 
 semdiff_report time-before.xml time.xml
 
@@ -173,7 +173,7 @@ cp time.xml time-before.xml
 
 # Add it back
 pdk package add -r time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
+    $PACKAGES/adjtimex-1.13-12.src.rpm \
+    $PACKAGES/adjtimex-1.13-12.i386.rpm
 
 semdiff_report time-before.xml time.xml

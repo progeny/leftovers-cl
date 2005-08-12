@@ -79,7 +79,6 @@ popd
 # -----------------------------------------------------------
 
 pdk workspace create production
-
 pushd production/work
     pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pull failed"
     create_snapshot $tmp_dir/production
@@ -110,10 +109,9 @@ pdk clone http://localhost:$SERVER_PORT/telco/ \
 # -----------------------------------------------------------
 # Customer moves to work area and makes a local change.
 # -----------------------------------------------------------
-
 pushd customer-work-area/work
+    test -d .git || fail "No git created"
 
-    echo >>progeny.com/apache.xml
     echo GARBAGE >>progeny.com/apache.xml
 
     parent_id=$(cat .git/HEAD)
