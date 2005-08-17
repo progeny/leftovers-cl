@@ -40,38 +40,6 @@ EOF
 $apache2_bin -t -f etc/apache2/apache2.conf
 $apache2_bin -X -f etc/apache2/apache2.conf &
 
-# -----------------------------------------------------------
-# Common Functions
-# -----------------------------------------------------------
-
-do_production_pull() {
-    # Does a pull from one git directory to another.
-    # Unlike other commands, does not assume work/.git directory
-    # layout.
-    # Also creates snap.tar. In real production that part of the
-    # process could be separated and done infrequently. (cron weekly)
-
-    local remote_path=$1
-    local remote_head_name=$2
-    local local_path=$3
-    local local_head_name=$4
-
-    GIT_DIR=$local_path
-    export GIT_DIR
-
-    if [ ! -e $GIT_DIR ]; then
-        mkdir -p $GIT_DIR
-        git-init-db
-    fi
-    remote_commit_id=$(cat $remote_path/refs/heads/$remote_head_name)
-    git-local-pull -a -l $remote_commit_id $remote_path
-    echo $remote_commit_id >$local_path/refs/heads/$local_head_name
-    # now update the snapshot
-    tar Cc $local_path . > $local_path/../snap.tar.tmp
-    mv $local_path/../snap.tar.tmp $local_path/../snap.tar
-    cd $tmp_dir
-    unset GIT_DIR
-}
 
 
 # -----------------------------------------------------------
