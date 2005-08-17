@@ -54,24 +54,48 @@ class VersionControlError(StandardError):
     pass
 
 
+
 def _shell_command(command_string, stdin = None, debug = False):
     """
     run a shell command
+
+    stdin is text to copy to the command's stdin pipe. If null,
+        nothing is sent.
     """
     process = popen2.Popen3(command_string, capturestderr = True)
+
+    # Copy input to process, if any.
     if stdin:
         shutil.copyfileobj(stdin, process.tochild)
     process.tochild.close()
+
     result = process.wait()
+
     output = process.fromchild.read()
     if debug:
         error = process.childerr.read()
         print >> sys.stderr, '###+', command_string
-        print >> sys.stderr, '####', output
-        print >> sys.stderr, '####', error
+        print >> sys.stderr, '###1', output
+        print >> sys.stderr, '###2', error
+        print >> sys.stderr, '##$!', result
     if result:
         raise VersionControlError, 'command "%s" failed' % command_string
     return output
+
+def _cd_shell_command(path, command_string, stdin=None, debug=False):
+    """Wrapper for _shell_command which includes the necessary dir
+    path hijinks for version control (must execute from .git parent)
+
+    All command parameters which are files must have already been 
+    modified to be relative to the ./work directory of the project.
+    """
+    original_dir = os.getcwd()
+    os.chdir(path)
+    try:
+        result = _shell_command(command_string, stdin, debug)
+    finally:
+        os.chdir(original_dir)
+    return result
 
 
 def cat(filename):
@@ -100,6 +124,7 @@ def create(working_path):
         # Follow the bread crumbs home
         os.chdir(starting_path)
     return _VersionControl(working_path)
+
 
 def clone(product_URL, branch_name, local_head_name, work_dir):
     """
@@ -168,25 +193,45 @@ class _VersionControl(object):
         """
         Initialize version control
         """
-        cmd = 'git-update-cache --add ' + name
-        return _shell_command(cmd)
+        name = relative_path(self.work_dir, name)
+        cmd = 'git-update-cache --add %s' % name
+        return _cd_shell_command(self.work_dir, cmd)
 
     def commit(self, remark):
         """
         call git commands to commit local work
         """
-        files = _shell_command('git-diff-files --name-only').split()
-        _shell_command('git-update-cache ' + ' '.join(files))
-        sha1 = _shell_command('git-write-tree').strip()
+        pjoin = os.path.join
+
+        work_dir = self.work_dir
+        files = _cd_shell_command(
+            work_dir
+            , 'git-diff-files --name-only'
+            ).split()
+        files = [ relative_path(work_dir, item) 
+                  for item in files ]
+        _cd_shell_command(
+            work_dir
+            , 'git-update-cache ' + ' '.join(files))
+
+        sha1 = _cd_shell_command(work_dir, 'git-write-tree').strip()
+
         comment_handle = StringIO(remark)
-        output = _shell_command('git-commit-tree ' + \
+        output = _cd_shell_command(work_dir, 'git-commit-tree ' + \
                                  sha1, comment_handle)
-        filename = '.git/refs/heads/master'
+
+        filename = pjoin(work_dir, '.git/refs/heads/master')
         if os.path.exists(filename):
             the_file = file(filename, 'r')
             old_content = the_file.read().strip()
             the_file.close()
-            back_filename = '.git/refs/heads/' + old_content
+            back_filename = pjoin(
+                work_dir
+                , '.git'
+                , 'refs'
+                , 'heads'
+                , old_content
+                )
             os.rename(filename, back_filename)
 
         the_file = file(filename, 'w')
@@ -198,25 +243,37 @@ class _VersionControl(object):
         """
         update the version control
         """
-        config_file_name = 'work/.git/branches/' + upstream_name
-        config_file = file(config_file_name, 'r')
-        remote_URL = config_file.read().strip()
-        config_file.close()
+        work_dir = self.work_dir
+        original_dir = os.getcwd()
+        try:
+            config_file_name = 'work/.git/branches/' + upstream_name
+            config_file = file(config_file_name, 'r')
+            remote_URL = config_file.read().strip()
+            config_file.close()
 
-        curl_source = remote_URL + 'VC/HEAD'
-        remote_commit_id = _shell_command('curl -s  ' + curl_source).strip()
+            curl_source = remote_URL + 'VC/HEAD'
+            remote_commit_id = _cd_shell_command(
+                work_dir
+                , 'curl -s  ' + curl_source
+                ).strip()
 
-        os.chdir('work')
-        cmd_str = 'git-http-pull -c ' + remote_commit_id + \
-                  ' ' + remote_URL + 'VC/'
-        _shell_command(cmd_str)
+            cmd_str = 'git-http-pull -c %s %sVC/' % (
+                remote_commit_id
+                , remote_URL
+                )
+            try:
+                _cd_shell_command(work_dir, cmd_str)
+            except Exception, message:
+                print "Message: %s" % message
+                raise
 
-        command_string = 'git-read-tree ' + remote_commit_id
-        _shell_command(command_string)
+            command_string = 'git-read-tree ' + remote_commit_id
+            _cd_shell_command(work_dir, command_string)
 
-        command_string = 'git-merge-cache git-merge-one-file-script -a'
-        _shell_command(command_string)
-        os.chdir('..')
+            command_string = 'git-merge-cache git-merge-one-file-script -a'
+            _cd_shell_command(work_dir, command_string)
+        finally:
+            os.chdir(original_dir)
 
 
 def patch(args):
@@ -226,6 +283,43 @@ def patch(args):
     _shell_command(command_string)
 ##    git-update-cache progeny.com/apache.xml
 ##    pdk commit master "Required commit remark"
+
+
+#-----------------------------------------------------------------------
+# Path management
+
+def relative_path(base_dir, file_path):
+    """Modify a file path to be relative to another (base) path.
+    throws ValueError if file is not in the base tree.
+
+    base_dir = any local directory path
+    file_path = any relative or absolute file path under base_dir
+    """
+    # localize some functions
+    sep = os.path.sep
+    absolute = os.path.abspath
+
+    # Make lists of the paths
+    base_parts = absolute(base_dir).split(sep)
+    file_parts = absolute(file_path).split(sep)
+
+    if len(base_parts) >= len(file_parts):
+        raise ValueError("%s not within %s" % (file_path, base_dir))
+    
+    # Bite off bits from the left, ensuring they're the same.
+    while base_parts:
+        base_bit = base_parts.pop(0)
+        file_bit = file_parts.pop(0)
+        if base_bit != file_bit:
+            raise ValueError("%s not within %s" % (file_path, base_dir))
+
+    result = os.path.join(*file_parts)
+
+    # git commands require trailing slashes on directories. 
+    if os.path.isdir(result):
+        result += "/"
+    return result
+    
 
 
 # vim:ai:et:sts=4:sw=4:tw=0:
