@@ -112,4 +112,4 @@ echo "moo" | pdk >cowstuff.txt
 #   cleanup:
 rm .pdk_plugins localfile.py cowstuff.txt
 
-sh
+# vim:ai:et:sts=4:sw=4:tw=0:
