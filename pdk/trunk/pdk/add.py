@@ -25,12 +25,13 @@ Part of the PDK suite
 __revision__ = '$Progeny$'
 
 import sys
+import os
 import optparse
 from pdk.workspace import current_workspace
 from pdk.cache import calculate_checksums
 from pdk.component import ComponentDescriptor, PackageReference
 from pdk.package import get_package_type
-from pdk.util import split_pipe, path
+from pdk.util import split_pipe
 
 
 def add_my_options(parser):
@@ -139,6 +140,9 @@ def add(argv):
     workspace = current_workspace()
     cache = workspace.cache()
 
+    pjoin = os.path.join
+    dirname = os.path.dirname
+
     for component, files in data.iteritems():
         packages = []
         for filename in files:
@@ -150,7 +154,9 @@ def add(argv):
                 package = cache.load_package(blob_id, package_type_string)
                 if hasattr(package, 'extra_file'):
                     for blob_id, extra_filename in package.extra_file:
-                        extra_path = path(filename)['..'][extra_filename]()
+                        extra_path = pjoin( dirname(filename)
+                                            , extra_filename
+                                          )
                         cache.import_file('', extra_path, blob_id)
                 packages.append(package)
             except UnicodeError, message:

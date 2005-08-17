@@ -23,6 +23,7 @@ Generate a repository from component & cache
 """
 import os
 import os.path
+pjoin = os.path.join
 from time import strftime, gmtime
 import re
 import stat
@@ -30,7 +31,6 @@ import md5
 import optparse
 from sets import Set
 from itertools import chain
-from pdk.util import path
 from pdk import workspace
 #from pdk.cache import Cache
 from pdk.component import ComponentDescriptor
@@ -136,7 +136,7 @@ class DebianPoolInjector(object):
         self.cache = cache
         self.package = package
         self.section = section
-        self.repo_dir = path(str(repo_dir))
+        self.repo_dir = repo_dir #path(str(repo_dir))
 
 
     def get_pool_dir(self):
@@ -146,14 +146,14 @@ class DebianPoolInjector(object):
         else:
             name = self.package.name
 
-        return self.repo_dir.pool[self.section][name[0]][name]
+        return pjoin(self.repo_dir, 'pool', self.section, name[0], name)
 
 
     def get_pool_location(self):
         """Where should the given package be put?"""
         repo_path = self.get_pool_dir()
         repo_filename = self.package.filename
-        return repo_path[repo_filename]
+        return pjoin(repo_path, repo_filename)
 
 
     def get_relative_pool_path(self):
@@ -162,10 +162,11 @@ class DebianPoolInjector(object):
         abs_path = str(self.get_pool_dir())
         rel_path = ""
         fn = ""
+        psplit = os.path.split
         while fn != "pool":
-            (abs_path, fn) = os.path.split(abs_path)
+            (abs_path, fn) = psplit(abs_path)
             if rel_path:
-                rel_path = os.path.join(fn, rel_path)
+                rel_path = pjoin(fn, rel_path)
             else:
                 rel_path = fn
         return rel_path
@@ -180,7 +181,7 @@ class DebianPoolInjector(object):
         if not hasattr(self.package, 'extra_file'):
             return {}
         pool_dir = self.get_pool_dir()
-        return dict([ (pool_dir[filename], blob_id)
+        return dict([ (pjoin(pool_dir, filename), blob_id)
                       for blob_id, filename in self.package.extra_file ])
 
 
@@ -222,7 +223,7 @@ class DebianPoolInjector(object):
         # Relative path:
         pool_path = self.get_relative_pool_path()
         if not is_source:
-            pool_path = pool_path + "/" + self.package.filename
+            pool_path = os.path.join(pool_path, self.package.filename)
 
         # File size and MD5:
         (size, md5_digest) = self.get_file_size_and_hash()
@@ -315,15 +316,16 @@ class DebianPoolInjector(object):
         """
 
         locations = self.get_links()
+        pexist = os.path.exists
         for link_dest, blob_id in locations.items():
             link_src = self.cache.file_path(blob_id)
-            if os.path.exists(link_dest()):
-                assert is_hard_linked(link_src, link_dest())
+            if pexist(link_dest):
+                assert is_hard_linked(link_src, link_dest)
                 continue
-            link_dest_dir = os.path.dirname(link_dest())
-            if not os.path.exists(link_dest_dir):
+            link_dest_dir = os.path.dirname(link_dest)
+            if not pexist(link_dest_dir):
                 os.makedirs(link_dest_dir)
-            os.link(link_src, link_dest())
+            os.link(link_src, link_dest)
 
 class DebianPoolRepo(object):
     """Create a full repository from a Debian pool, using
@@ -345,14 +347,14 @@ class DebianPoolRepo(object):
 
     def get_repo_dir(self):
         """Return the top level repo directory."""
-        return path(self.work_dir, self.repo_dir_name)
+        return os.path.join(self.work_dir, self.repo_dir_name)
     repo_dir = property(get_repo_dir)
 
 
     def get_tmp_dir(self):
         """Return the path for a temporary work area."""
-        return path(self.work_dir, self.tmp_dir_name, self.repo_dir_name,
-                    self.dist)
+        return os.path.join(self.work_dir, self.tmp_dir_name
+                            , self.repo_dir_name, self.dist)
     tmp_dir = property(get_tmp_dir)
 
 
@@ -440,12 +442,12 @@ Tree "%(dist)s" {
     def get_one_dir(self, section, arch):
         """Return the index directory path for a given section and
         architecture."""
-        base = self.repo_dir[self.dist]
+        base = pjoin(self.repo_dir, self.dist)
         if arch == 'source':
             arch_dir = 'source'
         else:
             arch_dir = 'binary-%s' % arch
-        return base[section][arch_dir]
+        return pjoin(base, section, arch_dir)
 
 
     def get_all_dirs(self):
@@ -465,7 +467,7 @@ Tree "%(dist)s" {
         while writing filelists, etc.
         """
         for needed_dir in self.get_all_dirs():
-            os.makedirs(needed_dir())
+            os.makedirs(needed_dir)
 
 
     def invoke_archiver(self):
@@ -492,10 +494,14 @@ Tree "%(dist)s" {
         """Write all Release files for the repository."""
         for section in self.sections:
             for arch in self.arches:
-                release_path = self.get_one_dir(section, arch).Release
+                release_path = pjoin(
+                    self.get_one_dir(section, arch)
+                    , 'Release'
+                    )
                 handle = LazyWriter(release_path)
                 writer.write(handle, section, arch)
-        writer.write_outer(LazyWriter(self.repo_dir[self.dist].Release))
+        release_path = pjoin(self.repo_dir, self.dist, 'Release')
+        writer.write_outer(LazyWriter(release_path)) 
 
 
 class DebianDirectPoolRepo(DebianPoolRepo):
@@ -517,7 +523,7 @@ class DebianDirectPoolRepo(DebianPoolRepo):
                 else:
                     file_name = "%s/%s/binary-%s/Packages" \
                                 % (self.dist, section, arch)
-                full_name = self.repo_dir[file_name]
+                full_name = pjoin(self.repo_dir, file_name)
                 lists[key] = LazyWriter(full_name)
         return lists
 
@@ -645,6 +651,7 @@ class Compiler:
 
     def create_debian_pool_repo(self, product, provided_contents):
         """Do the work of creating a pool repo given packages."""
+
         # some sane defaults for contents
         default_date = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
         default_apt_suite_name = get_apt_component_name(product.ref)
@@ -683,13 +690,13 @@ class Compiler:
 
         # Set True to use apt-ftparchive, False to use the direct version.
         if False:
-            repo = DebianPoolRepo(os.getcwd(), path('dists')[suite](),
+            repo = DebianPoolRepo(os.getcwd(), pjoin('dists', suite),
                                   arches, sections)
         else:
-            repo = DebianDirectPoolRepo(os.getcwd(), path('dists')[suite](),
+            repo = DebianDirectPoolRepo(os.getcwd(), pjoin('dists', suite),
                                         arches, sections)
 
-        search_path = repo.repo_dir[repo.dist]()
+        search_path = pjoin(repo.repo_dir, repo.dist)
         contents['archive'] = suite
         writer = DebianReleaseWriter(contents, arches, sections,
                                      search_path)
@@ -708,7 +715,8 @@ class Compiler:
         os.mkdir('repo')
         for package in component.packages:
             os.link(self.cache.file_path(package.blob_id),
-                    path('repo')[package.filename]())
+                    os.path.join('repo', package.filename)
+                    )
 
     def dump_report(self, component, contents):
         """Instead of building a repo, dump a report of component contents.

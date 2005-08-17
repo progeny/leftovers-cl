@@ -33,6 +33,9 @@ from xml.sax.writer import XmlWriter
 from pdk.progress import ConsoleProgress, CurlAdapter
 from pdk.exceptions import ConfigurationError
 
+normpath = os.path.normpath
+pjoin = os.path.join
+
 def caller():
     """Report the caller of the current function
 
@@ -50,71 +53,9 @@ from elementtree.ElementTree import Comment as et_comment
 from elementtree.ElementTree import ProcessingInstruction \
      as et_processing_instruction
 
-class path(object):
-    '''Utility class for handling paths with less typing.
-
-    str(path("project", "super")) -> "project/super"
-
-    # note the trailing ()
-    path("project", "super")() -> "project/super"
-    path("project")["s-u-p-e-r"]() -> "project/s-u-p-e-r"
-    path("project").a.b.c.super() -> "project/a/b/c/super"
-    path("/")() -> "/"
-    path("project", ".", "super")() -> "project/super"
-    path("project").super[".."]() -> "project"
-
-    The basic idea is: given a starting path object, you can use
-    item or attribute access to contruct longer paths.
-
-    The actual path is accessible by converting the object to 
-    a string or just calling to object.
-
-    '''
-    def __init__(self, *args):
-        """Set base path"""
-        self.base = str(os.path.normpath(os.path.join(*args)))
-
-    def __str__(self):
-        """return self as a string """
-        return self.str()
-
-    def __call__(self):
-        """return self as a string """
-        return self.str()
-
-    def str(self):
-        """return self as a string """
-        return self.base
-
-    def __add__(self, segment):
-        """Append a new path from self + component"""
-        return path(self.base, str(segment))
-
-    def __getattr__(self, attribute):
-        """Append a new path from self + attribute
-        It is handy for path.smith = "path/smith"
-        """
-        return self + attribute
-
-    __getitem__ = __getattr__
-
-    def __cmp__(self, other_object):
-        """Compare self to string or other path"""
-        other = str(other_object)
-        return cmp(self.base, other)
-
-    def __repr__(self):
-        """Return representation"""
-        return '<path %s>' % self.base + '- %s' % hash(self.base)
-
-    def __hash__(self):
-        """Return a hash of path"""
-        return hash(self.base)
-
-
 def cpath(*args):
     """Get an absolute path object pointing to the current directory."""
-    return path(os.getcwd(), *args)
+    return os.path.normpath(os.path.join(os.getcwd(), *args))
 
 def split_pipe(handle):
     """convert a file/list of "<key>|<value" pairings into a map"""

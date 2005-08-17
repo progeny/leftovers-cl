@@ -23,6 +23,7 @@ Channels are ways to acquire packages.
 """
 
 import os
+pjoin = os.path.join
 import pycurl
 from cStringIO import StringIO
 from rfc822 import Message
@@ -32,7 +33,7 @@ from md5 import md5
 from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError, SemanticError, ConfigurationError
 from pdk.exceptions import CommandLineError
-from pdk.util import path, cpath, gen_file_fragments, find_base_dir
+from pdk.util import cpath, gen_file_fragments, find_base_dir
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import get_package_type, UnknownPackageTypeError
 from pdk.progress import ConsoleProgress, CurlAdapter
@@ -56,7 +57,7 @@ def gen_package_dir(channel_data):
     directory = channel_data['path']
     for root, dummy, files in os.walk(directory):
         for candidate in files:
-            full_path = path(root)[candidate]()
+            full_path = pjoin(root, candidate)
             try:
                 package_type = get_package_type(filename = candidate)
             except UnknownPackageTypeError:
@@ -68,7 +69,7 @@ def gen_package_dir(channel_data):
             for block in iterator:
                 md51_digest.update(block)
             blob_id = 'md5:' + md51_digest.hexdigest()
-            url = 'file://' + cpath(root)()
+            url = 'file://' + cpath(root)
             yield package_type.parse(control, blob_id), url, candidate
 
 def gen_apt_deb_dir(channel_data):
@@ -118,7 +119,7 @@ def gen_apt_deb_slice(base_url, dist, component, arch):
                 'md5:' + fields['md5sum']
 
     tag_file = StringIO()
-    url = base_url + path('dists')[dist][component][arch_specific][target]()
+    url = base_url + pjoin('dists', dist, component, arch_specific, target)
     curl = pycurl.Curl()
     curl.setopt(curl.URL, url)
     curl.setopt(curl.WRITEFUNCTION, tag_file.write)
@@ -138,7 +139,7 @@ def gen_apt_deb_slice(base_url, dist, component, arch):
 
 
 # Locate the local channels config & cache location
-channel_data_source_global = os.path.join(
+channel_data_source_global = pjoin(
     find_base_dir() or "."
     , 'channels.xml'
     )

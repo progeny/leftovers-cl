@@ -24,7 +24,7 @@ machine modifying components.
 
 """
 import os
-from pdk.util import path, write_pretty_xml, parse_xml
+from pdk.util import write_pretty_xml, parse_xml
 from pdk.channels import ChannelData
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, \
@@ -261,7 +261,7 @@ class ComponentDescriptor(object):
                 component_element = SubElement(contents_element,
                                                'component')
                 component_element.text = reference.filename
-        dirname = path(self.filename)['..']()
+        dirname = os.path.dirname(self.filename) or "."
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         write_pretty_xml(tree, self.filename)
