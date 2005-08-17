@@ -256,31 +256,6 @@ class _Workspace(object):
             self.its_version_control = ctor(self.location)
         return self.its_version_control
 
-
-    def create(self, name):
-        """
-        Create an 'empty' local instance of the workspace
-        """
-        vc_constructor = version_control.VersionControl
-        if os.path.exists(name):
-            raise Exception, "directory already exists"
-
-        start_path = os.getcwd()
-        try:
-            product_path = os.path.join(start_path, name)
-            os.mkdir(product_path)
-            os.mkdir(os.path.join(product_path,'cache'))
-            symlink_dir = os.path.join(product_path, 'VC')
-
-            # Darned two-stage creation
-            vc = self.its_version_control = vc_constructor(product_path)
-            vc.create()
-            # Link to top VC dir, so workspace is a "source"
-            vc_dir = os.path.abspath(vc.location)
-            os.symlink(vc_dir, symlink_dir)
-        finally:
-            os.chdir(start_path)
-
     def add(self, name):
         """
         Create an 'empty' local instance of the database
