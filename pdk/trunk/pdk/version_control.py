@@ -25,26 +25,15 @@ Part of the PDK suite
 __revision__ = '$Progeny$'
 
 import os
-import popen2
 import shutil
-import sys
 from cStringIO import StringIO
 from pdk.exceptions import IntegrityFault
+from pdk.util import shell_command
 
 ## version_control
 ## Author:  Glen Smith
 ## Date:    23 June 2005
 ## Version: 0.0.1
-
-
-####def quote(arg): 
-####    """return the arg string surrounded by quotes"""
-####    return "'%s'" % arg
-####
-####
-####def flatten_args(args):
-####    """return a whitespace delimited string of the args list"""
-####    return " ".join( [quote(x) for x in args ])
 
 
 ## Command definitions ##
@@ -54,36 +43,8 @@ class VersionControlError(StandardError):
     pass
 
 
-
-def _shell_command(command_string, stdin = None, debug = False):
-    """
-    run a shell command
-
-    stdin is text to copy to the command's stdin pipe. If null,
-        nothing is sent.
-    """
-    process = popen2.Popen3(command_string, capturestderr = True)
-
-    # Copy input to process, if any.
-    if stdin:
-        shutil.copyfileobj(stdin, process.tochild)
-    process.tochild.close()
-
-    result = process.wait()
-
-    output = process.fromchild.read()
-    if debug:
-        error = process.childerr.read()
-        print >> sys.stderr, '###+', command_string
-        print >> sys.stderr, '###1', output
-        print >> sys.stderr, '###2', error
-        print >> sys.stderr, '##$!', result
-    if result:
-        raise VersionControlError, 'command "%s" failed' % command_string
-    return output
-
 def _cd_shell_command(path, command_string, stdin=None, debug=False):
-    """Wrapper for _shell_command which includes the necessary dir
+    """Wrapper for shell_command which includes the necessary dir
     path hijinks for version control (must execute from .git parent)
 
     All command parameters which are files must have already been 
@@ -92,7 +53,7 @@ def _cd_shell_command(path, command_string, stdin=None, debug=False):
     original_dir = os.getcwd()
     os.chdir(path)
     try:
-        result = _shell_command(command_string, stdin, debug)
+        result = shell_command(command_string, stdin, debug)
     finally:
         os.chdir(original_dir)
     return result
@@ -100,11 +61,11 @@ def _cd_shell_command(path, command_string, stdin=None, debug=False):
 
 def cat(filename):
     '''Get the unchanged version of the given filename.'''
-    funny_git_line = _shell_command('git-diff-files ' + filename).strip()
+    funny_git_line = shell_command('git-diff-files ' + filename).strip()
     if funny_git_line:
         parts = funny_git_line.split()
         git_blob_id = parts[2]
-        return StringIO(_shell_command('git-cat-file blob %s'
+        return StringIO(shell_command('git-cat-file blob %s'
                                        % git_blob_id))
     else:
         return open(filename)
@@ -119,7 +80,7 @@ def create(working_path):
         # If we're not there already, go to our working path
         if not starting_path.endswith(working_path):
             os.chdir(working_path)
-        _shell_command('git-init-db')
+        shell_command('git-init-db')
     finally:
         # Follow the bread crumbs home
         os.chdir(starting_path)
@@ -151,7 +112,7 @@ def clone(product_URL, branch_name, local_head_name, work_dir):
         curl_source = product_URL + '/work/snap.tar'
         curl_command = 'curl -s ' + curl_source + \
                        ' | (tar Cx %s)' % git_path
-        _shell_command(curl_command)
+        shell_command(curl_command)
 
         # Make a branches directory in git
         branch_path = pjoin(git_path, 'branches')
@@ -165,8 +126,8 @@ def clone(product_URL, branch_name, local_head_name, work_dir):
         source = pjoin(git_path, 'HEAD')
         target = pjoin(git_path, 'refs', 'heads', local_head_name)
         shutil.copy(source, target)
-        _shell_command('git-read-tree %s' % local_head_name)
-        _shell_command('git-checkout-cache -a')
+        shell_command('git-read-tree %s' % local_head_name)
+        shell_command('git-checkout-cache -a')
     finally:
         os.chdir(start_dir)
 
@@ -280,7 +241,7 @@ def patch(args):
     """Perform a version control patch command"""
     file_name = args[0]
     command_string = 'git-apply ' + file_name
-    _shell_command(command_string)
+    shell_command(command_string)
 ##    git-update-cache progeny.com/apache.xml
 ##    pdk commit master "Required commit remark"
 

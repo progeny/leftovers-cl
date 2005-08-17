@@ -185,7 +185,7 @@ def pull(args):
         remote_commit_id = remote_file.read().strip()
         remote_file.close()
 
-        version_control._shell_command('git-local-pull -a -l ' + \
+        util.shell_command('git-local-pull -a -l ' + \
                                         remote_commit_id + ' ' + \
                                         remote_vc_path)
 

@@ -27,11 +27,13 @@ __revision__ = "$Progeny$"
 import os
 import sys
 import inspect
+import popen2
+import shutil
 from cElementTree import ElementTree
 from elementtree.ElementTree import XMLTreeBuilder
 from xml.sax.writer import XmlWriter
 from pdk.progress import ConsoleProgress, CurlAdapter
-from pdk.exceptions import ConfigurationError
+from pdk.exceptions import ConfigurationError, CommandLineError
 
 normpath = os.path.normpath
 pjoin = os.path.join
@@ -353,6 +355,33 @@ def WithAccessLogging(instance, its_name):
                 )
             setattr(instance, name, value)
     return add_in()
+
+def shell_command(command_string, stdin = None, debug = False):
+    """
+    run a shell command
+
+    stdin is text to copy to the command's stdin pipe. If null,
+        nothing is sent.
+    """
+    process = popen2.Popen3(command_string, capturestderr = True)
+
+    # Copy input to process, if any.
+    if stdin:
+        shutil.copyfileobj(stdin, process.tochild)
+    process.tochild.close()
+
+    result = process.wait()
+
+    output = process.fromchild.read()
+    if debug:
+        error = process.childerr.read()
+        print >> sys.stderr, '###+', command_string
+        print >> sys.stderr, '###1', output
+        print >> sys.stderr, '###2', error
+        print >> sys.stderr, '##$!', result
+    if result:
+        raise CommandLineError, 'command "%s" failed' % command_string
+    return output
 
 def moo(args):
     """our one easter-egg, used primarily for plugin testing"""
