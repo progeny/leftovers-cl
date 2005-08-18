@@ -116,17 +116,6 @@ bail() {
     fail "$msg"
 }
 
-switch_svk_root() {
-    SVKROOT="$1"
-    export SVKROOT
-    if [ ! -d "$SVKROOT" ]; then
-        mkdir "$SVKROOT"
-        # manually populating $SVKROOT/local prevents svk from
-        # interactively prompting using it's pesky non-redirectable prompts
-        svnadmin create --fs-type fsfs "$SVKROOT/local"
-    fi
-}
-
 # Create a sandboxed apache configuration.
 # Also sets the variable $apache2_bin.
 create_apache_conf() {

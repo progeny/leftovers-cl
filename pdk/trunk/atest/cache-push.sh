@@ -19,7 +19,7 @@
 # cache-push.sh
 # $Progeny$
 #
-# Test the basic svk cycle.
+# Test the cache push cycle.
 
 # get Utility functions
 . atest/test_lib.sh
