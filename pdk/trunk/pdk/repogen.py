@@ -28,11 +28,9 @@ from time import strftime, gmtime
 import re
 import md5
 import optparse
-import stat
 from sets import Set
 from itertools import chain
 from pdk import workspace
-#from pdk.cache import Cache
 from pdk.component import ComponentDescriptor
 from pdk.package import Package
 from pdk.exceptions import SemanticError, InputError, CommandLineError, \
@@ -95,17 +93,6 @@ def compile_product(component_name):
         os.system('rm -rf repo')
 
     repo_type(product, contents)
-
-
-def is_hard_linked(path1, path2):
-    """Are the two files described by the path parameters hard links
-    to the same physical file?
-    """
-    inode1 = os.stat(path1)[stat.ST_INO]
-    inode2 = os.stat(path2)[stat.ST_INO]
-    return inode1 == inode2
-    #return os.path.samefile(path1, path2)
-
 
 class LazyWriter(object):
     """Writable file which is not opened until needed."""
@@ -319,16 +306,16 @@ class DebianPoolInjector(object):
         """
 
         pexist = os.path.exists
-
         locations = self.get_links()
         for link_dest, blob_id in locations.items():
             link_src = self.cache.file_path(blob_id)
             if pexist(link_dest):
-                if not is_hard_linked(link_src, link_dest):
+                if os.path.samefile(link_src, link_dest):
+                    continue
+                else:
                     message =  ", %s exists and is not %s"  \
                                % (link_dest, link_src)
                     raise IntegrityFault(message)
-                continue
             link_dest_dir = os.path.dirname(link_dest)
             ensure_directory_exists(link_dest_dir)
             try:
