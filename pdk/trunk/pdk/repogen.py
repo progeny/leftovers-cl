@@ -26,17 +26,19 @@ import os.path
 pjoin = os.path.join
 from time import strftime, gmtime
 import re
-import stat
 import md5
 import optparse
+import stat
 from sets import Set
 from itertools import chain
 from pdk import workspace
 #from pdk.cache import Cache
 from pdk.component import ComponentDescriptor
 from pdk.package import Package
-from pdk.exceptions import SemanticError, InputError, CommandLineError
+from pdk.exceptions import SemanticError, InputError, CommandLineError, \
+                IntegrityFault
 import pdk.log as log
+from pdk.util import ensure_directory_exists
 
 logger = log.get_logger()
 
@@ -102,6 +104,7 @@ def is_hard_linked(path1, path2):
     inode1 = os.stat(path1)[stat.ST_INO]
     inode2 = os.stat(path2)[stat.ST_INO]
     return inode1 == inode2
+    #return os.path.samefile(path1, path2)
 
 
 class LazyWriter(object):
@@ -315,17 +318,26 @@ class DebianPoolInjector(object):
         pool.
         """
 
-        locations = self.get_links()
         pexist = os.path.exists
+
+        locations = self.get_links()
         for link_dest, blob_id in locations.items():
             link_src = self.cache.file_path(blob_id)
             if pexist(link_dest):
-                assert is_hard_linked(link_src, link_dest)
+                if not is_hard_linked(link_src, link_dest):
+                    message =  ", %s exists and is not %s"  \
+                               % (link_dest, link_src)
+                    raise IntegrityFault(message)
                 continue
             link_dest_dir = os.path.dirname(link_dest)
-            if not pexist(link_dest_dir):
-                os.makedirs(link_dest_dir)
-            os.link(link_src, link_dest)
+            ensure_directory_exists(link_dest_dir)
+            try:
+                os.link(link_src, link_dest)
+            except OSError, message:
+                raise IntegrityFault(
+                    "%s: Cannot link %s to %s" \
+                    % (message, link_src,link_dest)
+                    )
 
 class DebianPoolRepo(object):
     """Create a full repository from a Debian pool, using
@@ -689,12 +701,12 @@ class Compiler:
         arches = self.deb_scan_arches(all_packages)
 
         # Set True to use apt-ftparchive, False to use the direct version.
+        cwd = os.getcwd()
+        suitepath = pjoin('dists', suite)
         if False:
-            repo = DebianPoolRepo(os.getcwd(), pjoin('dists', suite),
-                                  arches, sections)
+            repo = DebianPoolRepo(cwd, suitepath, arches, sections)
         else:
-            repo = DebianDirectPoolRepo(os.getcwd(), pjoin('dists', suite),
-                                        arches, sections)
+            repo = DebianDirectPoolRepo(cwd, suitepath, arches, sections)
 
         search_path = pjoin(repo.repo_dir, repo.dist)
         contents['archive'] = suite
