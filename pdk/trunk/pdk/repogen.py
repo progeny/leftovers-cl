@@ -803,3 +803,5 @@ class forgiving_dict(dict):
             return ''
         else:
             return value
+
+# vim:ai:et:sts=4:sw=4:tw=0:

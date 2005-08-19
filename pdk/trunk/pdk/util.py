@@ -328,7 +328,8 @@ def parse_xml(source):
     Includes comments and processing instructions.
     '''
     tree = ElementTree()
-    tree.parse(source, PDKXMLTreeBuilder())
+    pdk_parser = PDKXMLTreeBuilder()
+    tree.parse(source, pdk_parser)
     return tree
 
 def WithAccessLogging(instance, its_name):
