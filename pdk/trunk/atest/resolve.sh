@@ -23,6 +23,7 @@
 # references.
 
 . atest/test_lib.sh
+. atest/utils/test_channel.sh
 
 # Set umask now in preparation for later permissions checking.
 umask 002
@@ -79,21 +80,12 @@ cat >apache.xml <<EOF
 </component>
 EOF
 
-mkdir channel-1
-cp -a \
-    ${PACKAGES}/ida_2.01-1.2_arm.deb \
-    ${PACKAGES}/ida_2.01-1.2.diff.gz \
-    ${PACKAGES}/ida_2.01-1.2.dsc \
-    ${PACKAGES}/ida_2.01.orig.tar.gz \
-    channel-1
+make_channel channel-1 ida_2.01-1.2_arm.deb ida_2.01-1.2.diff.gz \
+    ida_2.01-1.2.dsc ida_2.01.orig.tar.gz
 
-mkdir channel-2
-cp -a \
-    ${PACKAGES}/apache2_2.0.53-5.diff.gz \
-    ${PACKAGES}/apache2_2.0.53-5.dsc \
-    ${PACKAGES}/apache2_2.0.53.orig.tar.gz \
-    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb \
-    channel-2
+make_channel channel-2 apache2_2.0.53-5.diff.gz apache2_2.0.53-5.dsc \
+    apache2_2.0.53.orig.tar.gz apache2-common_2.0.53-5_i386.deb
+
 
 # Add a channel for the package directory
 cat >${channels} <<EOF
