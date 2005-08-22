@@ -39,3 +39,10 @@ echo "help workspace create" |pdk
 pdk help workspace create foo
 echo "help workspace create foo" |pdk
 
+#make sure errors that occur while in the command shell
+#don't cause the command shell to exit
+pdk >pdk-framework.out 2>pdk-framework.err<<EOF
+resolve
+!echo marker
+EOF
+grep -q marker pdk-framework.out && grep -q "Syntax Error" pdk-framework.err

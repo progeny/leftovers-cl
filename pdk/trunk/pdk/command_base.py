@@ -83,9 +83,6 @@ def load_addins(base, *config_files):
 
     base.add_external_plugins(addin_list)
 
-
-
-
 class LazyModuleRef(object):
     """Callable object that defers importing a package until it is 
     actually needed by a function call.
@@ -111,11 +108,45 @@ class LazyModuleRef(object):
         return fn.__doc__
     __doc__ = property(getdoc, None)
 
+def add_wrapper(function):
+    """
+    Provide the means to wrap any of our functions in the same
+    exception handling call.
+    """
+    def _with_exception_wrapper_(self, *args, **kwargs):
+        "exception-ignoring decorator"
+        failure_type = 0
+        try:
+            return function(self, *args, **kwargs)
+        except IntegrityFault, message:
+            logger.error("Integrity Fault Noted: %s" % message)
+            failure_type = 1
+        except CommandLineError, message:
+            logger.error("Syntax Error: %s" % message)
+            self.do_help(args[0])
+            failure_type = 2
+        except InputError, message:
+            logger.error("Invalid input: %s" % message)
+            failure_type = 3
+        except SemanticError, message:
+            logger.error("Operation cannot be performed: %s" % message)
+            failure_type = 4
+        except ConfigurationError, message:
+            logger.error("Configuration/setup error: %s" % message)
+            failure_type = 5
+        except:
+            traceback.print_exc(sys.stderr)
+            logger.error("Unknown error")
+            failure_type = 6
+        if self._is_in_shell():
+            pass
+        else:
+            sys.exit(failure_type)
+    return _with_exception_wrapper_
 
 class CmdBase(cmd.Cmd):
     """This is the main command object"""
 
-    
     def __init__(self):
         """
         Set up the command dictionary for pdk
@@ -127,6 +158,7 @@ class CmdBase(cmd.Cmd):
         self._locals  = {}      ## Initialize execution namespace for user
         self._globals = {}
 
+    cmd.Cmd.onecmd = add_wrapper(cmd.Cmd.onecmd)
 
     def _is_in_shell(self):
         """invoke to assure commands aren't being called from a script"""
@@ -226,30 +258,10 @@ class CmdBase(cmd.Cmd):
         Intended for use in command-line (one-shot) invocation of 
         commands in the command base.
         """
-        try:
-            func = getattr(self, fn_name)
-            fn_args = args[2:]
-            func(fn_args)
-        except IntegrityFault, message:
-            logger.error("Integrity Fault Noted: %s" % message)
-            sys.exit(1)
-        except CommandLineError, message:
-            logger.error("Syntax Error: %s" % message)
-            self.do_help(args[0])
-            sys.exit(2)
-        except InputError, message:
-            logger.error("Invalid input: %s" % message)
-            sys.exit(3)
-        except SemanticError, message:
-            logger.error("Operation cannot be performed: %s" % message)
-            sys.exit(4)
-        except ConfigurationError, message:
-            logger.error("Configuration/setup error: %s" % message)
-            sys.exit(5)
-        except:
-            traceback.print_exc(sys.stderr)
-            logger.error("Unknown error")
-            sys.exit(6)
+        func = getattr(self, fn_name)
+        fn_args = args[2:]
+        func(fn_args)
+    run_one_command = add_wrapper(run_one_command)
 
     def add_plugins(self, plugins):
         """Add additional functions to this commandbase

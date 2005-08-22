@@ -23,7 +23,7 @@
 
 # get Utility functions
 . atest/test_lib.sh
-. atest/utils/test_channel.sh
+. atest/utils/test_channel.sh #for make_channel, config_channel
 
 SERVER_PORT=$(unused_port 8120 8121 8122 8123 8124 8125 8126 8127 13847)
 
@@ -44,19 +44,13 @@ $apache2_bin -X -f etc/apache2/apache2.conf &
 #First, create the workspace that we actually work in...
 pdk workspace create integration
 
-#from test_channel.sh
 make_channel channel apache2*.deb apache2*.dsc ethereal*.dsc
 
 cd integration
-
-#from test_channel.sh
 config_channel
-
-pdk channel update
-[ -f channels.xml.cache ] \
-    || fail 'channel cache file should have been created'
-
 cd work
+pdk channel update
+
 #note: this will become an effect of the pdk channel command above,
 # pdk channel add --dir $PACKAGES progeny.com
 mkdir progeny.com
