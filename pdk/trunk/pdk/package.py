@@ -69,20 +69,19 @@ class Package(object):
         return None
 
     def __contains__(self, key):
-        if self.find_key(key) == None:
-            return False
-        else:
-            return True
+        return self.find_key(key) != None
 
     def __getattr__(self, key):
+        result = None
         contents_key = self.find_key(key)
         if contents_key == None:
             if hasattr(self.contents, key):
-                return getattr(self.contents, key)
+                result = getattr(self.contents, key)
             else:
                 raise AttributeError(key)
         else:
-            return self[contents_key]
+            result = self[contents_key]
+        return result
 
     def __getitem__(self, key):
         contents_key = self.find_key(key)

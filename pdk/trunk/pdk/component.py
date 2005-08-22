@@ -25,7 +25,7 @@ machine modifying components.
 """
 import os
 from pdk.util import write_pretty_xml, parse_xml
-from pdk.channels import ChannelData
+#from pdk.channels import ChannelData
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, \
      FieldMatchCondition, TrueCondition
@@ -34,13 +34,13 @@ from pdk.exceptions import PdkException, CommandLineError, InputError, \
      SemanticError
 from xml.parsers.expat import ExpatError
 from pdk.log import get_logger
+from pdk.workspace import current_workspace
 
 
 
 def dumpmeta(component_refs):
     """Print all component metadata to standard out."""
-    from pdk import workspace
-    cache = workspace.current_workspace().cache()
+    cache = current_workspace().cache()
     for component_ref in component_refs:
         component = ComponentDescriptor(component_ref).load(cache)
         for item in component.meta:
@@ -76,10 +76,11 @@ def resolve(args):
     """
     if len(args) < 1:
         raise CommandLineError, 'component descriptor required'
+    workspace = current_workspace()
     component_name = args[0]
     descriptor = ComponentDescriptor(component_name)
     channel_names = args[1:]
-    channels = ChannelData.load_cached()
+    channels = workspace.channels()
     for channel in channels.get_channels(channel_names):
         descriptor.resolve(channel)
 
@@ -351,9 +352,9 @@ class ComponentDescriptor(object):
         """
         Acquire the packages for this descriptor from known channels
         """
-        from pdk import workspace
-        cache = workspace.current_workspace().cache()
-        channels = ChannelData.load_cached()
+        workspace = current_workspace()
+        cache = workspace.cache()
+        channels = workspace.channels()
         for ref in self.iter_full_package_refs():
             if ref.blob_id and ref.blob_id not in cache:
                 try:

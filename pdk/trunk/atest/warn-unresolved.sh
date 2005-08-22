@@ -24,20 +24,25 @@
 . atest/test_lib.sh
 
 mkdir channel
-cp packages/apache2*_2.0.53* channel
+cp ${PACKAGES}/apache2*_2.0.53* channel
 
-cat >channels.xml <<EOF
+pdk workspace create workspace
+
+cat >workspace/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <local>
     <type>dir</type>
-    <path>channel</path>
+    <path>$(pwd)/channel</path>
   </local>
 </channels>
 EOF
 
+cd workspace/work
 pdk channel update
 
+# Try requesting existing packages + one "ida" which isn't
+# present
 cat >apache.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
@@ -64,4 +69,4 @@ cat >apache.xml <<EOF
 EOF
 
 pdk resolve apache.xml 2>error.xml
-egrep "WARNING.*unresolved" error.xml && fail 'no warning expected'
+egrep "WARNING.*unresolved" error.xml && bail 'no warning expected'

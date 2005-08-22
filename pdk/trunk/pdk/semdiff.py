@@ -27,9 +27,8 @@ import optparse
 from sets import Set
 from itertools import chain
 from pdk.component import ComponentDescriptor
-from pdk import workspace
+from pdk.workspace import current_workspace
 from pdk.version_control import cat
-from pdk.channels import ChannelData
 from pdk.package import Package
 from pdk.exceptions import CommandLineError
 
@@ -187,7 +186,8 @@ def semdiff(argv):
 
     -m makes the output machine readable.
     """
-    cache = workspace.current_workspace().cache()
+    workspace = current_workspace()
+    cache = workspace.cache()
     parser = optparse.OptionParser()
     add_my_options(parser)
     opts, args = parser.parse_args(args=argv)
@@ -202,7 +202,7 @@ def semdiff(argv):
         desc = ComponentDescriptor(args[0])
         component = desc.load(cache)
         old_package_list = component.direct_packages
-        channels = ChannelData.load_cached()
+        channels = workspace.channels()
         new_package_list = []
         for channel in channels.get_channels(opts.channels):
             package_list = [ t[0] for t in channel ]
@@ -211,23 +211,27 @@ def semdiff(argv):
         new_meta = {}
     elif len(args) == 1:
         ref = args[0]
+        # Get old
         old_desc = ComponentDescriptor(ref, cat(ref))
-        new_desc = ComponentDescriptor(ref)
         old_component = old_desc.load(cache)
-        new_component = new_desc.load(cache)
         old_package_list = old_component.direct_packages
-        new_package_list = new_component.direct_packages
         old_meta = old_component.meta
+        # Get new
+        new_desc = ComponentDescriptor(ref)
+        new_component = new_desc.load(cache)
+        new_package_list = new_component.direct_packages
         new_meta = new_component.meta
     elif len(args) == 2:
         ref = args[1]
+        # get old
         old_desc = ComponentDescriptor(args[0])
-        new_desc = ComponentDescriptor(args[1])
         old_component = old_desc.load(cache)
-        new_component = new_desc.load(cache)
         old_package_list = old_component.direct_packages
-        new_package_list = new_component.direct_packages
         old_meta = old_component.meta
+        # Get new
+        new_desc = ComponentDescriptor(args[1])
+        new_component = new_desc.load(cache)
+        new_package_list = new_component.direct_packages
         new_meta = new_component.meta
     else:
         raise CommandLineError("Argument list is invalid")
@@ -281,7 +285,7 @@ def print_man(ref, data):
             print >> output, '.T&'
             print >> output, 'l l l l.'
             for item in collater[field]:
-                fields = get_package_presence_fields(item[0], ref)
+                field = get_package_presence_fields(item[0], ref)
                 print >> output, '\t'.join(fields)
             print >> output, '.TE'
         else:

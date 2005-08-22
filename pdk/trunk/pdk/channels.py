@@ -27,7 +27,7 @@ pjoin = os.path.join
 import pycurl
 from cStringIO import StringIO
 from rfc822 import Message
-from cPickle import dump, load
+import cPickle
 from gzip import GzipFile
 from md5 import md5
 from xml.parsers.expat import ExpatError
@@ -38,8 +38,8 @@ from pdk.yaxml import parse_yaxml_file
 from pdk.package import get_package_type, UnknownPackageTypeError
 from pdk.progress import ConsoleProgress, CurlAdapter
 
-def gen_apt_deb_control(handle):
-    """Given a file like object, yield its deb control-like stanzas."""
+def iter_apt_deb_control(handle):
+    """Given a file like object, yield its deb control-like stanzas.  """
     control = ''
     for line in handle:
         control += line
@@ -47,14 +47,18 @@ def gen_apt_deb_control(handle):
             yield control
             control = ''
 
-def gen_packages(control_iterator, package_type):
-    """For each control or header, yield a package object."""
+def iter_as_packages(control_iterator, package_type):
+    """For each control or header, yield a stream of package objects."""
     for control in control_iterator:
         yield package_type.parse(control, None)
 
-def gen_package_dir(channel_data):
-    """Generate package objects for every package found in a dir tree."""
-    directory = channel_data['path']
+
+def iter_package_dir(channel_descriptor):
+    """Generate package objects for every package found in a dir tree.
+
+    yeilds three-tuple (package object, uri, unpathed filename)
+    """
+    directory = channel_descriptor['path']
     for root, dummy, files in os.walk(directory):
         for candidate in files:
             full_path = pjoin(root, candidate)
@@ -72,30 +76,35 @@ def gen_package_dir(channel_data):
             url = 'file://' + cpath(root)
             yield package_type.parse(control, blob_id), url, candidate
 
-def gen_apt_deb_dir(channel_data):
+def iter_apt_deb_dir(channel_descriptor):
     '''Generate package objects for every stanza in an apt source.
 
-    expect channel_data to be a dict:
+    expect channel_descriptor to be a dict:
       { "path": http url
         "dist": dist_name
         "archs": space separated list of archs **including "source".**
         "components": space separated list of apt components
-    All parameters in channel_data should be in a form similar to
+    All parameters in channel_descriptor should be in a form similar to
     sources.list. (except archs)
+
+    yeilds (non-tuple) package object
     '''
-    base_url = channel_data['path']
+    base_url = channel_descriptor['path']
     if base_url[-1] != "/":
         raise InputError, "path in channels.xml must end in a slash"
-    dist = channel_data['dist']
-    components = channel_data['components'].split()
-    archs = channel_data['archs'].split()
+    dist = channel_descriptor['dist']
+    components = channel_descriptor['components'].split()
+    archs = channel_descriptor['archs'].split()
     for component in components:
         for arch in archs:
-            for item in gen_apt_deb_slice(base_url, dist, component, arch):
+            for item in iter_apt_deb_slice(base_url, dist, component, arch):
                 yield item
 
-def gen_apt_deb_slice(base_url, dist, component, arch):
+def iter_apt_deb_slice(base_url, dist, component, arch):
     '''Generate metadata for a single url, dist, component, and arch.'''
+    # The navigation of the repo, loading of files, and parsing of 
+    # the Sources, Packages, et al, are a SIDE EFFECT of an 
+    # iterator wrapper? Hmmmm....
     if arch == 'source':
         target = 'Sources.gz'
         arch_specific = 'source'
@@ -131,41 +140,54 @@ def gen_apt_deb_slice(base_url, dist, component, arch):
     tag_file.reset()
     gunzipped = GzipFile(fileobj = tag_file)
 
-    control_iterator = gen_apt_deb_control(gunzipped)
-    for package in gen_packages(control_iterator, package_type):
+    control_iterator = iter_apt_deb_control(gunzipped)
+    for package in iter_as_packages(control_iterator, package_type):
         base_uri, filename, blob_id = get_download_info(package)
         package.contents['blob-id'] = blob_id
         yield package, base_uri, filename
 
 
 # Locate the local channels config & cache location
+# Channels are expected to live in the root of the workspace
+#
+# We need to reconsider how the pathing is managed.  This probably
+# needs to be something that is configured by the workspace, and
+# not independently calculated.
 channel_data_source_global = pjoin(
     find_base_dir() or "."
     , 'channels.xml'
     )
-channel_data_cache_global = channel_data_source_global + '.cache'
+channel_data_store_global = channel_data_source_global + '.cache'
 
 
+
+# Externally-exposed function -- pdk channel update
 def update(args):
     '''Read channels.xml and update the remote channel data. (depot)'''
     if len(args) > 0:
         raise CommandLineError, 'update takes no arguments'
+    ChannelData.update_index()
 
-    ChannelData.rebuild_cached()
 
 
 class ChannelData(object):
-    '''This object holds the downloaded state of channels.
+    '''This object holds the downloaded state of all channels.
+    And loads the state.
+    And writest the state.
+    And returns a list of channels.
+    And indexes all files by blob ids.
 
     It is intended to be loaded from a pickle file or rebuilt completely
     and saved to a pickle file.
     '''
-    def __init__(self):
-        self.by_blob_id = {}
-        self.by_channel_name = {}
 
-    def rebuild_cached(channel_data_source = channel_data_source_global,
-                       channel_data_cache = channel_data_cache_global):
+    def __init__(self):
+        self.by_blob_id = {}            # A flat space of all blobs
+        self.by_channel_name = {}       # tuples by channel name
+
+
+    def update_index(channel_data_source = channel_data_source_global,
+                       channel_data_store = channel_data_store_global):
         '''Download new metadata and rewrite the pickle file.'''
         try:
             channels = parse_yaxml_file(channel_data_source)
@@ -175,7 +197,10 @@ class ChannelData(object):
             if error.errno == 2:
                 raise ConfigurationError("Missing channels.xml.")
 
-        type_lookup = {'dir': gen_package_dir, 'apt-deb': gen_apt_deb_dir}
+        type_lookup = {
+            'dir': iter_package_dir, 
+            'apt-deb': iter_apt_deb_dir,
+            }
 
         channel_data = ChannelData()
         for name, data in channels.items():
@@ -193,22 +218,26 @@ class ChannelData(object):
                                  )
 
             channel_data.add(name, channel_generator(data))
-        channel_data.dump(channel_data_cache)
-    rebuild_cached = staticmethod(rebuild_cached)
+        channel_data.dump(channel_data_store)
+    update_index = staticmethod(update_index)
 
-    def load_cached(channel_data_cache = channel_data_cache_global):
-        '''Load the instance of this object from the pickle file.'''
+    def load_cached():
+        '''Read channel data from the pickle file.'''
+        result = None
+        channel_data_store = channel_data_store_global
         try:
-            return load(open(channel_data_cache))
+            result = cPickle.load(open(channel_data_store))
         except IOError, error:
             if error.errno == 2:
                 raise SemanticError("Missing channels.xml.cache")
+        return result
     load_cached = staticmethod(load_cached)
 
     def add(self, channel_name, channel_iterator):
         '''Collect and index the contents of a channel.'''
         channel = list(channel_iterator)
         self.by_channel_name[channel_name] = channel
+        # Ghost package? 
         for ghost_package, base_uri, filename in channel:
             self.by_blob_id[ghost_package.blob_id] = (base_uri, filename)
 
@@ -224,4 +253,7 @@ class ChannelData(object):
 
     def dump(self, filename):
         '''Dump this object to the given file.'''
-        dump(self, open(filename, 'w'), 2)
+        cPickle.dump(self, open(filename, 'w'), 2)
+
+
+

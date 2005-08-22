@@ -27,6 +27,7 @@ import os
 from pdk import version_control
 from pdk import util
 from pdk.cache import Cache
+from pdk.channels import ChannelData
 from pdk.exceptions import ConfigurationError, IntegrityFault, \
           SemanticError, CommandLineError
 
@@ -228,11 +229,6 @@ class _Workspace(object):
     """
     Library interface to pdk workspace
     """
-#    def __init__(self, product_URL, work_area, branch_name, \
-#                 local_head_name, remote_head_name):
-        # look at the os.getcwd():
-        # If we are in an existing workspace,
-        # we should populate attributes accordingly
     def __init__(self, directory):
         location = self.location = directory
         if not os.path.isdir(directory):
@@ -255,6 +251,13 @@ class _Workspace(object):
             ctor = version_control.VersionControl
             self.its_version_control = ctor(self.location)
         return self.its_version_control
+
+    def channels(self):
+        """Return the current channel index
+
+        The data returned is a ChannelData instance.
+        """
+        return ChannelData.load_cached()
 
     def add(self, name):
         """

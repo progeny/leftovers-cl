@@ -49,6 +49,8 @@ test "$status" = "2" || {
 
 #-----------------------------------------------------------------------
 # Process ill-formed channels file
+pdk workspace create foo
+pushd foo
 cat > channels.xml << EOF
 <?xml version="1.0"?>
 <channels>
@@ -57,9 +59,12 @@ cat > channels.xml << EOF
 EOF
 pdk channel update || status=$?
 test "$status" = "3" || bail "Incorrect/unexpected error return"
+popd ; rm -rf foo
 
 #-----------------------------------------------------------------------
 # Missing channels.xml and channels.xml.cache
+pdk workspace create foo
+pushd foo
 cat >empty.xml <<EOF
 <?xml version="1.0"?>
 <component/>
@@ -69,6 +74,7 @@ pdk channel update || status=$?
 test "$status" = "5" || bail "Incorrect/unexpected error return"
 pdk resolve empty.xml || status=$?
 test "$status" = "4" || bail "Incorrect/unexpected error return"
+popd ; rm -rf foo
 
 
 #-----------------------------------------------------------------------
