@@ -17,15 +17,14 @@
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 import os
-import re
 from sets import Set
 from pdk.test.utest_util import TempDirTest
 from pdk.cache import Cache
-from pdk.util import path, cpath
+from pdk.util import pjoin, cpath
 from pdk.package import Package
 
 from pdk.repogen import DebianReleaseWriter, LazyWriter, \
-     is_hard_linked, DebianDirectPoolRepo, DebianPoolInjector, Compiler
+     DebianDirectPoolRepo, DebianPoolInjector, Compiler
 
 __revision__ = "$Progeny$"
 
@@ -89,59 +88,46 @@ class CacheFixture(TempDirTest):
 class DebianPoolFixture(CacheFixture):
     def set_up(self):
         super(DebianPoolFixture, self).set_up()
-        self.repo = DebianDirectPoolRepo(os.path.join(self.work_dir, '.'),
-                                   'dists/happy',
-                                   Set(['i386', 'sparc', 'source']),
-                                   Set(['main', 'contrib']))
+        self.repo = DebianDirectPoolRepo(pjoin(self.work_dir, '.'),
+                                         'dists/happy',
+                                         Set(['i386', 'sparc', 'source']),
+                                         Set(['main', 'contrib']))
 
 class TestDebianPoolRepo(DebianPoolFixture):
     def test_repo_and_tmp_dir(self):
-        self.assert_equal(os.path.join(self.work_dir, 'repo'),
-                          self.repo.repo_dir)
-        self.assert_equal(os.path.join(self.work_dir, 'tmp', 'repo',
-                                       'dists', 'happy'),
+        self.assert_equal(pjoin(self.work_dir, 'repo'), self.repo.repo_dir)
+        self.assert_equal(pjoin(self.work_dir, 'tmp', 'repo', 'dists',
+                                'happy'),
                           self.repo.tmp_dir)
 
     def test_lazy_writer(self):
-        full_name = self.repo.tmp_dir.asdf
+        full_name = pjoin(self.repo.tmp_dir, 'asdf')
         handle = LazyWriter(full_name)
         print >> handle, 'hello'
         handle.close()
-        self.fail_unless(os.path.exists(full_name()))
-        handle = open(full_name())
+        self.fail_unless(os.path.exists(full_name))
+        handle = open(full_name)
         self.assert_equal("hello\n", handle.read())
         handle.close()
 
-    def test_write_config(self):
-        config = self.repo.get_config()
-        assert re.search(r'ArchiveDir "%s"' % self.repo.repo_dir, config)
-        assert re.search(r'CacheDir "%s"' % self.repo.tmp_dir, config)
-        assert re.search(r'FileListDir "%s"' % self.repo.tmp_dir, config)
-        assert re.search(r'OverrideDir "%s"' % self.repo.tmp_dir, config)
-        assert re.search(r'Architectures "%s"' % ' '.join(self.repo.arches),
-                         config)
-        assert re.search(r'Sections "%s"' % ' '.join(self.repo.sections),
-                         config)
-        assert re.search(r'Tree "%s" {' % self.repo.dist, config)
-
-
-        self.repo.write_config()
-        read_config = self.read_file(self.repo.tmp_dir.config)
-        self.assert_equals_long(config, read_config)
-
     def test_create_directories(self):
         all_dirs = self.repo.get_all_dirs()
-        assert cpath().repo.dists.happy.main['binary-i386'] in all_dirs
-        assert cpath().repo.dists.happy.main['binary-sparc'] in all_dirs
-        assert cpath().repo.dists.happy.main['source'] in all_dirs
-        assert cpath().repo.dists.happy.contrib['binary-i386'] in all_dirs
-        assert cpath().repo.dists.happy.contrib['binary-sparc'] in all_dirs
-        assert cpath().repo.dists.happy.contrib['source'] in all_dirs
+        assert cpath('repo', 'dists', 'happy', 'main', 'binary-i386') \
+               in all_dirs
+        assert cpath('repo', 'dists', 'happy', 'main', 'binary-sparc') \
+               in all_dirs
+        assert cpath('repo', 'dists', 'happy', 'main', 'source') in all_dirs
+        assert cpath('repo', 'dists', 'happy', 'contrib', 'binary-i386') \
+               in all_dirs
+        assert cpath('repo', 'dists', 'happy', 'contrib', 'binary-sparc') \
+               in all_dirs
+        assert cpath('repo', 'dists', 'happy', 'contrib', 'source') \
+               in all_dirs
         self.assert_equals(6, len(all_dirs))
 
         self.repo.make_all_dirs()
         for expected_dir in all_dirs:
-            assert os.path.isdir(expected_dir())
+            assert os.path.isdir(expected_dir)
 
     def test_write_releases(self):
         calls = Set()
@@ -161,7 +147,8 @@ class TestDebianPoolRepo(DebianPoolFixture):
         self.assert_equals(6, len(calls))
 
         def make_tuple(section, arch):
-            release_path = self.repo.get_one_dir(section, arch).Release()
+            release_path = pjoin(self.repo.get_one_dir(section, arch),
+                                 'Release')
             return (release_path, section, arch)
 
         assert make_tuple('main', 'i386') in calls
@@ -171,7 +158,9 @@ class TestDebianPoolRepo(DebianPoolFixture):
         assert make_tuple('contrib', 'sparc') in calls
         assert make_tuple('contrib', 'source') in calls
 
-        expected = Set([self.repo.repo_dir.dists.happy.Release()])
+        release_path = pjoin(self.repo.repo_dir, 'dists', 'happy',
+                             'Release')
+        expected = Set([release_path])
         self.assert_equal(expected, outer)
 
 class TestDebianPoolInjector(DebianPoolFixture):
@@ -190,7 +179,8 @@ class TestDebianPoolInjector(DebianPoolFixture):
 
     def test_pool_location(self):
         location = self.bin_injector.get_pool_location()
-        expected = self.repo.repo_dir.pool.main.a.apache2[self.bin.filename]
+        expected = pjoin(self.repo.repo_dir, 'pool', 'main', 'a', 'apache2',
+                         self.bin.filename)
         self.assert_equals_long(expected, location)
 
     def test_extra_pool_locations(self):
@@ -198,9 +188,9 @@ class TestDebianPoolInjector(DebianPoolFixture):
                           self.bin_injector.get_extra_pool_locations())
 
         src_package_path = self.src_injector.get_pool_location()
-        src_package_dir = src_package_path['..']
+        src_package_dir = pjoin(src_package_path, '..')
         extras = {}
-        extras.update(dict([ (src_package_dir[filename], blob_id)
+        extras.update(dict([ (pjoin(src_package_dir, filename), blob_id)
                              for blob_id, filename
                              in self.src.extra_file ]))
         actual_extras = self.src_injector.get_extra_pool_locations()
@@ -215,13 +205,13 @@ class TestDebianPoolInjector(DebianPoolFixture):
 
     def test_get_links(self):
         package_location = self.src_injector.get_pool_location()
-        package_dir = self.src_injector.get_pool_location()['..']
+        package_dir = pjoin(self.src_injector.get_pool_location(), '..')
         files = [ blob_id for blob_id, dummy in self.src.extra_file ]
         files.sort()
         expected = { package_location: self.src.blob_id,
-                     package_dir['apache2_2.0.53-5.diff.gz']:
+                     pjoin(package_dir, 'apache2_2.0.53-5.diff.gz'):
                      'md5:0d060d66b3a1e6ec0b9c58e995f7b9f7',
-                     package_dir['apache2_2.0.53.orig.tar.gz']:
+                     pjoin(package_dir, 'apache2_2.0.53.orig.tar.gz'):
                      'md5:40507bf19919334f07355eda2df017e5' }
         actual = self.src_injector.get_links()
         self.assert_equals_long(expected, actual)
@@ -229,7 +219,7 @@ class TestDebianPoolInjector(DebianPoolFixture):
 class TestReleaseWriter(TempDirTest):
     def set_up(self):
         super(self.__class__, self).set_up()
-        self.search_path = path(self.work_dir).repo.stuff
+        self.search_path = pjoin(self.work_dir, 'repo', 'stuff')
         release_time = 'Wed, 22 Mar 2005 21:20:00 UTC'
         contents = { 'archive': 'stable', 'version': '3.0r4',
                      'origin': 'Debian', 'label': 'Debian2',
@@ -240,7 +230,7 @@ class TestReleaseWriter(TempDirTest):
                                           self.search_path)
 
     def test_write_inner_release(self):
-        dest = LazyWriter(path(self.work_dir).Release)
+        dest = LazyWriter(pjoin(self.work_dir, 'Release'))
         self.writer.write(dest, 'main', 'i386')
         dest.close()
         expected = """Archive: stable
@@ -254,11 +244,11 @@ Architecture: i386
         self.assert_equals_long(expected, actual)
 
     def test_writer_outer_release(self):
-        handle = LazyWriter(self.search_path.data.Release())
+        handle = LazyWriter(pjoin(self.search_path, 'data', 'Release'))
         print >> handle, 'testing123'
         handle.close()
 
-        release_path = self.search_path.Release
+        release_path = pjoin(self.search_path, 'Release')
         release_handle = LazyWriter(release_path)
         self.writer.write_outer(release_handle)
         release_handle.close()
@@ -277,14 +267,5 @@ MD5Sum:
 SHA1:
  e3dc8362c1586e4d9702ad862f29b6bef869afde               11 data/Release
 """
-        actual_release = self.read_file(release_path())
+        actual_release = self.read_file(release_path)
         self.assert_equals_long(expected_release, actual_release)
-
-class TestHardLinkChecker(TempDirTest):
-    def test_is_hard_linked(self):
-        open('a1', 'w').write('')
-        os.link('a1', 'a2')
-        open('b', 'w').write('')
-
-        assert is_hard_linked('a1', 'a2')
-        assert not is_hard_linked('a1', 'b')

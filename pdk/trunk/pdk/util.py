@@ -36,7 +36,6 @@ from pdk.progress import ConsoleProgress, CurlAdapter
 from pdk.exceptions import ConfigurationError, CommandLineError
 
 normpath = os.path.normpath
-pjoin = os.path.join
 
 def caller():
     """Report the caller of the current function
@@ -58,6 +57,10 @@ from elementtree.ElementTree import ProcessingInstruction \
 def cpath(*args):
     """Get an absolute path object pointing to the current directory."""
     return os.path.normpath(os.path.join(os.getcwd(), *args))
+
+def pjoin(*args):
+    '''Act like os.path.join but also normalize the result.'''
+    return normpath(os.path.join(*args))
 
 def split_pipe(handle):
     """convert a file/list of "<key>|<value" pairings into a map"""

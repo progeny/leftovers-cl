@@ -23,7 +23,6 @@ Generate a repository from component & cache
 """
 import os
 import os.path
-pjoin = os.path.join
 from time import strftime, gmtime
 import re
 import md5
@@ -36,7 +35,7 @@ from pdk.package import Package
 from pdk.exceptions import SemanticError, InputError, CommandLineError, \
                 IntegrityFault
 import pdk.log as log
-from pdk.util import ensure_directory_exists
+from pdk.util import ensure_directory_exists, pjoin
 
 logger = log.get_logger()
 
@@ -126,7 +125,7 @@ class DebianPoolInjector(object):
         self.cache = cache
         self.package = package
         self.section = section
-        self.repo_dir = repo_dir #path(str(repo_dir))
+        self.repo_dir = pjoin(repo_dir)
 
 
     def get_pool_dir(self):
@@ -399,45 +398,6 @@ class DebianPoolRepo(object):
                 handle.flush()
 
 
-    def get_config(self):
-        """Return appropriate contents for the config file for
-        apt-ftparchive."""
-
-        config = '''
-Dir {
-    ArchiveDir "%(repo_dir)s";
-    CacheDir "%(tmp_dir)s";
-    FileListDir "%(tmp_dir)s";
-    OverrideDir "%(tmp_dir)s";
-};
-
-TreeDefault {
-    Filelist "list-$(SECTION)-$(ARCH)";
-    SourceFilelist "list-$(SECTION)-$(ARCH)";
-};
-
-Tree "%(dist)s" {
-    Architectures "%(arches)s";
-    Sections "%(sections)s";
-
-};
-''' 
-        return config % {
-            'repo_dir':self.repo_dir(),
-            'tmp_dir':self.tmp_dir(),
-            'dist':self.dist,
-            'arches': ' '.join(self.arches),
-            'sections': ' '.join(self.sections),
-            }
-
-
-    def write_config(self):
-        """Write a config suitable for apt-ftparchive generate."""
-        handle = LazyWriter(self.tmp_dir.config)
-        handle.write(self.get_config())
-        handle.close()
-
-
     def get_one_dir(self, section, arch):
         """Return the index directory path for a given section and
         architecture."""
@@ -485,7 +445,6 @@ Tree "%(dist)s" {
         """After all injectors have been added properly, create
         the repo."""
         self.flush_lists()
-        self.write_config()
         self.invoke_archiver()
 
 

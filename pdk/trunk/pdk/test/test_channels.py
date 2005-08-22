@@ -19,12 +19,12 @@
 from cStringIO import StringIO
 from pdk.test.utest_util import Test
 
-from pdk.channels import gen_apt_deb_control, ChannelData
+from pdk.channels import iter_apt_deb_control, ChannelData
 
 class TestAptDebControl(Test):
-    def test_gen_apt_deb_control(self):
+    def test_iter_apt_deb_control(self):
         packages = 'a\n\nb\nc\r\n\n'
-        actual = list(gen_apt_deb_control(StringIO(packages)))
+        actual = list(iter_apt_deb_control(StringIO(packages)))
         expected = ['a\n\n', 'b\nc\r\n\n']
         self.assert_equals_long(actual, expected)
 
