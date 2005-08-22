@@ -29,6 +29,7 @@ import os
 import sys
 import pdk.log as log
 import pdk.command_base as command_base
+from pdk.exceptions import ConfigurationError
 from pdk.util import assert_python_version
 assert_python_version()
 
@@ -71,12 +72,28 @@ class Pdk(command_base.CmdBase):
         """
         Set up the command dictionary for pdk
         """
+        def set_prompt():
+            """
+            Setup the shell prompt
+            """
+            from pdk import workspace
+            from pdk.util import relative_path
+            try:
+                ws = workspace.current_workspace()
+                ws_name = "[" + os.path.basename(ws.location) + "]"
+                cwd = os.getcwd()
+                rel = "(" + relative_path(ws.location, cwd) + ")"
+            except ConfigurationError:
+                ws_name = "[no workspace]"
+                rel = "()"
+            self.prompt = "pdk=" + ws_name + rel + "=>>"
+
         command_base.CmdBase.__init__(self)
-        self.prompt = "pdk=>> "
         self.intro  = "Welcome to pdk!"  ## defaults to None
         self._hist    = []      ## No history yet
         self._locals  = {}      ## Initialize execution namespace for user
         self._globals = {}
+        set_prompt()
 
 
     ## Command definitions ##

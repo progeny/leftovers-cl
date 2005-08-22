@@ -29,6 +29,7 @@ import shutil
 from cStringIO import StringIO
 from pdk.exceptions import IntegrityFault
 from pdk.util import shell_command
+from pdk.util import relative_path
 
 ## version_control
 ## Author:  Glen Smith
@@ -244,43 +245,5 @@ def patch(args):
     shell_command(command_string)
 ##    git-update-cache progeny.com/apache.xml
 ##    pdk commit master "Required commit remark"
-
-
-#-----------------------------------------------------------------------
-# Path management
-
-def relative_path(base_dir, file_path):
-    """Modify a file path to be relative to another (base) path.
-    throws ValueError if file is not in the base tree.
-
-    base_dir = any local directory path
-    file_path = any relative or absolute file path under base_dir
-    """
-    # localize some functions
-    sep = os.path.sep
-    absolute = os.path.abspath
-
-    # Make lists of the paths
-    base_parts = absolute(base_dir).split(sep)
-    file_parts = absolute(file_path).split(sep)
-
-    if len(base_parts) >= len(file_parts):
-        raise ValueError("%s not within %s" % (file_path, base_dir))
-    
-    # Bite off bits from the left, ensuring they're the same.
-    while base_parts:
-        base_bit = base_parts.pop(0)
-        file_bit = file_parts.pop(0)
-        if base_bit != file_bit:
-            raise ValueError("%s not within %s" % (file_path, base_dir))
-
-    result = os.path.join(*file_parts)
-
-    # git commands require trailing slashes on directories. 
-    if os.path.isdir(result):
-        result += "/"
-    return result
-    
-
 
 # vim:ai:et:sts=4:sw=4:tw=0:

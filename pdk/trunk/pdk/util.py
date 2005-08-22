@@ -357,6 +357,44 @@ def WithAccessLogging(instance, its_name):
             setattr(instance, name, value)
     return add_in()
 
+#-----------------------------------------------------------------------
+# Path management
+
+def relative_path(base_dir, file_path):
+    """Modify a file path to be relative to another (base) path.
+    throws ValueError if file is not in the base tree.
+
+    base_dir = any local directory path
+    file_path = any relative or absolute file path under base_dir
+    """
+    # localize some functions
+    sep = os.path.sep
+    absolute = os.path.abspath
+
+    # Make lists of the paths
+    base_parts = absolute(base_dir).split(sep)
+    file_parts = absolute(file_path).split(sep)
+
+    if len(base_parts) > len(file_parts):
+        raise ValueError("%s not within %s" % (file_path, base_dir))
+    
+    # Bite off bits from the left, ensuring they're the same.
+    while base_parts:
+        base_bit = base_parts.pop(0)
+        file_bit = file_parts.pop(0)
+        if base_bit != file_bit:
+            raise ValueError("%s not within %s" % (file_path, base_dir))
+
+    if file_parts:
+        result = os.path.join(*file_parts)
+    else:
+        result = '.'
+
+    # git commands require trailing slashes on directories. 
+    if os.path.isdir(result):
+        result += "/"
+    return result
+    
 def shell_command(command_string, stdin = None, debug = False):
     """
     run a shell command
