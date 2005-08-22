@@ -24,41 +24,15 @@
 
 # get Utility functions
 . atest/test_lib.sh
+. atest/utils/test_channel.sh
 
 pdk workspace create workspace
 cd workspace/work
 
-# Create a component descriptor
-# XXX: This is done often enough in testing, it it worth a script or shell
-# function? 
-cat >product.xml <<EOF
-<?xml version="1.0"?>
-<component>
-  <meta>
-    <origin>community</origin>
-    <label>distro</label>
-    <version>1.0</version>
-    <codename>zip</codename>
-    <suite>stable</suite>
-    <date>Tue, 22 Mar 2005 21:20:00 +0000</date>
-    <description>Hello World!</description>
-  </meta>
-  <contents>
-    <component>main.xml</component>
-  </contents>
-</component>
-EOF
+cp ${tmp_dir}/atest/abstract_comps/product.xml .
+cp ${tmp_dir}/atest/abstract_comps/main.xml .
 
-cat >main.xml <<EOF
-<?xml version="1.0"?>
-<component>
-  <contents>
-    <component>progeny.com/emacs.xml</component>
-  </contents>
-</component>
-EOF
-
-# Add the emacs packagexs
+# Add the emacs packages
 pdk package add progeny.com/emacs.xml \
     ${PACKAGES}/emacs-defaults_1.1_all.deb \
     ${PACKAGES}/emacs-defaults_1.1.dsc
@@ -85,7 +59,7 @@ check_file "9ec95718a49fd7f1a8a745c3673b5386349f3f77" \
 
 repo_path=repo/pool/main/e/emacs-defaults
 
-# Check all the binarie files (heh, all one of them -- for now)
+# Check all the binary files (heh, all one of them -- for now)
 pkgname=emacs-defaults_1.1_all.deb
 grep ${pkgname} repo/dists/stable/main/binary-i386/Packages
 assert_exists ${repo_path}/${pkgname}

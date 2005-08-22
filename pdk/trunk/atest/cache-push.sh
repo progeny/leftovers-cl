@@ -23,6 +23,7 @@
 
 # get Utility functions
 . atest/test_lib.sh
+. atest/utils/test_channel.sh
 
 # -------------------
 # Setup
@@ -32,25 +33,29 @@
 pdk workspace create sim-source
 #Then, create the workspace that we will "cachepush" to...
 pdk workspace create sim-dest
-#Put the client in the place to do the descriptor work
-#in the source workspace
-cd sim-source/work
 
-# Install all the packages into the local cache
-#This needs to be replaced with the creation of
-#a component with an abstract package,
-#followed by "pdk resolve (descr.)
-pdk package add progeny.com/apache.xml \
-    $tmp_dir/packages/apache2-common_2.0.53-5_i386.deb \
-    $tmp_dir/packages/apache2_2.0.53-5.dsc \
+#from test_channel.sh
+make_channel channel apache2*.deb apache2*.dsc ethereal*.dsc
 
-# add a whole product component
-cat >progeny.com/sim-product.xml <<"EOF"
-<?xml version="1.0"?>
-<component>
-  <component>progeny.com/apache.xml</component>
-</component>
-EOF
+cd sim-source
+
+#from test_channel.sh
+config_channel
+
+pdk channel update
+[ -f channels.xml.cache ] \
+    || fail 'channel cache file should have been created'
+
+cd work
+
+#note: this will become an effect of the pdk channel command above,
+# pdk channel add --dir $PACKAGES progeny.com
+mkdir progeny.com
+cp ${tmp_dir}/atest/abstract_comps/apache.xml progeny.com
+cp ${tmp_dir}/atest/abstract_comps/sim-product.xml progeny.com
+
+pdk resolve progeny.com/apache.xml
+
 pdk add progeny.com/
 pdk commit master foo
 cd ..

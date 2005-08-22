@@ -22,17 +22,31 @@
 # apt.
 
 . atest/test_lib.sh
+. atest/utils/test_channel.sh
 
 test_root=$(pwd)
-packages=$(pwd)/packages
 apt_root=$(pwd)/apt-setup
-working=$(pwd)/apt-compatible/work
+working=$(pwd)/apt/work
 
 # Create a component to build a repository from
-pdk workspace create apt-compatible
-cd apt-compatible/work
-pdk package add aptable.xml ${packages}/apache*.deb ${packages}/apache*.dsc
-pdk package add aptable.xml ${packages}/*xsok*.deb ${packages}/*xsok*.dsc
+pdk workspace create apt
+
+#from test_channel.sh
+make_channel apache*.deb apache*.dsc *xsok*.deb *xsok*.dsc
+
+cd apt
+
+#from test_channel.sh
+config_channel
+
+pdk channel update
+
+cd work
+
+cp ${tmp_dir}/atest/abstract_comps/aptable.xml .
+
+pdk resolve aptable.xml
+pdk download aptable.xml
 pdk repogen aptable.xml || bail "Cannot compile myrepo.xml"
 cd -
 

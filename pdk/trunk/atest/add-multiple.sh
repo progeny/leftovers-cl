@@ -41,42 +41,18 @@ EOF
 $apache2_bin -t -f etc/apache2/apache2.conf
 $apache2_bin -X -f etc/apache2/apache2.conf &
 
-# -----------------------------------------------------------
-# Bootstrap and do some "integration" work in the integration area.
-# -----------------------------------------------------------
-
 #First, create the workspace that we actually work in...
 pdk workspace create integration
 
-#Make the local channel
-make_channel channel \
-    apache2-common_2.0.53-5_i386.deb apache2_2.0.53-5.dsc \
-    apache2_2.0.53-5.dsc \
-    apache2-common_2.0.53-5_i386.deb \
-    ethereal_0.9.13-1.0progeny2.dsc \
-    ethereal_0.9.13-1.0progeny2_ia64.deb \
-    ethereal-common_0.9.13-1.0progeny2_ia64.deb \
-    ethereal-dev_0.9.13-1.0progeny2_ia64.deb \
-    tethereal_0.9.13-1.0progeny2_ia64.deb
+#from test_channel.sh
+make_channel channel apache2*.deb apache2*.dsc ethereal*.dsc
 
-#Move to the ws root
 cd integration
 
-# Add a channel for the package directory
-# note: this will migrate to a proper pdk command, like:
-# pdk channel add --dir $PACKAGES progeny.com
-cat >channels.xml <<EOF
-<?xml version="1.0"?>
-<channels>
-  <channel>
-    <type>dir</type>
-    <path>${PACKAGES}</path>
-  </channel>
-</channels>
-EOF
+#from test_channel.sh
+config_channel
 
 pdk channel update
-
 [ -f channels.xml.cache ] \
     || fail 'channel cache file should have been created'
 

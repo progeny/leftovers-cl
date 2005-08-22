@@ -35,4 +35,19 @@ make_channel() {
     done
 }
 
+config_channel() {
+    # Add a channel for the package directory
+    # note: this will migrate to a proper pdk command, like:
+    # pdk channel add --dir $PACKAGES progeny.com
+    cat >channels.xml <<EOF
+<?xml version="1.0"?>
+<channels>
+  <channel>
+    <type>dir</type>
+    <path>${PACKAGES}</path>
+  </channel>
+</channels>
+EOF
+}
+
 # vim:ai:et:sts=4:sw=4:tw=0:

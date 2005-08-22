@@ -23,27 +23,43 @@
 
 # get Utility functions
 . atest/test_lib.sh
+. atest/utils/test_channel.sh
 
 
 packages=$(pwd)/packages
 test_root=$(pwd)
-
-pdk workspace create audit
 work_root=$(pwd)/audit
 working_dir=${work_root}/work
 cache_base=${work_root}/cache
 
 
-cd ${working_dir}
+pdk workspace create audit
 
-# Install all the packages into the local cache
-pdk package add progeny.com/apache.xml \
-    ${packages}/apache2-common_2.0.53-5_i386.deb \
-    ${packages}/apache2_2.0.53-5.dsc \
+#from test_channel.sh
+make_channel apache2*.deb apache2*.dsc \
+    emacs-defaults*.dsc emacs-defaults*.deb
 
-pdk package add progeny.com/emacs.xml \
-    ${packages}/emacs-defaults_1.1.dsc \
-    ${packages}/emacs-defaults_1.1_all.deb
+cd audit
+
+#from test_channel.sh
+config_channel
+
+pdk channel update
+
+cd work
+
+#note: this will become an effect of the pdk channel command above,
+# pdk channel add --dir $PACKAGES progeny.com
+mkdir progeny.com
+
+cp ${tmp_dir}/atest/abstract_comps/apache.xml progeny.com
+cp ${tmp_dir}/atest/abstract_comps/emacs.xml progeny.com
+
+pdk resolve progeny.com/apache.xml
+pdk resolve progeny.com/emacs.xml
+
+pdk download progeny.com/apache.xml
+pdk download progeny.com/emacs.xml
 
 pdk audit progeny.com/apache.xml progeny.com/emacs.xml \
     >pdk_audit.txt || {
@@ -54,10 +70,10 @@ pdk audit progeny.com/apache.xml progeny.com/emacs.xml \
 diff -u - pdk_audit.txt <<EOF
 EOF
 
-# Start fresh.
+# Discard descriptors.
 rm -r ${work_root}/cache/ ${working_dir}/progeny.com/
 
-# Reinstall emacs-defaults without it's source.
+# Reinstall emacs-defaults without its source.
 pdk package add progeny.com/emacs.xml \
     ${packages}/emacs-defaults_1.1_all.deb
 
