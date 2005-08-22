@@ -104,7 +104,7 @@ EOF
 
 pdk channel update
 [ -f ${channels}.cache ] \
-    || fail 'channel cache file should have been created'
+    || bail 'channel cache file should have been created'
 
 pdk resolve apache.xml channel-1
 pdk resolve apache.xml channel-2
@@ -151,6 +151,13 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
 EOF
 
 # "Download" missing packages.
+# Note -- one should be able to do this from any directory
+mkdir junk
+cd junk
+pdk download ../apache.xml 
+cd ..
+
+# "Download" missing packages.
 pdk download apache.xml
 
 compare_timestamps() {
@@ -162,13 +169,13 @@ compare_timestamps() {
 
     if [ "$time1" != "$time2" ]; then
         difference=$(($time2 - $time1))
-        fail "timestamp mismatch $file1 $time1 -- $file2 $time2 -- $difference"
+        bail "timestamp mismatch $file1 $time1 -- $file2 $time2 -- $difference"
     fi
 }
 
 for file in $(find ${cachedir} -type f); do
     perms=$(stat -c '%a' $file)
-    [ 664 = "$perms" ] || fail "wrong permissions $perms for $file"
+    [ 664 = "$perms" ] || bail "wrong permissions $perms for $file"
 done
 
 # Make sure the timestamps match the original files.
@@ -257,6 +264,14 @@ pdk channel update
 # Resolve the component against the apt-deb repo.
 pdk resolve apache.xml
 
+# Should also be able to resolve apache.xml from 
+# a different directory
+cd junk
+pdk resolve ../apache.xml
+
+test -f apache.xml && bail "Rewritten file in wrong dir"
+cd -
+
 # Check that the result is what we expect
 diff -u - apache.xml <<EOF || bail 'apache.xml differs'
 <?xml version="1.0" encoding="utf-8"?>
@@ -305,7 +320,7 @@ pdk download apache.xml
 
 for file in $(find ${cachedir} -type f); do
     perms=$(stat -c '%a' $file)
-    [ 664 = "$perms" ] || fail "wrong permissions $perms for $file"
+    [ 664 = "$perms" ] || bail "wrong permissions $perms for $file"
 done
 
 # Make sure the timestamps match the original files.
