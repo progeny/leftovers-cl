@@ -137,10 +137,14 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
       </meta>
     </dsc>
     <component>empty.xml</component>
-    <deb ref="md5:5acd04d4cc6e9d1530aad04accdc8eb5">
+    <deb>
       <name>apache2-common</name>
       <version>2.0.53-5</version>
-      <arch>i386</arch>
+      <deb ref="md5:5acd04d4cc6e9d1530aad04accdc8eb5">
+        <name>apache2-common</name>
+        <version>2.0.53-5</version>
+        <arch>i386</arch>
+      </deb>
       <dsc ref="md5:d94c995bde2f13e04cdd0c21417a7ca5">
         <name>apache2</name>
         <version>2.0.53-5</version>
@@ -299,10 +303,14 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
       </meta>
     </dsc>
     <component>empty.xml</component>
-    <deb ref="md5:5acd04d4cc6e9d1530aad04accdc8eb5">
+    <deb>
       <name>apache2-common</name>
       <version>2.0.53-5</version>
-      <arch>i386</arch>
+      <deb ref="md5:5acd04d4cc6e9d1530aad04accdc8eb5">
+        <name>apache2-common</name>
+        <version>2.0.53-5</version>
+        <arch>i386</arch>
+      </deb>
       <dsc ref="md5:d94c995bde2f13e04cdd0c21417a7ca5">
         <name>apache2</name>
         <version>2.0.53-5</version>

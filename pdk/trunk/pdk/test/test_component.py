@@ -32,7 +32,8 @@ from pdk.component import find_overlaps, collate_packages, \
      get_deb_child_condition_data, \
      get_dsc_child_condition_data, \
      get_rpm_child_condition_data, \
-     get_srpm_child_condition_data
+     get_srpm_child_condition_data, \
+     get_abstract_condition_data
 
 __revision__ = "$Progeny$"
 
@@ -525,8 +526,13 @@ class TestPackageRef(Test):
         assert not ref.verify(bad_cache)
 
     def test_is_abstract(self):
-        concrete_ref = PackageReference(Deb(), 'sha-1:aaa', None, [], None)
-        assert not concrete_ref.is_abstract()
+        concrete_ref_a = \
+            PackageReference(Deb(), 'sha-1:aaa', None, [], None)
+        assert not concrete_ref_a.is_abstract()
+
+        concrete_ref_b = PackageReference(Deb(), None, None, [], None)
+        concrete_ref_b.children.append(concrete_ref_a)
+        assert not concrete_ref_b.is_abstract()
 
         abstract_ref = PackageReference(Deb(), None, None, [], None)
         assert abstract_ref.is_abstract()
@@ -599,3 +605,10 @@ class TestPackageRef(Test):
         self.assert_equals(expected,
                            get_srpm_child_condition_data(apache_srpm))
 
+
+    def test_get_abstract_condition_data(self):
+        start = [ ('name', 'a'), ('arch', 'b'), ('version', '33'),
+                  ('blob-id', 'd') ]
+        expected = [ ('name', 'a'), ('version', '33') ]
+
+        self.assert_equals(expected, get_abstract_condition_data(start))

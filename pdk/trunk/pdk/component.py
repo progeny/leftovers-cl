@@ -177,15 +177,17 @@ class ComponentDescriptor(object):
                 if isinstance(ref, PackageReference):
                     if ref.blob_id:
                         refs = [ref] + ref.children
-                        for ref in refs:
-                            package = ref.load(cache)
-                            component.packages.append(package)
-                            component.direct_packages.append(package)
-                            if not ref.verify(cache):
-                                message = 'Concrete package does not ' \
-                                          'meet expected constraints: %s' \
-                                          % ref.blob_id, package.name
-                                raise SemanticError(message)
+                    else:
+                        refs = ref.children
+                    for ref in refs:
+                        package = ref.load(cache)
+                        component.packages.append(package)
+                        component.direct_packages.append(package)
+                        if not ref.verify(cache):
+                            message = 'Concrete package does not ' \
+                                      'meet expected constraints: %s' \
+                                      % ref.blob_id, package.name
+                            raise SemanticError(message)
                     rule = ref.rule
                 elif isinstance(ref, ComponentReference):
                     child_descriptor = ref.load()
@@ -323,12 +325,28 @@ class ComponentDescriptor(object):
             for ref_index, ref_tuple in enumerate(refs):
                 ref, contents_index = ref_tuple
                 if ref.rule.condition.evaluate(ghost_package):
-                    new_ref = PackageReference.from_package(ghost_package)
-                    new_ref.rule.predicates = ref.rule.predicates
-                    self.contents[contents_index] = new_ref
-                    del refs[ref_index]
-                    newly_resolved_refs.append(new_ref)
-                    break
+                    if ghost_package.role == 'source':
+                        new_ref = \
+                            PackageReference.from_package(ghost_package)
+                        new_ref.rule.predicates = ref.rule.predicates
+                        self.contents[contents_index] = new_ref
+                        del refs[ref_index]
+                        newly_resolved_refs.append(new_ref)
+                        break
+                    elif ghost_package.role == 'binary':
+                        if ref in newly_resolved_refs:
+                            new_ref = ref
+                        else:
+                            get_abstract_ref = \
+                                PackageReference.abstract_from_package
+                            new_ref = get_abstract_ref(ghost_package)
+                            self.contents[contents_index] = new_ref
+                            del refs[ref_index]
+                            newly_resolved_refs.append(new_ref)
+                        new_bin_ref = \
+                            PackageReference.from_package(ghost_package)
+                        new_ref.children.append(new_bin_ref)
+                        break
 
         # run through the whole channel again, this time using the
         # child_conditions of new references.
@@ -635,6 +653,11 @@ def get_general_condition_data(package):
     condition_data.append(('type', package.type))
     return condition_data
 
+def get_abstract_condition_data(full_condition_data):
+    """Remove conditions which are used only for concrete references."""
+    return [ (k, v) for k, v in full_condition_data
+             if k not in ('arch', 'blob-id') ]
+
 def get_child_condition_data(package):
     """Get child condition data for any package."""
     condition_fn = get_child_condition_fn(package)
@@ -667,6 +690,21 @@ class PackageReference(object):
         self.children = children
         self.child_condition = child_condition
 
+    def abstract_from_package(package):
+        '''Instantiate an abstract reference for the given package.'''
+        concrete_condition_data = get_general_condition_data(package)
+        abstract_condition_data = \
+            get_abstract_condition_data(concrete_condition_data)
+        condition = build_condition(abstract_condition_data)
+
+        rule = Rule(condition, [])
+
+        child_condition_data = get_child_condition_data(package)
+        child_condition = build_condition(child_condition_data)
+        return PackageReference(package.package_type, None, rule,
+                                [], child_condition)
+    abstract_from_package = staticmethod(abstract_from_package)
+
     def from_package(package):
         '''Instantiate a reference for the given package.'''
         condition_data = get_general_condition_data(package)
@@ -694,7 +732,7 @@ class PackageReference(object):
 
     def is_abstract(self):
         '''Return true if this package reference is abstact.'''
-        return not bool(self.blob_id)
+        return not (bool(self.blob_id) or bool(self.children))
 
 class ComponentReference(object):
     '''Represents a component reference.
