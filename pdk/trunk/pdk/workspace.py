@@ -206,6 +206,21 @@ def add(args):
     ws = current_workspace()
     return ws.add(name)
 
+def remove(args):
+    """
+    remove a local working item under version control
+    """
+    name = args[0]
+    ws = current_workspace()
+    return ws.remove(name)
+
+def revert(args):
+    """
+    revert a local working item under version control
+    """
+    name = args[0]
+    ws = current_workspace()
+    return ws.revert(name)
 
 def commit(args):
     """
@@ -215,8 +230,23 @@ def commit(args):
     ws = current_workspace()
     ws.commit(remark)
 
+def update(ignore):
+    """
+    commit local changes
+    """
+    ws = current_workspace()
+    ws.update()
+    return ignore
 
-def update(args):
+def update_from_remote(args):
+    """
+    commit local changes
+    """
+    remote_name = args[0]
+    ws = current_workspace()
+    ws.update_from_remote(remote_name)
+
+def checkout(args):
     """
     commit local changes
     """
@@ -261,10 +291,21 @@ class _Workspace(object):
 
     def add(self, name):
         """
-        Create an 'empty' local instance of the database
+        Add an item to local version control
         """
         return self.version_control().add(name)
 
+    def remove(self, name):
+        """
+        Remove an item from local version control
+        """
+        return self.version_control().remove(name)
+
+    def revert(self, name):
+        """
+        Remove an item from local version control
+        """
+        return self.version_control().revert(name)
 
     def commit(self, remark):
         """
@@ -272,12 +313,17 @@ class _Workspace(object):
         """
         self.version_control().commit(remark)
 
-
-    def update(self, upstream_name):
+    def update(self):
         """
         Get latest changes from version control
         """
-        self.version_control().update(upstream_name)
+        self.version_control().update()
+
+    def update_from_remote(self, upstream_name):
+        """
+        Get latest changes from version control
+        """
+        self.version_control().update_from_remote(upstream_name)
 
 
 # vim:ai:et:sts=4:sw=4:tw=0:

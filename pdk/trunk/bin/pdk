@@ -52,8 +52,12 @@ class Pdk(command_base.CmdBase):
     do_init = LazyModuleRef('pdk.services', 'init')
     do_publish = LazyModuleRef('pdk.source', 'publish')
     do_update = LazyModuleRef('pdk.workspace', 'update')
+    do_update_from_remote = LazyModuleRef('pdk.workspace', \
+                                          'update_from_remote')
     do_commit = LazyModuleRef('pdk.workspace', 'commit')
     do_add = LazyModuleRef('pdk.workspace', 'add')
+    do_remove = LazyModuleRef('pdk.workspace', 'remove')
+    do_revert = LazyModuleRef('pdk.workspace', 'revert')
     do_clone = LazyModuleRef('pdk.workspace', 'clone')
     ##do_checkin = LazyModuleRef('pdk.version_control', 'checkin')
     ##do_copy = LazyModuleRef('pdk.version_control', 'copy')

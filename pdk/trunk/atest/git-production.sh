@@ -96,7 +96,6 @@ pushd integration
     pdk cachepush http://localhost:$SERVER_PORT/telco/upload
     ls cache/ | grep -v .header$ >$tmp_dir/expected
 popd
-
 ls production/cache >actual
 diff -u expected actual
 
@@ -144,7 +143,7 @@ pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pul
 # -----------------------------------------------------------
 
 cd customer-work-area
-pdk update progeny.com 
+pdk update_from_remote progeny.com 
 grep GARBAGE work/progeny.com/apache.xml
 
 # vim:ai:et:sts=4:sw=4:tw=0:

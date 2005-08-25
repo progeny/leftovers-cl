@@ -159,49 +159,71 @@ class _VersionControl(object):
         cmd = 'git-update-cache --add %s' % name
         return _cd_shell_command(self.work_dir, cmd)
 
+    def remove(self, name):
+        """
+        Initialize version control
+        """
+        name = relative_path(self.work_dir, name)
+        shell_command('rm ' + name)
+        cmd = 'git-update-cache --remove %s' % name
+        return _cd_shell_command(self.work_dir, cmd)
+
+    def revert(self, name):
+        """
+        Initialize version control
+        """
+        name = relative_path(self.work_dir, name)
+        shell_command('rm ' + name)
+        self.update()
+
     def commit(self, remark):
         """
         call git commands to commit local work
         """
         pjoin = os.path.join
 
+        head_file = '.git/refs/heads/master'
+
+        parent_id = 0
+
+        if os.path.exists(head_file):
+            the_file = file(head_file, 'r')
+            parent_id = the_file.read().strip()
+            the_file.close()
+
         work_dir = self.work_dir
-        files = _cd_shell_command(
-            work_dir
-            , 'git-diff-files --name-only'
-            ).split()
+        files = _cd_shell_command(work_dir, \
+                                 'git-diff-files --name-only').split()
         files = [ relative_path(work_dir, item) 
                   for item in files ]
-        _cd_shell_command(
-            work_dir
-            , 'git-update-cache ' + ' '.join(files))
+        _cd_shell_command(work_dir, 'git-update-cache ' + \
+                          ' '.join(files))
 
         sha1 = _cd_shell_command(work_dir, 'git-write-tree').strip()
 
-        comment_handle = StringIO(remark)
-        output = _cd_shell_command(work_dir, 'git-commit-tree ' + \
-                                 sha1, comment_handle)
+        commit_cmd = 'git-commit-tree ' + str(sha1)
+        if not parent_id == 0:
+            commit_cmd += ' -p ' + str(parent_id)
+        output = shell_command(commit_cmd, StringIO(remark))
 
-        filename = pjoin(work_dir, '.git/refs/heads/master')
-        if os.path.exists(filename):
-            the_file = file(filename, 'r')
-            old_content = the_file.read().strip()
-            the_file.close()
-            back_filename = pjoin(
-                work_dir
-                , '.git'
-                , 'refs'
-                , 'heads'
-                , old_content
-                )
-            os.rename(filename, back_filename)
-
+        filename = pjoin(work_dir, head_file)
         the_file = file(filename, 'w')
         the_file.write(str(output))
         the_file.close()
 
 
-    def update(self, upstream_name):
+    def update(self):
+        """
+        update the version control
+        """
+        start_dir = os.getcwd()
+        try:
+            shell_command('git-read-tree HEAD')
+            shell_command('git-checkout-cache -a')
+        finally:
+            os.chdir(start_dir)
+
+    def update_from_remote(self, upstream_name):
         """
         update the version control
         """
