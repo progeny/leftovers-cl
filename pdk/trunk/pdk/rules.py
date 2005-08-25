@@ -53,6 +53,9 @@ class FieldMatchCondition(object):
     def __repr__(self):
         return 'cond fm (%s, %s)' % (self.field_name, self.target)
 
+    def __str__(self):
+        return "[%s] is '%s'" % (self.field_name, self.target)
+
 class AndCondition(object):
     '''Check that the provided object meets all the provided conditions.'''
     def __init__(self, conditions):
@@ -66,6 +69,11 @@ class AndCondition(object):
 
     def __repr__(self):
         return 'cond and %s' % self.conditions
+
+    def __str__(self):
+        child_strings = [str(x) for x in self.conditions]
+        return ' AND '.join(child_strings)
+
 
 class OneMatchMetacondition(object):
     '''Check that the success_count attribute is 1.'''
@@ -107,6 +115,16 @@ class Rule(object):
             for predicate in self.predicates:
                 yield (package,) + predicate
 
+    def __str__(self):
+        text = "where " + str(self.condition) 
+        if (self.predicates):
+            text += (
+                "returning " + \
+                " ".join(self.predicates)
+            )
+        return text
+
+
 class CompositeRule(object):
     '''Composite a number of rule objects.'''
     def __init__(self, rules):
@@ -126,3 +144,7 @@ class CompositeRule(object):
         for rule in self.rules:
             for statement in rule.fire(package):
                 yield statement
+
+    def __str__(self):
+        return " AND ".join( [ str(r) for r in self.rules ])
+

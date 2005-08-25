@@ -303,13 +303,21 @@ class ComponentDescriptor(object):
         Assert that the descriptor has no abstract references.
         """
         logger = get_logger()
-        for reference in self.contents:
-            if isinstance(reference, PackageReference):
-                if reference.is_abstract():
-                    message = 'unresolved references remain in %s' \
-                              % self.filename
-                    logger.warn(message)
-                    break
+        unresolved = [r for r in self.contents 
+                       if isinstance(r,PackageReference) 
+                         and r.is_abstract()
+                      ]
+        if unresolved:
+            logger.warn(
+                'Unresolved references remain in %s' \
+                % self.filename
+                )
+            for reference in unresolved:
+                pkgtype = reference.package_type.type_string
+                condition = str(reference.rule)
+                logger.warn(
+                    "No %s %s" % (pkgtype, condition)
+                )
 
 
     def resolve(self, channel):

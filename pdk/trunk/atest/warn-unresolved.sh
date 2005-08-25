@@ -50,12 +50,16 @@ cat >apache.xml <<EOF
     <dsc>apache2</dsc>
     <deb>apache2-common</deb>
     <dsc>ida</dsc>
+    <deb>snorklewink2</deb>
   </contents>
 </component>
 EOF
 
 pdk resolve apache.xml 2>error.xml
-egrep "WARNING.*unresolved" error.xml
+cat error.xml
+egrep -q "WARNING.*[Uu]nresolved" error.xml
+egrep -q "ida" error.xml
+egrep -q "snorklewink2" error.xml
 
 # try again with all references resolvable.
 cat >apache.xml <<EOF
