@@ -73,10 +73,25 @@ pushd customer
         cp JS5-3.xml JS5.xml
 
 # execute:
+
         pdk revert JS5.xml
 
 # evaluate: see if the file is back in its original state
+
         diff -u JS5.xml JS5-2.xml
+
+# -----------------------------------------------------------
+# setup: make a local change to a file
+
+        cp JS5-3.xml JS5.xml
+
+# execute: cat a file in version control
+
+        pdk cat JS5.xml >> JS5-cat.xml
+
+# evaluate: see if pdk reports the file in its original state
+
+        diff -u JS5-cat.xml JS5-2.xml
 
 # -----------------------------------------------------------
 # setup:
@@ -96,11 +111,10 @@ pushd customer
 # -----------------------------------------------------------
 # More functions that need to be tested:
 # -----------------------------------------------------------
+        # pdk status
         # pdk diff
         # pdk move some other other descriptor files
-        # pdk cat
         # pdk update -r previous version
-        # pdk revert
     popd
 popd
 

@@ -59,6 +59,7 @@ class Pdk(command_base.CmdBase):
     do_remove = LazyModuleRef('pdk.workspace', 'remove')
     do_revert = LazyModuleRef('pdk.workspace', 'revert')
     do_clone = LazyModuleRef('pdk.workspace', 'clone')
+    do_cat = LazyModuleRef('pdk.workspace', 'cat')
     ##do_checkin = LazyModuleRef('pdk.version_control', 'checkin')
     ##do_copy = LazyModuleRef('pdk.version_control', 'copy')
     do_repogen = LazyModuleRef('pdk.repogen','generate')

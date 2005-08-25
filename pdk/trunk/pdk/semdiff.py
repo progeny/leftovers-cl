@@ -28,7 +28,6 @@ from sets import Set
 from itertools import chain
 from pdk.component import ComponentDescriptor
 from pdk.workspace import current_workspace
-from pdk.version_control import cat
 from pdk.package import Package
 from pdk.exceptions import CommandLineError
 
@@ -187,6 +186,7 @@ def semdiff(argv):
     -m makes the output machine readable.
     """
     workspace = current_workspace()
+    cat = workspace.its_version_control.cat
     cache = workspace.cache()
     parser = optparse.OptionParser()
     add_my_options(parser)
@@ -343,3 +343,5 @@ def get_package_presence_fields(package, ref):
             package.version.full_version,
             package.arch,
             ref)
+
+# vim:ai:et:sts=4:sw=4:tw=0:

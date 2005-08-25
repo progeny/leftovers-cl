@@ -60,18 +60,6 @@ def _cd_shell_command(path, command_string, stdin=None, debug=False):
     return result
 
 
-def cat(filename):
-    '''Get the unchanged version of the given filename.'''
-    funny_git_line = shell_command('git-diff-files ' + filename).strip()
-    if funny_git_line:
-        parts = funny_git_line.split()
-        git_blob_id = parts[2]
-        return StringIO(shell_command('git-cat-file blob %s'
-                                       % git_blob_id))
-    else:
-        return open(filename)
-
-
 def create(working_path):
     """Create a version control repo in the given work dir """
     # Since we're porcelain, we have to set the stage for command-line
@@ -259,6 +247,18 @@ class _VersionControl(object):
         finally:
             os.chdir(original_dir)
 
+    def cat(self, filename):
+        '''Get the unchanged version of the given filename.'''
+        git_result = shell_command('git-diff-files ' + filename).strip()
+        result = ''
+        if git_result:
+            parts = git_result.split()
+            git_blob_id = parts[2]
+            result = StringIO(shell_command('git-cat-file blob %s'
+                                             % git_blob_id))
+        else:
+            result = open(filename)
+        return result
 
 def patch(args):
     """Perform a version control patch command"""

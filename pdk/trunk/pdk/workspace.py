@@ -24,6 +24,7 @@ Library interface to pdk workspace
 __revision__ = '$Progeny$'
 
 import os
+import sys
 from pdk import version_control
 from pdk import util
 from pdk.cache import Cache
@@ -214,6 +215,16 @@ def remove(args):
     ws = current_workspace()
     return ws.remove(name)
 
+def cat(args):
+    """
+    remove a local working item under version control
+    """
+    name = args[0]
+    ws = current_workspace()
+    result = ws.cat(name).read().strip()
+    print >> sys.stdout, result
+    return result
+
 def revert(args):
     """
     revert a local working item under version control
@@ -300,6 +311,12 @@ class _Workspace(object):
         Remove an item from local version control
         """
         return self.version_control().remove(name)
+
+    def cat(self, name):
+        """
+        Remove an item from local version control
+        """
+        return self.version_control().cat(name)
 
     def revert(self, name):
         """
