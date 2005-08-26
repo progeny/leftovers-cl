@@ -104,14 +104,18 @@ apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpda
 passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/repogendumpdata/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb
 
 md5:5acd04d4cc6e9d1530aad04accdc8eb5 one-more thing
-md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate objectEOF
-
-diff -u report.txt control.txt
-
-pdk repogen joined-report.xml >report.txt
-diff -u - report.txt <<EOF
-apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 one-more thing
-apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate object
-passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb  
+md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate object
 
 EOF
+
+diff -u control.txt report.txt
+
+pdk repogen joined-report.xml >report.txt
+cat >control.txt <<EOF
+apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 one-more thing
+apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate object
+passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/repogendumpdata/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb  
+
+EOF
+
+diff -u control.txt report.txt

@@ -173,22 +173,22 @@ class ComponentDescriptor(object):
         local_rules = []
         for ref in self.contents:
             try:
-                rule = None
                 if isinstance(ref, PackageReference):
                     if ref.blob_id:
                         refs = [ref] + ref.children
                     else:
+                        local_rules.append(ref.rule)
                         refs = ref.children
-                    for ref in refs:
-                        package = ref.load(cache)
+                    for concrete_ref in refs:
+                        package = concrete_ref.load(cache)
                         component.packages.append(package)
                         component.direct_packages.append(package)
-                        if not ref.verify(cache):
+                        if not concrete_ref.verify(cache):
                             message = 'Concrete package does not ' \
                                       'meet expected constraints: %s' \
-                                      % ref.blob_id, package.name
+                                      % concrete_ref.blob_id, package.name
                             raise SemanticError(message)
-                    rule = ref.rule
+                        local_rules.append(concrete_ref.rule)
                 elif isinstance(ref, ComponentReference):
                     child_descriptor = ref.load()
                     child_component = child_descriptor.load(cache)
@@ -198,8 +198,6 @@ class ComponentDescriptor(object):
                     component.packages.extend(child_component.packages)
                     component.rules.extend(child_component.rules)
 
-                if rule:
-                    local_rules.append(rule)
             except PdkException, local_message:
                 if group_message:
                     group_message = group_message + "\n"
