@@ -118,10 +118,7 @@ class Rule(object):
     def __str__(self):
         text = "where " + str(self.condition) 
         if (self.predicates):
-            text += (
-                "returning " + \
-                " ".join(self.predicates)
-            )
+            text += " returning " + repr(self.predicates)
         return text
 
 

@@ -41,8 +41,7 @@ EOF
 cd workspace/work
 pdk channel update
 
-# Try requesting existing packages + one "ida" which isn't
-# present
+# Try requesting existing packages some which aren't present
 cat >apache.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
@@ -51,15 +50,24 @@ cat >apache.xml <<EOF
     <deb>apache2-common</deb>
     <dsc>ida</dsc>
     <deb>snorklewink2</deb>
+    <!-- this one is a binary with meta info -->
+    <deb>
+      <name>snorklewink3</name>
+      <meta>
+        <test>data</test>
+      </meta>
+    </deb>
   </contents>
 </component>
 EOF
 
-pdk resolve apache.xml 2>error.xml
-cat error.xml
-egrep -q "WARNING.*[Uu]nresolved" error.xml
-egrep -q "ida" error.xml
-egrep -q "snorklewink2" error.xml
+pdk resolve apache.xml 2>&1 | cut -d ' ' -f 3- >errors
+diff -u - errors <<EOF
+WARNING Unresolved references remain in apache.xml
+WARNING No dsc where [name] is 'ida' AND [type] is 'dsc'
+WARNING No deb where [name] is 'snorklewink2' AND [type] is 'deb'
+WARNING No deb where [name] is 'snorklewink3' AND [type] is 'deb' returning [('test', 'data')]
+EOF
 
 # try again with all references resolvable.
 cat >apache.xml <<EOF
@@ -72,5 +80,5 @@ cat >apache.xml <<EOF
 </component>
 EOF
 
-pdk resolve apache.xml 2>error.xml
-egrep "WARNING.*unresolved" error.xml && bail 'no warning expected'
+pdk resolve apache.xml 2>errors
+egrep "WARNING.*unresolved" errors && bail 'no warning expected'
