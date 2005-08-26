@@ -24,13 +24,12 @@
 #-----------------------------------------------------------------------
 # Ill-formed command line
 pdk workspace create foo
-pushd foo
+pushd foo/work
 pdk semdiff  || status=$?
 test "$status" = "2" || { 
     bail "Expected command-line error(2), got ${status}"
 }
-popd
-rm -rf foo
+popd ; rm -rf foo
 
 pdk resolve || status=$?
 test "$status" = "2" || {
@@ -50,8 +49,8 @@ test "$status" = "2" || {
 #-----------------------------------------------------------------------
 # Process ill-formed channels file
 pdk workspace create foo
-pushd foo
-cat > channels.xml << EOF
+pushd foo/work
+cat > ../channels.xml << EOF
 <?xml version="1.0"?>
 <channels>
   <blow-up-here>
@@ -64,12 +63,11 @@ popd ; rm -rf foo
 #-----------------------------------------------------------------------
 # Missing channels.xml and channels.xml.cache
 pdk workspace create foo
-pushd foo
+pushd foo/work
 cat >empty.xml <<EOF
 <?xml version="1.0"?>
 <component/>
 EOF
-rm -f channels.xml channels.xml.cache
 pdk channel update || status=$?
 test "$status" = "5" || bail "Incorrect/unexpected error return"
 pdk resolve empty.xml || status=$?
@@ -79,15 +77,20 @@ popd ; rm -rf foo
 
 #-----------------------------------------------------------------------
 # Process even worse ill-formed (non)XML
-cat > channels.xml << EOF
+pdk workspace create foo
+pushd foo/work
+cat > ../channels.xml << EOF
 not ex emm ell at all
 EOF
 pdk channel update || status=$?
 test "$status" = "3" || bail "Incorrect/unexpected error return"
+popd ; rm -rf foo
 
 #-----------------------------------------------------------------------
 # Bad path in apt-deb channel
-cat > channels.xml <<EOF
+pdk workspace create foo
+pushd foo/work
+cat > ../channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <foo>
@@ -101,12 +104,13 @@ cat > channels.xml <<EOF
 EOF
 pdk channel update || status=$?
 test "$status" = "3" || bail "Path element w/o trailing slash accepted"
+popd ; rm -rf foo
 
 #-----------------------------------------------------------------------
 # Process an ill-formed component descriptor
 
 pdk workspace create foo
-pushd foo
+pushd foo/work
 cat > bad_component.xml << EOF
 <?xml version="1.0"?>
 EOF
@@ -120,7 +124,7 @@ rm -rf foo
 # Unclosed tag
 
 pdk workspace create foo
-pushd foo
+pushd foo/work
 cat > ethereal.xml << EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
@@ -141,7 +145,7 @@ rm -rf foo
 # Cache miss
 
 pdk workspace create foo
-pushd foo
+pushd foo/work
 cat > cache-miss.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -159,7 +163,7 @@ rm -rf foo
 #-----------------------------------------------------------------------
 # Download non-existent package from channel
 pdk workspace create foo
-pushd foo
+pushd foo/work
 cat > cache-miss.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -168,7 +172,7 @@ cat > cache-miss.xml <<EOF
   </contents>
 </component>
 EOF
-cat > channels.xml <<EOF
+cat > ../channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <foo>
