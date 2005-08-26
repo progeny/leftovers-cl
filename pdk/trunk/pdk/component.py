@@ -348,6 +348,7 @@ class ComponentDescriptor(object):
                             get_abstract_ref = \
                                 PackageReference.abstract_from_package
                             new_ref = get_abstract_ref(ghost_package)
+                            new_ref.rule.predicates = ref.rule.predicates
                             self.contents[contents_index] = new_ref
                             del refs[ref_index]
                             newly_resolved_refs.append(new_ref)

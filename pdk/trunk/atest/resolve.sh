@@ -76,6 +76,13 @@ cat >apache.xml <<EOF
     <deb>
       apache2-common
     </deb>
+    <!-- binary with metadata. watch for regression -->
+    <deb>
+      <name>ethereal-common</name>
+      <meta>
+        <test>data</test>
+      </meta>
+    </deb>
   </contents>
 </component>
 EOF
@@ -84,8 +91,11 @@ make_channel channel-1 ida_2.01-1.2_arm.deb ida_2.01-1.2.diff.gz \
     ida_2.01-1.2.dsc ida_2.01.orig.tar.gz
 
 make_channel channel-2 apache2_2.0.53-5.diff.gz apache2_2.0.53-5.dsc \
-    apache2_2.0.53.orig.tar.gz apache2-common_2.0.53-5_i386.deb
-
+    apache2_2.0.53.orig.tar.gz apache2-common_2.0.53-5_i386.deb \
+    ethereal-common_0.9.4-1woody2_i386.deb \
+    ethereal_0.9.4-1woody2.dsc \
+    ethereal_0.9.4-1woody2.diff.gz \
+    ethereal_0.9.4.orig.tar.gz
 
 # Add a channel for the package directory
 cat >${channels} <<EOF
@@ -93,7 +103,7 @@ cat >${channels} <<EOF
 <channels>
   <channel-1>
     <type>dir</type>
-    <path>${PACKAGES}</path>
+    <path>channel-1</path>
   </channel-1>
   <channel-2>
     <type>dir</type>
@@ -149,6 +159,22 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
         <name>apache2</name>
         <version>2.0.53-5</version>
       </dsc>
+    </deb>
+    <deb>
+      <name>ethereal-common</name>
+      <version>0.9.4-1woody2</version>
+      <deb ref="md5:fead37813e0a8b27b2d198ed96a09e72">
+        <name>ethereal-common</name>
+        <version>0.9.4-1woody2</version>
+        <arch>i386</arch>
+      </deb>
+      <dsc ref="md5:3422eaafcc0c6790921c2fadcfb45c21">
+        <name>ethereal</name>
+        <version>0.9.4-1woody2</version>
+      </dsc>
+      <meta>
+        <test>data</test>
+      </meta>
     </deb>
   </contents>
 </component>
@@ -245,6 +271,12 @@ cat >apache.xml <<EOF
     <deb>
       apache2-common
     </deb>
+    <deb>
+      <name>ethereal-common</name>
+      <meta>
+        <test>data</test>
+      </meta>
+    </deb>
   </contents>
 </component>
 EOF
@@ -315,6 +347,22 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
         <name>apache2</name>
         <version>2.0.53-5</version>
       </dsc>
+    </deb>
+    <deb>
+      <name>ethereal-common</name>
+      <version>0.9.4-1woody2</version>
+      <deb ref="md5:fead37813e0a8b27b2d198ed96a09e72">
+        <name>ethereal-common</name>
+        <version>0.9.4-1woody2</version>
+        <arch>i386</arch>
+      </deb>
+      <dsc ref="md5:3422eaafcc0c6790921c2fadcfb45c21">
+        <name>ethereal</name>
+        <version>0.9.4-1woody2</version>
+      </dsc>
+      <meta>
+        <test>data</test>
+      </meta>
     </deb>
   </contents>
 </component>
