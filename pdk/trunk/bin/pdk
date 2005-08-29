@@ -66,6 +66,7 @@ class Pdk(command_base.CmdBase):
     do_semdiff = LazyModuleRef('pdk.semdiff', 'semdiff')
     do_resolve = LazyModuleRef('pdk.component', 'resolve')
     do_download = LazyModuleRef('pdk.component', 'download')
+    do_compare = LazyModuleRef('pdk.compare', 'compare')
     #temporary utility
     do_production_pull = LazyModuleRef('pdk.workspace', 'pull')
 
@@ -98,17 +99,6 @@ class Pdk(command_base.CmdBase):
         set_prompt()
 
 
-    ## Command definitions ##
-    def do_compare(self, args):
-        """
-        compare an upstream repo to local components
-        """
-        import pdk.compare as compare
-        results = compare.compare_to_debian_repo(args[0], args[1:])
-        for result in results:
-            print "|".join(result)
-
-
     def module_command(self, module, args):
         """
         Provide a general function that supports
@@ -126,7 +116,6 @@ class Pdk(command_base.CmdBase):
             print >> sys.stderr, "What do you want to do with " + \
                    module.__name__ + " ?"
 
-
     def do_workspace(self, args):
         """
         Perform an action on a workspace
@@ -136,7 +125,6 @@ class Pdk(command_base.CmdBase):
         from pdk import workspace
         self.module_command(workspace, args)
 
- 
     def do_channel(self, args):
         """
         Perform an action on channel(s)
@@ -146,7 +134,6 @@ class Pdk(command_base.CmdBase):
         from pdk import channels
         self.module_command(channels, args)
 
- 
     def do_package(self, args):
         """
         Perform an action on a package
@@ -166,7 +153,6 @@ class Pdk(command_base.CmdBase):
         else:
             print >> sys.stderr, "What do you want to do with a package?"
 
-    
     def module_help(self, module, args):
         """
         Provide a general function that supports help for
@@ -186,7 +172,6 @@ class Pdk(command_base.CmdBase):
         else:
             self.stdout.write("%s\n"%str(self.nohelp % (arg_list[0],)))
 
-
     def help_workspace(self, *args):
         """
         Dispatch help requests for commands of the form
@@ -198,7 +183,6 @@ class Pdk(command_base.CmdBase):
             self.module_help(workspace, arg_list)
         else:
             print self.do_workspace.__doc__
-
 
     ## Command definitions to support Cmd object functionality ##
 
@@ -218,7 +202,6 @@ class Pdk(command_base.CmdBase):
             command_base.CmdBase.do_help(self, '')
 
 
-
 plugin_locations = [
     "~/.pdk_addins"
     , ".pdk_addins"
@@ -229,7 +212,6 @@ if __name__ == '__main__':
     filterwarnings('ignore', category = FutureWarning)
     main_args = sys.argv or []
     pdk = Pdk()
-
 
     # are we being invoked as a cgi?
     if 'GATEWAY_INTERFACE' in os.environ:

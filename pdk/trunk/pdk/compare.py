@@ -40,6 +40,28 @@ logger = pdk.log.get_logger()
 
 # Auth class for urllib2.
 
+## Command definitions ##
+def compare(args):
+    """
+    compare: Compare the descriptor FILE to one or more 
+    apt repositories.  
+    FILE is a product descriptor filename or component reference, 
+    and each repo is a string that locates an apt repository.
+    Each repo should contain 'base_uri,distro,component' where base_uri,
+    distro, and component have the same meaning as in sources.list.
+    usage: compare FILE repo1 [repo2...]
+
+    Valid options:
+    none
+    """
+    product = args[0]
+    repos = args[1:]
+    results = compare_to_debian_repo(product, repos)
+    for result in results:
+        print "|".join(result)
+
+
+
 class NoRealmPasswordMgr(urllib2.HTTPPasswordMgr):
     """The urllib2 password manager requires that the realm and URI
     passed to the auth handler be just right, a very difficult task.
@@ -235,3 +257,6 @@ def compare_to_debian_repo(product, repositories):
     # All done.
 
     return changes_list
+
+
+# vim:ai:et:sts=4:sw=4:tw=0:
