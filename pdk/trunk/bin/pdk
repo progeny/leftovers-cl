@@ -65,7 +65,6 @@ class Pdk(command_base.CmdBase):
     do_repogen = LazyModuleRef('pdk.repogen','generate')
     do_dumpmeta = LazyModuleRef('pdk.component', 'dumpmeta')
     #obsolete
-    do_mark = LazyModuleRef('pdk.mark','mark')
     do_semdiff = LazyModuleRef('pdk.semdiff', 'semdiff')
     do_resolve = LazyModuleRef('pdk.component', 'resolve')
     do_download = LazyModuleRef('pdk.component', 'download')
