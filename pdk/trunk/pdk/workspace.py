@@ -36,7 +36,6 @@ def current_workspace():
     """
     Locate the current workspace and return the workspace object.
 
-
     This works on the assumption/presumption that you are in a
     workspace currently.  It merely looks upward in the directory
     tree until it finds its' marker files/dirs, and then instances
@@ -201,7 +200,12 @@ def pull(args):
 
 def add(args):
     """
-    add a local working item under version control
+    add: Put the file under version control, scheduling it
+    for addition to repository.  It will be added in next commit.
+    usage: add filename
+
+    Valid options:
+    none
     """
     name = args[0]
     ws = current_workspace()
@@ -209,7 +213,15 @@ def add(args):
 
 def remove(args):
     """
-    remove a local working item under version control
+    remove: Remove  a file from version control.
+    usage: remove FILE
+
+    The item specified by FILE is scheduled for deletion upon
+    the next commit.  A files that has not been committed is 
+    immediately removed from the working copy.
+
+    Valid options:
+    none
     """
     name = args[0]
     ws = current_workspace()
@@ -217,7 +229,12 @@ def remove(args):
 
 def cat(args):
     """
-    remove a local working item under version control
+    cat: Output the content of specified file from the
+    version control repository.
+    usage: cat FILE
+
+    Valid options:
+    none
     """
     name = args[0]
     ws = current_workspace()
@@ -227,7 +244,11 @@ def cat(args):
 
 def revert(args):
     """
-    revert a local working item under version control
+    revert: Restore pristine working copy file (undo most local edits).
+    usage: revert FILE
+
+    Valid options:
+    none
     """
     name = args[0]
     ws = current_workspace()
@@ -235,7 +256,13 @@ def revert(args):
 
 def commit(args):
     """
-    commit local changes
+    commit: Send changes from your working copy to the repository.
+    usage: commit FILE MESSAGE
+
+    A log message must be provided.
+
+    Valid options:
+    none
     """
     remark = args[0]
     ws = current_workspace()
@@ -243,7 +270,13 @@ def commit(args):
 
 def update(ignore):
     """
-    commit local changes
+    update: Bring changes from the repository into the working copy.
+    usage: update
+
+    Synchronize working copy to HEAD in repository.
+
+    Valid options:
+    none
     """
     ws = current_workspace()
     ws.update()
@@ -251,19 +284,17 @@ def update(ignore):
 
 def update_from_remote(args):
     """
-    commit local changes
+    update_from_remote: Bring changes from REMOTE into the working copy.
+    usage: update [REMOTE]
+
+      Bring working copy up-to-date with HEAD rev.
+
+    Valid options:
+    none
     """
     remote_name = args[0]
     ws = current_workspace()
     ws.update_from_remote(remote_name)
-
-def checkout(args):
-    """
-    commit local changes
-    """
-    upstream_name = args[0]
-    ws = current_workspace()
-    ws.update(upstream_name)
 
 
 class _Workspace(object):

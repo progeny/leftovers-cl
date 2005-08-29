@@ -181,14 +181,14 @@ class CmdBase(cmd.Cmd):
 
 
     def do_exit(self, args):
-        """Exits from the pdk command shell"""
+        """Exit from the pdk command shell"""
         if args:
             raise CommandLineError, "exit command takes no arguments"
         return -1
 
 
     def do_quit(self, args):
-        """Exits from the pdk command shell"""
+        """Exit from the pdk command shell"""
         if args:
             raise CommandLineError, "quit command takes no arguments"
         return -1

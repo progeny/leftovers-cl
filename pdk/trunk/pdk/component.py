@@ -89,8 +89,13 @@ def resolve(args):
 
 def download(args):
     """
-    Command line entry point to downloading missing packages.
-    *This needs a detailed usage message*
+    download: Make local copies of the package files needed by the 
+    descriptor FILE.  The needed package files will be located based 
+    on the package index on configured channels.
+    usage: download FILE
+
+    Valid options:
+    none
     """
     if len(args) != 1:
         raise CommandLineError, 'download takes a component descriptor'
