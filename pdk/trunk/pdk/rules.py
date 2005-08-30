@@ -75,6 +75,25 @@ class AndCondition(object):
         return ' AND '.join(child_strings)
 
 
+class OrCondition(object):
+    '''Check that the provided object meets one of the conditions.'''
+    def __init__(self, conditions):
+        self.conditions = conditions
+
+    def evaluate(self, candidate):
+        for condition in self.conditions:
+            if condition.evaluate(candidate):
+                return True
+        return False
+
+    def __repr__(self):
+        return 'cond or %s' % self.conditions
+
+    def __str__(self):
+        child_strings = [str(x) for x in self.conditions]
+        return ' OR '.join(child_strings)
+
+
 class OneMatchMetacondition(object):
     '''Check that the success_count attribute is 1.'''
     def evaluate(self, rule):

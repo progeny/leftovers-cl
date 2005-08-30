@@ -27,7 +27,7 @@ import os
 from pdk.util import write_pretty_xml, parse_xml
 #from pdk.channels import ChannelData
 from cElementTree import ElementTree, Element, SubElement
-from pdk.rules import Rule, CompositeRule, AndCondition, \
+from pdk.rules import Rule, CompositeRule, AndCondition, OrCondition, \
      FieldMatchCondition, TrueCondition
 from pdk.package import get_package_type, Package
 from pdk.exceptions import PdkException, CommandLineError, InputError, \
@@ -355,9 +355,6 @@ class ComponentDescriptor(object):
                             self.contents[contents_index] = new_ref
                             del refs[ref_index]
                             newly_resolved_refs.append(new_ref)
-                        new_bin_ref = \
-                            PackageReference.from_package(ghost_package)
-                        new_ref.children.append(new_bin_ref)
                         break
 
         # run through the whole channel again, this time using the
@@ -368,7 +365,8 @@ class ComponentDescriptor(object):
                 if ref.child_condition.evaluate(ghost_package):
                     # watch out... this ref could be the same as the
                     # base level reference.
-                    if ref.rule.condition.evaluate(ghost_package):
+                    if ref.rule.condition.evaluate(ghost_package) and \
+                           ghost_package.role == 'source':
                         continue
                     new_child_ref = \
                         PackageReference.from_package(ghost_package)
@@ -707,12 +705,14 @@ class PackageReference(object):
         concrete_condition_data = get_general_condition_data(package)
         abstract_condition_data = \
             get_abstract_condition_data(concrete_condition_data)
-        condition = build_condition(abstract_condition_data)
+        abstract_condition = build_condition(abstract_condition_data)
 
-        rule = Rule(condition, [])
+        rule = Rule(abstract_condition, [])
 
-        child_condition_data = get_child_condition_data(package)
-        child_condition = build_condition(child_condition_data)
+        complement_data = get_child_condition_data(package)
+        complement_condition = build_condition(complement_data)
+        child_condition = OrCondition([ abstract_condition,
+                                        complement_condition ])
         return PackageReference(package.package_type, None, rule,
                                 [], child_condition)
     abstract_from_package = staticmethod(abstract_from_package)

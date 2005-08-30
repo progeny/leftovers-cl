@@ -19,7 +19,7 @@
 from pdk.test.utest_util import Test
 from pdk.package import Package
 
-from pdk.rules import FieldMatchCondition, AndCondition, \
+from pdk.rules import FieldMatchCondition, AndCondition, OrCondition, \
      OneMatchMetacondition, TrueCondition, Rule, CompositeRule
 
 class ConditionsAndRulesFixture(Test):
@@ -28,7 +28,9 @@ class ConditionsAndRulesFixture(Test):
         self.name_condition = FieldMatchCondition('name', 'a')
         self.version_condition = FieldMatchCondition('version', '1')
         self.and_condition = AndCondition([self.name_condition,
-                                                 self.version_condition])
+                                           self.version_condition])
+        self.or_condition = OrCondition([self.name_condition,
+                                         self.version_condition])
 
         self.a1 = Package({'name': 'a', 'version': '1'}, None)
         self.a2 = Package({'name': 'a', 'version': '2'}, None)
@@ -52,6 +54,12 @@ class ConditionsAndRulesFixture(Test):
         assert not self.and_condition.evaluate(self.a2)
         assert not self.and_condition.evaluate(self.b1)
         assert not self.and_condition.evaluate(self.b2)
+
+    def test_or_match(self):
+        assert self.or_condition.evaluate(self.a1)
+        assert self.or_condition.evaluate(self.a2)
+        assert self.or_condition.evaluate(self.b1)
+        assert not self.or_condition.evaluate(self.b2)
 
     def test_basic_metaconditions(self):
         assert TrueCondition().evaluate(None)
