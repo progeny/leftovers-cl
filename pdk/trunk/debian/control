@@ -6,9 +6,9 @@ Build-Depends: cdbs, python2.3-dev
 Standards-Version: 3.6.1
 
 Package: pdk
-Architecture: any
-Suggests: python2.3-pylint, openssl, subversion, curl, apache2, libapache2-svn, python-librpm4.4, rpm-4.4
-Depends: ${shlibs:Depends}, python2.3, python-gnupginterface, python2.3-xml, python2.3-pycurl, smartpm, python-apt, python2.3-celementtree, git-core
+Architecture: all
+Depends: ${shlibs:Depends}, git-core, python-apt, python-gnupginterface, python2.3, python2.3-celementtree, python2.3-pycurl, python2.3-xml, smartpm
+Suggests: apache2, curl, libapache2-svn, openssl, python-librpm4.4, python2.3-pylint, rpm-4.4, subversion
 Description: Componentized Linux Platform Development Kit (PDK)
  Simply put, Componentized Linux is a platform for building
  specialized Linux distributions. Componentized Linux provides
@@ -31,4 +31,3 @@ Description: Componentized Linux Platform Development Kit (PDK)
  distro-specific patches and managing the changes over time.
  .
  Homepage: http://componentizedlinux.org/
-
