@@ -41,26 +41,32 @@ cat >xsok.xml <<EOF
 </component>
 EOF
 
-make_channel channel-1 \
+make_channel x86 \
     xsok_1.02-9.dsc \
     xsok_1.02-9.diff.gz \
     xsok_1.02.orig.tar.gz \
-    xsok_1.02-9_i386.deb \
+    xsok_1.02-9_i386.deb
+
+make_channel ia64 \
     xsok_1.02-9_ia64.deb
 
 cat >../channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
-  <channel-1>
+  <x86>
     <type>dir</type>
-    <path>channel-1</path>
-  </channel-1>
+    <path>x86</path>
+  </x86>
+  <ia64>
+    <type>dir</type>
+    <path>ia64</path>
+  </ia64>
 </channels>
 EOF
 
 pdk channel update
 
-pdk resolve xsok.xml channel-1
+pdk resolve xsok.xml
 
 # Check that the result is what we expect
 # Note, xml comments are not preseved.
@@ -71,15 +77,15 @@ diff -u - xsok.xml <<EOF || bail 'xsok.xml differs'
     <deb>
       <name>xsok</name>
       <version>1.02-9</version>
-      <dsc ref="md5:c2a02a1c12dc59f8c410663cd38db12d">
-        <name>xsok</name>
-        <version>1.02-9</version>
-      </dsc>
       <deb ref="md5:bf98a669a087a57e9a05245440431b25">
         <name>xsok</name>
         <version>1.02-9</version>
         <arch>ia64</arch>
       </deb>
+      <dsc ref="md5:c2a02a1c12dc59f8c410663cd38db12d">
+        <name>xsok</name>
+        <version>1.02-9</version>
+      </dsc>
       <deb ref="md5:42926c5789c4c684bf9844ab6a1afe0d">
         <name>xsok</name>
         <version>1.02-9</version>

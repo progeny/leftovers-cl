@@ -25,6 +25,7 @@ machine modifying components.
 """
 import os
 from pdk.util import write_pretty_xml, parse_xml
+from itertools import chain
 #from pdk.channels import ChannelData
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, OrCondition, \
@@ -81,8 +82,8 @@ def resolve(args):
     descriptor = ComponentDescriptor(component_name)
     channel_names = args[1:]
     channels = workspace.channels()
-    for channel in channels.get_channels(channel_names):
-        descriptor.resolve(channel)
+    chained_channel = list(chain(*channels.get_channels(channel_names)))
+    descriptor.resolve(chained_channel)
 
     descriptor._assert_resolved()
 
