@@ -292,6 +292,9 @@ def update_from_remote(args):
     Valid options:
     none
     """
+    if len(args) != 1:
+        message = 'update_from_remote requires an upstream name.'
+        raise CommandLineError(message)
     remote_name = args[0]
     ws = current_workspace()
     ws.update_from_remote(remote_name)

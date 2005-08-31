@@ -249,7 +249,10 @@ class ChannelData(object):
         '''Get a list of channels added under the given names.'''
         if not channel_names:
             channel_names = self.by_channel_name.keys()
-        return [ self.by_channel_name[n] for n in channel_names ]
+        try:
+            return [ self.by_channel_name[n] for n in channel_names ]
+        except KeyError, e:
+            raise InputError("Unknown channel %s." % str(e))
 
     def dump(self, filename):
         '''Dump this object to the given file.'''

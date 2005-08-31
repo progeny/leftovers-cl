@@ -192,3 +192,58 @@ rm -rf foo
 pdk repogen  || status=$?
 test "${status}" = "2" || bail "Expected error 2, got $status"
 
+#-----------------------------------------------------------------------
+# Use non-exsistant channel.
+pdk workspace create foo
+pushd foo/work
+cat > component.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <deb/>
+  </contents>
+</component>
+EOF
+
+cat > ../channels.xml <<EOF
+<?xml version="1.0"?>
+<channels>
+  <foo>
+    <type>dir</type>
+    <path>/tmp</path>
+  </foo>
+</channels>
+EOF
+pdk channel update
+pdk resolve component.xml bar || status=$?
+test "$status" = "3" || bail "Did not handle non-existant channel correctly"
+popd
+rm -rf foo
+
+#-----------------------------------------------------------------------
+# repogen an empty component
+pdk workspace create foo
+pushd foo/work
+cat > empty.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+  </contents>
+</component>
+EOF
+rm -rf foo
+
+pdk repogen empty.xml || status=$?
+test "$status" = "3" || bail "Did not handle repogen empty.xml correctly."
+popd
+rm -rf foo
+
+#-----------------------------------------------------------------------
+# update_from_remote with no upstream name
+pdk workspace create foo
+pushd foo/work
+pdk update_from_remote || status=$?
+test "$status" = "2" \
+    || bail "Did not handle update_from_remote no argument correctly."
+popd
+rm -rf foo

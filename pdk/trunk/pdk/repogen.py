@@ -77,7 +77,12 @@ def compile_product(component_name):
     if 'repo-type' in contents:
         repo_type_string = contents['repo-type']
     else:
-        first_package = product.packages[0]
+        try:
+            first_package = product.packages[0]
+        except IndexError:
+            message = 'The component given to repogen must have ' + \
+                      'at least one package.'
+            raise InputError(message)
         if first_package.format == 'deb':
             repo_type_string = 'apt-deb'
         else:
