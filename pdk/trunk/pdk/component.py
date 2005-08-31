@@ -29,7 +29,7 @@ from itertools import chain
 #from pdk.channels import ChannelData
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, OrCondition, \
-     FieldMatchCondition, TrueCondition
+     FieldMatchCondition
 from pdk.package import get_package_type, Package
 from pdk.exceptions import PdkException, CommandLineError, InputError, \
      SemanticError
@@ -327,7 +327,7 @@ class ComponentDescriptor(object):
     def resolve(self, channel):
         """Resolve abstract references by searching the given channel."""
         refs = []
-        newly_resolved_refs = []
+        child_conditions = []
         for index, ref in self.enumerate_package_refs():
             refs.append((ref, index))
 
@@ -343,10 +343,11 @@ class ComponentDescriptor(object):
                         new_ref.rule.predicates = ref.rule.predicates
                         self.contents[contents_index] = new_ref
                         del refs[ref_index]
-                        newly_resolved_refs.append(new_ref)
+                        child_condition = get_child_condition(ghost_package)
+                        child_conditions.append((child_condition, new_ref))
                         break
                     elif ghost_package.role == 'binary':
-                        if ref in newly_resolved_refs:
+                        if ref in [ cs[1] for cs in child_conditions ]:
                             new_ref = ref
                         else:
                             get_abstract_ref = \
@@ -355,15 +356,18 @@ class ComponentDescriptor(object):
                             new_ref.rule.predicates = ref.rule.predicates
                             self.contents[contents_index] = new_ref
                             del refs[ref_index]
-                            newly_resolved_refs.append(new_ref)
+                            child_condition = \
+                                get_child_condition(ghost_package)
+                            child_conditions.append((child_condition,
+                                                     new_ref))
                         break
 
         # run through the whole channel again, this time using the
         # child_conditions of new references.
         for channel_item in channel:
             ghost_package = channel_item[0]
-            for ref in newly_resolved_refs:
-                if ref.child_condition.evaluate(ghost_package):
+            for child_condition, ref in child_conditions:
+                if child_condition.evaluate(ghost_package):
                     # watch out... this ref could be the same as the
                     # base level reference.
                     if ref.rule.condition.evaluate(ghost_package) and \
@@ -478,9 +482,9 @@ class ComponentDescriptor(object):
                     and_condition.conditions.append(inner_condition)
         and_condition.conditions.append(type_condition)
         rule = Rule(and_condition, predicates)
-        child_condition = TrueCondition()
-        return PackageReference(package_type, blob_id, rule, inner_refs,
-                                child_condition)
+        ref = PackageReference(package_type, blob_id, rule)
+        ref.children = inner_refs
+        return ref
 
     def normalize_text(self, element, strip):
         '''Read a text string from an xml element.
@@ -669,10 +673,17 @@ def get_abstract_condition_data(full_condition_data):
     return [ (k, v) for k, v in full_condition_data
              if k not in ('arch', 'blob-id') ]
 
-def get_child_condition_data(package):
+def get_child_condition(package):
     """Get child condition data for any package."""
     condition_fn = get_child_condition_fn(package)
-    return condition_fn(package)
+    child_part = build_and_condition(condition_fn(package))
+    if package.role == 'source':
+        return child_part
+    else:
+        parent_data = get_general_condition_data(package)
+        parent_data = get_abstract_condition_data(parent_data)
+        parent_part = build_and_condition(parent_data)
+        return OrCondition([child_part, parent_part])
 
 child_condition_fn_map = {
     'deb': get_deb_child_condition_data,
@@ -683,7 +694,7 @@ def get_child_condition_fn(package):
     """Determine which child condition function to use on a package."""
     return child_condition_fn_map[package.type]
 
-def build_condition(condition_data):
+def build_and_condition(condition_data):
     """Build an 'and' condition from a list of tuples."""
     and_condition = AndCondition([])
     conditions = and_condition.conditions
@@ -691,43 +702,34 @@ def build_condition(condition_data):
         conditions.append(FieldMatchCondition(name, value))
     return and_condition
 
+
 class PackageReference(object):
     '''Represents a concrete package reference.'''
-    def __init__(self, package_type, blob_id, rule, children,
-                 child_condition):
+    def __init__(self, package_type, blob_id, rule):
         self.package_type = package_type
         self.blob_id = blob_id
         self.rule = rule
-        self.children = children
-        self.child_condition = child_condition
+        self.children = []
 
     def abstract_from_package(package):
         '''Instantiate an abstract reference for the given package.'''
         concrete_condition_data = get_general_condition_data(package)
         abstract_condition_data = \
             get_abstract_condition_data(concrete_condition_data)
-        abstract_condition = build_condition(abstract_condition_data)
+        abstract_condition = build_and_condition(abstract_condition_data)
 
         rule = Rule(abstract_condition, [])
 
-        complement_data = get_child_condition_data(package)
-        complement_condition = build_condition(complement_data)
-        child_condition = OrCondition([ abstract_condition,
-                                        complement_condition ])
-        return PackageReference(package.package_type, None, rule,
-                                [], child_condition)
+        return PackageReference(package.package_type, None, rule)
     abstract_from_package = staticmethod(abstract_from_package)
 
     def from_package(package):
         '''Instantiate a reference for the given package.'''
         condition_data = get_general_condition_data(package)
-        condition = build_condition(condition_data)
+        condition = build_and_condition(condition_data)
         rule = Rule(condition, [])
 
-        child_condition_data = get_child_condition_data(package)
-        child_condition = build_condition(child_condition_data)
-        return PackageReference(package.package_type, package.blob_id, rule,
-                                [], child_condition)
+        return PackageReference(package.package_type, package.blob_id, rule)
 
     from_package = staticmethod(from_package)
 

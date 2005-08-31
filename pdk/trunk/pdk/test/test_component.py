@@ -476,8 +476,7 @@ EOF
     def test_iter_package_refs(self):
         class MockRef(PackageReference):
             def __init__(self, label):
-                PackageReference.__init__(self, None, None, None, None,
-                                          None)
+                PackageReference.__init__(self, None, None, None)
                 self.label = label
                 self.children = []
 
@@ -515,7 +514,7 @@ class TestPackageRef(Test):
 
         condition = FieldMatchCondition('name', 'apache')
         rule = Rule(condition, [])
-        ref = PackageReference(Deb(), 'sha-1:aaa', rule, [], None)
+        ref = PackageReference(Deb(), 'sha-1:aaa', rule)
         good_cache = ShamCache()
         good_cache.add(apache)
         assert ref.verify(good_cache)
@@ -527,14 +526,14 @@ class TestPackageRef(Test):
 
     def test_is_abstract(self):
         concrete_ref_a = \
-            PackageReference(Deb(), 'sha-1:aaa', None, [], None)
+            PackageReference(Deb(), 'sha-1:aaa', None)
         assert not concrete_ref_a.is_abstract()
 
-        concrete_ref_b = PackageReference(Deb(), None, None, [], None)
+        concrete_ref_b = PackageReference(Deb(), None, None)
         concrete_ref_b.children.append(concrete_ref_a)
         assert not concrete_ref_b.is_abstract()
 
-        abstract_ref = PackageReference(Deb(), None, None, [], None)
+        abstract_ref = PackageReference(Deb(), None, None)
         assert abstract_ref.is_abstract()
 
     def test_get_child_condition_fn(self):
