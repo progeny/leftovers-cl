@@ -59,7 +59,9 @@ def iter_package_dir(channel_descriptor):
     yeilds three-tuple (package object, uri, unpathed filename)
     """
     directory = channel_descriptor['path']
-    for root, dummy, files in os.walk(directory):
+    for root, dirnames, files in os.walk(directory, topdown = True):
+        dirnames.sort()
+        files.sort()
         for candidate in files:
             full_path = pjoin(root, candidate)
             try:

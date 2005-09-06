@@ -150,28 +150,28 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
     <deb>
       <name>apache2-common</name>
       <version>2.0.53-5</version>
-      <dsc ref="md5:d94c995bde2f13e04cdd0c21417a7ca5">
-        <name>apache2</name>
-        <version>2.0.53-5</version>
-      </dsc>
       <deb ref="md5:5acd04d4cc6e9d1530aad04accdc8eb5">
         <name>apache2-common</name>
         <version>2.0.53-5</version>
         <arch>i386</arch>
       </deb>
+      <dsc ref="md5:d94c995bde2f13e04cdd0c21417a7ca5">
+        <name>apache2</name>
+        <version>2.0.53-5</version>
+      </dsc>
     </deb>
     <deb>
       <name>ethereal-common</name>
       <version>0.9.4-1woody2</version>
-      <dsc ref="md5:3422eaafcc0c6790921c2fadcfb45c21">
-        <name>ethereal</name>
-        <version>0.9.4-1woody2</version>
-      </dsc>
       <deb ref="md5:fead37813e0a8b27b2d198ed96a09e72">
         <name>ethereal-common</name>
         <version>0.9.4-1woody2</version>
         <arch>i386</arch>
       </deb>
+      <dsc ref="md5:3422eaafcc0c6790921c2fadcfb45c21">
+        <name>ethereal</name>
+        <version>0.9.4-1woody2</version>
+      </dsc>
       <meta>
         <test>data</test>
       </meta>
