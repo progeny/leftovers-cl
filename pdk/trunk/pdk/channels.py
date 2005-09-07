@@ -59,6 +59,10 @@ class FileLocator(object):
         '''Make a new locator which shares the base_uri or this locator.'''
         return FileLocator(self.base_uri, filename, expected_blob_id)
 
+    def __cmp__(self, other):
+        return cmp((self.base_uri, self.filename, self.blob_id),
+                   (other.base_uri, other.filename, other.blob_id))
+
 class PackageDirChannel(object):
     """Generate package objects for every package found in a dir tree.
 

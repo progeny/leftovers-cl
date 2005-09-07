@@ -19,11 +19,12 @@
 from cStringIO import StringIO
 from pdk.test.utest_util import Test
 
-from pdk.channels import iter_apt_deb_control, ChannelData
+from pdk.channels import AptDebChannel, OutsideWorld, FileLocator
 
 class TestAptDebControl(Test):
     def test_iter_apt_deb_control(self):
         packages = 'a\n\nb\nc\r\n\n'
+        iter_apt_deb_control = AptDebChannel.iter_apt_deb_control
         actual = list(iter_apt_deb_control(StringIO(packages)))
         expected = ['a\n\n', 'b\nc\r\n\n']
         self.assert_equals_long(actual, expected)
@@ -32,20 +33,25 @@ class MockPackage(object):
     def __init__(self, blob_id):
         self.blob_id = blob_id
 
-class TestChannelData(Test):
+class TestOutsideWorld(Test):
     def test_add(self):
         a = MockPackage('a')
         b = MockPackage('b')
         c = MockPackage('c')
-        channel = [ (a, 'uri:a', 'a.deb'),
-                    (b, 'uri:b', 'b.deb'),
-                    (c, 'uri:c', 'c.deb') ]
+        fl = FileLocator
+        channel = [ (a, fl('uri:a', 'a.deb', None)),
+                    (b, fl('uri:b', 'b.deb', None)),
+                    (c, fl('uri:c', 'c.deb', None)) ]
 
-        data = ChannelData()
+        data = OutsideWorld()
         data.add('local', channel)
 
-        self.assert_equals(('uri:b', 'b.deb'), data.find_by_blob_id('b'))
-        self.assert_equals(('uri:a', 'a.deb'), data.find_by_blob_id('a'))
-        self.assert_equals(('uri:c', 'c.deb'), data.find_by_blob_id('c'))
+        self.assert_equals(fl('uri:b', 'b.deb', None),
+                           data.find_by_blob_id('b'))
+        self.assert_equals(fl('uri:a', 'a.deb', None),
+                           data.find_by_blob_id('a'))
+        self.assert_equals(fl('uri:c', 'c.deb', None),
+                           data.find_by_blob_id('c'))
 
-        self.assert_equals([channel], data.get_channels(['local']))
+        self.assert_equals_long([i[0] for i in channel],
+                                data.get_package_list(['local']))
