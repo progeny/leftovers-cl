@@ -203,10 +203,7 @@ def semdiff(argv):
         component = desc.load(cache)
         old_package_list = component.direct_packages
         channels = workspace.channels()
-        new_package_list = []
-        for channel in channels.get_channels(opts.channels):
-            package_list = [ t[0] for t in channel ]
-            new_package_list.extend(package_list)
+        new_package_list = channels.get_package_list(opts.channels)
         old_meta = {}
         new_meta = {}
     elif len(args) == 1:

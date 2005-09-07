@@ -25,8 +25,6 @@ machine modifying components.
 """
 import os
 from pdk.util import write_pretty_xml, parse_xml
-from itertools import chain
-#from pdk.channels import ChannelData
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, OrCondition, \
      FieldMatchCondition
@@ -82,8 +80,8 @@ def resolve(args):
     descriptor = ComponentDescriptor(component_name)
     channel_names = args[1:]
     channels = workspace.channels()
-    chained_channel = list(chain(*channels.get_channels(channel_names)))
-    descriptor.resolve(chained_channel)
+    package_list = channels.get_package_list(channel_names)
+    descriptor.resolve(package_list)
 
     descriptor._assert_resolved()
 
@@ -324,16 +322,16 @@ class ComponentDescriptor(object):
                 )
 
 
-    def resolve(self, channel):
-        """Resolve abstract references by searching the given channel."""
+    def resolve(self, package_list):
+        """Resolve abstract references by searching the given package list.
+        """
         refs = []
         child_conditions = []
         for index, ref in self.enumerate_package_refs():
             refs.append((ref, index))
 
-        # first run the channel through base level package references.
-        for channel_item in channel:
-            ghost_package = channel_item[0]
+        # first run the packages through base level package references.
+        for ghost_package in package_list:
             for ref_index, ref_tuple in enumerate(refs):
                 ref, contents_index = ref_tuple
                 if ref.rule.condition.evaluate(ghost_package):
@@ -362,10 +360,9 @@ class ComponentDescriptor(object):
                                                      new_ref))
                         break
 
-        # run through the whole channel again, this time using the
+        # run through all the packages again, this time using the
         # child_conditions of new references.
-        for channel_item in channel:
-            ghost_package = channel_item[0]
+        for ghost_package in package_list:
             for child_condition, ref in child_conditions:
                 if child_condition.evaluate(ghost_package):
                     # watch out... this ref could be the same as the

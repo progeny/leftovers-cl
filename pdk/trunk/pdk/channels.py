@@ -20,6 +20,15 @@
 channels.py
 
 Channels are ways to acquire packages.
+
+The only class here designed for use outside of this module is
+ChannelData.
+
+Channel objects are transient. They only exist long enough to acquire
+and parse their index or package data, which may be remote. They behave
+as iterators, and do not need to be persistent.
+
+Persistence of all the channel is managed by the ChannelData class.
 """
 
 import os
@@ -30,6 +39,7 @@ from rfc822 import Message
 import cPickle
 from gzip import GzipFile
 from md5 import md5
+from itertools import chain
 from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError, SemanticError, ConfigurationError
 from pdk.exceptions import CommandLineError
@@ -38,115 +48,111 @@ from pdk.yaxml import parse_yaxml_file
 from pdk.package import get_package_type, UnknownPackageTypeError
 from pdk.progress import ConsoleProgress, CurlAdapter
 
-def iter_apt_deb_control(handle):
-    """Given a file like object, yield its deb control-like stanzas.  """
-    control = ''
-    for line in handle:
-        control += line
-        if not line.rstrip():
-            yield control
-            control = ''
-
-def iter_as_packages(control_iterator, package_type):
-    """For each control or header, yield a stream of package objects."""
-    for control in control_iterator:
-        yield package_type.parse(control, None)
-
-
-def iter_package_dir(channel_descriptor):
+class PackageDirChannel(object):
     """Generate package objects for every package found in a dir tree.
 
-    yeilds three-tuple (package object, uri, unpathed filename)
+    yields three-tuple (package object, uri, unpathed filename)
     """
-    directory = channel_descriptor['path']
-    for root, dirnames, files in os.walk(directory, topdown = True):
-        dirnames.sort()
-        files.sort()
-        for candidate in files:
-            full_path = pjoin(root, candidate)
-            try:
-                package_type = get_package_type(filename = candidate)
-            except UnknownPackageTypeError:
-                # if we don't know the the file is, we skip it.
-                continue
-            control = package_type.extract_header(full_path)
-            iterator = gen_file_fragments(full_path)
-            md51_digest = md5()
-            for block in iterator:
-                md51_digest.update(block)
-            blob_id = 'md5:' + md51_digest.hexdigest()
-            url = 'file://' + cpath(root)
-            yield package_type.parse(control, blob_id), url, candidate
+    def __init__(self, path):
+        self.path = path
 
-def iter_apt_deb_dir(channel_descriptor):
-    '''Generate package objects for every stanza in an apt source.
+    def __iter__(self):
+        for root, dirnames, files in os.walk(self.path, topdown = True):
+            dirnames.sort()
+            files.sort()
+            for candidate in files:
+                full_path = pjoin(root, candidate)
+                try:
+                    package_type = get_package_type(filename = candidate)
+                except UnknownPackageTypeError:
+                    # if we don't know the the file is, we skip it.
+                    continue
+                control = package_type.extract_header(full_path)
+                iterator = gen_file_fragments(full_path)
+                md51_digest = md5()
+                for block in iterator:
+                    md51_digest.update(block)
+                blob_id = 'md5:' + md51_digest.hexdigest()
+                url = 'file://' + cpath(root)
+                yield package_type.parse(control, blob_id), url, candidate
 
-    expect channel_descriptor to be a dict:
-      { "path": http url
-        "dist": dist_name
-        "archs": space separated list of archs **including "source".**
-        "components": space separated list of apt components
-    All parameters in channel_descriptor should be in a form similar to
-    sources.list. (except archs)
+class AptDebChannel(object):
+    '''Generate package objects for every stanza in an apt source.'''
+    def __init__(self, path, dist, components, archs):
+        self.path = path
+        self.dist = dist
+        self.components = components
+        self.archs = archs
 
-    yeilds (non-tuple) package object
-    '''
-    base_url = channel_descriptor['path']
-    if base_url[-1] != "/":
-        raise InputError, "path in channels.xml must end in a slash"
-    dist = channel_descriptor['dist']
-    components = channel_descriptor['components'].split()
-    archs = channel_descriptor['archs'].split()
-    for component in components:
-        for arch in archs:
-            for item in iter_apt_deb_slice(base_url, dist, component, arch):
-                yield item
+    def iter_apt_deb_control(handle):
+        """Given a file like object, yield its deb control-like stanzas."""
+        control = ''
+        for line in handle:
+            control += line
+            if not line.rstrip():
+                yield control
+                control = ''
+    iter_apt_deb_control = staticmethod(iter_apt_deb_control)
 
-def iter_apt_deb_slice(base_url, dist, component, arch):
-    '''Generate metadata for a single url, dist, component, and arch.'''
-    # The navigation of the repo, loading of files, and parsing of 
-    # the Sources, Packages, et al, are a SIDE EFFECT of an 
-    # iterator wrapper? Hmmmm....
-    if arch == 'source':
-        target = 'Sources.gz'
-        arch_specific = 'source'
-        package_type = get_package_type(format='dsc')
-        def get_download_info(package):
-            """Return base, filename, blob_id for a package"""
-            for md5_sum, filename in package.extra_file:
+    def iter_as_packages(control_iterator, package_type):
+        """For each control or header, yield a stream of package objects."""
+        for control in control_iterator:
+            yield package_type.parse(control, None)
+    iter_as_packages = staticmethod(iter_as_packages)
+
+    def __iter__(self):
+        for component in self.components:
+            for arch in self.archs:
+                for item in self.iter_apt_deb_slice(component, arch):
+                    yield item
+
+    def iter_apt_deb_slice(self, component, arch):
+        '''Generate metadata for a single url, dist, component, and arch.'''
+        # The navigation of the repo, loading of files, and parsing of 
+        # the Sources, Packages, et al, are a SIDE EFFECT of an 
+        # iterator wrapper? Hmmmm....
+        if arch == 'source':
+            target = 'Sources.gz'
+            arch_specific = 'source'
+            package_type = get_package_type(format='dsc')
+            def get_download_info(package):
+                """Return base, filename, blob_id for a package"""
+                for md5_sum, filename in package.extra_file:
+                    fields = Message(StringIO(package.raw))
+                    if filename.endswith('.dsc'):
+                        base = self.path + fields['directory']
+                        return base, filename, md5_sum
+                raise SemanticError, 'no dsc found'
+        else:
+            target = 'Packages.gz'
+            arch_specific = 'binary-%s' % arch
+            package_type = get_package_type(format='deb')
+            def get_download_info(package):
+                """Return base, filename, blob_id for a package"""
                 fields = Message(StringIO(package.raw))
-                if filename.endswith('.dsc'):
-                    base = base_url + fields['directory']
-                    return base, filename, md5_sum
-            raise SemanticError, 'no dsc found'
-    else:
-        target = 'Packages.gz'
-        arch_specific = 'binary-%s' % arch
-        package_type = get_package_type(format='deb')
-        def get_download_info(package):
-            """Return base, filename, blob_id for a package"""
-            fields = Message(StringIO(package.raw))
-            return base_url, fields['filename'], \
-                'md5:' + fields['md5sum']
+                return self.path, fields['filename'], \
+                    'md5:' + fields['md5sum']
 
-    tag_file = StringIO()
-    url = base_url + pjoin('dists', dist, component, arch_specific, target)
-    curl = pycurl.Curl()
-    curl.setopt(curl.URL, url)
-    curl.setopt(curl.WRITEFUNCTION, tag_file.write)
-    progress = ConsoleProgress(url)
-    adapter = CurlAdapter(progress)
-    curl.setopt(curl.NOPROGRESS, False)
-    curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
-    curl.perform()
-    tag_file.reset()
-    gunzipped = GzipFile(fileobj = tag_file)
+        tag_file = StringIO()
+        url = self.path + pjoin('dists', self.dist, component,
+                                    arch_specific, target)
+        curl = pycurl.Curl()
+        curl.setopt(curl.URL, url)
+        curl.setopt(curl.WRITEFUNCTION, tag_file.write)
+        progress = ConsoleProgress(url)
+        adapter = CurlAdapter(progress)
+        curl.setopt(curl.NOPROGRESS, False)
+        curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
+        curl.perform()
+        tag_file.reset()
+        gunzipped = GzipFile(fileobj = tag_file)
 
-    control_iterator = iter_apt_deb_control(gunzipped)
-    for package in iter_as_packages(control_iterator, package_type):
-        base_uri, filename, blob_id = get_download_info(package)
-        package.contents['blob-id'] = blob_id
-        yield package, base_uri, filename
+        control_iterator = self.iter_apt_deb_control(gunzipped)
+        for package in \
+                self.iter_as_packages(control_iterator, package_type):
+            base_uri, filename, blob_id = get_download_info(package)
+            package.contents['blob-id'] = blob_id
+            yield package, base_uri, filename
 
 
 # Locate the local channels config & cache location
@@ -170,7 +176,47 @@ def update(args):
         raise CommandLineError, 'update takes no arguments'
     ChannelData.update_index()
 
+def create_channel(name, data_dict):
+    ''' Create a channel from the given data_dict.
 
+    Expects a data_dict containing at least "path" and "type"
+    keys. Other keys may be required depending on the type.
+
+    If type is "dir", then only "path" is required. Path should refer
+    to a directory containing packages.
+
+    If type is "apt-deb", then the following keys should be present:
+      { "path": http url
+        "dist": dist_name
+        "archs": space separated list of archs **including "source".**
+        "components": space separated list of apt components }
+    All parameters for apt-deb should be in a form similar to
+    sources.list. (except archs)
+
+    '''
+    type_value = None
+    try:
+        type_value = data_dict['type']
+    except KeyError, message:
+        raise InputError('%s has no type' % name)
+
+    try:
+        path = data_dict['path']
+        if type_value == 'apt-deb':
+            if path[-1] != "/":
+                raise InputError, "path in channels.xml must end in a slash"
+            dist = data_dict['dist']
+            components = data_dict['components'].split()
+            archs = data_dict['archs'].split()
+            return AptDebChannel(path, dist, components, archs)
+        elif type_value == 'dir':
+            return PackageDirChannel(path)
+        else:
+            raise InputError('channel %s has unrecognized type %s'
+                             % (name, type_value))
+    except KeyError, field:
+        message = 'channel "%s" missing field "%s"' % (name, str(field))
+        raise InputError(message)
 
 class ChannelData(object):
     '''This object holds the downloaded state of all channels.
@@ -199,27 +245,10 @@ class ChannelData(object):
             if error.errno == 2:
                 raise ConfigurationError("Missing channels.xml.")
 
-        type_lookup = {
-            'dir': iter_package_dir, 
-            'apt-deb': iter_apt_deb_dir,
-            }
-
         channel_data = ChannelData()
         for name, data in channels.items():
-            type_value = None
-            channel_generator = None
-            try:
-                type_value = data['type']
-            except KeyError, message:
-                raise InputError('%s has no type' % name)
-            try:
-                channel_generator = type_lookup[type_value]
-            except KeyError, message:
-                raise InputError('%s unrecognized type %s'
-                                 % (name, type_value)
-                                 )
-
-            channel_data.add(name, channel_generator(data))
+            channel = create_channel(name, data)
+            channel_data.add(name, iter(channel))
         channel_data.dump(channel_data_store)
     update_index = staticmethod(update_index)
 
@@ -237,24 +266,27 @@ class ChannelData(object):
 
     def add(self, channel_name, channel_iterator):
         '''Collect and index the contents of a channel.'''
-        channel = list(channel_iterator)
-        self.by_channel_name[channel_name] = channel
-        # Ghost package? 
-        for ghost_package, base_uri, filename in channel:
+        self.by_channel_name[channel_name] = []
+        for ghost_package, base_uri, filename in channel_iterator:
+            # ghost_package is a pdk.package.Package object but we don't
+            # have a file in the cache backing it.
+            self.by_channel_name[channel_name].append(ghost_package)
             self.by_blob_id[ghost_package.blob_id] = (base_uri, filename)
 
     def find_by_blob_id(self, blob_id):
         '''Find a (base_uri, filename) tuple by blob_id.'''
         return self.by_blob_id[blob_id]
 
-    def get_channels(self, channel_names):
-        '''Get a list of channels added under the given names.'''
+    def get_package_list(self, channel_names):
+        '''Get a list of packages added under the given channel names.'''
         if not channel_names:
             channel_names = self.by_channel_name.keys()
         try:
-            return [ self.by_channel_name[n] for n in channel_names ]
+            package_lists = [ self.by_channel_name[n]
+                              for n in channel_names ]
         except KeyError, e:
             raise InputError("Unknown channel %s." % str(e))
+        return list(chain(*package_lists))
 
     def dump(self, filename):
         '''Dump this object to the given file.'''
