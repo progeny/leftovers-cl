@@ -32,6 +32,7 @@ from pdk.cache import calculate_checksums
 from pdk.component import ComponentDescriptor, PackageReference
 from pdk.package import get_package_type
 from pdk.util import split_pipe
+from pdk.channels import FileLocator
 
 
 def add_my_options(parser):
@@ -150,14 +151,17 @@ def add(argv):
                 blob_id = calculate_checksums(filename)[0]
                 package_type = get_package_type(filename = filename)
                 package_type_string = package_type.type_string
-                cache.import_file('', filename, blob_id)
+                locator = FileLocator('', filename, blob_id)
+                cache.import_file(locator)
                 package = cache.load_package(blob_id, package_type_string)
                 if hasattr(package, 'extra_file'):
                     for blob_id, extra_filename in package.extra_file:
                         extra_path = pjoin( dirname(filename)
                                             , extra_filename
                                           )
-                        cache.import_file('', extra_path, blob_id)
+                        make_extra = locator.make_extra_file_locator
+                        extra_locator = make_extra(extra_path, blob_id)
+                        cache.import_file(extra_locator)
                 packages.append(package)
             except UnicodeError, message:
                 print >> sys.stderr, "Invalid character in filename.",

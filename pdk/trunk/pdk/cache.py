@@ -50,6 +50,7 @@ from pdk.util import \
      find_cache_path, make_path_to, get_remote_file
 from pdk.progress import ConsoleProgress, CurlAdapter
 from pdk.exceptions import SemanticError, ConfigurationError
+from pdk.channels import FileLocator
 
 # Debugging aids
 import pdk.log
@@ -143,15 +144,18 @@ class SimpleCache(object):
             result = os.path.exists(local_path)
         return result
 
-    def import_file(self, base_uri, filename, blob_id):
+    def import_file(self, locator):
         '''Download and incorporate a potentially remote source.
 
-        base-uri, filename -- portions of the full_url
-        blob_id -- expected blob_id, can be left blank is source is trusted.
+        locator - A FileLocator
+
+        If the locator has a blob_id, it is used to verify the correctness
+        of the acquired file. If the blob_id is missing, the file is not
+        verified.
         '''
         local_filename = self.make_download_filename()
         try:
-            parts = [ p for p in (base_uri, filename) if p ]
+            parts = [ p for p in (locator.base_uri, locator.filename) if p ]
             full_url = '/'.join(parts)
             parts = urlparse(full_url)
             scheme = parts[0]
@@ -171,7 +175,7 @@ class SimpleCache(object):
                     get_remote_file(full_url, local_filename)
                 except pycurl.error, msg:
                     raise CacheImportError('%s, %s' % (msg, full_url))
-            self.incorporate_file(local_filename, blob_id)
+            self.incorporate_file(local_filename, locator.blob_id)
         finally:
             if os.path.exists(local_filename):
                 os.unlink(local_filename)
@@ -488,7 +492,8 @@ class NetPush(object):
                     for block in gen_fragments(handle, size):
                         local_handle.write(block)
                     local_handle.close()
-                    self.local_cache.import_file('', temp_file, name)
+                    locator = FileLocator('', temp_file, name)
+                    self.local_cache.import_file(locator)
                 finally:
                     os.unlink(temp_file)
         print

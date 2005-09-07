@@ -48,6 +48,17 @@ from pdk.yaxml import parse_yaxml_file
 from pdk.package import get_package_type, UnknownPackageTypeError
 from pdk.progress import ConsoleProgress, CurlAdapter
 
+class FileLocator(object):
+    '''Represents a resource which can be imported into the cache.'''
+    def __init__(self, base_uri, filename, expected_blob_id):
+        self.base_uri = base_uri
+        self.filename = filename
+        self.blob_id = expected_blob_id
+
+    def make_extra_file_locator(self, filename, expected_blob_id):
+        '''Make a new locator which shares the base_uri or this locator.'''
+        return FileLocator(self.base_uri, filename, expected_blob_id)
+
 class PackageDirChannel(object):
     """Generate package objects for every package found in a dir tree.
 
@@ -74,7 +85,8 @@ class PackageDirChannel(object):
                     md51_digest.update(block)
                 blob_id = 'md5:' + md51_digest.hexdigest()
                 url = 'file://' + cpath(root)
-                yield package_type.parse(control, blob_id), url, candidate
+                locator = FileLocator(url, candidate, None)
+                yield package_type.parse(control, blob_id), locator
 
 class AptDebChannel(object):
     '''Generate package objects for every stanza in an apt source.'''
@@ -121,7 +133,7 @@ class AptDebChannel(object):
                     fields = Message(StringIO(package.raw))
                     if filename.endswith('.dsc'):
                         base = self.path + fields['directory']
-                        return base, filename, md5_sum
+                        return FileLocator(base, filename, md5_sum)
                 raise SemanticError, 'no dsc found'
         else:
             target = 'Packages.gz'
@@ -130,8 +142,8 @@ class AptDebChannel(object):
             def get_download_info(package):
                 """Return base, filename, blob_id for a package"""
                 fields = Message(StringIO(package.raw))
-                return self.path, fields['filename'], \
-                    'md5:' + fields['md5sum']
+                return FileLocator(self.path, fields['filename'], \
+                                   'md5:' + fields['md5sum'])
 
         tag_file = StringIO()
         url = self.path + pjoin('dists', self.dist, component,
@@ -150,9 +162,9 @@ class AptDebChannel(object):
         control_iterator = self.iter_apt_deb_control(gunzipped)
         for package in \
                 self.iter_as_packages(control_iterator, package_type):
-            base_uri, filename, blob_id = get_download_info(package)
-            package.contents['blob-id'] = blob_id
-            yield package, base_uri, filename
+            locator = get_download_info(package)
+            package.contents['blob-id'] = locator.blob_id
+            yield package, locator
 
 
 # Locate the local channels config & cache location
@@ -267,14 +279,14 @@ class ChannelData(object):
     def add(self, channel_name, channel_iterator):
         '''Collect and index the contents of a channel.'''
         self.by_channel_name[channel_name] = []
-        for ghost_package, base_uri, filename in channel_iterator:
+        for ghost_package, locator in channel_iterator:
             # ghost_package is a pdk.package.Package object but we don't
             # have a file in the cache backing it.
             self.by_channel_name[channel_name].append(ghost_package)
-            self.by_blob_id[ghost_package.blob_id] = (base_uri, filename)
+            self.by_blob_id[ghost_package.blob_id] = locator
 
     def find_by_blob_id(self, blob_id):
-        '''Find a (base_uri, filename) tuple by blob_id.'''
+        '''Find a package locator by blob_id.'''
         return self.by_blob_id[blob_id]
 
     def get_package_list(self, channel_names):

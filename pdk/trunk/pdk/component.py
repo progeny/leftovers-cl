@@ -388,16 +388,17 @@ class ComponentDescriptor(object):
         for ref in self.iter_full_package_refs():
             if ref.blob_id and ref.blob_id not in cache:
                 try:
-                    base_uri, filename = \
-                        channels.find_by_blob_id(ref.blob_id)
+                    locator = channels.find_by_blob_id(ref.blob_id)
                 except KeyError:
                     raise SemanticError, \
                         "could not find %s in any channel" % (ref.blob_id,)
-                cache.import_file(base_uri, filename, ref.blob_id)
+                cache.import_file(locator)
                 package = ref.load(cache)
                 if hasattr(package, 'extra_file'):
                     for blob_id, filename in package.extra_file:
-                        cache.import_file(base_uri, filename, blob_id)
+                        make_extra = locator.make_extra_file_locator
+                        extra_locator = make_extra(filename, blob_id)
+                        cache.import_file(extra_locator)
 
 
     def iter_package_refs(self):
