@@ -28,7 +28,7 @@ import sys
 from pdk import version_control
 from pdk import util
 from pdk.cache import Cache
-from pdk.channels import ChannelData
+from pdk.channels import OutsideWorld
 from pdk.exceptions import ConfigurationError, IntegrityFault, \
           SemanticError, CommandLineError
 
@@ -330,9 +330,9 @@ class _Workspace(object):
     def channels(self):
         """Return the current channel index
 
-        The data returned is a ChannelData instance.
+        The data returned is an OutsideWorld instance.
         """
-        return ChannelData.load_cached()
+        return OutsideWorld.load_cached()
 
     def add(self, name):
         """

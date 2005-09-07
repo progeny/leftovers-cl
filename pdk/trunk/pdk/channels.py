@@ -22,13 +22,13 @@ channels.py
 Channels are ways to acquire packages.
 
 The only class here designed for use outside of this module is
-ChannelData.
+OutsideWorld.
 
 Channel objects are transient. They only exist long enough to acquire
 and parse their index or package data, which may be remote. They behave
 as iterators, and do not need to be persistent.
 
-Persistence of all the channel is managed by the ChannelData class.
+Persistence of all the channels is managed by the OutsideWorld class.
 """
 
 import os
@@ -186,7 +186,7 @@ def update(args):
     '''Read channels.xml and update the remote channel data. (depot)'''
     if len(args) > 0:
         raise CommandLineError, 'update takes no arguments'
-    ChannelData.update_index()
+    OutsideWorld.update_index()
 
 def create_channel(name, data_dict):
     ''' Create a channel from the given data_dict.
@@ -230,7 +230,7 @@ def create_channel(name, data_dict):
         message = 'channel "%s" missing field "%s"' % (name, str(field))
         raise InputError(message)
 
-class ChannelData(object):
+class OutsideWorld(object):
     '''This object holds the downloaded state of all channels.
     And loads the state.
     And writest the state.
@@ -257,7 +257,7 @@ class ChannelData(object):
             if error.errno == 2:
                 raise ConfigurationError("Missing channels.xml.")
 
-        channel_data = ChannelData()
+        channel_data = OutsideWorld()
         for name, data in channels.items():
             channel = create_channel(name, data)
             channel_data.add(name, iter(channel))
