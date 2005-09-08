@@ -113,7 +113,7 @@ cat >${channels} <<EOF
 EOF
 
 pdk channel update
-[ -f ${channels}.cache ] \
+[ -f ${project}/outside_world.cache ] \
     || bail 'channel cache file should have been created'
 
 pdk resolve apache.xml channel-1

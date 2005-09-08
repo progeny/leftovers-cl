@@ -131,8 +131,10 @@ class Pdk(command_base.CmdBase):
         General usage:
         pdk channel command args
         """
-        from pdk import channels
-        self.module_command(channels, args)
+        from pdk import workspace
+        if args[0] == 'update':
+            args[0] = 'world_update'
+        self.module_command(workspace, args)
 
     def do_package(self, args):
         """

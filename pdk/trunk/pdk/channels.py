@@ -33,17 +33,18 @@ Persistence of all the channels is managed by the OutsideWorld class.
 
 import os
 pjoin = os.path.join
+import rfc822
 import pycurl
 from cStringIO import StringIO
+from urlparse import urlsplit, urlunsplit
 from rfc822 import Message
 import cPickle
 from gzip import GzipFile
 from md5 import md5
 from itertools import chain
 from xml.parsers.expat import ExpatError
-from pdk.exceptions import InputError, SemanticError, ConfigurationError
-from pdk.exceptions import CommandLineError
-from pdk.util import cpath, gen_file_fragments, find_base_dir
+from pdk.exceptions import InputError, SemanticError
+from pdk.util import cpath, gen_file_fragments
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import get_package_type, UnknownPackageTypeError
 from pdk.progress import ConsoleProgress, CurlAdapter
@@ -58,6 +59,26 @@ class FileLocator(object):
     def make_extra_file_locator(self, filename, expected_blob_id):
         '''Make a new locator which shares the base_uri or this locator.'''
         return FileLocator(self.base_uri, filename, expected_blob_id)
+
+    def __cmp__(self, other):
+        return cmp((self.base_uri, self.filename, self.blob_id),
+                   (other.base_uri, other.filename, other.blob_id))
+
+class CacheFileLocator(object):
+    '''Represents a remote cached resource for import into this cache.'''
+    def __init__(self, base_uri, filename, expected_blob_id, outside_world):
+        self.base_uri = base_uri
+        self.filename = filename
+        self.blob_id = expected_blob_id
+        self.outside_world = outside_world
+
+    def make_extra_file_locator(self, dummy, expected_blob_id):
+        '''Make a new locator for the given extra file.
+
+        Hunt for the expected_blob_id in the world instead of looking
+        for the given filename.
+        '''
+        return self.outside_world.find_by_blob_id(expected_blob_id)
 
     def __cmp__(self, other):
         return cmp((self.base_uri, self.filename, self.blob_id),
@@ -170,27 +191,41 @@ class AptDebChannel(object):
             package.contents['blob-id'] = locator.blob_id
             yield package, locator
 
+class RemoteSource(object):
+    '''Read the remote cache_info list from a source.'''
+    def __init__(self, path, outside_world):
+        self.path = path
+        self.outside_world = outside_world
 
-# Locate the local channels config & cache location
-# Channels are expected to live in the root of the workspace
-#
-# We need to reconsider how the pathing is managed.  This probably
-# needs to be something that is configured by the workspace, and
-# not independently calculated.
-channel_data_source_global = pjoin(
-    find_base_dir() or "."
-    , 'channels.xml'
-    )
-channel_data_store_global = channel_data_source_global + '.cache'
-
-
-
-# Externally-exposed function -- pdk channel update
-def update(args):
-    '''Read channels.xml and update the remote channel data. (depot)'''
-    if len(args) > 0:
-        raise CommandLineError, 'update takes no arguments'
-    OutsideWorld.update_index()
+    def __iter__(self):
+        cache_index = StringIO()
+        raw_url = self.path
+        scheme, netloc, raw_path, query, fragment = urlsplit(raw_url)
+        if not scheme:
+            scheme = 'file://'
+        path_parts = raw_path.split('/')
+        path_parts[-1] = 'cache_info.gz'
+        cache_path = '/'.join(path_parts)
+        remote_path = '/'.join(path_parts[:-1])
+        cache_url = urlunsplit((scheme, netloc, cache_path, query,
+                                fragment))
+        remote_url = urlunsplit((scheme, netloc, remote_path, query,
+                                 fragment))
+        curl = pycurl.Curl()
+        curl.setopt(curl.URL, cache_url)
+        curl.setopt(curl.WRITEFUNCTION, cache_index.write)
+        progress = ConsoleProgress(cache_url)
+        adapter = CurlAdapter(progress)
+        curl.setopt(curl.NOPROGRESS, False)
+        curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
+        curl.perform()
+        cache_index.reset()
+        gunzipped = GzipFile(fileobj = cache_index)
+        for line in gunzipped:
+            blob_id, blob_path = line.strip().split()
+            locator = CacheFileLocator(remote_url, blob_path, blob_id,
+                                       self.outside_world)
+            yield blob_id, locator
 
 def create_channel(name, data_dict):
     ''' Create a channel from the given data_dict.
@@ -250,37 +285,46 @@ class OutsideWorld(object):
         self.by_channel_name = {}       # tuples by channel name
 
 
-    def update_index(channel_data_source = channel_data_source_global,
-                       channel_data_store = channel_data_store_global):
+    def update_index(workspace):
         '''Download new metadata and rewrite the pickle file.'''
         try:
-            channels = parse_yaxml_file(channel_data_source)
+            channels = parse_yaxml_file(workspace.channel_data_source)
         except ExpatError, message:
-            raise InputError("In %s, %s" % (channel_data_source, message))
+            raise InputError("In %s, %s" % (workspace.channel_data_source,
+                                            message))
         except IOError, error:
             if error.errno == 2:
-                raise ConfigurationError("Missing channels.xml.")
+                # treat missing channels.xml as no channels needed.
+                channels = {}
 
-        channel_data = OutsideWorld()
+        outside_world = OutsideWorld()
         for name, data in channels.items():
             channel = create_channel(name, data)
-            channel_data.add(name, iter(channel))
-        channel_data.dump(channel_data_store)
+            outside_world.update_with_channel(name, iter(channel))
+
+        for name in os.listdir(workspace.sources_dir):
+            source_file = os.path.join(workspace.sources_dir, name)
+            lookup = rfc822.Message(open(source_file))
+            path = lookup['URL']
+            source = RemoteSource(path, outside_world)
+            outside_world.update_with_source(iter(source))
+        outside_world.dump(workspace.outside_world_store)
     update_index = staticmethod(update_index)
 
-    def load_cached():
+    def load_cached(workspace):
         '''Read channel data from the pickle file.'''
         result = None
-        channel_data_store = channel_data_store_global
         try:
-            result = cPickle.load(open(channel_data_store))
+            result = cPickle.load(open(workspace.outside_world_store))
         except IOError, error:
             if error.errno == 2:
-                raise SemanticError("Missing channels.xml.cache")
+                message = 'Missing "%s."\n' + \
+                          'Consider running pdk channel update.'
+                raise SemanticError(message % workspace.outside_world_store)
         return result
     load_cached = staticmethod(load_cached)
 
-    def add(self, channel_name, channel_iterator):
+    def update_with_channel(self, channel_name, channel_iterator):
         '''Collect and index the contents of a channel.'''
         self.by_channel_name[channel_name] = []
         for ghost_package, locator in channel_iterator:
@@ -288,6 +332,11 @@ class OutsideWorld(object):
             # have a file in the cache backing it.
             self.by_channel_name[channel_name].append(ghost_package)
             self.by_blob_id[ghost_package.blob_id] = locator
+
+    def update_with_source(self, source_iterator):
+        '''Collect and index the contents of a source.'''
+        for blob_id, locator in source_iterator:
+            self.by_blob_id[blob_id] = locator
 
     def find_by_blob_id(self, blob_id):
         '''Find a package locator by blob_id.'''

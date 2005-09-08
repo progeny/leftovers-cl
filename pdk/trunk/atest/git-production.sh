@@ -54,6 +54,14 @@ create_snapshot() {
     mv $local_vc_path/../snap.tar.tmp $local_vc_path/../snap.tar
 }
 
+index_cache() {
+    # Assume we are in a work area.
+    pushd ..
+    find cache -type f | grep -v .header$ | sort | \
+        awk '{ split($1, parts, "/"); print parts[4], $1; }' \
+        | gzip >cache_info.gz
+    popd
+}
 
 # -----------------------------------------------------------
 # Bootstrap and do some "integration" work in the integration area.
@@ -99,6 +107,10 @@ popd
 ls production/cache >actual
 diff -u expected actual
 
+pushd production/work
+    index_cache
+popd
+
 # -----------------------------------------------------------
 # Initial customer product retrieval.
 # -----------------------------------------------------------
@@ -109,6 +121,11 @@ pdk clone http://localhost:$SERVER_PORT/telco/ \
 # Customer moves to work area and makes a local change.
 # -----------------------------------------------------------
 pushd customer-work-area/work
+    echo "URL: $tmp_dir/production/VC" \
+        >../sources/progeny.com
+    pdk channel update
+    pdk download progeny.com/apache.xml
+    pdk repogen progeny.com/apache.xml
     test -d .git || fail "No git created"
 
     echo GARBAGE >>progeny.com/apache.xml

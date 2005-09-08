@@ -43,7 +43,7 @@ cd sim-source
 config_channel
 
 pdk channel update
-[ -f channels.xml.cache ] \
+[ -f outside_world.cache ] \
     || fail 'channel cache file should have been created'
 
 cd work

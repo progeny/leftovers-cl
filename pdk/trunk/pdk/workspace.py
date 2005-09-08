@@ -94,9 +94,12 @@ def create_workspace(workspace_root):
     vc = version_control.create(work_path)
     os.symlink(absolute(vc.vc_dir), absolute(vc_link_path))
 
+    workspace = _Workspace(work_root)
+    os.makedirs(workspace.sources_dir)
+
     # Return an object that wraps the workspace
-    return _Workspace(work_root)
-    
+    return workspace
+
 # For external linkage
 def create(args):
     """
@@ -299,6 +302,14 @@ def update_from_remote(args):
     ws = current_workspace()
     ws.update_from_remote(remote_name)
 
+# Externally-exposed function -- pdk channel update
+def world_update(args):
+    '''Read channels and sources and update our map of the outside world.'''
+    if len(args) > 0:
+        raise CommandLineError, 'update takes no arguments'
+    workspace = current_workspace()
+    OutsideWorld.update_index(workspace)
+
 
 class _Workspace(object):
     """
@@ -311,10 +322,15 @@ class _Workspace(object):
                 "%s is not a workspace directory" 
                 % directory
                 )
-        self.workdir = workdir = os.path.join(location,'work')
+        pjoin = os.path.join
+        self.workdir = workdir = pjoin(location,'work')
         self.its_version_control = \
             version_control._VersionControl(workdir)
         self.its_cache = Cache(os.path.join(location,'cache'))
+        self.channel_data_source = pjoin(self.location, 'channels.xml')
+        self.outside_world_store = pjoin(self.location,
+                                         'outside_world.cache')
+        self.sources_dir = pjoin(self.location, 'sources')
 
     def cache(self):
         """Return the current workspace's cache component"""
@@ -332,7 +348,7 @@ class _Workspace(object):
 
         The data returned is an OutsideWorld instance.
         """
-        return OutsideWorld.load_cached()
+        return OutsideWorld.load_cached(self)
 
     def add(self, name):
         """

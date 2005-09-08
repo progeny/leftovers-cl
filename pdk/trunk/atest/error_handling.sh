@@ -61,15 +61,13 @@ test "$status" = "3" || bail "Incorrect/unexpected error return"
 popd ; rm -rf foo
 
 #-----------------------------------------------------------------------
-# Missing channels.xml and channels.xml.cache
+# Missing outside_world.cache
 pdk workspace create foo
 pushd foo/work
 cat >empty.xml <<EOF
 <?xml version="1.0"?>
 <component/>
 EOF
-pdk channel update || status=$?
-test "$status" = "5" || bail "Incorrect/unexpected error return"
 pdk resolve empty.xml || status=$?
 test "$status" = "4" || bail "Incorrect/unexpected error return"
 popd ; rm -rf foo

@@ -21,12 +21,15 @@
 #
 #  Will check that pdk works with RPMs that have and have not epochs.
 
+pdk workspace create test
+pushd test/work
+
 mkdir channel-1
 
-cp packages/centos-release-4-1.2.i386.rpm channel-1/
-cp packages/passwd-0.68-10.i386.rpm channel-1/
+cp $tmp_dir/packages/centos-release-4-1.2.i386.rpm channel-1/
+cp $tmp_dir/packages/passwd-0.68-10.i386.rpm channel-1/
 
-cat >channels.xml <<EOF
+cat >../channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <channel-1>
@@ -49,3 +52,4 @@ cat >rpms.xml <<EOF
 EOF
 
 pdk channel update
+

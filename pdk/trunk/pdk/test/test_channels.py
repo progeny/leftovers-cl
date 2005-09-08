@@ -34,7 +34,7 @@ class MockPackage(object):
         self.blob_id = blob_id
 
 class TestOutsideWorld(Test):
-    def test_add(self):
+    def test_update_with_channel(self):
         a = MockPackage('a')
         b = MockPackage('b')
         c = MockPackage('c')
@@ -44,7 +44,7 @@ class TestOutsideWorld(Test):
                     (c, fl('uri:c', 'c.deb', None)) ]
 
         data = OutsideWorld()
-        data.add('local', channel)
+        data.update_with_channel('local', channel)
 
         self.assert_equals(fl('uri:b', 'b.deb', None),
                            data.find_by_blob_id('b'))
