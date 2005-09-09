@@ -67,18 +67,6 @@ class TestCache(TempDirTest):
             , os.path.abspath(cache.file_path('md5:this-one-md5'))
             )
 
-    def test_verify_ids(self):
-        """Verify_ids finds correct ids and returns true on none.
-
-        verify_ids should always return true when given None as the
-        expected id. Otherwise, the expected id should be in the list
-        of actual ids"""
-        assert pdk.cache.verify_ids(None, [])
-        assert pdk.cache.verify_ids(None, [1, 2])
-        assert pdk.cache.verify_ids(1, [1, 2])
-        assert pdk.cache.verify_ids(2, [1, 2])
-        assert not pdk.cache.verify_ids(3, [1, 2])
-
     def test_acquire_file(self):
         """acquire file downloads the contents of the file_object.
 

@@ -25,7 +25,6 @@ Part of the PDK suite
 __revision__ = '$Progeny$'
 
 import os
-import shutil
 from cStringIO import StringIO
 from pdk.exceptions import IntegrityFault
 from pdk.util import shell_command
@@ -74,49 +73,6 @@ def create(working_path):
         # Follow the bread crumbs home
         os.chdir(starting_path)
     return _VersionControl(working_path)
-
-
-def clone(product_URL, branch_name, local_head_name, work_dir):
-    """
-    call git commands to create local workspace from
-    depot at upstream url
-    """
-
-    # capture starting dir
-    start_dir = os.getcwd()
-
-    # Adjust for relative paths
-    if not os.path.isabs(work_dir):
-        if start_dir.endswith(work_dir):
-            work_dir = start_dir
-        else:
-            work_dir = os.path.abspath(work_dir)
-    os.chdir(work_dir)
-    try:
-        git_path = pjoin(work_dir, '.git')
-
-        # Get a tar file and untar it locally
-        curl_source = product_URL + '/work/snap.tar'
-        curl_command = 'curl -s ' + curl_source + \
-                       ' | (tar Cx %s)' % git_path
-        shell_command(curl_command)
-
-        # Make a branches directory in git
-        branch_path = pjoin(git_path, 'branches')
-        os.mkdir(branch_path)
-
-        branch_filename = pjoin(branch_path, branch_name)
-        branch_file = file(branch_filename, 'w')
-        branch_file.write(product_URL) 
-        branch_file.close()
-
-        source = pjoin(git_path, 'HEAD')
-        target = pjoin(git_path, 'refs', 'heads', local_head_name)
-        shutil.copy(source, target)
-        shell_command('git-read-tree %s' % local_head_name)
-        shell_command('git-checkout-cache -a')
-    finally:
-        os.chdir(start_dir)
 
 
 class _VersionControl(object):

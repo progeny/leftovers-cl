@@ -102,31 +102,6 @@ def download(args):
     descriptor.download()
 
 
-def find_overlaps(packages):
-    """Group packages by their names, 'newest' package first in a group."""
-    overlaps = []
-    def reverse_version_compare(a, b):
-        """Reverse sense of version comparison"""
-        return -cmp(a.version, b.version)
-    for dummy, package_group in collate_packages(packages):
-        if len(package_group) > 1:
-            sorted = package_group[:]
-            sorted.sort(reverse_version_compare)
-            overlaps.append((sorted[0], sorted[1:]))
-    return overlaps
-
-
-def collate_packages(packages):
-    """Group packages into a sorted list by package name,type."""
-    collated = {}
-    for package in packages:
-        key = (package.name, package.type)
-        collated.setdefault(key, []).append(package)
-    keys = collated.keys()
-    keys.sort()
-    return [ (k, collated[k]) for k in keys ]
-
-
 class ComponentDescriptor(object):
     """Represents a component descriptor object.
 

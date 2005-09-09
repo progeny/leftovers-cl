@@ -80,22 +80,6 @@ class CacheImportError(SemanticError):
     """Generic error for trouble importing to cache"""
     pass
 
-def verify_ids(expected_blob_id, blob_ids):
-    """Tells that expected_blob_id is in blob_ids, with None 
-    always considered to be present.
-    """
-    # This is assuredly an odd little function.  Why is it necessary?
-    # Note: Is "(!A) or B" a bad code smell?
-    return (not expected_blob_id) or (expected_blob_id in blob_ids)
-
-def parse_package_reference(ref_string):
-    """parse out a package reference
-
-    returning the blob scheme and blob id and 
-    """
-    parts = ref_string[7:].split(',')
-    return parts[0], parts[-1]
-
 ########################################################################
 class SimpleCache(object):
     """A moderately dumb data structure representing a physical cache
@@ -252,13 +236,6 @@ class SimpleCache(object):
         """Return the inode of a file given blob_id"""
         filepath = self.file_path(blob_id)
         return os.stat(filepath)[ST_INO]
-
-    def iter_sha1_ids(self):
-        """Iterate over the list of all the sha-1 ids in this cache."""
-        rexp = re.compile('sha-1:[a-fA-F0-9]+$')
-        for filename in self:
-            if rexp.match(filename):
-                yield filename
 
     def write_index(self):
         """Write an index file describing the contents of the cache."""

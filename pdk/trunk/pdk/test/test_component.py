@@ -18,15 +18,14 @@
 
 """Unit test for component operations"""
 import os
-from sets import Set
 from cStringIO import StringIO as stringio
-from pdk.test.utest_util import Test, TempDirTest, ShamCache, MockPackage
+from pdk.test.utest_util import Test, TempDirTest, ShamCache
 from pdk.package import Package, Deb, Dsc, Rpm, SRpm, RPMVersion, \
      DebianVersion
 from pdk.cache import Cache
 from pdk.rules import FieldMatchCondition, Rule
 
-from pdk.component import find_overlaps, collate_packages, \
+from pdk.component import \
      ComponentDescriptor, Component, ComponentMeta, PackageReference, \
      get_child_condition_fn, \
      get_deb_child_condition_data, \
@@ -50,70 +49,6 @@ class MockCache(object):
         if ref not in self.packages:
             self.packages.append(ref)
         return ref
-
-class TestFindRemovalCandidates(Test):
-    def test_no_dups(self):
-        a = MockPackage('a', '0:1-2', Deb())
-        b = MockPackage('b', '0:1-2', Deb())
-
-        self.assert_equal([], find_overlaps(Set([a, b])))
-
-    def test_one_dup(self):
-        a1 = MockPackage('a', '0:1-1', Deb())
-        a2 = MockPackage('a', '0:1-2', Deb())
-
-        self.assert_equals_long([(a2, [a1])], find_overlaps(Set([a1, a2])))
-
-    def test_many_dups(self):
-        a1 = MockPackage('a', '0:1-1', Deb())
-        a2 = MockPackage('a', '0:1-2', Deb())
-        a3 = MockPackage('a', '0:1-3', Deb())
-        b1 = MockPackage('b', '0:1-1', Deb())
-        b2 = MockPackage('b', '0:1-2', Deb())
-
-        packages = Set([a1, a2, a3, b1, b2])
-
-        self.assert_equals_long([(a3, [a2, a1]), (b2, [b1])],
-                                find_overlaps(packages))
-
-    def test_source(self):
-        a1b = MockPackage('a', '0:1-1', Deb())
-        a1s = MockPackage('a', '0:1-1', Dsc())
-
-        self.assert_equals_long([], find_overlaps(Set([a1b, a1s])))
-
-
-class TestCollatePackages(Test):
-    def set_up(self):
-        self.cp = collate_packages
-
-    def test_none(self):
-        self.assert_equal([], self.cp([]))
-
-    def test_one(self):
-        a = MockPackage('a', '0:1-2', Deb())
-        self.assert_equal([(('a', 'deb'), [a])], self.cp([a]))
-
-    def test_two(self):
-        a1 = MockPackage('a', '0:1-1', Deb())
-        a2 = MockPackage('a', '0:1-2', Deb())
-        self.assert_equal([(('a', 'deb'), [a1, a2])], self.cp([a1, a2]))
-
-    def test_different(self):
-        a = MockPackage('a', '0:1-2', Deb())
-        b = MockPackage('b', '0:1-2', Deb())
-        self.assert_equals_long([(('a', 'deb'), [a]),
-                                 (('b', 'deb'), [b])],
-                                self.cp([a, b]))
-
-    def test_source(self):
-        a1b = MockPackage('a', '0:1-1', Deb())
-        a1s = MockPackage('a', '0:1-1', Dsc())
-        b = MockPackage('b', '0:1-2', Deb())
-        self.assert_equals_long([(('a', 'deb'), [a1b]),
-                                 (('a', 'dsc'), [a1s]),
-                                 (('b', 'deb'), [b])],
-                                self.cp([a1b, a1s, b]))
 
 class TestCompDesc(TempDirTest):
     def test_load_empty(self):
