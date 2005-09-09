@@ -41,32 +41,10 @@ $apache2_bin -t -f etc/apache2/apache2.conf
 $apache2_bin -X -f etc/apache2/apache2.conf &
 
 # -----------------------------------------------------------
-# Common Functions
-# -----------------------------------------------------------
-
-create_snapshot() {
-    # Creates snap.tar. In real production that part of the
-    # process could be separated and done infrequently. (cron weekly)
-    local local_path=$1
-    local local_vc_path=$local_path/VC
-
-    tar Cc $local_vc_path . > $local_vc_path/../snap.tar.tmp
-    mv $local_vc_path/../snap.tar.tmp $local_vc_path/../snap.tar
-}
-
-index_cache() {
-    # Assume we are in a work area.
-    pushd ..
-    find cache -type f | grep -v .header$ | sort | \
-        awk '{ split($1, parts, "/"); print parts[4], $1; }' \
-        | gzip >cache_info.gz
-    popd
-}
-
-# -----------------------------------------------------------
 # Bootstrap and do some "integration" work in the integration area.
 # -----------------------------------------------------------
 
+pdk workspace create production
 pdk workspace create integration
 pushd integration/work
     #This needs to be replaced with the creation of
@@ -80,61 +58,41 @@ pushd integration/work
     pdk commit "git-production commit"
 
     pdk repogen progeny.com/apache.xml
-popd
 
 # -----------------------------------------------------------
-# Set up production environment with initial production data
+# Populate production environment with initial production data
 # -----------------------------------------------------------
 
-pdk workspace create production
-pushd production/work
-    pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pull failed"
-    create_snapshot $tmp_dir/production
+    pdk publish $tmp_dir/production
 popd
-echo "Where should this take place?"
-pdk production_pull $tmp_dir/integration $tmp_dir/production master 
 
-create_snapshot $tmp_dir/production
-
-# -----------------------------------------------------------
-# Push packages from integration to production.
-# -----------------------------------------------------------
-
-pushd integration
-    pdk cachepush http://localhost:$SERVER_PORT/telco/upload
-    ls cache/ | grep -v .header$ >$tmp_dir/expected
-popd
-ls production/cache >actual
-diff -u expected actual
-
-pushd production/work
-    index_cache
-popd
+(cd integration; find cache | grep -v .header ) >expected
+(cd production; find cache | grep -v .header ) >actual
+diff -u expected actual || fail 'caches should match'
+diff -u integration/VC/refs/heads/master \
+    production/VC/refs/heads/master
 
 # -----------------------------------------------------------
 # Initial customer product retrieval.
 # -----------------------------------------------------------
-pdk clone http://localhost:$SERVER_PORT/telco/ \
-    customer-work-area progeny.com local 
-
-# -----------------------------------------------------------
-# Customer moves to work area and makes a local change.
-# -----------------------------------------------------------
+pdk workspace create customer-work-area
 pushd customer-work-area/work
-    echo "URL: $tmp_dir/production/VC" \
-        >../sources/progeny.com
-    pdk channel update
+    pdk subscribe http://localhost:$SERVER_PORT/telco/ progeny.com
+    [ -e $tmp_dir/customer-work-area/sources/progeny.com ] \
+        || fail "progeny.com subscription not created"
     pdk download progeny.com/apache.xml
     pdk repogen progeny.com/apache.xml
-    test -d .git || fail "No git created"
+
+# -----------------------------------------------------------
+# Customer makes a local change.
+# -----------------------------------------------------------
 
     echo GARBAGE >>progeny.com/apache.xml
 
-    parent_id=$(cat .git/HEAD)
     pdk commit "git-production testing"
 
     # Send change from customer to integration.
-    git-diff-tree -p -r $parent_id $(cat .git/HEAD) >patch.txt
+    git diff HEAD^ >patch.txt
 
     # really this file would be sent by email.
     cp patch.txt $tmp_dir/integration/work/patch.txt
@@ -146,21 +104,24 @@ popd
 # -----------------------------------------------------------
 
 pushd integration/work
+    # No direct pdk support for this. This case is an outlier.
     git-apply patch.txt
     pdk commit "Required commit remark"
-popd
+
 # -----------------------------------------------------------
-# Pull from integration to production (again)
+# Push from integration to production (again)
 # -----------------------------------------------------------
 
-pdk production_pull $tmp_dir/integration $tmp_dir/production master || bail "Pulling from int->prod"
+    pdk publish $tmp_dir/production
+popd
 
 # -----------------------------------------------------------
 # Pull from production to customer (again)
 # -----------------------------------------------------------
 
-cd customer-work-area
-pdk update_from_remote progeny.com 
-grep GARBAGE work/progeny.com/apache.xml
+pushd customer-work-area/work
+    pdk update_from_remote progeny.com
+    grep GARBAGE progeny.com/apache.xml
+popd
 
 # vim:ai:et:sts=4:sw=4:tw=0:

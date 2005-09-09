@@ -24,10 +24,10 @@
 #(meaningful help is another question altogether)
 pdk help
 echo "help" |pdk
-pdk help clone
-echo "help clone" |pdk
-pdk help clone foo
-echo "help clone foo" |pdk
+pdk help commit
+echo "help commit" |pdk
+pdk help commit foo
+echo "help commit foo" |pdk
 pdk help workspace
 echo "help workspace" |pdk
 pdk help workspace foo

@@ -38,6 +38,7 @@ from stat import ST_INO, ST_SIZE
 from itertools import chain
 import sha
 import md5
+import gzip
 import pycurl
 from shutil import copy2
 from urlparse import urlparse
@@ -180,18 +181,6 @@ class SimpleCache(object):
             if os.path.exists(local_filename):
                 os.unlink(local_filename)
 
-    def import_file_from_sources(self, sources, filename, blob_id):
-        '''Attempt to download a file from multiple sources (urls).'''
-
-        for source in sources:
-            try:
-                self.import_file(source, filename, blob_id)
-                return
-            except CacheImportError:
-                continue
-        raise CacheImportError('%s not found at any given source.'
-                               % filename)
-
     def _add_links(self, source, blob_ids):
         '''Create visible links to the blob contained in source.
 
@@ -271,6 +260,18 @@ class SimpleCache(object):
             if rexp.match(filename):
                 yield filename
 
+    def write_index(self):
+        """Write an index file describing the contents of the cache."""
+        index_file = os.path.join(self.path, 'blob_list.gz')
+        handle = gzip.open(index_file, 'w')
+        regex = re.compile('(sha-1:|md5:)[a-fA-F0-9]+$')
+        for filename in self:
+            if regex.match(filename):
+                path = self.make_relative_filename(filename)
+                handle.write('%s %s\n' % (filename, path))
+        handle.flush()
+        handle.close()
+
 class Cache(SimpleCache):
     """Manage and report on the contents of the cache
 
@@ -328,7 +329,9 @@ class Cache(SimpleCache):
             for blob_id in self:
                 if rexpr.match(blob_id) and blob_id not in destination:
                     local_filename = self.file_path(blob_id)
-                    destination.import_file('', local_filename, blob_id)
+                    locator = FileLocator('', local_filename, blob_id)
+                    destination.import_file(locator)
+                    destination.write_index()
 
 
     def add_header(self, header, blob_id):
@@ -496,6 +499,7 @@ class NetPush(object):
                     self.local_cache.import_file(locator)
                 finally:
                     os.unlink(temp_file)
+        self.local_cache.write_index()
         print
 
 

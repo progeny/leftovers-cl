@@ -55,6 +55,7 @@ cp ${tmp_dir}/atest/abstract_comps/apache.xml progeny.com
 cp ${tmp_dir}/atest/abstract_comps/sim-product.xml progeny.com
 
 pdk resolve progeny.com/apache.xml
+pdk download progeny.com/apache.xml
 
 pdk add progeny.com/
 pdk commit master foo

@@ -27,10 +27,12 @@ import os
 import sys
 from pdk import version_control
 from pdk import util
+from pdk import source
 from pdk.cache import Cache
 from pdk.channels import OutsideWorld
 from pdk.exceptions import ConfigurationError, IntegrityFault, \
           SemanticError, CommandLineError
+from pdk.util import pjoin
 
 def current_workspace():
     """
@@ -78,7 +80,6 @@ def create_workspace(workspace_root):
             )
 
     # localize some functions
-    pjoin = os.path.join 
     absolute = os.path.abspath
 
     # Plan the layout 
@@ -93,12 +94,11 @@ def create_workspace(workspace_root):
     os.makedirs(cache_path)
     vc = version_control.create(work_path)
     os.symlink(absolute(vc.vc_dir), absolute(vc_link_path))
+    ws =  _Workspace(work_root)
+    source.create(ws)
 
-    workspace = _Workspace(work_root)
-    os.makedirs(workspace.sources_dir)
+    return ws
 
-    # Return an object that wraps the workspace
-    return workspace
 
 # For external linkage
 def create(args):
@@ -117,89 +117,6 @@ def create(args):
     if not args:
         raise CommandLineError("requires an argument")
     create_workspace(args[0])
-
-def clone(args):
-    """
-    Create the standard product work area beneath pwd.
-    Usage:
-    pdk clone [remote_url] [local_dir] [src_branch] [local_head]
-    """
-    # Friends don't let friends nest workspaces.
-    if currently_in_a_workspace():
-        raise SemanticError(
-            "%s is Already in a workspace"
-            % os.getcwd()
-            )
-    remote_product_url = args[0]
-    local_work_area = args[1]
-    branch_name = args[2]
-    local_head_name = args[3]
-
-    # We want the work area to NOT already exist
-    if os.path.isdir(local_work_area):
-        raise SemanticError(
-            "%s is already a work area" % local_work_area
-            )
-
-    # Make the work directory
-    ws = create_workspace(local_work_area)
-    if not os.path.isdir(local_work_area):
-        raise IntegrityFault(
-            "%s does not exist after create" 
-            %  local_work_area
-            )
-
-    # Start cloning
-    start_path = os.getcwd()
-    try:
-        version_control.clone(
-            remote_product_url
-            , branch_name
-            , local_head_name
-            , ws.workdir
-            )
-    finally:
-        os.chdir(start_path)
-    return ws
-
-
-def pull(args):
-    """ 
-    Started from the shell script production_pull
-    Does a pull from one git directory to another.
-    """
-    remote_vc_path = os.path.join(args[0], 'VC')
-    local_vc_path = os.path.join(args[1], 'VC')
-    if not os.path.isdir(remote_vc_path):
-        raise CommandLineError(
-            "Remote directory %s does not exist" % remote_vc_path
-            )
-    if not os.path.isdir(local_vc_path):
-        raise CommandLineError(
-            "Local directory %s does not exist" % local_vc_path
-            )
-
-    local_head_name = args[2]
-    
-    start_path = os.getcwd()
-    try:
-        os.environ['GIT_DIR'] = local_vc_path
-
-        remote_file = file(remote_vc_path + '/HEAD', 'r')
-        remote_commit_id = remote_file.read().strip()
-        remote_file.close()
-
-        util.shell_command('git-local-pull -a -l ' + \
-                                        remote_commit_id + ' ' + \
-                                        remote_vc_path)
-
-        local_head = local_vc_path + '/refs/heads/' + local_head_name
-        tmp_file = file(local_head, 'w')
-        tmp_file.write(remote_commit_id)
-        tmp_file.close()
-    finally:
-        os.chdir(start_path)
-
 
 def add(args):
     """
@@ -310,6 +227,41 @@ def world_update(args):
     workspace = current_workspace()
     OutsideWorld.update_index(workspace)
 
+def publish(args):
+    """Publish the HEAD of this workspace to another workspace.
+
+    This command also pushes the cache.
+
+    This command takes a remote workspace path as an argument.
+    """
+    if len(args) != 1:
+        raise CommandLineError('requires a remote workspace path')
+    remote_path = args[0]
+    local = current_workspace()
+    remote_cache_path = pjoin(remote_path, 'cache')
+    local.cache().push(remote_cache_path)
+
+    remote_vc_path = pjoin(remote_path, 'VC')
+    local.version_control().push(remote_vc_path)
+
+def subscribe(args):
+    """Subscribe to and initially update from a remote workspace.
+
+    This command takes a remote workspace and a symbolic name as
+    arguments. The name will be used as shorthand for the remote workspace
+    in future invocations.
+    """
+    if len(args) != 2:
+        raise CommandLineError('requires a remote workspace path and name')
+    remote_path, name = args
+    local = current_workspace()
+    local_source = source.RemoteSources(local)
+    remote_vc_path = os.path.join(remote_path, 'VC')
+    local_source.subscribe(remote_vc_path, name)
+    local.version_control().update_from_remote(name)
+    world_update([])
+
+
 
 class _Workspace(object):
     """
@@ -322,7 +274,6 @@ class _Workspace(object):
                 "%s is not a workspace directory" 
                 % directory
                 )
-        pjoin = os.path.join
         self.workdir = workdir = pjoin(location,'work')
         self.its_version_control = \
             version_control._VersionControl(workdir)
@@ -379,6 +330,7 @@ class _Workspace(object):
         Commit changes to version control
         """
         self.version_control().commit(remark)
+        self.cache().write_index()
 
     def update(self):
         """

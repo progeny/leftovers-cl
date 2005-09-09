@@ -23,85 +23,28 @@ Library interface to pdk source
 __revision__ = '$Progeny$'
 
 import os
-#from pdk import cache
-#from pdk import version_control
-#from pdk import workspace
-import sys
 
+def create(workspace):
+    '''Create the sources directory in the workspace.'''
+    source = RemoteSources(workspace)
+    source.create()
+    return source
 
-def publish(args):
-    """
-    Create the standard product source at the argument path,
-    using the current workspace.
-    Usage:
-    pdk publish [source_path]
-    """
-    workspace_path = args[0]
-    workspace_branch = args[1]
-    source_path = args[2]
-    source_branch = args[3]
-    source = Source(source_path)
-    source.publish(workspace_path, workspace_branch, source_branch)
+class RemoteSources(object):
+    '''Represents the list of remote workspaces from which we can update.'''
+    def __init__(self, workspace):
+        self.workspace = workspace
+        self.vc = workspace.version_control()
+        self.vc_dir = os.path.join(workspace.location, 'VC')
+        self.sources_dir = os.path.join(workspace.location, 'sources')
 
+    def create(self):
+        '''Create the symlink to the internal vc dir. (i.e. .git/remotes)'''
+        os.symlink(self.vc.remotes_dir, self.sources_dir)
 
-class Source(object):
-    """
-    Library interface to pdk source
-    """
-    def __init__(self, source_path, source_name):
-        """
-        Initialize source
-        """
-        start_path = os.getcwd()
-        self.replace = False
-        if os.path.exists(source_path):
-            if self.replace:
-                os.removedirs(source_path)
-            else:
-                raise Exception, "directory already exists"
-
-#1) find the head of the current workspace
-        #ws = workspace.Workspace()
-        #get it from the command param...for now.
-        #workspace_path = ws.path
-#2a) create the destination dir 
-        os.mkdir(source_path)
-        os.chdir(source_path)
-        #make sure we define the path attribute in
-        #absolute terms
-        self.path = os.getcwd()
-        self.name = source_name
-
-        vc_path = self.path + '/VC'
-        os.mkdir(vc_path)
-#2b) ...with cache...
-        cache_path = self.path + '/cache'
-        os.mkdir(cache_path)
-#2c) ...& vc dirs.
-        os.chdir(start_path)
-
-
-    def publish(self, workspace_path, workspace_branch, source_branch):
-        """
-        Create the standard product source at the argument path,
-        using the current workspace.
-        Usage:
-        pdk publish [source_path]
-        options:
-        -r --replace: allows overwriting an existing source,
-        destroying all content that currently exists
-        """
-        start_path = os.getcwd()
-        print sys.stderr, workspace_branch, source_branch
-
-#3) copy (cache-push?) the workspace/cache into the dest/cache dir.
-#        chache.cache_push(workspace_cache_path, source_cache_path)
-#4) Drop the destination's 'vc' directory.
-#5) Recursive-copy the workspace/vc directory to destination/vc
-        os.chdir(start_path)
-        print sys.syserr, workspace_path
-
-
-
+    def subscribe(self, remote_url, name):
+        '''Create the file representing an individual subscription.'''
+        source_file = os.path.join(self.sources_dir, name)
+        open(source_file, 'w').write("URL: %s\n" % remote_url)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

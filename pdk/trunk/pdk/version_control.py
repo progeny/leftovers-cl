@@ -29,7 +29,7 @@ import shutil
 from cStringIO import StringIO
 from pdk.exceptions import IntegrityFault
 from pdk.util import shell_command
-from pdk.util import relative_path
+from pdk.util import relative_path, pjoin
 
 ## version_control
 ## Author:  Glen Smith
@@ -81,8 +81,6 @@ def clone(product_URL, branch_name, local_head_name, work_dir):
     call git commands to create local workspace from
     depot at upstream url
     """
-    # localize a path function
-    pjoin = os.path.join
 
     # capture starting dir
     start_dir = os.getcwd()
@@ -138,6 +136,9 @@ class _VersionControl(object):
             raise IntegrityFault(
                 "%s is not a directory" % self.vc_dir
                 )
+        self.remotes_dir = pjoin(self.vc_dir ,'remotes')
+        if not os.path.exists(self.remotes_dir):
+            os.mkdir(self.remotes_dir)
 
     def add(self, name):
         """
@@ -168,11 +169,9 @@ class _VersionControl(object):
         """
         call git commands to commit local work
         """
-        pjoin = os.path.join
+        head_file = pjoin(self.vc_dir, 'HEAD')
 
-        head_file = '.git/refs/heads/master'
-
-        parent_id = 0
+        parent_id = None
 
         if os.path.exists(head_file):
             the_file = file(head_file, 'r')
@@ -190,7 +189,7 @@ class _VersionControl(object):
         sha1 = _cd_shell_command(work_dir, 'git-write-tree').strip()
 
         commit_cmd = 'git-commit-tree ' + str(sha1)
-        if not parent_id == 0:
+        if parent_id:
             commit_cmd += ' -p ' + str(parent_id)
         output = shell_command(commit_cmd, StringIO(remark))
 
@@ -215,37 +214,15 @@ class _VersionControl(object):
         """
         update the version control
         """
-        work_dir = self.work_dir
-        original_dir = os.getcwd()
-        try:
-            config_file_name = 'work/.git/branches/' + upstream_name
-            config_file = file(config_file_name, 'r')
-            remote_URL = config_file.read().strip()
-            config_file.close()
-
-            curl_source = remote_URL + 'VC/HEAD'
-            remote_commit_id = _cd_shell_command(
-                work_dir
-                , 'curl -s  ' + curl_source
-                ).strip()
-
-            cmd_str = 'git-http-pull -c %s %sVC/' % (
-                remote_commit_id
-                , remote_URL
-                )
-            try:
-                _cd_shell_command(work_dir, cmd_str)
-            except Exception, message:
-                print "Message: %s" % message
-                raise
-
-            command_string = 'git-read-tree ' + remote_commit_id
-            _cd_shell_command(work_dir, command_string)
-
-            command_string = 'git-merge-cache git-merge-one-file-script -a'
-            _cd_shell_command(work_dir, command_string)
-        finally:
-            os.chdir(original_dir)
+        if self.is_new():
+            command_string = 'git fetch %(name)s :%(name)s' \
+                % {'name' : upstream_name}
+            _cd_shell_command(self.work_dir, command_string)
+            command_string = 'git checkout -b master -f %s' % upstream_name
+            _cd_shell_command(self.work_dir, command_string)
+        else:
+            command_string = 'git pull %s' % upstream_name
+            _cd_shell_command(self.work_dir, command_string)
 
     def cat(self, filename):
         '''Get the unchanged version of the given filename.'''
@@ -259,6 +236,20 @@ class _VersionControl(object):
         else:
             result = open(filename)
         return result
+
+    def push(self, remote):
+        '''Push local commits to a remote git.'''
+        command_string = 'git ls-remote "%s"' % remote
+        output = _cd_shell_command(self.work_dir, command_string)
+        push_command_string = 'git push "%s"' % remote
+        if '\tHEAD\n' not in output:
+            push_command_string += ' master'
+        _cd_shell_command(self.work_dir, push_command_string)
+
+    def is_new(self):
+        '''Is this a "new" (no commits) git repository?'''
+        head_file = pjoin(self.vc_dir, 'HEAD')
+        return not os.path.exists(head_file)
 
 def patch(args):
     """Perform a version control patch command"""

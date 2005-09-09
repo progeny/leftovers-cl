@@ -377,10 +377,12 @@ done
 munge_in_place pylint.txt awk -f make_records.awk
 
 ignore_message() {
+    set +x
     local pattern="$1"
 
     munge_in_place pylint.txt \
         awk -f ignore_pattern.awk -v pattern="$pattern"
+    set -x
 }
 
 ignore_message '^pdk.package:W0704:.*: Except doesn.t do anything'

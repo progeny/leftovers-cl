@@ -204,15 +204,15 @@ class RemoteSource(object):
         if not scheme:
             scheme = 'file://'
         path_parts = raw_path.split('/')
-        path_parts[-1] = 'cache_info.gz'
-        cache_path = '/'.join(path_parts)
-        remote_path = '/'.join(path_parts[:-1])
+        del path_parts[-1]
+        index_path = '/'.join(path_parts + ['cache', 'blob_list.gz'])
+        index_url = urlunsplit((scheme, netloc, index_path, query,
+                                fragment))
+        cache_path = '/'.join(path_parts + ['cache'])
         cache_url = urlunsplit((scheme, netloc, cache_path, query,
                                 fragment))
-        remote_url = urlunsplit((scheme, netloc, remote_path, query,
-                                 fragment))
         curl = pycurl.Curl()
-        curl.setopt(curl.URL, cache_url)
+        curl.setopt(curl.URL, index_url)
         curl.setopt(curl.WRITEFUNCTION, cache_index.write)
         progress = ConsoleProgress(cache_url)
         adapter = CurlAdapter(progress)
@@ -223,7 +223,7 @@ class RemoteSource(object):
         gunzipped = GzipFile(fileobj = cache_index)
         for line in gunzipped:
             blob_id, blob_path = line.strip().split()
-            locator = CacheFileLocator(remote_url, blob_path, blob_id,
+            locator = CacheFileLocator(cache_url, blob_path, blob_id,
                                        self.outside_world)
             yield blob_id, locator
 
