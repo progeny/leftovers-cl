@@ -16,11 +16,12 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# resolve.sh
+# resolve-multi-arch.sh
 # $Progeny$
 #
-# The resolve command should transform abstract references to concrete
-# references.
+# The resolve command should work when binaries from multiple architectures
+# are spread across channels. When packages are duplicated between the
+# channels, they should only show up once in the component descriptor.
 
 . atest/utils/test_channel.sh
 
@@ -48,6 +49,9 @@ make_channel x86 \
     xsok_1.02-9_i386.deb
 
 make_channel ia64 \
+    xsok_1.02-9.dsc \
+    xsok_1.02-9.diff.gz \
+    xsok_1.02.orig.tar.gz \
     xsok_1.02-9_ia64.deb
 
 cat >../channels.xml <<EOF
@@ -77,6 +81,11 @@ diff -u - xsok.xml <<EOF || bail 'xsok.xml differs'
     <deb>
       <name>xsok</name>
       <version>1.02-9</version>
+      <deb ref="md5:42926c5789c4c684bf9844ab6a1afe0d">
+        <name>xsok</name>
+        <version>1.02-9</version>
+        <arch>i386</arch>
+      </deb>
       <deb ref="md5:bf98a669a087a57e9a05245440431b25">
         <name>xsok</name>
         <version>1.02-9</version>
@@ -86,11 +95,6 @@ diff -u - xsok.xml <<EOF || bail 'xsok.xml differs'
         <name>xsok</name>
         <version>1.02-9</version>
       </dsc>
-      <deb ref="md5:42926c5789c4c684bf9844ab6a1afe0d">
-        <name>xsok</name>
-        <version>1.02-9</version>
-        <arch>i386</arch>
-      </deb>
     </deb>
   </contents>
 </component>

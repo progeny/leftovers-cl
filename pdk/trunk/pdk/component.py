@@ -24,6 +24,7 @@ machine modifying components.
 
 """
 import os
+from sets import Set
 from pdk.util import write_pretty_xml, parse_xml
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, OrCondition, \
@@ -82,8 +83,10 @@ def resolve(args):
     channels = workspace.channels()
     package_list = channels.get_package_list(channel_names)
     descriptor.resolve(package_list)
+    descriptor.setify_child_references()
 
     descriptor._assert_resolved()
+    descriptor.write()
 
 
 def download(args):
@@ -294,6 +297,19 @@ class ComponentDescriptor(object):
                 )
 
 
+    def setify_child_references(self):
+        """Remove duplicate and sort child references from the component.
+
+        The same child ocurring three times under three different
+        parents is not considered a duplicate.
+        """
+
+        for parent_ref in self.iter_package_refs():
+            child_set = Set(parent_ref.children)
+            new_child_list = list(child_set)
+            new_child_list.sort()
+            parent_ref.children = new_child_list
+
     def resolve(self, package_list):
         """Resolve abstract references by searching the given package list.
         """
@@ -346,8 +362,6 @@ class ComponentDescriptor(object):
                         PackageReference.from_package(ghost_package)
                     ref.children.append(new_child_ref)
                     break
-
-        self.write()
 
 
     def download(self):
@@ -748,13 +762,17 @@ class PackageReference(object):
         return Rule(build_and_condition(all_fields), self.predicates)
     rule = property(get_rule)
 
+    def __identity_tuple(self):
+        '''Return a tuple to help cmp and hash handle this object.'''
+        return self.package_type.role_string, self.name, self.blob_id, \
+               tuple(self.fields), tuple(self.predicates), \
+               tuple(self.children)
+
     def __cmp__(self, other):
-        return cmp(self.name, other.name) or \
-               cmp(self.package_type, other.package_type) or \
-               cmp(self.blob_id, other.blob_id) or \
-               cmp(self.fields, other.fields) or \
-               cmp(self.predicates, other.predicates) or \
-               cmp(self.children, other.children)
+        return cmp(self.__identity_tuple(), other.__identity_tuple())
+
+    def __hash__(self):
+        return hash(self.__identity_tuple())
 
 class ComponentReference(object):
     '''Represents a component reference.

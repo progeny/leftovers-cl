@@ -410,8 +410,8 @@ EOF
     def test_iter_package_refs(self):
         class MockRef(PackageReference):
             def __init__(self, label):
-                PackageReference.__init__(self, None, None,
-                                          [('name', 'apache')], None)
+                PackageReference.__init__(self, deb, None,
+                                          [('name', 'apache')], [])
                 self.label = label
                 self.children = []
 
