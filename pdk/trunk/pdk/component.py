@@ -254,19 +254,16 @@ class ComponentDescriptor(object):
         name = reference.package_type.type_string
         ref_element = SubElement(parent, name, attributes)
 
-        assert hasattr(reference.rule.condition, 'conditions'), \
-            'Package rules should always be flat AndConditions'
-        for condition in reference.rule.condition.conditions:
-            if condition.field_name in ('blob-id', 'type'):
+        for name, value in reference.fields:
+            if name in ('blob-id', 'type'):
                 continue
-            condition_element = SubElement(ref_element,
-                                           condition.field_name)
-            condition_element.text = condition.target
+            condition_element = SubElement(ref_element, name)
+            condition_element.text = value
 
         for inner_ref in reference.children:
             self.write_package_reference(ref_element, inner_ref)
 
-        predicates = reference.rule.predicates
+        predicates = reference.predicates
         if predicates:
             meta_element = SubElement(ref_element, 'meta')
             for predicate, target in predicates:
@@ -313,7 +310,7 @@ class ComponentDescriptor(object):
                     if ghost_package.role == 'source':
                         new_ref = \
                             PackageReference.from_package(ghost_package)
-                        new_ref.rule.predicates = ref.rule.predicates
+                        new_ref.predicates = ref.predicates
                         self.contents[contents_index] = new_ref
                         del refs[ref_index]
                         child_condition = get_child_condition(ghost_package)
@@ -326,7 +323,7 @@ class ComponentDescriptor(object):
                             get_abstract_ref = \
                                 PackageReference.abstract_from_package
                             new_ref = get_abstract_ref(ghost_package)
-                            new_ref.rule.predicates = ref.rule.predicates
+                            new_ref.predicates = ref.predicates
                             self.contents[contents_index] = new_ref
                             del refs[ref_index]
                             child_condition = \
@@ -423,24 +420,19 @@ class ComponentDescriptor(object):
         This function should only be applied to elements which pass the
         is_package_ref test.
         '''
-        and_condition = AndCondition([])
+        fields = []
 
         blob_id = None
         if 'ref' in ref_element.attrib:
             blob_id = ref_element.attrib['ref']
-            blob_id_condition = FieldMatchCondition('blob-id', blob_id)
-            and_condition.conditions.append(blob_id_condition)
 
         package_type = get_package_type(format = ref_element.tag)
-        type_condition = FieldMatchCondition('type',
-                                             package_type.type_string)
 
         predicates = []
         inner_refs = []
         if ref_element.text and ref_element.text.strip():
             target = ref_element.text.strip()
-            name_condition = FieldMatchCondition('name', target)
-            and_condition.conditions.append(name_condition)
+            fields.append(('name', target))
         else:
             for element in ref_element:
                 if element.tag == 'meta':
@@ -450,12 +442,8 @@ class ComponentDescriptor(object):
                     inner_refs.append(inner_ref)
                 else:
                     target = element.text.strip()
-                    inner_condition = FieldMatchCondition(element.tag,
-                                                          target)
-                    and_condition.conditions.append(inner_condition)
-        and_condition.conditions.append(type_condition)
-        rule = Rule(and_condition, predicates)
-        ref = PackageReference(package_type, blob_id, rule)
+                    fields.append((element.tag, target))
+        ref = PackageReference(package_type, blob_id, fields, predicates)
         ref.children = inner_refs
         return ref
 
@@ -678,10 +666,11 @@ def build_and_condition(condition_data):
 
 class PackageReference(object):
     '''Represents a concrete package reference.'''
-    def __init__(self, package_type, blob_id, rule):
+    def __init__(self, package_type, blob_id, fields, predicates):
         self.package_type = package_type
         self.blob_id = blob_id
-        self.rule = rule
+        self.fields = fields
+        self.predicates = predicates
         self.children = []
 
     def abstract_from_package(package):
@@ -689,21 +678,16 @@ class PackageReference(object):
         concrete_condition_data = get_general_condition_data(package)
         abstract_condition_data = \
             get_abstract_condition_data(concrete_condition_data)
-        abstract_condition = build_and_condition(abstract_condition_data)
 
-        rule = Rule(abstract_condition, [])
-
-        return PackageReference(package.package_type, None, rule)
+        return PackageReference(package.package_type, None,
+                                abstract_condition_data, [])
     abstract_from_package = staticmethod(abstract_from_package)
 
     def from_package(package):
         '''Instantiate a reference for the given package.'''
-        condition_data = get_general_condition_data(package)
-        condition = build_and_condition(condition_data)
-        rule = Rule(condition, [])
-
-        return PackageReference(package.package_type, package.blob_id, rule)
-
+        fields = get_general_condition_data(package)
+        return PackageReference(package.package_type, package.blob_id,
+                                fields, [])
     from_package = staticmethod(from_package)
 
     def verify(self, cache):
@@ -721,6 +705,56 @@ class PackageReference(object):
     def is_abstract(self):
         '''Return true if this package reference is abstact.'''
         return not (bool(self.blob_id) or bool(self.children))
+
+    def __contains__(self, field):
+        return field in [ t[0] for t in self.fields ]
+
+    def __getitem__(self, field):
+        fields_dict = dict(self.fields)
+        return fields_dict[field]
+
+    def get_name(self):
+        '''Get the expected name of the referenced package(s).
+
+        Returns a blank string if no name was given.
+        '''
+        return ('name' in self and self['name']) or ''
+    name = property(get_name)
+
+    def get_version(self):
+        '''Get the exected version of the referenced package(s).
+
+        Returns a blank string if no version was given.
+        '''
+        return ('version' in self and self['version']) or ''
+    version = property(get_version)
+
+    def get_arch(self):
+        '''Get the exected arch of the referenced package(s).
+
+        Returns a blank string if no arch was given.
+        '''
+        return ('arch' in self and self['arch']) or ''
+    arch = property(get_version)
+
+    def get_rule(self):
+        '''Construct a rule object for this reference.'''
+        all_fields = []
+        if self.blob_id:
+            all_fields.append(('blob-id', self.blob_id))
+
+        all_fields.extend(self.fields)
+        all_fields.append(('type', self.package_type.type_string))
+        return Rule(build_and_condition(all_fields), self.predicates)
+    rule = property(get_rule)
+
+    def __cmp__(self, other):
+        return cmp(self.name, other.name) or \
+               cmp(self.package_type, other.package_type) or \
+               cmp(self.blob_id, other.blob_id) or \
+               cmp(self.fields, other.fields) or \
+               cmp(self.predicates, other.predicates) or \
+               cmp(self.children, other.children)
 
 class ComponentReference(object):
     '''Represents a component reference.

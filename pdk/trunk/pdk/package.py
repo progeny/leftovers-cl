@@ -40,7 +40,7 @@ except ImportError:
 
 try:
     # for working with rpm packages
-    import rpm
+    import rpm as rpm_api
 except ImportError:
     pass
 
@@ -172,7 +172,7 @@ def sanitize_deb_header(header):
     """Normalize the whitespace around the deb header/control contents."""
     return header.strip() + '\n'
 
-class Dsc(object):
+class _Dsc(object):
     """Handle debian source packages (dsc file + friends)."""
     type_string = 'dsc'
     format_string = 'deb'
@@ -235,7 +235,9 @@ class Dsc(object):
                                                    package.version.release)
         return '%s_%s.dsc' % (package.name, version_string)
 
-class Deb(object):
+dsc = _Dsc()
+
+class _Deb(object):
     """Handle deb packages. (binary)"""
     type_string = 'deb'
     format_string = 'deb'
@@ -279,10 +281,12 @@ class Deb(object):
         return '%s_%s_%s.deb' % (package.name, version_string,
                                     package.arch)
 
+deb = _Deb()
+
 def get_rpm_header(handle):
     """Extract an rpm header from an rpm package file."""
-    ts = rpm.TransactionSet('/', rpm._RPMVSF_NODIGESTS
-                            | rpm._RPMVSF_NOSIGNATURES)
+    ts = rpm_api.TransactionSet('/', rpm_api._RPMVSF_NODIGESTS
+                            | rpm_api._RPMVSF_NOSIGNATURES)
     header = ts.hdrFromFdno(handle.fileno())
     handle.close()
     return header
@@ -291,12 +295,12 @@ class RPMVersion(object):
     """A comparable RPM package version."""
     def __init__(self, header = None, version_tuple = None):
         if header:
-            if header[rpm.RPMTAG_EPOCH]:
-                self.epoch = str(header[rpm.RPMTAG_EPOCH])
+            if header[rpm_api.RPMTAG_EPOCH]:
+                self.epoch = str(header[rpm_api.RPMTAG_EPOCH])
             else:
                 self.epoch = ''
-            self.version = header[rpm.RPMTAG_VERSION]
-            self.release = header[rpm.RPMTAG_RELEASE]
+            self.version = header[rpm_api.RPMTAG_VERSION]
+            self.release = header[rpm_api.RPMTAG_RELEASE]
         else:
             self.epoch, self.version, self.release = version_tuple
         self.tuple = (self.epoch or '',  self.version, self.release)
@@ -306,9 +310,9 @@ class RPMVersion(object):
     def __cmp__(self, other):
         if isinstance(other, basestring):
             other = RPMVersion(version_tuple = other.split('/'))
-        return rpm.labelCompare(self.tuple, other.tuple)
+        return rpm_api.labelCompare(self.tuple, other.tuple)
 
-class Rpm(object):
+class _Rpm(object):
     """Handle binary rpm packages."""
     type_string = 'rpm'
     format_string = 'rpm'
@@ -316,12 +320,12 @@ class Rpm(object):
 
     def parse(self, raw_header, blob_id):
         """Parse an rpm header. Returns a package object."""
-        header = rpm.headerLoad(raw_header)
+        header = rpm_api.headerLoad(raw_header)
         return Package({ 'blob-id': blob_id,
-                         'name': header[rpm.RPMTAG_NAME],
+                         'name': header[rpm_api.RPMTAG_NAME],
                          'version': RPMVersion(header),
-                         'arch': header[rpm.RPMTAG_ARCH],
-                         'source-rpm': header[rpm.RPMTAG_SOURCERPM],
+                         'arch': header[rpm_api.RPMTAG_ARCH],
+                         'source-rpm': header[rpm_api.RPMTAG_SOURCERPM],
                          'raw': raw_header }, self)
 
     def extract_header(self, filename):
@@ -336,7 +340,9 @@ class Rpm(object):
         return '%s-%s.%s.rpm' % (package.name, version_string,
                                  package.arch)
 
-class SRpm(Rpm):
+rpm = _Rpm()
+
+class _SRpm(_Rpm):
     """Handle source rpm packages."""
     type_string = 'srpm'
     role_string_string = 'source'
@@ -346,16 +352,18 @@ class SRpm(Rpm):
         version_string = package.version.string_without_epoch
         return '%s-%s.src.rpm' % (package.name, version_string)
 
+srpm = _SRpm()
+
 def get_package_type(filename = '', format = ''):
     """Return a packge type for a filename or package reference format."""
     if filename.endswith('.deb') or format == 'deb':
-        return Deb()
+        return deb
     elif filename.endswith('.dsc') or format == 'dsc':
-        return Dsc()
+        return dsc
     elif filename.endswith('.src.rpm') or format == 'srpm':
-        return SRpm()
+        return srpm
     elif filename.endswith('.rpm') or format == 'rpm':
-        return Rpm()
+        return rpm
     else:
         raise UnknownPackageTypeError((filename, format))
 

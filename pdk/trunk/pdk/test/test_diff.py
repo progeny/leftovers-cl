@@ -18,15 +18,15 @@
 
 """Unit test for semantic diff operations"""
 from pdk.test.utest_util import Test, MockPackage
-from pdk.package import Deb
+from pdk.package import deb
 from sets import Set
 
 from pdk.semdiff import iter_diffs
 
 class TestDiff(Test):
     def test_diff_same(self):
-        a = MockPackage('a', '1', Deb(), arch = 'i386')
-        b = MockPackage('b', '1', Deb(), arch = 'i386')
+        a = MockPackage('a', '1', deb, arch = 'i386')
+        b = MockPackage('b', '1', deb, arch = 'i386')
         list1 = [ a, b ]
         list2 = list1[:]
         list2.reverse()
@@ -36,8 +36,8 @@ class TestDiff(Test):
         self.assert_equals_long(expected, Set(diffs))
 
     def test_diff_add(self):
-        a = MockPackage('a', '1', Deb(), arch = 'i386')
-        b = MockPackage('b', '1', Deb(), arch = 'i386')
+        a = MockPackage('a', '1', deb, arch = 'i386')
+        b = MockPackage('b', '1', deb, arch = 'i386')
         list1 = []
         list2 = [ a, b ]
         diffs = iter_diffs(list1, list2)
@@ -46,8 +46,8 @@ class TestDiff(Test):
         self.assert_equals_long(expected, Set(diffs))
 
     def test_diff_remove(self):
-        a = MockPackage('a', '1', Deb(), arch = 'i386')
-        b = MockPackage('b', '1', Deb(), arch = 'i386')
+        a = MockPackage('a', '1', deb, arch = 'i386')
+        b = MockPackage('b', '1', deb, arch = 'i386')
         list1 = [ a, b]
         list2 = []
         diffs = iter_diffs(list1, list2)
@@ -56,8 +56,8 @@ class TestDiff(Test):
         self.assert_equals_long(expected, Set(diffs))
 
     def test_diff_upgrade(self):
-        a1 = MockPackage('a', '1', Deb(), arch = 'i386')
-        a2 = MockPackage('a', '2', Deb(), arch = 'i386')
+        a1 = MockPackage('a', '1', deb, arch = 'i386')
+        a2 = MockPackage('a', '2', deb, arch = 'i386')
         list1 = [ a1 ]
         list2 = [ a2 ]
         diffs = iter_diffs(list1, list2)
@@ -65,8 +65,8 @@ class TestDiff(Test):
         self.assert_equals_long(expected, Set(diffs))
 
     def test_diff_downgrade(self):
-        a1 = MockPackage('a', '1', Deb(), arch = 'i386')
-        a2 = MockPackage('a', '2', Deb(), arch = 'i386')
+        a1 = MockPackage('a', '1', deb, arch = 'i386')
+        a2 = MockPackage('a', '2', deb, arch = 'i386')
         list1 = [ a2 ]
         list2 = [ a1 ]
         diffs = iter_diffs(list1, list2)
@@ -74,10 +74,10 @@ class TestDiff(Test):
         self.assert_equals_long(expected, Set(diffs))
 
     def test_diff_same_with_distractions(self):
-        a = MockPackage('a', '1', Deb(), arch = 'i386')
-        b = MockPackage('b', '1', Deb(), arch = 'i386')
-        a_arm = MockPackage('a', '1', Deb(), arch = 'arm')
-        c = MockPackage('c', '1', Deb(), arch = 'i386')
+        a = MockPackage('a', '1', deb, arch = 'i386')
+        b = MockPackage('b', '1', deb, arch = 'i386')
+        a_arm = MockPackage('a', '1', deb, arch = 'arm')
+        c = MockPackage('c', '1', deb, arch = 'i386')
         list1 = [ a, b ]
         list2 = list1[:]
         list2.reverse()

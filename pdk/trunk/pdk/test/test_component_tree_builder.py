@@ -57,6 +57,24 @@ class TestComponentTreeBuilder(Test):
         self.assert_rule_matches([('name', 'hello'), ('type', 'deb')],
                                  [('ice', 'cube')], ref.rule)
 
+    def test_build_concrete_ref(self):
+        builder = ComponentDescriptor('notused')
+        element = XML('''
+<deb ref="md5:aaa">
+  <name>hello</name>
+  <meta>
+    <ice>cube</ice>
+  </meta>
+</deb>
+''')
+        ref = builder.build_package_ref(element)
+        self.assert_equal('deb', ref.package_type.type_string)
+        self.assert_equal('md5:aaa', ref.blob_id)
+        self.assert_rule_matches([('blob-id', 'md5:aaa'),
+                                  ('name', 'hello'),
+                                  ('type', 'deb')],
+                                 [('ice', 'cube')], ref.rule)
+
     def test_build_bare_name_rule(self):
         '''rules like <deb>name</deb> should have name conditions.
         No metadata should be present.

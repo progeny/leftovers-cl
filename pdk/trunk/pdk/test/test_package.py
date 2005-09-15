@@ -21,7 +21,7 @@ from pdk.test.utest_util import Test
 from cPickle import dumps, loads
 
 from pdk.package import \
-     Package, get_package_type, Deb, Dsc, SRpm, Rpm, sanitize_deb_header, \
+     Package, get_package_type, deb, dsc, srpm, rpm, sanitize_deb_header, \
      UnknownPackageTypeError, synthesize_version_string, DebianVersion
 
 __revision__ = "$Progeny$"
@@ -113,8 +113,8 @@ Description: abc
  jkl mno
 
 """
-        package = Deb().parse(header, 'zzz')
-        assert isinstance(package.package_type, Deb)
+        package = deb.parse(header, 'zzz')
+        self.assert_equal(deb, package.package_type)
         self.assert_equal('zzz', package.blob_id)
         self.assertEquals('name', package.name)
         self.assertEquals('0', package.version.epoch)
@@ -144,7 +144,7 @@ Description: asdf
  Then more stuff.
 
 """
-        package = Deb().parse(header, 'zzz')
+        package = deb.parse(header, 'zzz')
         self.assertEquals('a', package['sp-name'])
 
     def test_has_source_version(self):
@@ -160,7 +160,7 @@ Description: asdf
  Then more stuff.
 
 """
-        package = Deb().parse(header, 'zzz')
+        package = deb.parse(header, 'zzz')
         self.assertEquals('a', package['sp-name'])
         self.assertEquals(None, package.sp_version.epoch)
         self.assertEquals('0.24', package.sp_version.version)
@@ -178,8 +178,8 @@ Files:
  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 111 zippy.orig.tar.gz
 
 """
-        package = Dsc().parse(header, 'zzz')
-        assert isinstance(package.package_type, Dsc)
+        package = dsc.parse(header, 'zzz')
+        self.assert_equal(dsc, package.package_type)
         self.assert_equal('zzz', package.blob_id)
         self.assertEquals('zippy', package.name)
         self.assertEquals(None, package.version.epoch)
@@ -197,15 +197,15 @@ Files:
 
 class TestGetPackageType(Test):
     def test_get_package_type(self):
-        assert isinstance(get_package_type(filename = 'a.deb'), Deb)
-        assert isinstance(get_package_type(filename = 'a.dsc'), Dsc)
-        assert isinstance(get_package_type(filename = 'a.src.rpm'), SRpm)
-        assert isinstance(get_package_type(filename = 'a.rpm'), Rpm)
+        self.assert_equal(deb, get_package_type(filename = 'a.deb'))
+        self.assert_equal(dsc, get_package_type(filename = 'a.dsc'))
+        self.assert_equals(srpm, get_package_type(filename = 'a.src.rpm'))
+        self.assert_equals(rpm, get_package_type(filename = 'a.rpm'))
 
-        assert isinstance(get_package_type(format = 'deb'), Deb)
-        assert isinstance(get_package_type(format = 'dsc'), Dsc)
-        assert isinstance(get_package_type(format = 'srpm'), SRpm)
-        assert isinstance(get_package_type(format = 'rpm'), Rpm)
+        self.assert_equals(deb, get_package_type(format = 'deb'))
+        self.assert_equals(dsc, get_package_type(format = 'dsc'))
+        self.assert_equals(srpm, get_package_type(format = 'srpm'))
+        self.assert_equals(rpm, get_package_type(format = 'rpm'))
 
         try:
             get_package_type(filename = 'a')
@@ -232,12 +232,12 @@ class TestGetFile(Test):
     def test_get_file(self):
         p = Package({'name': 'a', 'version': DebianVersion('2.3-1'),
                      'arch': 'i386'}, None)
-        self.assert_equal('a_2.3-1_i386.deb', Deb().get_filename(p))
-        self.assert_equal('a_2.3-1.dsc', Dsc().get_filename(p))
+        self.assert_equal('a_2.3-1_i386.deb', deb.get_filename(p))
+        self.assert_equal('a_2.3-1.dsc', dsc.get_filename(p))
         p = Package({'name': 'a', 'version': DebianVersion('1:2.3'),
                      'arch': 'i386'}, None)
-        self.assert_equal('a_2.3_i386.deb', Deb().get_filename(p))
-        self.assert_equal('a_2.3.dsc', Dsc().get_filename(p))
+        self.assert_equal('a_2.3_i386.deb', deb.get_filename(p))
+        self.assert_equal('a_2.3.dsc', dsc.get_filename(p))
 
 class TestSynthesizeVersionString(Test):
     def set_up(self):
@@ -280,7 +280,7 @@ class TestPickleablePackage(Test):
         '''Package.__new__ is needed for setting state from pickle.
         Done wrong, packge.contents causes a stack overflow.
         '''
-        original = Package({'version': '2'}, Deb())
+        original = Package({'version': '2'}, deb)
         blob = dumps(original, 2)
         unpickled = loads(blob)
         self.assert_equals_long(original.contents, unpickled.contents)

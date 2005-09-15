@@ -386,10 +386,10 @@ ignore_message() {
 }
 
 ignore_message '^pdk.package:W0704:.*: Except doesn.t do anything'
-ignore_message '^pdk.package:W0232:.*:Dsc:'
-ignore_message '^pdk.package:W0232:.*:Deb:'
-ignore_message '^pdk.package:W0232:.*:SRpm:'
-ignore_message '^pdk.package:W0232:.*:Rpm:'
+ignore_message '^pdk.package:W0232:.*:_Dsc:'
+ignore_message '^pdk.package:W0232:.*:_Deb:'
+ignore_message '^pdk.package:W0232:.*:_SRpm:'
+ignore_message '^pdk.package:W0232:.*:_Rpm:'
 
 ignore_message '^pdk.compare:W0613:.*realm'
 ignore_message '^pdk.compare:W0613:.*uri'

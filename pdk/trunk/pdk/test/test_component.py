@@ -20,10 +20,9 @@
 import os
 from cStringIO import StringIO as stringio
 from pdk.test.utest_util import Test, TempDirTest, ShamCache
-from pdk.package import Package, Deb, Dsc, Rpm, SRpm, RPMVersion, \
+from pdk.package import Package, deb, dsc, rpm, srpm, RPMVersion, \
      DebianVersion
 from pdk.cache import Cache
-from pdk.rules import FieldMatchCondition, Rule
 
 from pdk.component import \
      ComponentDescriptor, Component, ComponentMeta, PackageReference, \
@@ -77,7 +76,7 @@ EOF
 ''')
         desc = ComponentDescriptor('a.xml')
         cache = ShamCache()
-        cache.add(Package({'version': '1', 'blob-id': 'sha-1:aaa'}, Deb()))
+        cache.add(Package({'version': '1', 'blob-id': 'sha-1:aaa'}, deb))
         component = desc.load(cache)
         assert isinstance(component, Component)
         self.assert_equal(1, len(component.packages))
@@ -98,7 +97,7 @@ EOF
 ''')
         desc = ComponentDescriptor('a.xml', handle)
         cache = ShamCache()
-        cache.add(Package({'version': '1', 'blob-id': 'sha-1:aaa'}, Deb()))
+        cache.add(Package({'version': '1', 'blob-id': 'sha-1:aaa'}, deb))
         component = desc.load(cache)
         assert isinstance(component, Component)
         self.assert_equal('a.xml', desc.filename)
@@ -217,9 +216,9 @@ EOF
 ''')
 
         apache = Package({'name': 'apache', 'version': '1',
-                          'blob-id': 'sha-1:aaa'}, Deb())
+                          'blob-id': 'sha-1:aaa'}, deb)
         libc = Package({'name': 'libc6', 'version': '1',
-                        'blob-id': 'sha-1:bbb'}, Deb())
+                        'blob-id': 'sha-1:bbb'}, deb)
         cache = ShamCache()
         cache.add(apache)
         cache.add(libc)
@@ -337,7 +336,7 @@ EOF
 ''')
         desc = ComponentDescriptor('test.xml')
         cache = ShamCache()
-        cache.add(Package({'version': '1', 'blob-id': 'sha-1:aaa'}, Deb()))
+        cache.add(Package({'version': '1', 'blob-id': 'sha-1:aaa'}, deb))
         desc.load(cache)
         desc.write()
         expected = '''<?xml version="1.0" encoding="utf-8"?>
@@ -385,7 +384,7 @@ EOF
 </component>
 ''')
         cache = ShamCache()
-        package = Package({'version': '1', 'blob-id': 'sha-1:aaa'}, Deb())
+        package = Package({'version': '1', 'blob-id': 'sha-1:aaa'}, deb)
         cache.add(package)
         desc = ComponentDescriptor('test1.xml')
         comp = desc.load(cache)
@@ -411,7 +410,8 @@ EOF
     def test_iter_package_refs(self):
         class MockRef(PackageReference):
             def __init__(self, label):
-                PackageReference.__init__(self, None, None, None)
+                PackageReference.__init__(self, None, None,
+                                          [('name', 'apache')], None)
                 self.label = label
                 self.children = []
 
@@ -443,13 +443,11 @@ class TestComponentMeta(Test):
 class TestPackageRef(Test):
     def test_verify(self):
         apache = Package({'name': 'apache', 'version': '1',
-                          'blob-id': 'sha-1:aaa'}, Deb())
+                          'blob-id': 'sha-1:aaa'}, deb)
         libc = Package({'name': 'libc6', 'version': '1',
-                        'blob-id': 'sha-1:aaa'}, Deb())
+                        'blob-id': 'sha-1:aaa'}, deb)
 
-        condition = FieldMatchCondition('name', 'apache')
-        rule = Rule(condition, [])
-        ref = PackageReference(Deb(), 'sha-1:aaa', rule)
+        ref = PackageReference(deb, 'sha-1:aaa', [('name', 'apache')], [])
         good_cache = ShamCache()
         good_cache.add(apache)
         assert ref.verify(good_cache)
@@ -461,25 +459,44 @@ class TestPackageRef(Test):
 
     def test_is_abstract(self):
         concrete_ref_a = \
-            PackageReference(Deb(), 'sha-1:aaa', None)
+            PackageReference(deb, 'sha-1:aaa', None, None)
         assert not concrete_ref_a.is_abstract()
 
-        concrete_ref_b = PackageReference(Deb(), None, None)
+        concrete_ref_b = PackageReference(deb, None, None, None)
         concrete_ref_b.children.append(concrete_ref_a)
         assert not concrete_ref_b.is_abstract()
 
-        abstract_ref = PackageReference(Deb(), None, None)
+        abstract_ref = PackageReference(deb, None, None, None)
         assert abstract_ref.is_abstract()
+
+    def test_field_lookups(self):
+        ref = PackageReference(deb, 'sha-1:aaa', [('name', 'apache')], [])
+
+        assert 'name' in ref
+        assert 'version' not in ref
+        self.assert_equal('apache', ref['name'])
+        self.assert_equal('apache', ref.name)
+        self.assert_equal('', ref.version)
+        self.assert_equal('', ref.arch)
+
+    def test_comparable(self):
+        fields = [('name', 'apache')]
+        refa1 = PackageReference(deb, 'sha-1:aaa', fields, [])
+        refa2 = PackageReference(deb, 'sha-1:aaa', fields, [])
+        refb = PackageReference(deb, 'sha-1:aaa', [('name', 'xsok')], [])
+
+        assert refa1 == refa2
+        assert refa1 < refb
 
     def test_get_child_condition_fn(self):
         apache_deb = Package({'name': 'apache', 'version': '1',
-                              'blob-id': 'sha-1:aaa'}, Deb())
+                              'blob-id': 'sha-1:aaa'}, deb)
         apache_rpm = Package({'name': 'apache', 'version': '1',
-                              'blob-id': 'sha-1:aaa'}, Rpm())
+                              'blob-id': 'sha-1:aaa'}, rpm)
         apache_dsc = Package({'name': 'apache', 'version': '1',
-                              'blob-id': 'sha-1:aaa'}, Dsc())
+                              'blob-id': 'sha-1:aaa'}, dsc)
         apache_srpm = Package({'name': 'apache', 'version': '1',
-                               'blob-id': 'sha-1:aaa'}, SRpm())
+                               'blob-id': 'sha-1:aaa'}, srpm)
 
         self.assert_equals(get_deb_child_condition_data,
                            get_child_condition_fn(apache_deb))
@@ -495,7 +512,7 @@ class TestPackageRef(Test):
         apache_deb = Package({'name': 'apache', 'version': '1',
                               'blob-id': 'sha-1:aaa',
                               'sp_name': 'one', 'sp_version': sp_version},
-                             Deb())
+                             deb)
 
         expected = [ ('name', 'one'),
                      ('version', '1-2'),
@@ -507,7 +524,7 @@ class TestPackageRef(Test):
     def test_get_dsc_child_condition_data(self):
         version = DebianVersion('1-2')
         apache_dsc = Package({'name': 'apache', 'version': version,
-                              'blob-id': 'sha-1:aaa'}, Dsc())
+                              'blob-id': 'sha-1:aaa'}, dsc)
 
         expected = [ ('sp_name', 'apache'),
                      ('sp_version', '1-2'),
@@ -521,7 +538,7 @@ class TestPackageRef(Test):
         version = RPMVersion(version_tuple = (None, '1', '2'))
         apache_rpm = Package({'name': 'apache', 'version': version,
                               'blob-id': 'sha-1:aaa',
-                              'source-rpm': 'apache.src.rpm'}, Rpm())
+                              'source-rpm': 'apache.src.rpm'}, rpm)
         expected = [ ('filename', 'apache.src.rpm'),
                      ('type', 'srpm') ]
 
@@ -532,7 +549,7 @@ class TestPackageRef(Test):
         version = RPMVersion(version_tuple = (None, '1', '2'))
         apache_srpm = Package({'name': 'apache',
                                'version': version,
-                               'blob-id': 'sha-1:aaa'}, SRpm())
+                               'blob-id': 'sha-1:aaa'}, srpm)
         expected = [ ('sourcerpm', 'apache-1-2.src.rpm'),
                      ('type', 'rpm') ]
 
