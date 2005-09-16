@@ -69,9 +69,12 @@ cat >expected <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
   <contents>
-    <dsc ref="md5:5e3f7f8513b7fb3e8fa1ebfa56a2b4bc">
+    <dsc>
       <name>xsok</name>
-      <version>1.02-9woody2</version>
+      <dsc ref="md5:5e3f7f8513b7fb3e8fa1ebfa56a2b4bc">
+        <name>xsok</name>
+        <version>1.02-9woody2</version>
+      </dsc>
     </dsc>
   </contents>
 </component>

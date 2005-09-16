@@ -258,13 +258,8 @@ class ComponentDescriptor(object):
         ref_element = SubElement(parent, name, attributes)
 
         for name, value in reference.fields:
-            if name in ('blob-id', 'type'):
-                continue
             condition_element = SubElement(ref_element, name)
             condition_element.text = value
-
-        for inner_ref in reference.children:
-            self.write_package_reference(ref_element, inner_ref)
 
         predicates = reference.predicates
         if predicates:
@@ -273,6 +268,9 @@ class ComponentDescriptor(object):
                 predicate_element = SubElement(meta_element,
                                                predicate)
                 predicate_element.text = target
+
+        for inner_ref in reference.children:
+            self.write_package_reference(ref_element, inner_ref)
 
 
     def _assert_resolved(self):
@@ -313,55 +311,23 @@ class ComponentDescriptor(object):
     def resolve(self, package_list):
         """Resolve abstract references by searching the given package list.
         """
-        refs = []
         child_conditions = []
-        for index, ref in self.enumerate_package_refs():
-            refs.append((ref, index))
-
         # first run the packages through base level package references.
         for ghost_package in package_list:
-            for ref_index, ref_tuple in enumerate(refs):
-                ref, contents_index = ref_tuple
+            for ref in self.iter_package_refs():
                 if ref.rule.condition.evaluate(ghost_package):
-                    if ghost_package.role == 'source':
-                        new_ref = \
-                            PackageReference.from_package(ghost_package)
-                        new_ref.predicates = ref.predicates
-                        self.contents[contents_index] = new_ref
-                        del refs[ref_index]
-                        child_condition = get_child_condition(ghost_package)
-                        child_conditions.append((child_condition, new_ref))
-                        break
-                    elif ghost_package.role == 'binary':
-                        if ref in [ cs[1] for cs in child_conditions ]:
-                            new_ref = ref
-                        else:
-                            get_abstract_ref = \
-                                PackageReference.abstract_from_package
-                            new_ref = get_abstract_ref(ghost_package)
-                            new_ref.predicates = ref.predicates
-                            self.contents[contents_index] = new_ref
-                            del refs[ref_index]
-                            child_condition = \
-                                get_child_condition(ghost_package)
-                            child_conditions.append((child_condition,
-                                                     new_ref))
-                        break
+                    child_condition = get_child_condition(ghost_package,
+                                                          ref)
+                    child_conditions.append((child_condition, ref))
 
         # run through all the packages again, this time using the
         # child_conditions of new references.
         for ghost_package in package_list:
             for child_condition, ref in child_conditions:
                 if child_condition.evaluate(ghost_package):
-                    # watch out... this ref could be the same as the
-                    # base level reference.
-                    if ref.rule.condition.evaluate(ghost_package) and \
-                           ghost_package.role == 'source':
-                        continue
                     new_child_ref = \
                         PackageReference.from_package(ghost_package)
                     ref.children.append(new_child_ref)
-                    break
 
 
     def download(self):
@@ -633,32 +599,19 @@ def get_srpm_child_condition_data(package):
     return [ ('sourcerpm', package.filename),
              ('type', 'rpm') ]
 
-def get_general_condition_data(package):
+def get_general_fields(package):
     """Get condition data for any package."""
-    condition_data = [ ('blob-id', package.blob_id),
-                       ('name', package.name),
-                       ('version', package.version.full_version) ]
+    fields = [ ('name', package.name),
+               ('version', package.version.full_version) ]
     if package.role == 'binary':
-        condition_data.append(('arch', package.arch))
-    condition_data.append(('type', package.type))
-    return condition_data
+        fields.append(('arch', package.arch))
+    return fields
 
-def get_abstract_condition_data(full_condition_data):
-    """Remove conditions which are used only for concrete references."""
-    return [ (k, v) for k, v in full_condition_data
-             if k not in ('arch', 'blob-id') ]
-
-def get_child_condition(package):
+def get_child_condition(package, ref):
     """Get child condition data for any package."""
     condition_fn = get_child_condition_fn(package)
-    child_part = build_and_condition(condition_fn(package))
-    if package.role == 'source':
-        return child_part
-    else:
-        parent_data = get_general_condition_data(package)
-        parent_data = get_abstract_condition_data(parent_data)
-        parent_part = build_and_condition(parent_data)
-        return OrCondition([child_part, parent_part])
+    child_condition = build_and_condition(condition_fn(package))
+    return OrCondition([child_condition, ref.rule.condition])
 
 child_condition_fn_map = {
     'deb': get_deb_child_condition_data,
@@ -687,19 +640,9 @@ class PackageReference(object):
         self.predicates = predicates
         self.children = []
 
-    def abstract_from_package(package):
-        '''Instantiate an abstract reference for the given package.'''
-        concrete_condition_data = get_general_condition_data(package)
-        abstract_condition_data = \
-            get_abstract_condition_data(concrete_condition_data)
-
-        return PackageReference(package.package_type, None,
-                                abstract_condition_data, [])
-    abstract_from_package = staticmethod(abstract_from_package)
-
     def from_package(package):
         '''Instantiate a reference for the given package.'''
-        fields = get_general_condition_data(package)
+        fields = get_general_fields(package)
         return PackageReference(package.package_type, package.blob_id,
                                 fields, [])
     from_package = staticmethod(from_package)

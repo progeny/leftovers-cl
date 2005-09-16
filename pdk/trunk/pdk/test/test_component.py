@@ -30,8 +30,7 @@ from pdk.component import \
      get_deb_child_condition_data, \
      get_dsc_child_condition_data, \
      get_rpm_child_condition_data, \
-     get_srpm_child_condition_data, \
-     get_abstract_condition_data
+     get_srpm_child_condition_data
 
 __revision__ = "$Progeny$"
 
@@ -556,10 +555,3 @@ class TestPackageRef(Test):
         self.assert_equals(expected,
                            get_srpm_child_condition_data(apache_srpm))
 
-
-    def test_get_abstract_condition_data(self):
-        start = [ ('name', 'a'), ('arch', 'b'), ('version', '33'),
-                  ('blob-id', 'd') ]
-        expected = [ ('name', 'a'), ('version', '33') ]
-
-        self.assert_equals(expected, get_abstract_condition_data(start))

@@ -80,7 +80,6 @@ diff -u - xsok.xml <<EOF || bail 'xsok.xml differs'
   <contents>
     <deb>
       <name>xsok</name>
-      <version>1.02-9</version>
       <deb ref="md5:42926c5789c4c684bf9844ab6a1afe0d">
         <name>xsok</name>
         <version>1.02-9</version>

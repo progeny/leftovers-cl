@@ -134,22 +134,25 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
   <provides>c</provides>
   <provides>d</provides>
   <contents>
-    <dsc ref="md5:64863d0fde185cc7e572556729fa6f33">
+    <dsc>
       <name>ida</name>
       <version>2.01-1.2</version>
+      <meta>
+        <predicate>object</predicate>
+      </meta>
       <deb ref="md5:fe2f5a4e8d4e7ae422e71b5bdfaa1e9c">
         <name>ida</name>
         <version>2.01-1.2</version>
         <arch>arm</arch>
       </deb>
-      <meta>
-        <predicate>object</predicate>
-      </meta>
+      <dsc ref="md5:64863d0fde185cc7e572556729fa6f33">
+        <name>ida</name>
+        <version>2.01-1.2</version>
+      </dsc>
     </dsc>
     <component>empty.xml</component>
     <deb>
       <name>apache2-common</name>
-      <version>2.0.53-5</version>
       <deb ref="md5:5acd04d4cc6e9d1530aad04accdc8eb5">
         <name>apache2-common</name>
         <version>2.0.53-5</version>
@@ -162,7 +165,9 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
     </deb>
     <deb>
       <name>ethereal-common</name>
-      <version>0.9.4-1woody2</version>
+      <meta>
+        <test>data</test>
+      </meta>
       <deb ref="md5:fead37813e0a8b27b2d198ed96a09e72">
         <name>ethereal-common</name>
         <version>0.9.4-1woody2</version>
@@ -172,9 +177,6 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
         <name>ethereal</name>
         <version>0.9.4-1woody2</version>
       </dsc>
-      <meta>
-        <test>data</test>
-      </meta>
     </deb>
   </contents>
 </component>
@@ -322,22 +324,25 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
   <provides>c</provides>
   <provides>d</provides>
   <contents>
-    <dsc ref="md5:64863d0fde185cc7e572556729fa6f33">
+    <dsc>
       <name>ida</name>
       <version>2.01-1.2</version>
+      <meta>
+        <predicate>object</predicate>
+      </meta>
       <deb ref="md5:fe2f5a4e8d4e7ae422e71b5bdfaa1e9c">
         <name>ida</name>
         <version>2.01-1.2</version>
         <arch>arm</arch>
       </deb>
-      <meta>
-        <predicate>object</predicate>
-      </meta>
+      <dsc ref="md5:64863d0fde185cc7e572556729fa6f33">
+        <name>ida</name>
+        <version>2.01-1.2</version>
+      </dsc>
     </dsc>
     <component>empty.xml</component>
     <deb>
       <name>apache2-common</name>
-      <version>2.0.53-5</version>
       <deb ref="md5:5acd04d4cc6e9d1530aad04accdc8eb5">
         <name>apache2-common</name>
         <version>2.0.53-5</version>
@@ -350,7 +355,9 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
     </deb>
     <deb>
       <name>ethereal-common</name>
-      <version>0.9.4-1woody2</version>
+      <meta>
+        <test>data</test>
+      </meta>
       <deb ref="md5:fead37813e0a8b27b2d198ed96a09e72">
         <name>ethereal-common</name>
         <version>0.9.4-1woody2</version>
@@ -360,9 +367,6 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
         <name>ethereal</name>
         <version>0.9.4-1woody2</version>
       </dsc>
-      <meta>
-        <test>data</test>
-      </meta>
     </deb>
   </contents>
 </component>
