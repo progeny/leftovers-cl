@@ -22,45 +22,37 @@
 
 . atest/test_lib.sh
 
-#setup
-#execute
 pdk workspace
-#evaluate
-#cleanup
 
+verify_new_workspace() {
+    dir="$1"
+    (cd $dir; find -not -type d) | sort | grep -v git/hooks >actual.txt
+    diff -u - actual.txt <<EOF
+./etc/git/description
+./etc/git/HEAD
+./etc/git/info/exclude
+./etc/schema
+./etc/sources
+./.git
+EOF
+    [ -d $dir/etc/git/remotes ]
+    [ "$(readlink $dir/etc/sources)" = git/remotes ]
+    ls $dir/etc/sources >/dev/null
+    [ "$(readlink $dir/.git)" = etc/git ]
+    [ -e $dir/.git/description ]
+    [ 2 = "$(cat $dir/etc/schema)" ]
+}
 
-#setup
-#execute
 pdk workspace create || status=$?
 test "$status" == 2 || bail "Expected command line error"
-#evaluate
-#cleanup
 
-#setup
-#execute
 pdk workspace create foo
-#evaluate
-ls -la foo|grep -q VC
-ls -la foo|grep -q work
-ls -la foo|grep -q cache
-#cleanup
+verify_new_workspace foo
 rm -rf foo
 
-
-#   setup:
-#   execute:
 (echo "workspace create" |pdk ) || status=$?
-#   evaluate:
 test "${status}" == "0" && bail "cmd shell should have returned non-zero?"
-#   cleanup:
 
-#   setup:
-#   execute:
 echo "workspace create foo" |pdk
-#   evaluate:
-ls -la foo|grep -q VC
-ls -la foo|grep -q work
-ls -la foo|grep -q cache
-#   cleanup:
+verify_new_workspace foo
 rm -rf foo
-

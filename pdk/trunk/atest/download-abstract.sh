@@ -30,7 +30,7 @@ cd downloadabstract
 
 #create the default channel configuration
 #to point at the one created above
-cat >channels.xml <<EOF
+cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <channel>
@@ -42,7 +42,6 @@ EOF
 
 pdk channel update
 
-cd work
 cat >a.xml <<EOF
 <?xml version="1.0"?>
 <component>

@@ -226,7 +226,7 @@ def compare_to_debian_repo(product, repositories):
     # Load the packages.
 
     pdk_package_list = {}
-    cache = workspace.current_workspace().cache()
+    cache = workspace.current_workspace().cache
 
     descriptor = ComponentDescriptor(product)
     component = descriptor.load(cache)

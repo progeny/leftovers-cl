@@ -25,14 +25,13 @@
 . atest/test_lib.sh
 testroot=$(pwd)
 project=$(pwd)/idempotent
-cachedir=${project}/cache
-workroot=${project}/work
+cachedir=${project}/etc/cache
 packages=$(pwd)/packages
 pdk workspace create idempotent
 
 
 # Create a component descriptor
-cd ${workroot}
+cd ${project}
 cat >product.xml <<EOF
 <?xml version="1.0"?>
 <component>

@@ -150,69 +150,6 @@ def make_path_to(file_path):
     if path_part and not os.path.isdir(path_part):
         ensure_directory_exists(path_part)
 
-def find_cache_path(directory=None):
-    """return the cache directory location, by looking for the
-    work-in-progress directory, and appending "cache"
-    """
-    result = None
-
-    if (directory): 
-        base = find_base_dir(directory) 
-    else:
-        environ_key = 'PDK_CACHE_PATH'
-        if (environ_key in os.environ):
-            base = os.environ[environ_key]
-        else:
-            base = find_base_dir(os.getcwd())
-
-    if base:
-        result = os.path.join(base, 'cache')
-    else:
-        # This is so wrong (until workspace is added)
-        result = os.path.join(os.getcwd(), 'cache')
-        # This would be more sensible
-        #raise pdk.exceptions.ConfigurationError(
-        #    "Can't locate top of workspace from %s" 
-        #    % os.getcwd()
-        #    )
-
-    ensure_directory_exists(result)
-    return result
-
-def find_base_dir(directory=None):
-    """Locate the directory above the current directory, containing
-    the work, cache, and svn directories.
-
-    Returns None if 'work' is not to be found in the current path.
-    """
-    # Based on the client-side (only-side) directory structure 
-    # proposal.
-    #
-    # This is awful in its way.  We don't know where the top of our 
-    # workspace really is, so we look for markers.
-    #
-    # Is this too much like guessing?  
-    # See python -c "import this"
-    # 
-    # We need a way to know for certain where the top of the 
-    # workspace really is.
-    if directory is None:
-        directory = os.getcwd()
-    result = None
-    while not result:
-        # Look for our markers
-        for marker in 'cache', 'work', 'vc':
-            marker_path = os.path.join(directory, marker)
-            if os.path.isdir(marker_path):
-                result = directory
-                break
-        # Markers not found, trim down the path
-        directory, dummy = os.path.split(directory)
-        # If we run out of path, quit
-        if not dummy:
-            break
-    return result
-
 class PrettyWriter(object):
     '''Handle low-level details of writing pretty indented xml.'''
     def __init__(self, handle, encoding):

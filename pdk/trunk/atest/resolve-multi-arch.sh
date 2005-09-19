@@ -26,7 +26,7 @@
 . atest/utils/test_channel.sh
 
 pdk workspace create resolve
-cd resolve/work
+cd resolve
 
 # -----------------------------------------------------------
 # Resolve from a pile of packages on the local filesystem.
@@ -54,7 +54,7 @@ make_channel ia64 \
     xsok_1.02.orig.tar.gz \
     xsok_1.02-9_ia64.deb
 
-cat >../channels.xml <<EOF
+cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <x86>

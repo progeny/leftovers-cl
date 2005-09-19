@@ -82,7 +82,7 @@ class CacheFixture(TempDirTest):
     def set_up(self):
         super(CacheFixture, self).set_up()
         os.system(set_up_cache)
-        self.cache = Cache()
+        self.cache = Cache(pjoin(self.work_dir, 'cache'))
         self.compiler = Compiler(self.cache)
 
 class DebianPoolFixture(CacheFixture):

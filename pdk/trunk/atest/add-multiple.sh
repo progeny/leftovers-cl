@@ -48,7 +48,6 @@ make_channel channel apache2*.deb apache2*.dsc ethereal*.dsc
 
 cd integration
 config_channel
-cd work
 pdk channel update
 
 #note: this will become an effect of the pdk channel command above,

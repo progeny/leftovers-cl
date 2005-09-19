@@ -25,7 +25,7 @@
 . atest/test_lib.sh
 
 pdk workspace create 'workspace'
-cd workspace/work
+cd workspace
 
 # Install old version of adjtimex
 pdk package add time.xml \

@@ -26,7 +26,7 @@ __revision__ = '$Progeny$'
 
 import os
 from cStringIO import StringIO
-from pdk.exceptions import IntegrityFault
+from pdk.exceptions import SemanticError
 from pdk.util import shell_command
 from pdk.util import relative_path, pjoin
 
@@ -36,65 +36,77 @@ from pdk.util import relative_path, pjoin
 ## Version: 0.0.1
 
 
-## Command definitions ##
-
-class VersionControlError(StandardError):
-    '''Raised when there are version control problems.'''
-    pass
-
-
-def _cd_shell_command(path, command_string, stdin=None, debug=False):
-    """Wrapper for shell_command which includes the necessary dir
-    path hijinks for version control (must execute from .git parent)
-
-    All command parameters which are files must have already been 
-    modified to be relative to the ./work directory of the project.
-    """
-    original_dir = os.getcwd()
-    os.chdir(path)
-    try:
-        result = shell_command(command_string, stdin, debug)
-    finally:
-        os.chdir(original_dir)
-    return result
-
-
-def create(working_path):
-    """Create a version control repo in the given work dir """
-    # Since we're porcelain, we have to set the stage for command-line
-    # tools -- saving the dir is "bread crumbs"
-    starting_path = os.getcwd() 
-    try:
-        # If we're not there already, go to our working path
-        if not starting_path.endswith(working_path):
-            os.chdir(working_path)
-        shell_command('git-init-db')
-    finally:
-        # Follow the bread crumbs home
-        os.chdir(starting_path)
-    return _VersionControl(working_path)
-
-
-class _VersionControl(object):
+class VersionControl(object):
     """
     Library Interface to pdk version control
     """
 
-    def __init__(self, work_path):
-        if not os.path.isdir(work_path):
-            raise IntegrityFault(
-                "%s is not a directory" % work_path
-                )
+    def __init__(self, work_path, git_path):
         self.work_dir = work_path
+        self.vc_dir = git_path
 
-        self.vc_dir = os.path.join(work_path, '.git')
-        if not os.path.isdir(self.vc_dir):
-            raise IntegrityFault(
-                "%s is not a directory" % self.vc_dir
-                )
-        self.remotes_dir = pjoin(self.vc_dir ,'remotes')
-        if not os.path.exists(self.remotes_dir):
-            os.mkdir(self.remotes_dir)
+    def popen2(self, command):
+        """Forks off a pdk command.
+
+        Returns handles to stdin and standard out.
+        command is fed to /bin/sh, not exec'ed directly.
+
+        Command is executed with cwd set to self.work_dir, and
+        env variable GIT_DIR pointed at self.vc_dir.
+        """
+        child_in_read, child_in_write = os.pipe()
+        parent_in_read, parent_in_write = os.pipe()
+        pid = os.fork()
+        if pid:
+            # parent
+            os.close(child_in_read)
+            os.close(parent_in_write)
+
+            def _wait():
+                '''A closure. Calling it waits on the remote process.
+
+                If the remote process has non-zero status, an exception
+                will be raised.
+                '''
+                dummy, status = os.waitpid(pid, 0)
+                if status:
+                    raise SemanticError, 'command "%s" failed: %d' \
+                          % (command, status)
+
+            return os.fdopen(child_in_write, 'w'), \
+                   os.fdopen(parent_in_read), \
+                   _wait
+        else:
+            # child
+            os.close(child_in_write)
+            os.close(parent_in_read)
+            os.dup2(child_in_read, 0)
+            os.dup2(parent_in_write, 1)
+            os.chdir(self.work_dir)
+            shell_cmd = '{ %s ; } ' % command
+            os.execve('/bin/sh', ['/bin/sh', '-c', shell_cmd],
+                      {'GIT_DIR': self.vc_dir})
+
+    def shell_to_string(self, command):
+        """Execute self.popen2; capture stdout as a string.
+
+        Uses self.popen2, so it inherits those characteristics.
+
+        Closes the command's stdin.
+        """
+        remote_in, remote_out, wait = self.popen2(command)
+        remote_in.close()
+        value = remote_out.read()
+        remote_out.close()
+        wait()
+        return value
+
+    def create(self):
+        """
+        Populate self.vc_dir with a git skeleton.
+        """
+        self.shell_to_string('git-init-db')
+        os.makedirs(pjoin(self.vc_dir, 'remotes'))
 
     def add(self, name):
         """
@@ -102,23 +114,23 @@ class _VersionControl(object):
         """
         name = relative_path(self.work_dir, name)
         cmd = 'git-update-cache --add %s' % name
-        return _cd_shell_command(self.work_dir, cmd)
+        return self.shell_to_string(cmd)
 
     def remove(self, name):
         """
         Initialize version control
         """
         name = relative_path(self.work_dir, name)
-        shell_command('rm ' + name)
+        self.shell_to_string('rm ' + name)
         cmd = 'git-update-cache --remove %s' % name
-        return _cd_shell_command(self.work_dir, cmd)
+        return self.shell_to_string(cmd)
 
     def revert(self, name):
         """
         Initialize version control
         """
         name = relative_path(self.work_dir, name)
-        shell_command('rm ' + name)
+        self.shell_to_string('rm ' + name)
         self.update()
 
     def commit(self, remark):
@@ -135,23 +147,24 @@ class _VersionControl(object):
             the_file.close()
 
         work_dir = self.work_dir
-        files = _cd_shell_command(work_dir, \
-                                 'git-diff-files --name-only').split()
-        files = [ relative_path(work_dir, item) 
-                  for item in files ]
-        _cd_shell_command(work_dir, 'git-update-cache ' + \
-                          ' '.join(files))
+        files = self.shell_to_string('git-diff-files --name-only').split()
+        files = [ relative_path(work_dir, item) for item in files ]
+        self.shell_to_string('git-update-cache ' + ' '.join(files))
 
-        sha1 = _cd_shell_command(work_dir, 'git-write-tree').strip()
+        sha1 = self.shell_to_string('git-write-tree').strip()
 
-        commit_cmd = 'git-commit-tree ' + str(sha1)
+        commit_cmd = 'git-commit-tree ' + sha1
         if parent_id:
             commit_cmd += ' -p ' + str(parent_id)
-        output = shell_command(commit_cmd, StringIO(remark))
+        remote_in, remote_out, wait = self.popen2(commit_cmd)
+        remote_in.write(remark)
+        remote_in.close()
+        commit_id = remote_out.read()
+        remote_out.close()
+        wait()
 
-        filename = pjoin(work_dir, head_file)
-        the_file = file(filename, 'w')
-        the_file.write(str(output))
+        the_file = file(head_file, 'w')
+        the_file.write(str(commit_id))
         the_file.close()
 
 
@@ -168,27 +181,27 @@ class _VersionControl(object):
 
     def update_from_remote(self, upstream_name):
         """
-        update the version control
+        update the version control by pulling from remote sources.
         """
         if self.is_new():
             command_string = 'git fetch %(name)s :%(name)s' \
                 % {'name' : upstream_name}
-            _cd_shell_command(self.work_dir, command_string)
+            self.shell_to_string(command_string)
             command_string = 'git checkout -b master -f %s' % upstream_name
-            _cd_shell_command(self.work_dir, command_string)
+            self.shell_to_string(command_string)
         else:
             command_string = 'git pull %s' % upstream_name
-            _cd_shell_command(self.work_dir, command_string)
+            self.shell_to_string(command_string)
 
     def cat(self, filename):
         '''Get the unchanged version of the given filename.'''
-        git_result = shell_command('git-diff-files ' + filename).strip()
-        result = ''
+        command = 'git-diff-files ' + filename
+        git_result = self.shell_to_string(command).strip()
         if git_result:
             parts = git_result.split()
             git_blob_id = parts[2]
-            result = StringIO(shell_command('git-cat-file blob %s'
-                                             % git_blob_id))
+            result = StringIO(self.shell_to_string('git-cat-file blob %s'
+                                                     % git_blob_id))
         else:
             result = open(filename)
         return result
@@ -196,23 +209,15 @@ class _VersionControl(object):
     def push(self, remote):
         '''Push local commits to a remote git.'''
         command_string = 'git ls-remote "%s"' % remote
-        output = _cd_shell_command(self.work_dir, command_string)
+        output = self.shell_to_string(command_string)
         push_command_string = 'git push "%s"' % remote
         if '\tHEAD\n' not in output:
             push_command_string += ' master'
-        _cd_shell_command(self.work_dir, push_command_string)
+        self.shell_to_string(push_command_string)
 
     def is_new(self):
         '''Is this a "new" (no commits) git repository?'''
         head_file = pjoin(self.vc_dir, 'HEAD')
         return not os.path.exists(head_file)
-
-def patch(args):
-    """Perform a version control patch command"""
-    file_name = args[0]
-    command_string = 'git-apply ' + file_name
-    shell_command(command_string)
-##    git-update-cache progeny.com/apache.xml
-##    pdk commit master "Required commit remark"
 
 # vim:ai:et:sts=4:sw=4:tw=0:

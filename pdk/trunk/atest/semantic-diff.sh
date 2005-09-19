@@ -29,7 +29,7 @@
 # -------------------
 
 pdk workspace create sim-progeny
-cd sim-progeny/work
+cd sim-progeny
 # -----------------------------------------------------
 # Do it all with rpms.
 # -----------------------------------------------------

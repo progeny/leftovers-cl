@@ -34,7 +34,7 @@ cp packages/ethereal_0.9.13-1.0progeny2_ia64.deb channel-2/
 pdk workspace create semdiff_workspace
 cd semdiff_workspace
 
-cat >channels.xml <<EOF
+cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channel>
   <channel-1>
@@ -48,7 +48,6 @@ cat >channels.xml <<EOF
 </channel>
 EOF
 
-cd work
 cat >ethereal.xml <<EOF
 <?xml version="1.0"?>
 <component>

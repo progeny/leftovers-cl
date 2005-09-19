@@ -24,9 +24,9 @@
 . atest/test_lib.sh
 
 pdk workspace create work
-cd work/work
+cd work
 
-cat >../channels.xml <<EOF
+cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <local>

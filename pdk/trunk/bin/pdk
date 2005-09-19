@@ -47,8 +47,6 @@ class Pdk(command_base.CmdBase):
 
     LazyModuleRef = command_base.LazyModuleRef
     do_audit = LazyModuleRef('pdk.audit','audit')
-    do_cachepush = LazyModuleRef('pdk.cache', 'cachepush')
-    do_cachereceive = LazyModuleRef('pdk.cache', 'cachereceive')
     do_init = LazyModuleRef('pdk.services', 'init')
     do_publish = LazyModuleRef('pdk.workspace', 'publish')
     do_subscribe = LazyModuleRef('pdk.workspace', 'subscribe')
@@ -68,7 +66,7 @@ class Pdk(command_base.CmdBase):
     do_download = LazyModuleRef('pdk.component', 'download')
     do_compare = LazyModuleRef('pdk.compare', 'compare')
     #temporary utility
-
+    do_migrate = LazyModuleRef('pdk.workspace', 'migrate')
 
     def __init__(self):
         """

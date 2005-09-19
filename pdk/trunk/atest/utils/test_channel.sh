@@ -39,7 +39,7 @@ config_channel() {
     # Add a channel for the package directory
     # note: this will migrate to a proper pdk command, like:
     # pdk channel add --dir $PACKAGES progeny.com
-    cat >channels.xml <<EOF
+    cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <channel>

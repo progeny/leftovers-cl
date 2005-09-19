@@ -45,10 +45,8 @@ from urlparse import urlparse
 from cStringIO import StringIO
 from tempfile import mkstemp
 from pdk.package import get_package_type
-from pdk.util import \
-     ensure_directory_exists, \
-     gen_fragments, gen_file_fragments, \
-     find_cache_path, make_path_to, get_remote_file
+from pdk.util import ensure_directory_exists, gen_fragments, \
+     gen_file_fragments, make_path_to, get_remote_file
 from pdk.progress import ConsoleProgress, CurlAdapter
 from pdk.exceptions import SemanticError, ConfigurationError
 from pdk.channels import FileLocator
@@ -254,9 +252,7 @@ class Cache(SimpleCache):
 
     Adds higher-level functions
     """
-    def __init__(self, cache_path = None):
-        if not cache_path:
-            cache_path = find_cache_path()
+    def __init__(self, cache_path):
         SimpleCache.__init__(self, cache_path)
         ensure_directory_exists(self.path)
 
@@ -265,8 +261,6 @@ class Cache(SimpleCache):
         "Return the filename of a blob's header file"
         fname = self.file_path(blob_id) + '.header'
         return fname
-
-
     def push(self, remote_url):
         """Execute a cache push."""
         if remote_url.startswith('http://'):
@@ -414,7 +408,6 @@ class ReadAdapter(object):
         self.buffer = self.buffer[size:]
         return value
 
-
 class NetPush(object):
     """Push files between caches on separate machines.
 
@@ -479,19 +472,5 @@ class NetPush(object):
         self.local_cache.write_index()
         print
 
-
-########################################################################
-# Entry point for pdk-cache commands.
-
-
-def cachepush(args):
-    """Command line entry point to cache push."""
-    local_cache = Cache()
-    local_cache.push(args[0])
-
-
-def cachereceive(args):
-    """CGI entry poin to the receive side of cache push."""
-    NetPush(Cache(args[0])).receive()
 
 # vim:ai:et:sts=4:sw=4:tw=0:

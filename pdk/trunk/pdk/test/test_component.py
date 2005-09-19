@@ -402,7 +402,7 @@ EOF
 </component>
 ''')
         desc = ComponentDescriptor('test.xml')
-        comp = desc.load(Cache())
+        comp = desc.load(Cache(os.path.join(self.work_dir, 'cache')))
         assert comp in comp.meta
         self.assert_equal('mandatory', comp.meta[comp]['necessity'])
 

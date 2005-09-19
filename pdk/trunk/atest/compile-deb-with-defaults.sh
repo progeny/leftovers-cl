@@ -27,7 +27,7 @@
 packages=$(pwd)/packages
 
 pdk workspace create "workspace"
-cd workspace/work
+cd workspace
 
 # Install all the packages into the local cache
 pdk package add progeny.com/apache.xml \

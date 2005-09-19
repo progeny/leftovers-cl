@@ -186,8 +186,8 @@ def semdiff(argv):
     -m makes the output machine readable.
     """
     workspace = current_workspace()
-    cat = workspace.its_version_control.cat
-    cache = workspace.cache()
+    cat = workspace.vc.cat
+    cache = workspace.cache
     parser = optparse.OptionParser()
     add_my_options(parser)
     opts, args = parser.parse_args(args=argv)
@@ -202,7 +202,7 @@ def semdiff(argv):
         desc = ComponentDescriptor(args[0])
         component = desc.load(cache)
         old_package_list = component.direct_packages
-        channels = workspace.channels()
+        channels = workspace.channels
         new_package_list = channels.get_package_list(opts.channels)
         old_meta = {}
         new_meta = {}

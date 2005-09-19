@@ -33,7 +33,7 @@ pdk workspace create repogendumpdata
 cd repogendumpdata
 
 # Add a channel for the package directory
-cat >channels.xml <<EOF
+cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <local>
@@ -43,7 +43,6 @@ cat >channels.xml <<EOF
 </channels>
 EOF
 
-cd work
 # Add some concrete and abstract package references to a new component.
 cat >apache.xml <<EOF
 <?xml version="1.0"?>
@@ -88,20 +87,15 @@ cat >joined-report.xml <<EOF
 </component>
 EOF
 
-cd ..
 pdk channel update
-[ -f outside_world.cache ] \
-    || fail 'channel cache file should have been created'
-cd work
-
 pdk resolve apache.xml local
 pdk download apache.xml
 
 pdk repogen separate-report.xml >report.txt
 
 cat >control.txt <<EOF
-apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5
-passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/repogendumpdata/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb
+apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/etc/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5
+passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/repogendumpdata/etc/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb
 
 md5:5acd04d4cc6e9d1530aad04accdc8eb5 one-more thing
 md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate object
@@ -112,9 +106,9 @@ diff -u control.txt report.txt
 
 pdk repogen joined-report.xml >report.txt
 cat >control.txt <<EOF
-apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 one-more thing
-apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate object
-passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/repogendumpdata/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb  
+apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/etc/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 one-more thing
+apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/etc/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate object
+passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/repogendumpdata/etc/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb  
 
 EOF
 

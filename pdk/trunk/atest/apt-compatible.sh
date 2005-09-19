@@ -24,10 +24,6 @@
 . atest/test_lib.sh
 . atest/utils/test_channel.sh
 
-test_root=$(pwd)
-apt_root=$(pwd)/apt-setup
-working=$(pwd)/apt/work
-
 # Create a component to build a repository from
 pdk workspace create apt
 
@@ -41,8 +37,6 @@ config_channel
 
 pdk channel update
 
-cd work
-
 cp ${tmp_dir}/atest/abstract_comps/aptable.xml .
 
 pdk resolve aptable.xml
@@ -54,8 +48,8 @@ cd -
 # Setup  APT
 # -------------------------------------------
 # Set up the dir structures
-cd ${test_root}
-NEWROOT=${apt_root}
+cd $tmp_dir
+NEWROOT=$tmp_dir/apt-setup
 mkdir -p ${NEWROOT}/etc/apt 
 mkdir -p ${NEWROOT}/cachedir/archives/partial
 mkdir -p ${NEWROOT}/statedir/lists/partial
@@ -78,8 +72,8 @@ OVERRIDE=${NEWROOT}/overrides.conf
 
 # Create the sources.list file
 SOURCESLIST=${NEWROOT}/etc/apt/sources.list
-echo deb file:${working}/repo/ aptable main> ${SOURCESLIST}
-echo deb-src file:${working}/repo/ aptable main >> ${SOURCESLIST}
+echo deb file:$tmp_dir/apt/repo/ aptable main> ${SOURCESLIST}
+echo deb-src file:$tmp_dir/apt/repo/ aptable main >> ${SOURCESLIST}
 cat $SOURCESLIST
 
 # Try to use apt on the current repository

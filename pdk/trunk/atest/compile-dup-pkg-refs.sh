@@ -25,7 +25,7 @@
 . atest/test_lib.sh
 
 pdk workspace create "workspace"
-cd workspace/work
+cd workspace
 
 cat >product.xml <<EOF
 <?xml version="1.0"?>

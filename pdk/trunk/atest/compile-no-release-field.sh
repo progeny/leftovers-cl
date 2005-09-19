@@ -27,7 +27,7 @@
 . atest/utils/test_channel.sh
 
 pdk workspace create workspace
-cd workspace/work
+cd workspace
 
 cp ${tmp_dir}/atest/abstract_comps/product.xml .
 cp ${tmp_dir}/atest/abstract_comps/main.xml .

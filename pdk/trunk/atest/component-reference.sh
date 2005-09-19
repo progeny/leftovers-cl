@@ -26,7 +26,7 @@
 . atest/utils/test_product.sh
 
 pdk workspace create 'workspace'
-cd workspace/work
+cd workspace
 
 make_product
 pdk repogen product.xml

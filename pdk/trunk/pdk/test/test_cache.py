@@ -47,7 +47,7 @@ class TestReadAdapter(Test):
 
 class TestCache(TempDirTest):
     def test_construct(self):
-        pdk.cache.Cache()
+        pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
 
     def test_cache_files(self):
         # This is being invalidated by changes in cache layout
@@ -56,7 +56,7 @@ class TestCache(TempDirTest):
         open('hi.txt', 'w').write('hello')
 
         # Copy it into the cache
-        cache = pdk.cache.Cache()
+        cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
         cache.import_file(FileLocator('', 'hi.txt', None))
         expected_blob_id = 'sha-1:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d'
         cache_file = cache.file_path(expected_blob_id)
@@ -74,7 +74,7 @@ class TestCache(TempDirTest):
         The return value should be new blob_ids."""
 
         open ('test', 'w').write('hello')
-        cache = pdk.cache.Cache()
+        cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
         cache.import_file(FileLocator('', 'test', None))
         expected_ids = ('sha-1:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d',
                         'md5:5d41402abc4b2a76b9719d911017c592')
@@ -84,7 +84,7 @@ class TestCache(TempDirTest):
     def test_incorporate_file(self):
         """incorporate_file renames a blob to its new blob_ids"""
 
-        cache = pdk.cache.Cache()
+        cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
         blob_ids = ('sha-1:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d',
                     'md5:5d41402abc4b2a76b9719d911017c592')
         filepath = cache.make_download_filename()
@@ -101,7 +101,7 @@ class TestCache(TempDirTest):
         """id in cache returns whether or not a file exists in the cache"""
 
         open ('test', 'w').write('hello')
-        cache = pdk.cache.Cache()
+        cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
         cache.import_file(FileLocator('', 'test', None))
         expected_ids = ('sha-1:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d',
                         'md5:5d41402abc4b2a76b9719d911017c592')
@@ -112,7 +112,7 @@ class TestCache(TempDirTest):
         """Test that files added to the cache show up in the iterator
         and are accessed correctly via 'in'
         """
-        cache = pdk.cache.Cache()
+        cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
         make_path_to(cache.file_path('sha-1:someotherid'))
         open(cache.file_path('sha-1:someotherid'), 'w')\
                 .write('helloalso')
@@ -127,7 +127,7 @@ class TestCache(TempDirTest):
 
     def test_get_inode(self):
         open ('test', 'w').write('hello')
-        cache = pdk.cache.Cache()
+        cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
         cache.import_file(FileLocator('', 'test', None))
         expected_ids = ('sha-1:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d',
                         'md5:5d41402abc4b2a76b9719d911017c592')
@@ -136,7 +136,7 @@ class TestCache(TempDirTest):
  
     def test_get_header_filename(self):
         """header filename is blob_id + .header"""
-        cache = pdk.cache.Cache()
+        cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
         self.assert_equal(
             os.path.abspath('cache/sha-1/a/sha-1:a.header'),
             os.path.abspath(cache.get_header_filename('sha-1:a'))

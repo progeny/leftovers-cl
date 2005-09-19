@@ -24,7 +24,7 @@
 #-----------------------------------------------------------------------
 # Ill-formed command line
 pdk workspace create foo
-pushd foo/work
+pushd foo
 pdk semdiff  || status=$?
 test "$status" = "2" || { 
     bail "Expected command-line error(2), got ${status}"
@@ -49,8 +49,8 @@ test "$status" = "2" || {
 #-----------------------------------------------------------------------
 # Process ill-formed channels file
 pdk workspace create foo
-pushd foo/work
-cat > ../channels.xml << EOF
+pushd foo
+cat > etc/channels.xml << EOF
 <?xml version="1.0"?>
 <channels>
   <blow-up-here>
@@ -63,7 +63,7 @@ popd ; rm -rf foo
 #-----------------------------------------------------------------------
 # Missing outside_world.cache
 pdk workspace create foo
-pushd foo/work
+pushd foo
 cat >empty.xml <<EOF
 <?xml version="1.0"?>
 <component/>
@@ -76,8 +76,8 @@ popd ; rm -rf foo
 #-----------------------------------------------------------------------
 # Process even worse ill-formed (non)XML
 pdk workspace create foo
-pushd foo/work
-cat > ../channels.xml << EOF
+pushd foo
+cat > etc/channels.xml << EOF
 not ex emm ell at all
 EOF
 pdk channel update || status=$?
@@ -87,8 +87,8 @@ popd ; rm -rf foo
 #-----------------------------------------------------------------------
 # Bad path in apt-deb channel
 pdk workspace create foo
-pushd foo/work
-cat > ../channels.xml <<EOF
+pushd foo
+cat > etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <foo>
@@ -108,7 +108,7 @@ popd ; rm -rf foo
 # Process an ill-formed component descriptor
 
 pdk workspace create foo
-pushd foo/work
+pushd foo
 cat > bad_component.xml << EOF
 <?xml version="1.0"?>
 EOF
@@ -122,7 +122,7 @@ rm -rf foo
 # Unclosed tag
 
 pdk workspace create foo
-pushd foo/work
+pushd foo
 cat > ethereal.xml << EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
@@ -143,7 +143,7 @@ rm -rf foo
 # Cache miss
 
 pdk workspace create foo
-pushd foo/work
+pushd foo
 cat > cache-miss.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -161,7 +161,7 @@ rm -rf foo
 #-----------------------------------------------------------------------
 # Download non-existent package from channel
 pdk workspace create foo
-pushd foo/work
+pushd foo
 cat > cache-miss.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -170,7 +170,7 @@ cat > cache-miss.xml <<EOF
   </contents>
 </component>
 EOF
-cat > ../channels.xml <<EOF
+cat > etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <foo>
@@ -193,7 +193,7 @@ test "${status}" = "2" || bail "Expected error 2, got $status"
 #-----------------------------------------------------------------------
 # Use non-exsistant channel.
 pdk workspace create foo
-pushd foo/work
+pushd foo
 cat > component.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -203,7 +203,7 @@ cat > component.xml <<EOF
 </component>
 EOF
 
-cat > ../channels.xml <<EOF
+cat > etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <foo>
@@ -221,7 +221,7 @@ rm -rf foo
 #-----------------------------------------------------------------------
 # repogen an empty component
 pdk workspace create foo
-pushd foo/work
+pushd foo
 cat > empty.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -239,7 +239,7 @@ rm -rf foo
 #-----------------------------------------------------------------------
 # update_from_remote with no upstream name
 pdk workspace create foo
-pushd foo/work
+pushd foo
 pdk update_from_remote || status=$?
 test "$status" = "2" \
     || bail "Did not handle update_from_remote no argument correctly."

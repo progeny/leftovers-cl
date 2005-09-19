@@ -22,20 +22,17 @@
 # compare should report on differences between PDK and the repository
 # passed on the command line.
 
-pdk workspace create "workspace"
+pdk workspace create workspace
 testroot=$(pwd)
 testrepo=${testroot}/testrepo
 packages=${testroot}/packages
-workspace=${testroot}/workspace
-workdir=${workspace}/work
-cachedir=${workspace}/cache
+
+cd workspace
 
 mkdir -p ${testrepo}/dists/test/main/binary-i386
 cp ${packages}/python_2.3.5-2_all.deb ${testrepo}/dists/test/main/binary-i386
 (cd ${testrepo} && apt-ftparchive packages dists) \
     > ${testrepo}/dists/test/main/binary-i386/Packages
-
-cd ${workdir}
 
 pdk package add progeny.com/python-2.3.xml ${packages}/python_2.3.3-6_all.deb || fail "could not import package"
 

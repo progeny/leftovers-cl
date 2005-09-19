@@ -38,7 +38,7 @@ pdk workspace create workspace
 
 # Add channels file to workspace root
 cd workspace
-cat >channels.xml <<EOF
+cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <channel-1>
@@ -52,7 +52,6 @@ cat >channels.xml <<EOF
 </channels>
 EOF
 
-cd work
 cat >xsok.xml <<EOF
 <?xml version="1.0"?>
 <component>

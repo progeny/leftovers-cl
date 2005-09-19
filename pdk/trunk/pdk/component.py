@@ -40,7 +40,7 @@ from pdk.workspace import current_workspace
 
 def dumpmeta(component_refs):
     """Print all component metadata to standard out."""
-    cache = current_workspace().cache()
+    cache = current_workspace().cache
     for component_ref in component_refs:
         component = ComponentDescriptor(component_ref).load(cache)
         for item in component.meta:
@@ -80,7 +80,7 @@ def resolve(args):
     component_name = args[0]
     descriptor = ComponentDescriptor(component_name)
     channel_names = args[1:]
-    channels = workspace.channels()
+    channels = workspace.channels
     package_list = channels.get_package_list(channel_names)
     descriptor.resolve(package_list)
     descriptor.setify_child_references()
@@ -335,8 +335,8 @@ class ComponentDescriptor(object):
         Acquire the packages for this descriptor from known channels
         """
         workspace = current_workspace()
-        cache = workspace.cache()
-        channels = workspace.channels()
+        cache = workspace.cache
+        channels = workspace.channels
         for ref in self.iter_full_package_refs():
             if ref.blob_id and ref.blob_id not in cache:
                 try:

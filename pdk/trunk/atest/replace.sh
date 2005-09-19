@@ -37,7 +37,7 @@ assert_quiet() {
 }
 
 pdk workspace create 'workspace'
-cd workspace/work
+cd workspace
 
 assert_quiet \
     pdk package add progeny.com/ethereal.xml \

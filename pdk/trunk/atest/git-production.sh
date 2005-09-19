@@ -34,7 +34,7 @@ ScriptAlias /telco/upload $pdk_bin
 Alias /telco/ $tmp_dir/production/
 PassEnv PATH PYTHONPATH
 # Tell the cgi where its cache is.
-SetEnv PDK_CACHE_PATH $tmp_dir/production/cache
+SetEnv PDK_CACHE_PATH $tmp_dir/production/etc/cache
 EOF
 
 $apache2_bin -t -f etc/apache2/apache2.conf
@@ -46,7 +46,7 @@ $apache2_bin -X -f etc/apache2/apache2.conf &
 
 pdk workspace create production
 pdk workspace create integration
-pushd integration/work
+pushd integration
     #This needs to be replaced with the creation of
     #a component with an abstract package,
     #followed by "pdk resolve (descr.)":
@@ -69,16 +69,16 @@ popd
 (cd integration; find cache | grep -v .header ) >expected
 (cd production; find cache | grep -v .header ) >actual
 diff -u expected actual || fail 'caches should match'
-diff -u integration/VC/refs/heads/master \
-    production/VC/refs/heads/master
+diff -u integration/etc/git/refs/heads/master \
+    production/etc/git/refs/heads/master
 
 # -----------------------------------------------------------
 # Initial customer product retrieval.
 # -----------------------------------------------------------
 pdk workspace create customer-work-area
-pushd customer-work-area/work
+pushd customer-work-area
     pdk subscribe http://localhost:$SERVER_PORT/telco/ progeny.com
-    [ -e $tmp_dir/customer-work-area/sources/progeny.com ] \
+    [ -e $tmp_dir/customer-work-area/etc/sources/progeny.com ] \
         || fail "progeny.com subscription not created"
     pdk download progeny.com/apache.xml
     pdk repogen progeny.com/apache.xml
@@ -95,7 +95,7 @@ pushd customer-work-area/work
     git diff HEAD^ >patch.txt
 
     # really this file would be sent by email.
-    cp patch.txt $tmp_dir/integration/work/patch.txt
+    cp patch.txt $tmp_dir/integration/patch.txt
 
 popd
 
@@ -103,7 +103,7 @@ popd
 # Apply change from customer to integration
 # -----------------------------------------------------------
 
-pushd integration/work
+pushd integration
     # No direct pdk support for this. This case is an outlier.
     git-apply patch.txt
     pdk commit "Required commit remark"
@@ -119,7 +119,7 @@ popd
 # Pull from production to customer (again)
 # -----------------------------------------------------------
 
-pushd customer-work-area/work
+pushd customer-work-area
     pdk update_from_remote progeny.com
     grep GARBAGE progeny.com/apache.xml
 popd

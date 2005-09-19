@@ -34,7 +34,7 @@ pdk workspace create doublecompile
 cd doublecompile
 
 #create the channel configuration file
-cat >channels.xml <<EOF
+cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <local>
@@ -48,8 +48,7 @@ EOF
 #from the configured channel
 pdk channel update
 
-#go the the vc directory and make a component
-cd work
+#make a component
 cat >apache.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>

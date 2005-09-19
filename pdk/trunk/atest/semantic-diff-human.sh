@@ -38,9 +38,9 @@ semdiff_report () {
 }
 
 pdk workspace create workspace
-cd workspace/work
+cd workspace
 
-cat >../channels.xml <<EOF
+cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <local>

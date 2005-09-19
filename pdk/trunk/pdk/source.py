@@ -24,27 +24,14 @@ __revision__ = '$Progeny$'
 
 import os
 
-def create(workspace):
-    '''Create the sources directory in the workspace.'''
-    source = RemoteSources(workspace)
-    source.create()
-    return source
-
 class RemoteSources(object):
     '''Represents the list of remote workspaces from which we can update.'''
     def __init__(self, workspace):
         self.workspace = workspace
-        self.vc = workspace.version_control()
-        self.vc_dir = os.path.join(workspace.location, 'VC')
-        self.sources_dir = os.path.join(workspace.location, 'sources')
-
-    def create(self):
-        '''Create the symlink to the internal vc dir. (i.e. .git/remotes)'''
-        os.symlink(self.vc.remotes_dir, self.sources_dir)
 
     def subscribe(self, remote_url, name):
         '''Create the file representing an individual subscription.'''
-        source_file = os.path.join(self.sources_dir, name)
+        source_file = os.path.join(self.workspace.sources_dir, name)
         open(source_file, 'w').write("URL: %s\n" % remote_url)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

@@ -29,8 +29,7 @@
 packages=$(pwd)/packages
 test_root=$(pwd)
 work_root=$(pwd)/audit
-working_dir=${work_root}/work
-cache_base=${work_root}/cache
+cache_base=${work_root}/etc/cache
 
 
 pdk workspace create audit
@@ -45,8 +44,6 @@ cd audit
 config_channel
 
 pdk channel update
-
-cd work
 
 #note: this will become an effect of the pdk channel command above,
 # pdk channel add --dir $PACKAGES progeny.com
@@ -71,7 +68,7 @@ diff -u - pdk_audit.txt <<EOF
 EOF
 
 # Discard descriptors.
-rm -r ${work_root}/cache/ ${working_dir}/progeny.com/
+rm -r ${cache_base}/* ${work_root}/progeny.com/
 
 # Reinstall emacs-defaults without its source.
 pdk package add progeny.com/emacs.xml \
@@ -91,7 +88,7 @@ echo asdfasdfadsf >> $(cachepath 'sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b
 # Add an unknown file.
 echo asdf >${cache_base}/duh
 
-cd ${work_root}/work
+cd ${work_root}
 pdk audit progeny.com/apache.xml progeny.com/emacs.xml \
     >pdk_audit.raw.txt && bail 'pdk audit should fail' || status=$?
 test "$status" = "1" || bail 'pdk audit should return exit code 1.'

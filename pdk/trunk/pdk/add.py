@@ -139,7 +139,7 @@ def add(argv):
         bail('No component data given.')
 
     workspace = current_workspace()
-    cache = workspace.cache()
+    cache = workspace.cache
 
     pjoin = os.path.join
     dirname = os.path.dirname

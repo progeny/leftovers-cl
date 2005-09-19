@@ -61,7 +61,7 @@ def audit(argv):
 
     note_problem.called = False
 
-    my_cache = workspace.current_workspace().cache()
+    my_cache = workspace.current_workspace().cache
     arbiter = Arbiter(note_problem)
 
     for component_name in args:

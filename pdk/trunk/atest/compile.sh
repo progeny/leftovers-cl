@@ -26,7 +26,7 @@
 . atest/test_lib.sh
 
 pdk workspace create 'workspace'
-cd workspace/work
+cd workspace
 
 # Create a component descriptor
 # XXX: This is done often enough in testing, it it worth a script or shell

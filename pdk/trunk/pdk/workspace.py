@@ -25,14 +25,40 @@ __revision__ = '$Progeny$'
 
 import os
 import sys
-from pdk import version_control
-from pdk import util
-from pdk import source
+from pdk.version_control import VersionControl
+from pdk.source import RemoteSources
 from pdk.cache import Cache
 from pdk.channels import OutsideWorld
-from pdk.exceptions import ConfigurationError, IntegrityFault, \
-          SemanticError, CommandLineError
+from pdk.exceptions import ConfigurationError, SemanticError, \
+     CommandLineError
 from pdk.util import pjoin
+
+# current schema level for this pdk build
+schema_target = 2
+
+def find_workspace_base(directory=None):
+    """Locate the directory above the current directory, containing
+    the work, cache, and svn directories.
+
+    Returns None if a workspace is not to be found in the current path.
+    """
+    if directory is None:
+        directory = os.getcwd()
+
+    directory = os.path.normpath(directory)
+
+    while True:
+        schema_number = find_schema_number(directory)
+        if schema_number:
+            return directory, schema_number
+        else:
+            # no markers found. try parent.
+            directory, tail = os.path.split(directory)
+            # If we run out of path, quit
+            if not tail:
+                break
+
+    return None, None
 
 def current_workspace():
     """
@@ -43,17 +69,70 @@ def current_workspace():
     tree until it finds its' marker files/dirs, and then instances
     the Workspace object with that directory as its base.
     """
-    whole_path = util.find_base_dir()
-    if not whole_path:
+    directory, schema_number = find_workspace_base()
+    assert_schema_current(directory, schema_number)
+    if not directory:
         raise ConfigurationError("Not currently in a workspace")
-    return _Workspace(whole_path)
+    return _Workspace(directory)
 
 def currently_in_a_workspace():
-    """Determine if pwd is in a workspace """
-    result = False
-    if util.find_base_dir():
-        result = True
-    return result
+    """Determine if pwd is in a workspace"""
+    directory, schema_number = find_workspace_base()
+    assert_schema_current(directory, schema_number)
+    return bool(schema_number)
+
+def assert_schema_current(ws_directory, schema_number):
+    """Assert that the workspace can be handled by this software."""
+    if schema_number and schema_number != schema_target:
+        message = "Workspace migration is required.\n" + \
+                  "cd %s; pdk migrate" % os.path.abspath(ws_directory)
+        raise ConfigurationError(message)
+
+def find_schema_number(directory):
+    """Try to find a schema number for the given directory.
+
+    Returns None on failure.
+    """
+    schema_path = pjoin(directory, 'etc', 'schema')
+    if os.path.exists(schema_path):
+        schema_number = int(open(schema_path).read())
+        return schema_number
+
+    cache_dir = pjoin(directory, 'cache')
+    work_dir = pjoin(directory, 'work')
+    if os.path.isdir(cache_dir) and os.path.isdir(work_dir):
+        return 1
+
+    return None
+
+def migrate(dummy):
+    """Migrate the current workspace to a form supported by this software.
+
+    Only use this command from the base of the workspace.
+    """
+    directory, schema_number = find_workspace_base()
+    if schema_number > schema_target:
+        message = 'Cannot migrate. Workspace schema newer than pdk'
+        raise ConfigurationError(message)
+
+    if directory != os.getcwd():
+        message = 'Cannot migrate. Change directory to workspace base.\n' \
+                  'cd %s; pdk migrate' % directory
+        raise ConfigurationError(message)
+
+    if schema_number == 1:
+        os.makedirs('etc')
+        os.rename(pjoin('work','.git'), pjoin('etc', 'git'))
+        for item in os.listdir('work'):
+            os.rename(pjoin('work', item), item)
+        os.rmdir('work')
+        os.rename('cache', pjoin('etc', 'cache'))
+        os.rename('channels.xml', pjoin('etc', 'channels.xml'))
+        if os.path.exists('sources'):
+            os.remove('sources')
+        os.symlink(pjoin('etc', 'git'), '.git')
+        os.symlink(pjoin('git', 'remotes'), pjoin('etc', 'sources'))
+        open(pjoin('etc', 'schema'), 'w').write('2\n')
 
 def info(ignore):
     """Report information about the local workspace"""
@@ -64,7 +143,6 @@ def info(ignore):
         print 'Cache is: %s' % os.path.join(ws.location,'cache')
     except ConfigurationError, message:
         print message
-    
 
 def create_workspace(workspace_root):
     """
@@ -79,24 +157,16 @@ def create_workspace(workspace_root):
             % os.getcwd()
             )
 
-    # localize some functions
-    absolute = os.path.abspath
-
-    # Plan the layout 
-    work_root = absolute(pjoin(os.getcwd(), workspace_root))
-    work_path = pjoin(work_root, 'work')
-    cache_path = pjoin(work_root, 'cache')
-    vc_link_path = pjoin(work_root, 'VC')
-
     # Create empty workspace
-    print "Creating: %s, %s" % (work_path, cache_path)
-    os.makedirs(work_path)
-    os.makedirs(cache_path)
-    vc = version_control.create(work_path)
-    os.symlink(absolute(vc.vc_dir), absolute(vc_link_path))
-    ws =  _Workspace(work_root)
-    source.create(ws)
-
+    os.makedirs(workspace_root)
+    ws = _Workspace(workspace_root)
+    os.makedirs(ws.cache_dir)
+    os.makedirs(ws.vc_dir)
+    vc = ws.vc
+    vc.create()
+    os.symlink(pjoin('etc', 'git'), pjoin(ws.location, '.git'))
+    os.symlink(pjoin('git', 'remotes'), ws.sources_dir)
+    open(pjoin(ws.config_dir, 'schema'), 'w').write('2\n')
     return ws
 
 
@@ -238,11 +308,11 @@ def publish(args):
         raise CommandLineError('requires a remote workspace path')
     remote_path = args[0]
     local = current_workspace()
-    remote_cache_path = pjoin(remote_path, 'cache')
-    local.cache().push(remote_cache_path)
+    remote_cache_path = pjoin(remote_path, 'etc', 'cache')
+    local.cache.push(remote_cache_path)
 
-    remote_vc_path = pjoin(remote_path, 'VC')
-    local.version_control().push(remote_vc_path)
+    remote_vc_path = pjoin(remote_path, 'etc', 'git')
+    local.vc.push(remote_vc_path)
 
 def subscribe(args):
     """Subscribe to and initially update from a remote workspace.
@@ -255,94 +325,126 @@ def subscribe(args):
         raise CommandLineError('requires a remote workspace path and name')
     remote_path, name = args
     local = current_workspace()
-    local_source = source.RemoteSources(local)
-    remote_vc_path = os.path.join(remote_path, 'VC')
+    local_source = RemoteSources(local)
+    remote_vc_path = os.path.join(remote_path, 'etc', 'git')
     local_source.subscribe(remote_vc_path, name)
-    local.version_control().update_from_remote(name)
+    local.vc.update_from_remote(name)
     world_update([])
 
 
+def cached_property(prop_name, create_fn):
+    """Make a lazy property getter that memoizes it's value.
+
+    The prop_name is used to create an internal symbol. When debugging
+    the name should be visible so it should normally match the user
+    visible property name.
+
+    The create_fn should point to a private function which returns a
+    new object. The same object will be used on successive calls to
+    the property getter.
+
+    The doc string of create_fn will be used as the property's doc string.
+
+    Usage is simlar to the built in property function.
+
+    name = cached_value('name', __create_name)
+    # where __create_name is a function returning some object
+    """
+    private_name = '__' + prop_name
+    def _get_property(self):
+        '''Takes care of property getting details.
+
+        Memoizes the result of create_fn.
+        '''
+        if hasattr(self, private_name):
+            value = getattr(self, private_name)
+        else:
+            value = None
+        if not value:
+            value = create_fn(self)
+            setattr(self, private_name, value)
+        return value
+    return property(_get_property, doc = create_fn.__doc__)
 
 class _Workspace(object):
     """
     Library interface to pdk workspace
+
+    Provides attributes for finding common workspace files and directories,
+    as well as takes care of lazily creating related objects.
+
+    Functions which require coordination of channels, cache, and
+    version control may be found here.
     """
     def __init__(self, directory):
-        location = self.location = directory
-        if not os.path.isdir(directory):
-            raise IntegrityFault(
-                "%s is not a workspace directory" 
-                % directory
-                )
-        self.workdir = workdir = pjoin(location,'work')
-        self.its_version_control = \
-            version_control._VersionControl(workdir)
-        self.its_cache = Cache(os.path.join(location,'cache'))
-        self.channel_data_source = pjoin(self.location, 'channels.xml')
-        self.outside_world_store = pjoin(self.location,
+        self.location = os.path.abspath(directory)
+        self.config_dir = pjoin(self.location, 'etc')
+        self.vc_dir = pjoin(self.config_dir, 'git')
+        self.cache_dir = pjoin(self.config_dir,'cache')
+
+        self.channel_data_source = pjoin(self.config_dir, 'channels.xml')
+        self.outside_world_store = pjoin(self.config_dir,
                                          'outside_world.cache')
-        self.sources_dir = pjoin(self.location, 'sources')
 
-    def cache(self):
-        """Return the current workspace's cache component"""
-        return self.its_cache
+        # actually a symlink to etc/git/remotes
+        self.sources_dir = pjoin(self.config_dir, 'sources')
 
-    def version_control(self):
-        """Return the local workspace's version control component"""
-        if not self.its_version_control:
-            ctor = version_control.VersionControl
-            self.its_version_control = ctor(self.location)
-        return self.its_version_control
+    def __create_cache(self):
+        """The cache for this workspace."""
+        return Cache(self.cache_dir)
+    cache = cached_property('cache', __create_cache)
 
-    def channels(self):
-        """Return the current channel index
+    def __create_vc(self):
+        """The version contorl object for this workspace."""
+        return VersionControl(self.location, self.vc_dir)
+    vc = cached_property('vc', __create_vc)
 
-        The data returned is an OutsideWorld instance.
-        """
+    def __create_channels(self):
+        """Get the outside world object for this workspace."""
         return OutsideWorld.load_cached(self)
+    channels = cached_property('channels', __create_channels)
 
     def add(self, name):
         """
         Add an item to local version control
         """
-        return self.version_control().add(name)
+        return self.vc.add(name)
 
     def remove(self, name):
         """
         Remove an item from local version control
         """
-        return self.version_control().remove(name)
+        return self.vc.remove(name)
 
     def cat(self, name):
         """
         Remove an item from local version control
         """
-        return self.version_control().cat(name)
+        return self.vc.cat(name)
 
     def revert(self, name):
         """
         Remove an item from local version control
         """
-        return self.version_control().revert(name)
+        return self.vc.revert(name)
 
     def commit(self, remark):
         """
         Commit changes to version control
         """
-        self.version_control().commit(remark)
-        self.cache().write_index()
+        self.vc.commit(remark)
+        self.cache.write_index()
 
     def update(self):
         """
         Get latest changes from version control
         """
-        self.version_control().update()
+        self.vc.update()
 
     def update_from_remote(self, upstream_name):
         """
         Get latest changes from version control
         """
-        self.version_control().update_from_remote(upstream_name)
-
+        self.vc.update_from_remote(upstream_name)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

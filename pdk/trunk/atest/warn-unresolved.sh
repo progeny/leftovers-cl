@@ -28,7 +28,7 @@ cp ${PACKAGES}/apache2*_2.0.53* channel
 
 pdk workspace create workspace
 
-cat >workspace/channels.xml <<EOF
+cat >workspace/etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
   <local>
@@ -38,7 +38,7 @@ cat >workspace/channels.xml <<EOF
 </channels>
 EOF
 
-cd workspace/work
+cd workspace
 pdk channel update
 
 # Try requesting existing packages some which aren't present

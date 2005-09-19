@@ -61,7 +61,7 @@ source_field_order = [ "Package", "Source", "Binary", "Version", "Priority",
 def compile_product(component_name):
     """Compile the product described by the component."""
 
-    cache = workspace.current_workspace().cache()
+    cache = workspace.current_workspace().cache
     compiler = Compiler(cache)
 
     repo_types = { 'report': compiler.dump_report,

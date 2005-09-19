@@ -65,7 +65,7 @@ inode_of() {
 # algorithm for cache placement outside of PDK proper.
 # Use only this method to find files in cache
 cachepath() {
-    cache_dir=${CACHE_BASE:-"../cache"}
+    cache_dir=${cache_base:-"etc/cache"}
     if [ $(echo $1 | grep :) ]; then
         method=$(echo $1 | cut -f1 -d:)
         raw_cksum=$(echo $1 | cut -f2 -d:)

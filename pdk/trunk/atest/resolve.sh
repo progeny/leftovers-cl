@@ -31,14 +31,13 @@ umask 002
 pdk workspace create resolve
 
 testroot=$(pwd)
-cachedir=${testroot}/resolve/cache
-channels=${testroot}/resolve/channels.xml
+cachedir=${testroot}/resolve/etc/cache
+channels=${testroot}/resolve/etc/channels.xml
 project=${testroot}/resolve
-workdir=${project}/work
 etc=${testroot}/etc
 
 mkdir ${etc}
-cd ${workdir}
+cd $project
 
 # Load the cache with the ida package so we don't get errors later
 pdk package add dummy.xml ${PACKAGES}/ida_2.01-1.2.dsc
@@ -113,7 +112,7 @@ cat >${channels} <<EOF
 EOF
 
 pdk channel update
-[ -f ${project}/outside_world.cache ] \
+[ -f ${project}/etc/outside_world.cache ] \
     || bail 'channel cache file should have been created'
 
 pdk resolve apache.xml channel-1
@@ -237,14 +236,14 @@ SERVER_PORT=$(unused_port 8103 8104 8105 8106 8107 13847)
 create_apache_conf $SERVER_PORT
 
 cat >${etc}/svn.apache2.conf <<EOF
-DocumentRoot ${workdir}/repo/
+DocumentRoot ${project}/repo/
 EOF
 
 $apache2_bin -t -f ${etc}/apache2/apache2.conf
 $apache2_bin -X -f ${etc}/apache2/apache2.conf &
 
 # Add some concrete and abstract package references to a new component.
-cd ${workdir}
+cd ${project}
 cat >apache.xml <<EOF
 <?xml version="1.0"?>
 <component>

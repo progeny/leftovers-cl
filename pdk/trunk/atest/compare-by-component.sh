@@ -26,8 +26,9 @@ pdk workspace create testroot
 testrepo=$(pwd)/testrepo
 testroot=$(pwd)/testroot
 cachedir=${testroot}/cache
-workdir=${testroot}/work
 packages=$(pwd)/packages
+
+cd testroot
 
 # Create a pile of packages 
 mkdir -p ${testrepo}/dists/test/main/binary-i386
@@ -35,7 +36,6 @@ cp ${packages}/python_2.3.5-2_all.deb ${testrepo}/dists/test/main/binary-i386
 (cd ${testrepo} && apt-ftparchive packages dists) \
     > ${testrepo}/dists/test/main/binary-i386/Packages
 
-cd ${workdir}
 pdk package add progeny.com/python-2.3.xml ${packages}/python_2.3.3-6_all.deb || fail "could not import package"
 
 pdk compare progeny.com/python-2.3.xml file://${testrepo},test,main \
