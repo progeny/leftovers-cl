@@ -21,167 +21,84 @@
 #
 # Test pdk semdiff in compare two files mode.
 
-# get Utility functions
-. atest/test_lib.sh
+. atest/utils/semdiff-fixture.sh
 
-pdk workspace create 'workspace'
-cd workspace
+set_up_semdiff_fixture test-semdiff
+cd test-semdiff
 
-# Install old version of adjtimex
-pdk package add time.xml \
-    ${PACKAGES}/adjtimex-1.13-12.src.rpm \
-    ${PACKAGES}/adjtimex-1.13-12.i386.rpm
+# --------------------------------
+# Test semdiff with rpms.
+# --------------------------------
 
-cp time.xml time-before.xml
-
-# nothing has changed yet
-pdk semdiff -m time-before.xml time.xml | LANG=C sort >semdiff.txt
+pdk semdiff -m timex-12.xml timex-12.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-unchanged|rpm|adjtimex|/1.13/12|/1.13/12|i386|time.xml
-unchanged|srpm|adjtimex|/1.13/12|/1.13/12|x86_64|time.xml
+unchanged|rpm|adjtimex|/1.13/12|/1.13/12|i386|timex-12.xml
+unchanged|srpm|adjtimex|/1.13/12|/1.13/12|x86_64|timex-12.xml
 EOF
 
-cp time.xml time-before.xml
-
-# Install new version of adjtimex
-pdk package add -r time.xml \
-    ${PACKAGES}/adjtimex-1.13-13.src.rpm \
-    ${PACKAGES}/adjtimex-1.13-13.i386.rpm
-
-pdk semdiff -m time-before.xml time.xml | LANG=C sort >semdiff.txt
+pdk semdiff -m timex-12.xml timex-13.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-upgrade|rpm|adjtimex|/1.13/12|/1.13/13|i386|time.xml
-upgrade|srpm|adjtimex|/1.13/12|/1.13/13|x86_64|time.xml
+upgrade|rpm|adjtimex|/1.13/12|/1.13/13|i386|timex-13.xml
+upgrade|srpm|adjtimex|/1.13/12|/1.13/13|x86_64|timex-13.xml
 EOF
 
-cp time.xml time-before.xml
-
-# Downgrade back to the older version
-pdk package add -r time.xml \
-    ${PACKAGES}/adjtimex-1.13-12.src.rpm \
-    ${PACKAGES}/adjtimex-1.13-12.i386.rpm
-
-pdk semdiff -m time-before.xml time.xml | LANG=C sort >semdiff.txt
+pdk semdiff -m timex-13.xml timex-12.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-downgrade|rpm|adjtimex|/1.13/13|/1.13/12|i386|time.xml
-downgrade|srpm|adjtimex|/1.13/13|/1.13/12|x86_64|time.xml
+downgrade|rpm|adjtimex|/1.13/13|/1.13/12|i386|timex-12.xml
+downgrade|srpm|adjtimex|/1.13/13|/1.13/12|x86_64|timex-12.xml
 EOF
 
-cp time.xml time-before.xml
-
-# Drop a package
-pdk package add -r time.xml \
-    ${PACKAGES}/adjtimex-1.13-12.i386.rpm
-
-pdk semdiff -m time-before.xml time.xml | grep -v ^unchanged \
+pdk semdiff -m timex-12.xml timex-12-nosrc.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-drop|srpm|adjtimex|/1.13/12|x86_64|time.xml
+drop|srpm|adjtimex|/1.13/12|x86_64|timex-12-nosrc.xml
 EOF
 
-cp time.xml time-before.xml
-
-# Add it back
-pdk package add -r time.xml \
-    ${PACKAGES}/adjtimex-1.13-12.src.rpm \
-    ${PACKAGES}/adjtimex-1.13-12.i386.rpm
-
-pdk semdiff -m time-before.xml time.xml | grep -v ^unchanged \
+pdk semdiff -m timex-12-nosrc.xml timex-12.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-add|srpm|adjtimex|/1.13/12|x86_64|time.xml
+add|srpm|adjtimex|/1.13/12|x86_64|timex-12.xml
 EOF
 
-# -----------------------------------------------------
-# Do it all with debs.
-# -----------------------------------------------------
+# --------------------------------
+# Test semdiff with debs.
+# --------------------------------
 
-# Install old version of ethereal.
-pdk package add ethereal.xml \
-    ${PACKAGES}/ethereal_0.9.13-1.0progeny1.dsc \
-    ${PACKAGES}/ethereal_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/tethereal_0.9.13-1.0progeny1_ia64.deb
-
-cp ethereal.xml ethereal-before.xml
-
-# nothing has changed yet
-pdk semdiff -m ethereal-before.xml ethereal.xml | LANG=C sort >semdiff.txt
+pdk semdiff -m ethereal1.xml ethereal1.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-unchanged|deb|ethereal-common|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal.xml
-unchanged|deb|ethereal-dev|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal.xml
-unchanged|deb|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal.xml
-unchanged|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal.xml
-unchanged|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|any|ethereal.xml
+unchanged|deb|ethereal-common|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal1.xml
+unchanged|deb|ethereal-dev|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal1.xml
+unchanged|deb|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal1.xml
+unchanged|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal1.xml
+unchanged|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|any|ethereal1.xml
 EOF
 
-cp ethereal.xml ethereal-before.xml
-
-# Install newer version of ethereal.
-pdk package add -r ethereal.xml \
-    ${PACKAGES}/ethereal_0.9.13-1.0progeny2.dsc \
-    ${PACKAGES}/ethereal_0.9.13-1.0progeny2_ia64.deb \
-    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny2_ia64.deb \
-    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny2_ia64.deb \
-    ${PACKAGES}/tethereal_0.9.13-1.0progeny2_ia64.deb
-
-pdk semdiff -m ethereal-before.xml ethereal.xml | LANG=C sort >semdiff.txt
-
+pdk semdiff -m ethereal1.xml ethereal2.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-upgrade|deb|ethereal-common|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
-upgrade|deb|ethereal-dev|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
-upgrade|deb|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
-upgrade|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
-upgrade|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|any|ethereal.xml
+upgrade|deb|ethereal-common|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal2.xml
+upgrade|deb|ethereal-dev|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal2.xml
+upgrade|deb|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal2.xml
+upgrade|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal2.xml
+upgrade|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|any|ethereal2.xml
 EOF
 
-cp ethereal.xml ethereal-before.xml
-
-# Downgrade to older version again.
-pdk package add -r ethereal.xml \
-    ${PACKAGES}/ethereal_0.9.13-1.0progeny1.dsc \
-    ${PACKAGES}/ethereal_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/tethereal_0.9.13-1.0progeny1_ia64.deb
-
-pdk semdiff -m ethereal-before.xml ethereal.xml | LANG=C sort >semdiff.txt
+pdk semdiff -m ethereal2.xml ethereal1.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-downgrade|deb|ethereal-common|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal.xml
-downgrade|deb|ethereal-dev|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal.xml
-downgrade|deb|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal.xml
-downgrade|deb|tethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal.xml
-downgrade|dsc|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|any|ethereal.xml
+downgrade|deb|ethereal-common|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal1.xml
+downgrade|deb|ethereal-dev|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal1.xml
+downgrade|deb|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal1.xml
+downgrade|deb|tethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal1.xml
+downgrade|dsc|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|any|ethereal1.xml
 EOF
 
-cp ethereal.xml ethereal-before.xml
-
-# Drop a package.
-pdk package add -r ethereal.xml \
-    ${PACKAGES}/ethereal_0.9.13-1.0progeny1.dsc \
-    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/tethereal_0.9.13-1.0progeny1_ia64.deb
-
-pdk semdiff -m ethereal-before.xml ethereal.xml | grep -v ^unchanged \
+pdk semdiff -m ethereal1.xml ethereal1-missing.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-drop|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal.xml
+drop|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal1-missing.xml
 EOF
 
-cp ethereal.xml ethereal-before.xml
-
-# Add it back
-pdk package add -r ethereal.xml \
-    ${PACKAGES}/ethereal_0.9.13-1.0progeny1.dsc \
-    ${PACKAGES}/ethereal_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    ${PACKAGES}/tethereal_0.9.13-1.0progeny1_ia64.deb
-
-pdk semdiff -m ethereal-before.xml ethereal.xml | grep -v ^unchanged \
+pdk semdiff -m ethereal1-missing.xml ethereal1.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-add|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal.xml
+add|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal1.xml
 EOF

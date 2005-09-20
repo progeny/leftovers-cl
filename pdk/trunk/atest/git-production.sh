@@ -21,8 +21,9 @@
 #
 # test having git and pdk cache-pull talk to a real apache2 server.
 
-# get Utility functions
-. atest/test_lib.sh
+. atest/utils/repogen-fixture.sh
+
+set_up_repogen_fixture integration
 
 SERVER_PORT=$(unused_port 8110 8111 8112 8113 8114 8115 8116 8117 13847)
 
@@ -45,15 +46,7 @@ $apache2_bin -X -f etc/apache2/apache2.conf &
 # -----------------------------------------------------------
 
 pdk workspace create production
-pdk workspace create integration
 pushd integration
-    #This needs to be replaced with the creation of
-    #a component with an abstract package,
-    #followed by "pdk resolve (descr.)":
-    pdk package add progeny.com/apache.xml \
-        ${PACKAGES}/apache2_2.0.53-5.dsc \
-        ${PACKAGES}/apache2-common_2.0.53-5_i386.deb
-
     pdk add progeny.com/apache.xml
     pdk commit "git-production commit"
 

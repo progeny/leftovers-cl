@@ -67,16 +67,24 @@ pdk audit progeny.com/apache.xml progeny.com/emacs.xml \
 diff -u - pdk_audit.txt <<EOF
 EOF
 
-# Discard descriptors.
-rm -r ${cache_base}/* ${work_root}/progeny.com/
-
 # Reinstall emacs-defaults without its source.
-pdk package add progeny.com/emacs.xml \
-    ${packages}/emacs-defaults_1.1_all.deb
-
-pdk package add progeny.com/apache.xml \
-    ${packages}/apache2-common_2.0.53-5_i386.deb \
-    ${packages}/apache2_2.0.53-5.dsc \
+cat >progeny.com/emacs.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <deb>
+      <name>emacs-defaults</name>
+      <version>1.1</version>
+      <arch>all</arch>
+      <deb ref="md5:de0c6608cca3750129e62573d42e5c0a">
+        <name>emacs-defaults</name>
+        <version>1.1</version>
+        <arch>all</arch>
+      </deb>
+    </deb>
+  </contents>
+</component>
+EOF
 
 # Make one file go AWOL.
 CACHE_BASE=${work_root}/cache/

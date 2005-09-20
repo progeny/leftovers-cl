@@ -19,14 +19,13 @@
 # dump-meta.sh
 # $Progeny$
 #
-# pdk dumpmeta compname should dump the metadata found in the component.
+# pdk repogen with dumpmeta comp should dump the metadata found in the
+# component.
 
-pdk workspace create 'workspace'
-cd workspace
+. atest/utils/repogen-fixture.sh
 
-pdk package add python.xml \
-    ${PACKAGES}/python-defaults_2.3.3-6.dsc \
-    ${PACKAGES}/python_2.3.3-6_all.deb
+set_up_repogen_fixture test-repogen
+cd test-repogen
 
 pdk dumpmeta python.xml | diff -u /dev/null -
 

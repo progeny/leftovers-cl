@@ -22,23 +22,34 @@
 # Watch for regression. prc bombed when a binary was presented without it's
 # source.
 
-. atest/test_lib.sh
+. atest/utils/repogen-fixture.sh
 
-pdk workspace create 'workspace'
-cd workspace
+set_up_repogen_fixture test-repogen
+cd test-repogen
 
+# this component is missing a source package.
+cat >progeny.com/apache.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <dsc>
+      <name>apache2</name>
+      <deb ref="md5:5acd04d4cc6e9d1530aad04accdc8eb5">
+        <name>apache2-common</name>
+        <version>2.0.53-5</version>
+        <arch>i386</arch>
+      </deb>
+    </dsc>
+  </contents>
+</component>
+EOF
 
-ls ${PACKAGES}/apache2-*.deb | xargs pdk package add apache.xml || fail
-
-pdk repogen apache.xml
+pdk repogen progeny.com/apache.xml
 
 [ -d './repo' ] || fail "mising repo directory"
 
 check_file "b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b" \
     "./repo/pool/main/a/apache2/apache2-common_2.0.53-5_i386.deb"
-
-# XXX: Lists are not appropriate for acceptance tests.
-#grep apache tmp/repo/dists/stable/list-main-i386
 
 assert_exists repo/dists/apache/main/binary-i386/Packages.gz
 assert_not_exists repo/dists/apache/main/source/Sources.gz

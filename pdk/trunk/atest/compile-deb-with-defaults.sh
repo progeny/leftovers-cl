@@ -19,20 +19,12 @@
 # compile.sh 
 # $Progeny$
 #
-# poke -> prc works. Make sure the resulting repo looks sane. Packages
-# in the repo should be hard linked to the cache.
+# Make sure that the "default" deb repo layout works ok.
 
-# get Utility functions
-. atest/test_lib.sh
-packages=$(pwd)/packages
+. atest/utils/repogen-fixture.sh
 
-pdk workspace create "workspace"
-cd workspace
-
-# Install all the packages into the local cache
-pdk package add progeny.com/apache.xml \
-    ${packages}/apache2-common_2.0.53-5_i386.deb \
-    ${packages}/apache2_2.0.53-5.dsc \
+set_up_repogen_fixture test-repogen
+cd test-repogen
 
 pdk repogen progeny.com/apache.xml
 find repo

@@ -64,7 +64,6 @@ class Pdk(command_base.CmdBase):
     do_semdiff = LazyModuleRef('pdk.semdiff', 'semdiff')
     do_resolve = LazyModuleRef('pdk.component', 'resolve')
     do_download = LazyModuleRef('pdk.component', 'download')
-    do_compare = LazyModuleRef('pdk.compare', 'compare')
     #temporary utility
     do_migrate = LazyModuleRef('pdk.workspace', 'migrate')
 
@@ -132,25 +131,6 @@ class Pdk(command_base.CmdBase):
         if args[0] == 'update':
             args[0] = 'world_update'
         self.module_command(workspace, args)
-
-    def do_package(self, args):
-        """
-        Perform an action on a package
-        General usage:
-        pdk package command args
-        Specialized for
-        pdk package add
-        """
-        from pdk import package
-        if args:
-            arg_list = command_base._get_args_as_list(args)
-            if arg_list[0] == "add":
-                from pdk import add
-                add.add(arg_list[1:])
-            else:
-                self.module_command(package, args)
-        else:
-            print >> sys.stderr, "What do you want to do with a package?"
 
     def module_help(self, module, args):
         """

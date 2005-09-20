@@ -21,16 +21,10 @@
 #
 # check that we can import and then do a basic compile using rpms.
 
-# get Utility functions
-. atest/test_lib.sh
+. atest/utils/repogen-fixture.sh
 
-pdk workspace create 'workspace'
-cd workspace
-
-# Install all the packages into the local cache
-pdk package add progeny.com/time.xml \
-    ${PACKAGES}/adjtimex-1.13-13.i386.rpm \
-    ${PACKAGES}/adjtimex-1.13-13.src.rpm
+set_up_repogen_fixture test-repogen
+cd test-repogen
 
 pdk repogen progeny.com/time.xml
 

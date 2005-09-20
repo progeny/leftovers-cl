@@ -22,19 +22,22 @@
 # Make sure that an error is raised if the user tries to put a package
 # directly in a component marked with split-apt-components.
 
-# get Utility functions
-. atest/test_lib.sh
+. atest/utils/repogen-fixture.sh
 
-pdk workspace create "workspace"
-cd workspace
+set_up_repogen_fixture test-repogen
+cd test-repogen
 
-# Create a component descriptor
-# XXX: This is done often enough in testing, it it worth a script or shell
-# function? 
-cat >product.xml <<"EOF"
-<?xml version="1.0"?>
+# The deb reference is what triggers the error.
+
+cat >product.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
 <component>
+  <id>product</id>
+  <name>The Product</name>
+  <requires>a</requires>
+  <provides>b</provides>
   <meta>
+    <id>product</id>
     <origin>community</origin>
     <label>distro</label>
     <version>1.0</version>
@@ -44,37 +47,20 @@ cat >product.xml <<"EOF"
     <description>Hello World!</description>
     <split-apt-components>yes</split-apt-components>
   </meta>
-  <component>main.xml</component>
-  <component>contrib.xml</component>
+  <contents>
+    <component>main.xml</component>
+    <component>contrib.xml</component>
+    <deb>
+      <name>ida</name>
+      <deb ref="sha-1:a5b9ebe5914fa4fa2583b1f5eb243ddd90e6fbbe">
+        <name>ida</name>
+        <version>2.01-1.2</version>
+        <arch>arm</arch>
+      </deb>
+    </deb>
+  </contents>
 </component>
 EOF
-
-cat >contrib.xml <<"EOF"
-<?xml version="1.0"?>
-<component>
-  <component>progeny.com/ida.xml</component>
-</component>
-EOF
-
-cat >main.xml <<"EOF"
-<?xml version="1.0"?>
-<component>
-  <component>progeny.com/apache.xml</component>
-</component>
-EOF
-
-# Install all the packages into the local cache
-pdk package add progeny.com/apache.xml \
-    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb \
-    ${PACKAGES}/apache2_2.0.53-5.dsc \
-
-pdk package add progeny.com/ida.xml \
-    ${PACKAGES}/ida_2.01-1.2_arm.deb \
-    ${PACKAGES}/ida_2.01-1.2.dsc
-
-# This is what will trigger the error.
-pdk package add product.xml \
-    ${PACKAGES}/ida_2.01-1.2_arm.deb
 
 pdk repogen product.xml && fail 'repogen should have failed'
 

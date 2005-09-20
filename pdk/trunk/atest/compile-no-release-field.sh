@@ -16,33 +16,31 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# compile.sh 
+# compile-no-release-field.sh 
 # $Progeny$
 #
-# poke -> prc works. Make sure the resulting repo looks sane. Packages
-# in the repo should be hard linked to the cache.
+# Make sure that repogen doesn't barf when given a package with no
+# release field.
 
-# get Utility functions
-. atest/test_lib.sh
-. atest/utils/test_channel.sh
+. atest/utils/repogen-fixture.sh
 
-pdk workspace create workspace
-cd workspace
-
-cp ${tmp_dir}/atest/abstract_comps/product.xml .
-cp ${tmp_dir}/atest/abstract_comps/main.xml .
-
-# Add the emacs packages
-pdk package add progeny.com/emacs.xml \
-    ${PACKAGES}/emacs-defaults_1.1_all.deb \
-    ${PACKAGES}/emacs-defaults_1.1.dsc
+set_up_repogen_fixture test-repogen
+cd test-repogen
 
 # Add an apache package
-# XXX: This is necessary because pdk gets confused when only arch:all
+#
+# This is necessary because pdk gets confused when only arch:all
 # packages are present.
 
-pdk package add progeny.com/emacs.xml \
-    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb
+cat >main.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <component>progeny.com/apache.xml</component>
+    <component>progeny.com/emacs.xml</component>
+  </contents>
+</component>
+EOF
 
 pdk repogen product.xml
 
@@ -70,4 +68,3 @@ for pkgname in emacs-defaults_1.1.dsc emacs-defaults_1.1.tar.gz; do
     assert_exists ${repo_path}/${pkgname}
 done
 
-# Watch for regression in 

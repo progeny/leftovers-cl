@@ -19,69 +19,13 @@
 # compile.sh 
 # $Progeny$
 #
-# poke -> prc works. Make sure the resulting repo looks sane. Packages
+# repogen works. Make sure the resulting repo looks sane. Packages
 # in the repo should be hard linked to the cache.
 
-# get Utility functions
-. atest/test_lib.sh
+. atest/utils/repogen-fixture.sh
 
-pdk workspace create 'workspace'
-cd workspace
-
-# Create a component descriptor
-# XXX: This is done often enough in testing, it it worth a script or shell
-# function? 
-cat >product.xml <<"EOF"
-<?xml version="1.0"?>
-<component>
-  <id>product</id>
-  <name>The Product</name>
-  <requires>a</requires>
-  <provides>b</provides>
-  <meta>
-    <id>product</id>
-    <origin>community</origin>
-    <label>distro</label>
-    <version>1.0</version>
-    <codename>zip</codename>
-    <suite>stable</suite>
-    <date>Tue, 22 Mar 2005 21:20:00 +0000</date>
-    <description>Hello World!</description>
-    <split-apt-components>yes</split-apt-components>
-  </meta>
-  <contents>
-    <component>main.xml</component>
-    <component>contrib.xml</component>
-  </contents>
-</component>
-EOF
-
-cat >contrib.xml <<"EOF"
-<?xml version="1.0"?>
-<component>
-  <contents>
-    <component>progeny.com/ida.xml</component>
-  </contents>
-</component>
-EOF
-
-cat >main.xml <<"EOF"
-<?xml version="1.0"?>
-<component>
-  <contents>
-    <component>progeny.com/apache.xml</component>
-  </contents>
-</component>
-EOF
-
-# Install all the packages into the local cache
-pdk package add progeny.com/apache.xml \
-    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb \
-    ${PACKAGES}/apache2_2.0.53-5.dsc \
-
-pdk package add progeny.com/ida.xml \
-    ${PACKAGES}/ida_2.01-1.2_arm.deb \
-    ${PACKAGES}/ida_2.01-1.2.dsc
+set_up_repogen_fixture test-repogen
+cd test-repogen
 
 pdk repogen product.xml
 

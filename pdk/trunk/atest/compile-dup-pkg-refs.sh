@@ -22,84 +22,18 @@
 # Watch for regression. prc bombed when repo-eval resulted in the same
 # package being presented to the compiler more than once.
 
-. atest/test_lib.sh
+. atest/utils/repogen-fixture.sh
 
-pdk workspace create "workspace"
-cd workspace
-
-cat >product.xml <<EOF
-<?xml version="1.0"?>
-<component>
-  <meta>
-    <origin>community</origin>
-    <label>distro</label>
-    <version>1.0</version>
-    <codename>zip</codename>
-    <suite>stable</suite>
-    <date>Tue, 22 Mar 2005 21:20:00 +0000</date>
-    <description>Hello World!</description>
-  </meta>
-  <contents>
-    <component>main.xml</component>
-  </contents>
-</component>
-EOF
+set_up_repogen_fixture test-repogen
+cd test-repogen
 
 cat >main.xml <<EOF
 <?xml version="1.0"?>
 <component>
   <contents>
-    <component>apache.xml</component>
-  </contents>
-</component>
-EOF
-
-# Install all the packages into the local cache
-pdk package add apache.xml \
-    ${PACKAGES}/apache2-common_2.0.53-5_i386.deb \
-    ${PACKAGES}/apache2_2.0.53-5.dsc \
-
-cat >apache.xml <<EOF
-<?xml version="1.0" encoding="utf-8"?>
-<component>
-  <!-- note the same packages are mentioned repeatedly -->
-
-  <contents>
-    <deb ref="sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b">
-      <name>apache2-common</name>
-      <version>2.0.53-5</version>
-    </deb>
-    <dsc ref="sha-1:9d26152e78ca33a3d435433c67644b52ae4c670c">
-      <name>apache2</name>
-      <version>2.0.53-5</version>
-    </dsc>
-
-    <deb ref="sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b">
-      <name>apache2-common</name>
-      <version>2.0.53-5</version>
-    </deb>
-    <dsc ref="sha-1:9d26152e78ca33a3d435433c67644b52ae4c670c">
-      <name>apache2</name>
-      <version>2.0.53-5</version>
-    </dsc>
-
-    <deb ref="sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b">
-      <name>apache2-common</name>
-      <version>2.0.53-5</version>
-    </deb>
-    <dsc ref="sha-1:9d26152e78ca33a3d435433c67644b52ae4c670c">
-      <name>apache2</name>
-      <version>2.0.53-5</version>
-    </dsc>
-
-    <deb ref="sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b">
-      <name>apache2-common</name>
-      <version>2.0.53-5</version>
-    </deb>
-    <dsc ref="sha-1:9d26152e78ca33a3d435433c67644b52ae4c670c">
-      <name>apache2</name>
-      <version>2.0.53-5</version>
-    </dsc>
+    <component>progeny.com/apache.xml</component>
+    <component>progeny.com/apache.xml</component>
+    <component>progeny.com/apache.xml</component>
   </contents>
 </component>
 EOF
@@ -107,7 +41,6 @@ EOF
 pdk repogen product.xml
 
 [ -d './repo' ] || fail "mising repo directory"
-
 
 check_file "b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b" \
     "./repo/pool/main/a/apache2/apache2-common_2.0.53-5_i386.deb"

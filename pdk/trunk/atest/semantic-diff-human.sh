@@ -20,46 +20,36 @@
 # $Progeny$
 #
 # Test pdk semdiff human readable format.
-
-# get Utility functions
-. atest/test_lib.sh
+# We aren't really testing the content of the report, just that it is
+# generated quietly. Actual semantics are tested elsewhere.
 
 assert_empty() {
-    if [ "$(stat -c '%s' $1)" != 0 ]; then
-        cat "$1"
-        fail "$1 should be empty"
+    empty_file="$1"
+    if [ "$(stat -c '%s' $empty_file)" != 0 ]; then
+        cat "$empty_file"
+        fail "$empty_file should be empty"
     fi
 }
 
 semdiff_report () {
-    pdk semdiff "$@" | ul 2>errors.txt
+    pdk semdiff "$@" 2>errors.txt | ul
     assert_empty errors.txt
     rm errors.txt
 }
 
-pdk workspace create workspace
-cd workspace
+. atest/utils/semdiff-fixture.sh
 
-cat >etc/channels.xml <<EOF
-<?xml version="1.0"?>
-<channels>
-  <local>
-    <type>dir</type>
-    <path>channel</path>
-  </local>
-</channels>
-EOF
+set_up_semdiff_fixture test-semdiff
+cd test-semdiff
 
-channel_dir=${tmp_dir}/channel
-mkdir ${channel_dir}
-cp $PACKAGES/ethereal_0.9.4-1woody2_i386.deb ${channel_dir}
+cp ethereal1.xml ethereal.xml
 
-cat >ethereal.xml <<EOF
+cat >product.xml <<EOF
 <?xml version="1.0"?>
 <component>
   <contents>
     <component>meta-info.xml</component>
-    <deb>ethereal</deb>
+    <compoennt>ethereal</component>
   </contents>
 </component>
 EOF
@@ -79,101 +69,32 @@ cat >meta-info.xml <<EOF
 </component>
 EOF
 
-pdk channel update
-pdk resolve ethereal.xml
-pdk download ethereal.xml
-
 pdk add ethereal.xml
 pdk add meta-info.xml
+pdk add product.xml
+
 pdk commit 'Starting point for diff.'
 
-# Nothing should have changed yet.
 semdiff_report ethereal.xml
 
-rm -r ${channel_dir}
-mkdir ${channel_dir}
-cp $PACKAGES/ethereal_0.9.4-1woody3_i386.deb ${channel_dir}
-
-cat >ethereal.xml <<EOF
-<?xml version="1.0"?>
-<component>
-  <contents>
-    <component>meta-info.xml</component>
-    <deb>ethereal</deb>
-  </contents>
-</component>
-EOF
-
-pdk channel update
-pdk resolve ethereal.xml
-pdk download ethereal.xml
+cp ethereal2.xml ethereal.xml
 
 semdiff_report ethereal.xml
 
 pdk commit ''
 
-rm -r ${channel_dir}
-mkdir ${channel_dir}
-cp $PACKAGES/ethereal_0.9.4-1woody2_i386.deb ${channel_dir}
-
-cat >ethereal.xml <<EOF
-<?xml version="1.0"?>
-<component>
-  <contents>
-    <component>meta-info.xml</component>
-    <deb>ethereal</deb>
-  </contents>
-</component>
-EOF
-
-pdk channel update
-pdk resolve ethereal.xml
-pdk download ethereal.xml
+cp ethereal1.xml ethereal.xml
 
 semdiff_report ethereal.xml
 
+# Now check comparing two files.
 
-# Install old version of adjtimex
-pdk package add time.xml \
-    $PACKAGES/adjtimex-1.13-12.src.rpm \
-    $PACKAGES/adjtimex-1.13-12.i386.rpm
+semdiff_report timex-12.xml timex-12.xml
 
-cp time.xml time-before.xml
+semdiff_report timex-12.xml timex-13.xml
 
-# nothing has changed yet
-semdiff_report time-before.xml time.xml
+semdiff_report timex-13.xml timex-12.xml
 
-cp time.xml time-before.xml
+semdiff_report timex-12.xml timex-12-nosrc.xml
 
-# Install new version of adjtimex
-pdk package add -r time.xml \
-    $PACKAGES/adjtimex-1.13-13.src.rpm \
-    $PACKAGES/adjtimex-1.13-13.i386.rpm
-
-semdiff_report time-before.xml time.xml
-
-cp time.xml time-before.xml
-
-# Downgrade back to the older version
-pdk package add -r time.xml \
-    $PACKAGES/adjtimex-1.13-12.src.rpm \
-    $PACKAGES/adjtimex-1.13-12.i386.rpm
-
-semdiff_report time-before.xml time.xml
-
-cp time.xml time-before.xml
-
-# Drop a package
-pdk package add -r time.xml \
-    $PACKAGES/adjtimex-1.13-12.i386.rpm
-
-semdiff_report time-before.xml time.xml
-
-cp time.xml time-before.xml
-
-# Add it back
-pdk package add -r time.xml \
-    $PACKAGES/adjtimex-1.13-12.src.rpm \
-    $PACKAGES/adjtimex-1.13-12.i386.rpm
-
-semdiff_report time-before.xml time.xml
+semdiff_report timex-12-nosrc.xml timex-12.xml

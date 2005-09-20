@@ -39,9 +39,6 @@ etc=${testroot}/etc
 mkdir ${etc}
 cd $project
 
-# Load the cache with the ida package so we don't get errors later
-pdk package add dummy.xml ${PACKAGES}/ida_2.01-1.2.dsc
-
 # -----------------------------------------------------------
 # Resolve from a pile of packages on the local filesystem.
 # -----------------------------------------------------------

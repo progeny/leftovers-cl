@@ -21,175 +21,116 @@
 #
 # Test pdk semdiff
 
-# get Utility functions
-. atest/test_lib.sh
+. atest/utils/semdiff-fixture.sh
 
-# -------------------
-# Setup
-# -------------------
+set_up_semdiff_fixture test-semdiff
+cd test-semdiff
 
-pdk workspace create sim-progeny
-cd sim-progeny
-# -----------------------------------------------------
-# Do it all with rpms.
-# -----------------------------------------------------
+# --------------------------------
+# Test semdiff with rpms.
+# --------------------------------
 
-# Install old version of adjtimex
-pdk package add progeny.com/time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
+cp timex-12.xml time.xml
+pdk add time.xml
+pdk commit 'message'
 
-pdk add progeny.com/time.xml
-pdk commit foo
-# nothing has changed yet
-pdk semdiff -m progeny.com/time.xml | LANG=C sort >semdiff.txt
+pdk semdiff -m time.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-unchanged|rpm|adjtimex|/1.13/12|/1.13/12|i386|progeny.com/time.xml
-unchanged|srpm|adjtimex|/1.13/12|/1.13/12|x86_64|progeny.com/time.xml
+unchanged|rpm|adjtimex|/1.13/12|/1.13/12|i386|time.xml
+unchanged|srpm|adjtimex|/1.13/12|/1.13/12|x86_64|time.xml
 EOF
 
-# Install new version of adjtimex
-pdk package add -r progeny.com/time.xml \
-    $tmp_dir/packages/adjtimex-1.13-13.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-13.i386.rpm
-
-pdk semdiff -m progeny.com/time.xml | LANG=C sort >semdiff.txt
+cp timex-13.xml time.xml
+pdk semdiff -m time.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-upgrade|rpm|adjtimex|/1.13/12|/1.13/13|i386|progeny.com/time.xml
-upgrade|srpm|adjtimex|/1.13/12|/1.13/13|x86_64|progeny.com/time.xml
+upgrade|rpm|adjtimex|/1.13/12|/1.13/13|i386|time.xml
+upgrade|srpm|adjtimex|/1.13/12|/1.13/13|x86_64|time.xml
 EOF
 
-pdk commit foo
+pdk commit 'message'
 
-# Downgrade back to the older version
-pdk package add -r progeny.com/time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
-
-pdk semdiff -m progeny.com/time.xml | LANG=C sort >semdiff.txt
+cp timex-12.xml time.xml
+pdk semdiff -m time.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-downgrade|rpm|adjtimex|/1.13/13|/1.13/12|i386|progeny.com/time.xml
-downgrade|srpm|adjtimex|/1.13/13|/1.13/12|x86_64|progeny.com/time.xml
+downgrade|rpm|adjtimex|/1.13/13|/1.13/12|i386|time.xml
+downgrade|srpm|adjtimex|/1.13/13|/1.13/12|x86_64|time.xml
 EOF
 
-pdk commit foo
+pdk commit 'message'
 
-# Drop a package
-pdk package add -r progeny.com/time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
-
-pdk semdiff -m progeny.com/time.xml | grep -v ^unchanged \
+cp timex-12-nosrc.xml time.xml
+pdk semdiff -m time.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-drop|srpm|adjtimex|/1.13/12|x86_64|progeny.com/time.xml
+drop|srpm|adjtimex|/1.13/12|x86_64|time.xml
 EOF
 
-pdk commit foo
+pdk commit 'message'
 
-# Add it back
-pdk package add -r progeny.com/time.xml \
-    $tmp_dir/packages/adjtimex-1.13-12.src.rpm \
-    $tmp_dir/packages/adjtimex-1.13-12.i386.rpm
-
-pdk semdiff -m progeny.com/time.xml | grep -v ^unchanged \
+cp timex-12.xml time.xml
+pdk semdiff -m time.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-add|srpm|adjtimex|/1.13/12|x86_64|progeny.com/time.xml
+add|srpm|adjtimex|/1.13/12|x86_64|time.xml
 EOF
 
-pdk commit foo
+pdk commit 'message'
 
-# -----------------------------------------------------
-# Do it all with debs.
-# -----------------------------------------------------
+# --------------------------------
+# Test semdiff with debs.
+# --------------------------------
 
-# Install old version of ethereal.
-pdk package add progeny.com/ethereal.xml \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/tethereal_0.9.13-1.0progeny1_ia64.deb
+cp ethereal1.xml ethereal.xml
+pdk add ethereal.xml
+pdk commit 'message'
 
-pdk add progeny.com/ethereal.xml
-pdk commit foo
-
-# nothing has changed yet
-pdk semdiff -m progeny.com/ethereal.xml | LANG=C sort >semdiff.txt
+pdk semdiff -m ethereal.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-unchanged|deb|ethereal-common|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
-unchanged|deb|ethereal-dev|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
-unchanged|deb|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
-unchanged|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
-unchanged|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|any|progeny.com/ethereal.xml
+unchanged|deb|ethereal-common|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal.xml
+unchanged|deb|ethereal-dev|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal.xml
+unchanged|deb|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal.xml
+unchanged|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal.xml
+unchanged|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|any|ethereal.xml
 EOF
 
-# Install newer version of ethereal.
-pdk package add -r progeny.com/ethereal.xml \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny2.dsc \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny2_ia64.deb \
-    $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny2_ia64.deb \
-    $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny2_ia64.deb \
-    $tmp_dir/packages/tethereal_0.9.13-1.0progeny2_ia64.deb
-
-pdk semdiff -m progeny.com/ethereal.xml | LANG=C sort >semdiff.txt
-
+cp ethereal2.xml ethereal.xml
+pdk semdiff -m ethereal.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-upgrade|deb|ethereal-common|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|progeny.com/ethereal.xml
-upgrade|deb|ethereal-dev|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|progeny.com/ethereal.xml
-upgrade|deb|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|progeny.com/ethereal.xml
-upgrade|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|progeny.com/ethereal.xml
-upgrade|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|any|progeny.com/ethereal.xml
+upgrade|deb|ethereal-common|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
+upgrade|deb|ethereal-dev|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
+upgrade|deb|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
+upgrade|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
+upgrade|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|any|ethereal.xml
 EOF
 
-pdk commit foo
+pdk commit 'message'
 
-# Downgrade to older version again.
-pdk package add -r progeny.com/ethereal.xml \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/tethereal_0.9.13-1.0progeny1_ia64.deb
-
-pdk semdiff -m progeny.com/ethereal.xml | LANG=C sort >semdiff.txt
+cp ethereal1.xml ethereal.xml
+pdk semdiff -m ethereal.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-downgrade|deb|ethereal-common|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
-downgrade|deb|ethereal-dev|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
-downgrade|deb|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
-downgrade|deb|tethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
-downgrade|dsc|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|any|progeny.com/ethereal.xml
+downgrade|deb|ethereal-common|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal.xml
+downgrade|deb|ethereal-dev|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal.xml
+downgrade|deb|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal.xml
+downgrade|deb|tethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal.xml
+downgrade|dsc|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|any|ethereal.xml
 EOF
 
-pdk commit foo
+pdk commit 'message'
 
-# Drop a package.
-pdk package add -r progeny.com/ethereal.xml \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
-    $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/tethereal_0.9.13-1.0progeny1_ia64.deb
-
-pdk semdiff -m progeny.com/ethereal.xml | grep -v ^unchanged \
+cp ethereal1-missing.xml ethereal.xml
+pdk semdiff -m ethereal.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-drop|deb|ethereal|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
+drop|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal.xml
 EOF
 
-pdk commit foo
+pdk commit 'message'
 
-# Add it back
-pdk package add -r progeny.com/ethereal.xml \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1.dsc \
-    $tmp_dir/packages/ethereal_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-common_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/ethereal-dev_0.9.13-1.0progeny1_ia64.deb \
-    $tmp_dir/packages/tethereal_0.9.13-1.0progeny1_ia64.deb
-
-pdk semdiff -m progeny.com/ethereal.xml | grep -v ^unchanged \
+cp ethereal1.xml ethereal.xml
+pdk semdiff -m ethereal.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-add|deb|ethereal|0.9.13-1.0progeny1|ia64|progeny.com/ethereal.xml
+add|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal.xml
 EOF
 
-pdk commit foo
+pdk commit 'message'
