@@ -175,7 +175,7 @@ cat > etc/channels.xml <<EOF
 <channels>
   <foo>
     <type>dir</type>
-    <path>/tmp</path>
+    <path>.</path>
   </foo>
 </channels>
 EOF
@@ -208,7 +208,7 @@ cat > etc/channels.xml <<EOF
 <channels>
   <foo>
     <type>dir</type>
-    <path>/tmp</path>
+    <path>.</path>
   </foo>
 </channels>
 EOF
