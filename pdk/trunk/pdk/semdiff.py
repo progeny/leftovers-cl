@@ -282,7 +282,7 @@ def print_man(ref, data):
             print >> output, '.T&'
             print >> output, 'l l l l.'
             for item in collater[field]:
-                field = get_package_presence_fields(item[0], ref)
+                fields = get_package_presence_fields(item[0], ref)
                 print >> output, '\t'.join(fields)
             print >> output, '.TE'
         else:
