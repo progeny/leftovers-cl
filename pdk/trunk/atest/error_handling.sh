@@ -47,6 +47,24 @@ test "$status" = "2" || {
 }
 
 #-----------------------------------------------------------------------
+# Working with missing components is an error.
+pdk workspace create foo
+pushd foo
+cat >exists.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <component>doesnt-exist.xml</component>
+  </contents>
+</component>
+EOF
+pdk repogen exists.xml 2>errors.txt || status=$?
+( test "$status" = "3"; grep -i exist errors.txt ) \
+    || bail "Did not handle non-existant component correctly"
+popd
+rm -rf foo
+
+#-----------------------------------------------------------------------
 # Process ill-formed channels file
 pdk workspace create foo
 pushd foo
@@ -245,3 +263,4 @@ test "$status" = "2" \
     || bail "Did not handle update_from_remote no argument correctly."
 popd
 rm -rf foo
+

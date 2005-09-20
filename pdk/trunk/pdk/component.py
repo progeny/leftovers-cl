@@ -117,7 +117,9 @@ class ComponentDescriptor(object):
     """
     def __init__(self, filename, handle = None):
         self.filename = filename
-        if handle:
+        if filename is None:
+            tree = ElementTree(element = Element('component'))
+        elif handle:
             try:
                 tree = parse_xml(handle)
             except ExpatError, message:
@@ -130,7 +132,9 @@ class ComponentDescriptor(object):
                 except ExpatError, message:
                     raise InputError(filename, message)
             else:
-                tree = ElementTree(element = Element('component'))
+                message = 'Component descriptor "%s" does not exist.' \
+                          % filename
+                raise InputError(message)
 
         self.id = ''
         self.name = ''

@@ -42,7 +42,7 @@ class TestComponentTreeBuilder(Test):
                            OneMatchMetacondition)
 
     def test_build_ref(self):
-        builder = ComponentDescriptor('notused')
+        builder = ComponentDescriptor(None)
         element = XML('''
 <deb>
   <name>hello</name>
@@ -58,7 +58,7 @@ class TestComponentTreeBuilder(Test):
                                  [('ice', 'cube')], ref.rule)
 
     def test_build_concrete_ref(self):
-        builder = ComponentDescriptor('notused')
+        builder = ComponentDescriptor(None)
         element = XML('''
 <deb ref="md5:aaa">
   <name>hello</name>
@@ -79,7 +79,7 @@ class TestComponentTreeBuilder(Test):
         '''rules like <deb>name</deb> should have name conditions.
         No metadata should be present.
         '''
-        builder = ComponentDescriptor('notused')
+        builder = ComponentDescriptor(None)
         name_element = XML('<deb>some-name</deb>')
         ref = builder.build_package_ref(name_element)
         assert not ref.blob_id
@@ -88,7 +88,7 @@ class TestComponentTreeBuilder(Test):
                                  [], ref.rule)
 
     def test_is_package_ref(self):
-        builder = ComponentDescriptor('notused')
+        builder = ComponentDescriptor(None)
 
         deb_rule = Element('deb')
         dsc_rule = Element('dsc')

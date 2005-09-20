@@ -417,7 +417,7 @@ EOF
             def __repr__(self):
                 return str(self.label)
 
-        desc = ComponentDescriptor('test.xml')
+        desc = ComponentDescriptor(None)
         a = MockRef('a')
         b = MockRef('b')
         c = MockRef('c')

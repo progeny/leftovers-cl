@@ -43,6 +43,11 @@ cd $project
 # Resolve from a pile of packages on the local filesystem.
 # -----------------------------------------------------------
 
+cat >empty.xml <<EOF
+<?xml version="1.0"?>
+<component/>
+EOF
+
 # Add some concrete and abstract package references to a new component.
 cat >apache.xml <<EOF
 <?xml version="1.0"?>
