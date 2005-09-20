@@ -596,7 +596,7 @@ def get_rpm_child_condition_data(package):
 
 def get_srpm_child_condition_data(package):
     """Get child condition data for an srpm."""
-    return [ ('sourcerpm', package.filename),
+    return [ ('source-rpm', package.filename),
              ('type', 'rpm') ]
 
 def get_general_fields(package):

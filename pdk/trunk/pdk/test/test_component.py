@@ -549,7 +549,7 @@ class TestPackageRef(Test):
         apache_srpm = Package({'name': 'apache',
                                'version': version,
                                'blob-id': 'sha-1:aaa'}, srpm)
-        expected = [ ('sourcerpm', 'apache-1-2.src.rpm'),
+        expected = [ ('source-rpm', 'apache-1-2.src.rpm'),
                      ('type', 'rpm') ]
 
         self.assert_equals(expected,
