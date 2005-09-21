@@ -312,11 +312,17 @@ class _Rpm(object):
     def parse(self, raw_header, blob_id):
         """Parse an rpm header. Returns a package object."""
         header = rpm_api.headerLoad(raw_header)
+        source_rpm = header[rpm_api.RPMTAG_SOURCERPM]
+
+        # work around rpm oddity
+        if source_rpm == []:
+            source_rpm = None
+
         return Package({ 'blob-id': blob_id,
                          'name': header[rpm_api.RPMTAG_NAME],
                          'version': RPMVersion(header),
                          'arch': header[rpm_api.RPMTAG_ARCH],
-                         'source-rpm': header[rpm_api.RPMTAG_SOURCERPM],
+                         'source-rpm': source_rpm,
                          'raw': raw_header }, self)
 
     def extract_header(self, filename):
