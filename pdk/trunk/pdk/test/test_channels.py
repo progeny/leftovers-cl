@@ -32,6 +32,7 @@ class TestAptDebControl(Test):
 class MockPackage(object):
     def __init__(self, blob_id):
         self.blob_id = blob_id
+        self.contents = {}
 
 class TestOutsideWorld(Test):
     def test_update_with_channel(self):

@@ -646,6 +646,13 @@ class Compiler:
             packages_dict = { 'main': product.packages }
 
 
+        filtered_packages_dict = {}
+        for apt_component, packages in packages_dict.items():
+            new_list = [ Metafilter(product.meta, p) for p in packages ]
+            filtered_packages_dict[apt_component] = new_list
+
+        packages_dict = filtered_packages_dict
+
         sections = packages_dict.keys()
         all_packages = Set(chain(*packages_dict.values()))
         arches = self.deb_scan_arches(all_packages)
@@ -675,7 +682,8 @@ class Compiler:
     def create_raw_package_dump_repo(self, component, dummy):
         """Link all the packages in the product to the repository."""
         os.mkdir('repo')
-        for package in component.packages:
+        for raw_package in component.packages:
+            package = Metafilter(component.meta, raw_package)
             os.link(self.cache.file_path(package.blob_id),
                     os.path.join('repo', package.filename)
                     )

@@ -330,6 +330,8 @@ class OutsideWorld(object):
         for ghost_package, locator in channel_iterator:
             # ghost_package is a pdk.package.Package object but we don't
             # have a file in the cache backing it.
+            found_filename = os.path.basename(locator.filename)
+            ghost_package.contents['found_filename'] = found_filename
             self.by_channel_name[channel_name].append(ghost_package)
             self.by_blob_id[ghost_package.blob_id] = locator
 

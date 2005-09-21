@@ -331,6 +331,11 @@ class ComponentDescriptor(object):
                 if child_condition.evaluate(ghost_package):
                     new_child_ref = \
                         PackageReference.from_package(ghost_package)
+                    expected_filename = ghost_package.filename
+                    found_filename = ghost_package.found_filename
+                    if expected_filename != found_filename:
+                        predicate = ('filename', found_filename)
+                        new_child_ref.predicates.append(predicate)
                     ref.children.append(new_child_ref)
 
 
