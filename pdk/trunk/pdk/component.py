@@ -733,5 +733,37 @@ class ComponentReference(object):
         '''Instantiate the ComponentDescriptor object for this reference.'''
         return ComponentDescriptor(self.filename)
 
+class Metafilter(object):
+    '''Delegates attribute and item lookups through metadata.
+
+    Wraps other objects and provides __getattr__ and __getitem__.
+
+    If the provided metadata has data for the given key or attribute, the
+    metadata value is provided. Otherwise, the provided object handles
+    the key or attribute normally.
+    '''
+    def __init__(self, meta, filteree):
+        self.__meta = meta
+        self.__filteree = filteree
+
+    def __getattr__(self, name):
+        return self.__try_meta(name) or getattr(self.__filteree, name)
+
+    def __getitem__(self, name):
+        return self.__try_meta(name) or self.__filteree[name]
+
+    def __try_meta(self, name):
+        '''Try to find the named attribute/item in metadata.
+
+        Returns the found value on success, None on failure.
+        '''
+        if self.__filteree in self.__meta:
+            meta_dict = self.__meta[self.__filteree]
+            if name in meta_dict:
+                return meta_dict[name]
+        return None
+
+    def __repr__(self):
+        return '<Metafilter (%s)>' % self.__filteree
 
 # vim:ai:et:sts=4:sw=4:tw=0:

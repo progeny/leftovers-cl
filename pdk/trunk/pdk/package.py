@@ -80,14 +80,20 @@ class Package(object):
             else:
                 raise AttributeError(key)
         else:
-            result = self[contents_key]
+            result = self.contents[contents_key]
         return result
 
     def __getitem__(self, key):
-        contents_key = self.find_key(key)
-        if contents_key == None:
-            raise KeyError(key)
-        return self.contents.get(contents_key)
+        special_version_names = {'version.epoch': 'epoch',
+                                 'version.version': 'version',
+                                 'version.release': 'release' }
+        if key in special_version_names:
+            return getattr(self.version, special_version_names[key])
+
+        try:
+            return getattr(self, key)
+        except AttributeError, e:
+            raise KeyError, e
 
     def __setitem__(self, item, value):
         raise TypeError('object does not support item assignment')
@@ -111,21 +117,6 @@ class Package(object):
         """Defer the role string to the package type object."""
         return self.package_type.role_string
     role = property(get_role)
-
-    def get_bindings_dict(self):
-        """Get a dictionary for this object but with undashified fields."""
-        bindings = {}
-        for key, value in self.contents.items():
-            undashified_key = str(key).replace('-', '_')
-            bindings[undashified_key] = value
-        bindings['filename'] = self.filename
-        bindings['format'] = self.format
-        bindings['role'] = self.role
-        bindings['type'] = self.type
-        bindings['epoch'] = self.version.epoch
-        bindings['version'] = self.version.version
-        bindings['release'] = self.version.release
-        return bindings
 
     def __len__(self):
         return len(self.contents)

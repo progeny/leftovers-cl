@@ -26,6 +26,7 @@ from pdk.cache import Cache
 
 from pdk.component import \
      ComponentDescriptor, Component, ComponentMeta, PackageReference, \
+     Metafilter, \
      get_child_condition_fn, \
      get_deb_child_condition_data, \
      get_dsc_child_condition_data, \
@@ -47,6 +48,34 @@ class MockCache(object):
         if ref not in self.packages:
             self.packages.append(ref)
         return ref
+
+class TestMetafilter(Test):
+    def test_filter(self):
+        package1 = Package({'name': 'a', 'version': DebianVersion('1'),
+                            'arch': 'all'}, deb)
+        package2 = Package({'name': 'b', 'version': DebianVersion('1'),
+                            'arch': 'all'}, deb)
+        meta = ComponentMeta()
+        meta.update({package1: {'name': 'aa', 'filename': 'a.deb'}})
+        filtered = Metafilter(meta, package1)
+        self.assert_equal('aa', filtered.name)
+        self.assert_equal('1', filtered.version)
+        self.assert_equal('a.deb', filtered.filename)
+
+        self.assert_equal('aa', filtered['name'])
+        self.assert_equal('1', filtered['version'])
+        self.assert_equal('a.deb', filtered['filename'])
+
+        filtered = Metafilter(meta, package2)
+
+        self.assert_equal('b', filtered.name)
+        self.assert_equal('1', filtered.version)
+        self.assert_equal('b_1_all.deb', filtered.filename)
+
+        self.assert_equal('b', filtered['name'])
+        self.assert_equal('1', filtered['version'])
+        self.assert_equal('b_1_all.deb', filtered['filename'])
+
 
 class TestCompDesc(TempDirTest):
     def test_load_empty(self):

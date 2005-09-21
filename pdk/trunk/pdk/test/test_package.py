@@ -60,32 +60,6 @@ class TestPackageClass(Test):
         except KeyError:
             pass
 
-    def test_bindings_dict(self):
-        class MockType(object):
-            type_string = 'g'
-            format_string = 'f'
-            role_string = 'h'
-            def get_filename(self, dummy):
-                return 'zzz'
-
-        version = DebianVersion('1.2')
-
-        expected = {
-            'a': 1,
-            'b': 2,
-            'ccc': 3,
-            'd_d': 4,
-            'filename': 'zzz',
-            'format': 'f',
-            'role': 'h',
-            'type': 'g',
-            'epoch': None,
-            'version': '1.2',
-            'release': None}
-        p = Package({'a' : 1, 'b' : 2, 'ccc': 3, 'd-d': 4,
-                     'version': version}, MockType())
-        self.assert_equals_long(expected, p.get_bindings_dict())
-
     def test_package_is_hashable(self):
         p = Package({'a' : 1, 'b' : 2, 'ccc': 3, 'd-d': 4, 'version': None},
                     None)

@@ -22,93 +22,61 @@
 # The resolve command should transform abstract references to concrete
 # references.
 
-. atest/test_lib.sh
+. atest/utils/repogen-fixture.sh
 
-mkdir channel
-dir_channel=$(pwd)/channel
-cp packages/apache2-common_2.0.53-5_i386.deb channel
-cp packages/passwd-0.68-10.i386.rpm channel
-
-pdk workspace create repogendumpdata
-cd repogendumpdata
-
-# Add a channel for the package directory
-cat >etc/channels.xml <<EOF
-<?xml version="1.0"?>
-<channels>
-  <local>
-    <type>dir</type>
-    <path>${dir_channel}</path>
-  </local>
-</channels>
-EOF
+set_up_repogen_fixture test-repogen
+cd test-repogen
 
 # Add some concrete and abstract package references to a new component.
-cat >apache.xml <<EOF
+cat >apache-meta.xml <<EOF
 <?xml version="1.0"?>
 <component>
   <contents>
     <deb>
       <name>apache2-common</name>
       <meta>
-        <predicate>object</predicate>
-        <one-more>thing</one-more>
+        <answer>42</answer>
       </meta>
     </deb>
-    <rpm>passwd</rpm>
+    <rpm>
+      <name>not-present</name>
+      <meta>
+         <this>shouldn't-show-up</this>
+      </meta>
+    </rpm>
+    <rpm>
+      <name>adjtimex</name>
+      <meta>
+         <this>very-much-should</this>
+      </meta>
+    </rpm>
   </contents>
 </component>
 EOF
 
-cat >separate-report.xml <<EOF
+
+cat >report.xml <<EOF
 <?xml version="1.0"?>
 <component>
   <meta>
     <repo-type>report</repo-type>
-    <package-format>%(name)s %(epoch)s %(version)s %(release)s %(filename)s %(cache_location)s %(blob_id)s</package-format>
-    <meta-format>%(subject)s %(predicate)s %(target)s</meta-format>
+    <format>%(name)s %(version.epoch)s %(version.version)s %(version.release)s %(filename)s %(cache_location)s %(blob_id)s %(answer)s %(this)s</format>
   </meta>
   <contents>
-    <component>apache.xml</component>
+    <component>progeny.com/apache.xml</component>
+    <component>progeny.com/time.xml</component>
+    <component>apache-meta.xml</component>
   </contents>
 </component>
 EOF
 
-cat >joined-report.xml <<EOF
-<?xml version="1.0"?>
-<component>
-  <meta>
-    <repo-type>report</repo-type>
-    <combined-format>%(name)s %(epoch)s %(version)s %(release)s %(filename)s %(cache_location)s %(blob_id)s %(predicate)s %(target)s</combined-format>
-  </meta>
-  <contents>
-    <component>apache.xml</component>
-  </contents>
-</component>
-EOF
-
-pdk channel update
-pdk resolve apache.xml local
-pdk download apache.xml
-
-pdk repogen separate-report.xml >report.txt
+pdk repogen report.xml >report.txt
 
 cat >control.txt <<EOF
-apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/etc/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5
-passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/repogendumpdata/etc/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb
-
-md5:5acd04d4cc6e9d1530aad04accdc8eb5 one-more thing
-md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate object
-
-EOF
-
-diff -u control.txt report.txt
-
-pdk repogen joined-report.xml >report.txt
-cat >control.txt <<EOF
-apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/etc/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 one-more thing
-apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/repogendumpdata/etc/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 predicate object
-passwd  0.68 10 passwd-0.68-10.i386.rpm $tmp_dir/repogendumpdata/etc/cache/md5/d0/md5:d02b15b9e0f4e861c3fe82aed11801eb md5:d02b15b9e0f4e861c3fe82aed11801eb  
+adjtimex  1.13 13 adjtimex-1.13-13.i386.rpm $tmp_dir/test-repogen/etc/cache/md5/2c/md5:2c0376dce66844970269876d1e09fea9 md5:2c0376dce66844970269876d1e09fea9  very-much-should
+adjtimex  1.13 13 adjtimex-1.13-13.src.rpm $tmp_dir/test-repogen/etc/cache/md5/ad/md5:adf064bd5d34ee4522a01fd15176d9b6 md5:adf064bd5d34ee4522a01fd15176d9b6  
+apache2  2.0.53 5 apache2_2.0.53-5.dsc $tmp_dir/test-repogen/etc/cache/md5/d9/md5:d94c995bde2f13e04cdd0c21417a7ca5 md5:d94c995bde2f13e04cdd0c21417a7ca5  
+apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/test-repogen/etc/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 42 
 
 EOF
 

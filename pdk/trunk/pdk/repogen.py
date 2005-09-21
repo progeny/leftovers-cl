@@ -30,8 +30,7 @@ import optparse
 from sets import Set
 from itertools import chain
 from pdk import workspace
-from pdk.component import ComponentDescriptor
-from pdk.package import Package
+from pdk.component import ComponentDescriptor, Metafilter
 from pdk.exceptions import SemanticError, InputError, CommandLineError, \
                 IntegrityFault
 import pdk.log as log
@@ -684,67 +683,20 @@ class Compiler:
     def dump_report(self, component, contents):
         """Instead of building a repo, dump a report of component contents.
         """
-        packages = []
-        metas = []
-        joins = []
+        if 'format' not in contents:
+            raise InputError, 'Component descriptor missing format element'
 
-        for item in component.meta:
-            if isinstance(item, Package):
-                for predicate, target in component.meta[item].iteritems():
-                    bindings = forgiving_dict(subject = item.blob_id,
-                                              predicate = predicate,
-                                              target = target)
-                    metas.append(bindings)
-
-        for package in component.packages:
-            bindings = forgiving_dict(package.get_bindings_dict())
-            cache_location = self.cache.file_path(package.blob_id)
-            bindings['cache_location'] = cache_location
-            packages.append(bindings)
-
-            if package in component.meta:
-                predicates = component.meta[package].iteritems()
-                for predicate, target in predicates:
-                    joined_item = forgiving_dict(bindings)
-                    joined_item['predicate'] = predicate
-                    joined_item['target'] = target
-                    joins.append(joined_item)
-            else:
-                joins.append(bindings)
-
-        packages.sort()
-        metas.sort()
-        joins.sort()
-
-        if 'package-format' in contents:
-            format = contents['package-format']
-            lines = []
-            for package in packages:
-                lines.append(format % package)
-            lines.sort()
-            for line in lines:
-                print line
-            print
-
-        if 'meta-format' in contents:
-            format = contents['meta-format']
-            lines = []
-            for meta in metas:
-                lines.append(format % meta)
-            lines.sort()
-            for line in lines:
-                print line
-            print
-
-        if 'combined-format' in contents:
-            format = contents['combined-format']
-            lines = []
-            for join in joins:
-                lines.append(format % join)
-            lines.sort()
-            for line in lines:
-                print line
-            print
+        format = contents['format']
+        lines = []
+        for raw_package in component.packages:
+            cache_location = self.cache.file_path(raw_package.blob_id)
+            filtered = Metafilter(component.meta, raw_package)
+            package = overlay_getitem(filtered, cache_location, '')
+            lines.append(format % package)
+        lines.sort()
+        for line in lines:
+            print line
+        print
 
 def generate(argv):
     """
@@ -758,14 +710,30 @@ def generate(argv):
     product_file = args[0]
     compile_product(product_file)
 
-class forgiving_dict(dict):
-    """A dict that returns '' for missing keys. fd['missing'] -> ''
+class overlay_getitem(object):
+    """A dict like delegator that returns a default for missing keys.
+
+    Also converts None to the the default value.
+
+    Also adds a cache_location value
+
+    fd['missing'] -> ''
     """
+    def __init__(self, target, cache_location, default):
+        self.target = target
+        self.cache_location = cache_location
+        self.default = default
+
     def __getitem__(self, key):
-        value = self.get(key, '')
-        if value is None:
-            return ''
-        else:
-            return value
+        if key in ('cache-location', 'cache_location'):
+            return self.cache_location
+        try:
+            value = self.target[key]
+            if value is None:
+                return self.default
+            else:
+                return value
+        except KeyError:
+            return self.default
 
 # vim:ai:et:sts=4:sw=4:tw=0:
