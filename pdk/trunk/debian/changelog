@@ -1,3 +1,12 @@
+pdk (0.0.9) unstable; urgency=low
+
+  * New code.
+  * Includes workspace rearragement and migration tool.
+  * Reports missing comps.
+  * Make native debian package for now.
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue, 20 Sep 2005 17:37:29 -0500
+
 pdk (0.0.8-1) unstable; urgency=low
 
   * First packaged version.
