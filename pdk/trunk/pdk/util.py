@@ -29,6 +29,8 @@ import sys
 import inspect
 import popen2
 import shutil
+import stat
+import pycurl
 from cElementTree import ElementTree
 from elementtree.ElementTree import XMLTreeBuilder
 from xml.sax.writer import XmlWriter
@@ -112,21 +114,72 @@ def ensure_directory_exists(the_path):
     if not os.path.exists(real_path):
         os.makedirs(real_path)
 
-def get_remote_file(remote_url, local_filename):
+class LazyWriter(object):
+    """Writable file which is not opened until needed.
+
+    Directories needed to create the file are automatically created.
+    """
+    def __init__(self, filename):
+        self.name = filename
+        self.__handle = None
+
+    def open_if_needed(self):
+        """Create and open the file is hasn't been done yet."""
+        if not self.__handle:
+            dir_name = os.path.dirname(self.name)
+            if not os.path.exists(dir_name):
+                os.makedirs(dir_name)
+            self.__handle = open(self.name, 'w')
+
+    def __getattr__(self, attribute):
+        self.open_if_needed()
+        return getattr(self.__handle, attribute)
+
+    def write(self, block):
+        """Write to the handle.
+
+        This is written out explicitly so that accessing the write
+        method as an attribute avoids opening the handle.
+        """
+        self.open_if_needed()
+        self.__handle.write(block)
+
+    def close(self):
+        """Close the handle.
+
+        This is defined this way so that files remain untouched if this
+        object is closed but was never written to.
+        """
+        if self.is_started():
+            self.__handle.close()
+
+    def is_started(self):
+        """Have we started writing to the file yet?"""
+        return bool(self.__handle)
+
+def get_remote_file(remote_url, local_filename, trust_timestamp = False):
     '''Obtain a remote file via url.
 
     Copies the file to local_filename and attempts to set the last
     modified time.
     '''
-    import pycurl
+    if os.path.exists(local_filename):
+        mtime = os.stat(local_filename)[stat.ST_MTIME]
+    else:
+        mtime = None
+
+    handle = LazyWriter(local_filename)
+
     curl = pycurl.Curl()
     curl.setopt(curl.URL, remote_url)
-    handle = open(local_filename, 'w')
     curl.setopt(curl.USERAGENT, 'pdk')
     curl.setopt(curl.WRITEFUNCTION, handle.write)
     curl.setopt(curl.NOPROGRESS, False)
     curl.setopt(curl.FAILONERROR, True)
     curl.setopt(curl.OPT_FILETIME, True)
+    if mtime is not None and trust_timestamp:
+        curl.setopt(curl.TIMEVALUE, mtime)
+        curl.setopt(curl.TIMECONDITION, curl.TIMECONDITION_IFMODSINCE)
     progress = ConsoleProgress(remote_url)
     adapter = CurlAdapter(progress)
     curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)

@@ -190,19 +190,6 @@ popd
 # "Download" missing packages.
 pdk download apache.xml
 
-compare_timestamps() {
-    file1="$1"
-    file2="$2"
-
-    time1=$(stat -c '%Y' $file1)
-    time2=$(stat -c '%Y' $file2)
-
-    if [ "$time1" != "$time2" ]; then
-        difference=$(($time2 - $time1))
-        bail "timestamp mismatch $file1 $time1 -- $file2 $time2 -- $difference"
-    fi
-}
-
 for file in $(find ${cachedir} -type f); do
     perms=$(stat -c '%a' $file)
     [ 664 = "$perms" ] || bail "wrong permissions $perms for $file"

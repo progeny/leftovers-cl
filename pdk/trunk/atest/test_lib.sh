@@ -97,6 +97,19 @@ check_file() {
         || fail "package not hard linked $repo_filename"
 }
 
+compare_timestamps() {
+    file1="$1"
+    file2="$2"
+
+    time1=$(stat -c '%Y' $file1)
+    time2=$(stat -c '%Y' $file2)
+
+    if [ "$time1" != "$time2" ]; then
+        difference=$(($time2 - $time1))
+        bail "timestamp mismatch $file1 $time1 -- $file2 $time2 -- $difference"
+    fi
+}
+
 assert_exists() {
     local file="$1"
     [ -e $file ] || fail "Missing $file"

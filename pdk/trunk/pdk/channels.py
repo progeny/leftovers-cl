@@ -46,7 +46,6 @@ import os
 pjoin = os.path.join
 import re
 import rfc822
-import pycurl
 from cStringIO import StringIO
 from urlparse import urlsplit, urlunsplit
 from rfc822 import Message
@@ -54,10 +53,9 @@ from gzip import GzipFile
 from md5 import md5
 from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError, SemanticError
-from pdk.util import cpath, gen_file_fragments
+from pdk.util import cpath, gen_file_fragments, get_remote_file
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import deb, dsc, get_package_type, UnknownPackageTypeError
-from pdk.progress import ConsoleProgress, CurlAdapter
 
 def quote(raw):
     '''Create a valid filename which roughly resembles the raw string.'''
@@ -96,18 +94,6 @@ class CacheFileLocator(object):
     def __cmp__(self, other):
         return cmp((self.base_uri, self.filename, self.blob_id),
                    (other.base_uri, other.filename, other.blob_id))
-
-def curl_acquire(url, write_handle):
-    '''Grab a potentially remote file via curl.'''
-    curl = pycurl.Curl()
-    curl.setopt(curl.URL, url)
-    curl.setopt(curl.WRITEDATA, write_handle)
-    progress = ConsoleProgress(url)
-    adapter = CurlAdapter(progress)
-    curl.setopt(curl.NOPROGRESS, False)
-    curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
-    curl.setopt(curl.FAILONERROR, True)
-    curl.perform()
 
 def make_comparable(cls, id_fields = None):
     '''Makes a class comparable on the given identity fields.
@@ -161,9 +147,7 @@ class AptDebSection(object):
 
     def update(self):
         '''Grab the remote file and store it locally.'''
-        handle = open(self.channel_file, 'w')
-        curl_acquire(self.full_path, handle)
-        handle.close()
+        get_remote_file(self.full_path, self.channel_file, True)
 
     def iter_package_info(self):
         '''Iterate over ghost_package, blob_id, locator for this section.'''
@@ -280,9 +264,7 @@ class RemoteWorkspaceSection(object):
     def update(self):
         '''Grab the remote file and store it locally.'''
         index_url = '/'.join([self.full_path, 'cache', 'blob_list.gz'])
-        handle = open(self.channel_file, 'w')
-        curl_acquire(index_url, handle)
-        handle.close()
+        get_remote_file(index_url, self.channel_file, True)
 
     def iter_package_info(self):
         '''Iterate over blob_id, locator for this section.

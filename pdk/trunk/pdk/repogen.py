@@ -34,7 +34,7 @@ from pdk.component import ComponentDescriptor, Metafilter
 from pdk.exceptions import SemanticError, InputError, CommandLineError, \
                 IntegrityFault
 import pdk.log as log
-from pdk.util import ensure_directory_exists, pjoin
+from pdk.util import ensure_directory_exists, pjoin, LazyWriter
 
 logger = log.get_logger()
 
@@ -96,28 +96,6 @@ def compile_product(component_name):
         os.system('rm -rf repo')
 
     repo_type(product, contents)
-
-class LazyWriter(object):
-    """Writable file which is not opened until needed."""
-    def __init__(self, name):
-        self.name = str(name)
-        self.__handle = None
-
-    def __getattr__(self, attribute):
-        if not self.__handle:
-            dir_name = os.path.dirname(self.name)
-            if not os.path.exists(dir_name):
-                os.makedirs(dir_name)
-            self.__handle = open(self.name, 'w')
-        return getattr(self.__handle, attribute)
-
-    def is_started(self):
-        """Have we started writing to the file yet?"""
-        if self.__handle:
-            return True
-        else:
-            return False
-
 
 class DebianPoolInjector(object):
     """This class handles the details of putting a package into a
