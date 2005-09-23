@@ -104,18 +104,16 @@ cat >${channels} <<EOF
 <channels>
   <channel-1>
     <type>dir</type>
-    <path>channel-1</path>
+    <path>$(pwd)/channel-1</path>
   </channel-1>
   <channel-2>
     <type>dir</type>
-    <path>channel-2</path>
+    <path>$(pwd)/channel-2</path>
   </channel-2>
 </channels>
 EOF
 
 pdk channel update
-[ -f ${project}/etc/outside_world.cache ] \
-    || bail 'channel cache file should have been created'
 
 pdk resolve apache.xml channel-1
 pdk resolve apache.xml channel-2
@@ -183,12 +181,11 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
 </component>
 EOF
 
-# "Download" missing packages.
 # Note -- one should be able to do this from any directory
 mkdir junk
-cd junk
+pushd junk
 pdk download ../apache.xml 
-cd ..
+popd
 
 # "Download" missing packages.
 pdk download apache.xml

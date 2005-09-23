@@ -40,7 +40,7 @@ EOF
     ls $dir/etc/sources >/dev/null
     [ "$(readlink $dir/.git)" = etc/git ]
     [ -e $dir/.git/description ]
-    [ 2 = "$(cat $dir/etc/schema)" ]
+    [ 3 = "$(cat $dir/etc/schema)" ]
 }
 
 pdk workspace create || status=$?

@@ -21,35 +21,41 @@
 #
 . atest/test_lib.sh
 
-#-----------------------------------------------------------------------
-# Ill-formed command line
-pdk workspace create foo
-pushd foo
+set_up() {
+    message="$1"
+    expected_error="$2"
+    status="(missing or zero status!)"
+    echo "test: $message"
+    pdk workspace create error-handling
+    pushd error-handling
+}
+
+tear_down() {
+    [ -e errors.txt ] && cat errors.txt
+    [ "$status" = $expected_error ] \
+        || fail "$message [ $expected_error $status ]"
+    popd
+    rm -rf error-handling
+}
+
+
+set_up "Ill-formed command line - semdiff" 2
 pdk semdiff  || status=$?
-test "$status" = "2" || { 
-    bail "Expected command-line error(2), got ${status}"
-}
-popd ; rm -rf foo
+tear_down
 
+set_up "Ill-formed command line - resolve" 2
 pdk resolve || status=$?
-test "$status" = "2" || {
-    bail "Expected command-line error(2), got ${status}"
-}
+tear_down
 
+set_up "Ill-formed command line - channel update" 2
 pdk channel update z || status=$?
-test "$status" = "2" || {
-    bail "Expected command-line error(2), got ${status}"
-}
+tear_down
 
+set_up "Ill-formed command line - download" 2
 pdk download || status=$?
-test "$status" = "2" || {
-    bail "Expected command-line error(2), got ${status}"
-}
+tear_down
 
-#-----------------------------------------------------------------------
-# Working with missing components is an error.
-pdk workspace create foo
-pushd foo
+set_up "Working with missing components is an error." 4
 cat >exists.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -59,15 +65,12 @@ cat >exists.xml <<EOF
 </component>
 EOF
 pdk repogen exists.xml 2>errors.txt || status=$?
-( test "$status" = "3"; grep -i exist errors.txt ) \
-    || bail "Did not handle non-existant component correctly"
-popd
-rm -rf foo
+grep -i exist errors.txt \
+    || { cat errors.txt;
+         fail "The word exist should appear in error."; }
+tear_down
 
-#-----------------------------------------------------------------------
-# Process ill-formed channels file
-pdk workspace create foo
-pushd foo
+set_up "Process ill-formed channels file" 3
 cat > etc/channels.xml << EOF
 <?xml version="1.0"?>
 <channels>
@@ -75,37 +78,37 @@ cat > etc/channels.xml << EOF
 </channels>
 EOF
 pdk channel update || status=$?
-test "$status" = "3" || bail "Incorrect/unexpected error return"
-popd ; rm -rf foo
+tear_down
 
-#-----------------------------------------------------------------------
-# Missing outside_world.cache
-pdk workspace create foo
-pushd foo
+set_up "Missing outside_world.cache" 4
+cat >etc/channels.xml <<EOF
+<?xml version="1.0"?>
+<channels>
+  <remote>
+    <type>apt-deb</type>
+    <path>http://localhost/</path>
+    <archs>arm i386 source</archs>
+    <dist>apache</dist>
+    <components>main</components>
+  </remote>
+</channels>
+EOF
 cat >empty.xml <<EOF
 <?xml version="1.0"?>
 <component/>
 EOF
 pdk resolve empty.xml || status=$?
-test "$status" = "4" || bail "Incorrect/unexpected error return"
-popd ; rm -rf foo
+tear_down
 
 
-#-----------------------------------------------------------------------
-# Process even worse ill-formed (non)XML
-pdk workspace create foo
-pushd foo
+set_up "Process even worse ill-formed (non)XML" 3
 cat > etc/channels.xml << EOF
 not ex emm ell at all
 EOF
 pdk channel update || status=$?
-test "$status" = "3" || bail "Incorrect/unexpected error return"
-popd ; rm -rf foo
+tear_down
 
-#-----------------------------------------------------------------------
-# Bad path in apt-deb channel
-pdk workspace create foo
-pushd foo
+set_up "Bad path in apt-deb channel" 3
 cat > etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
@@ -119,28 +122,16 @@ cat > etc/channels.xml <<EOF
 </channels>
 EOF
 pdk channel update || status=$?
-test "$status" = "3" || bail "Path element w/o trailing slash accepted"
-popd ; rm -rf foo
+tear_down
 
-#-----------------------------------------------------------------------
-# Process an ill-formed component descriptor
-
-pdk workspace create foo
-pushd foo
+set_up "Process an ill-formed component descriptor" 3
 cat > bad_component.xml << EOF
 <?xml version="1.0"?>
 EOF
 pdk semdiff ./bad_component.xml  || status=$?
-test "$status" = "3" || bail "Expected InputError(3) got ${status}"
-popd
-rm -rf foo
+tear_down
 
-#-----------------------------------------------------------------------
-# Process a more reasonable ill-formed component descriptor
-# Unclosed tag
-
-pdk workspace create foo
-pushd foo
+set_up "Process a more reasonable ill-formed component descriptor" 3
 cat > ethereal.xml << EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
@@ -153,15 +144,9 @@ cat > ethereal.xml << EOF
 </component>
 EOF
 pdk semdiff ethereal.xml  || status=$?
-test "$status" = "3" || bail "Expected InputError(3) got ${status}"
-popd
-rm -rf foo
+tear_down
 
-#-----------------------------------------------------------------------
-# Cache miss
-
-pdk workspace create foo
-pushd foo
+set_up "Cache miss" 4
 cat > cache-miss.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -172,14 +157,9 @@ cat > cache-miss.xml <<EOF
 EOF
 
 pdk semdiff cache-miss.xml empty.xml || status=$?
-test "$status" = "4" || bail "Incorrect/unexpected error return"
-popd
-rm -rf foo
+tear_down
 
-#-----------------------------------------------------------------------
-# Download non-existent package from channel
-pdk workspace create foo
-pushd foo
+set_up "Download non-existent package from channel" 4
 cat > cache-miss.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -199,19 +179,9 @@ cat > etc/channels.xml <<EOF
 EOF
 pdk channel update
 pdk download cache-miss.xml || status=$?
-test "$status" = "4" || bail "Did not handle channel miss correctly"
-popd
-rm -rf foo
+tear_down
 
-#-----------------------------------------------------------------------
-# Don't give necessary arguments -- command line error (2)
-pdk repogen  || status=$?
-test "${status}" = "2" || bail "Expected error 2, got $status"
-
-#-----------------------------------------------------------------------
-# Use non-exsistant channel.
-pdk workspace create foo
-pushd foo
+set_up "Don't give necessary arguments" 3
 cat > component.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -232,14 +202,9 @@ cat > etc/channels.xml <<EOF
 EOF
 pdk channel update
 pdk resolve component.xml bar || status=$?
-test "$status" = "3" || bail "Did not handle non-existant channel correctly"
-popd
-rm -rf foo
+tear_down
 
-#-----------------------------------------------------------------------
-# repogen an empty component
-pdk workspace create foo
-pushd foo
+set_up "repogen an empty component" 3
 cat > empty.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -250,17 +215,9 @@ EOF
 rm -rf foo
 
 pdk repogen empty.xml || status=$?
-test "$status" = "3" || bail "Did not handle repogen empty.xml correctly."
-popd
-rm -rf foo
+tear_down
 
-#-----------------------------------------------------------------------
-# update_from_remote with no upstream name
-pdk workspace create foo
-pushd foo
+set_up "update_from_remote with no upstream name" 2
 pdk update_from_remote || status=$?
-test "$status" = "2" \
-    || bail "Did not handle update_from_remote no argument correctly."
-popd
-rm -rf foo
+tear_down
 

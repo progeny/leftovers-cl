@@ -19,12 +19,14 @@
 from cStringIO import StringIO
 from pdk.test.utest_util import Test
 
-from pdk.channels import AptDebChannel, OutsideWorld, FileLocator
+from pdk.channels import OutsideWorld, FileLocator, \
+     DirectorySection, AptDebBinaryStrategy, AptDebSourceStrategy, \
+     AptDebSection, OutsideWorldFactory, WorldData, quote
 
 class TestAptDebControl(Test):
     def test_iter_apt_deb_control(self):
         packages = 'a\n\nb\nc\r\n\n'
-        iter_apt_deb_control = AptDebChannel.iter_apt_deb_control
+        iter_apt_deb_control = AptDebSection.iter_apt_deb_control
         actual = list(iter_apt_deb_control(StringIO(packages)))
         expected = ['a\n\n', 'b\nc\r\n\n']
         self.assert_equals_long(actual, expected)
@@ -35,17 +37,22 @@ class MockPackage(object):
         self.contents = {}
 
 class TestOutsideWorld(Test):
-    def test_update_with_channel(self):
+    def test_update_blob_id_locator(self):
         a = MockPackage('a')
         b = MockPackage('b')
         c = MockPackage('c')
         fl = FileLocator
-        channel = [ (a, fl('uri:a', 'a.deb', None)),
-                    (b, fl('uri:b', 'b.deb', None)),
-                    (c, fl('uri:c', 'c.deb', None)) ]
+        section_data  = [ (a, 'a', fl('uri:a', 'a.deb', None)),
+                          (b, 'b', fl('uri:b', 'b.deb', None)),
+                          (c, 'c', fl('uri:c', 'c.deb', None)) ]
+        class MockSection(object):
+            def iter_package_info(self):
+                return section_data
 
-        data = OutsideWorld()
-        data.update_with_channel('local', channel)
+        sections = { 'local': [MockSection()] }
+
+        data = OutsideWorld(sections)
+        data.update_blob_id_locator()
 
         self.assert_equals(fl('uri:b', 'b.deb', None),
                            data.find_by_blob_id('b'))
@@ -54,5 +61,51 @@ class TestOutsideWorld(Test):
         self.assert_equals(fl('uri:c', 'c.deb', None),
                            data.find_by_blob_id('c'))
 
-        self.assert_equals_long([i[0] for i in channel],
-                                data.get_package_list(['local']))
+        self.assert_equals_long([ i[0] for i in section_data ],
+                                list(data.iter_packages(['local'])))
+
+class TestChannelFilenames(Test):
+    def test_iter_sections(self):
+        world_dict = {
+            'channels': { 'local': { 'type': 'dir',
+                                     'path': 'directory' },
+                          'remote': { 'type': 'apt-deb',
+                                      'path': 'http://localhost/',
+                                      'dist': 'stable',
+                                      'components': 'main contrib',
+                                      'archs': 'source i386' }
+                          },
+            'sources': {}
+            }
+        world_data = WorldData(world_dict)
+        world = OutsideWorldFactory(world_data, 'zzz/zzz').create()
+        base_path = 'http://localhost/'
+        hpath = base_path + 'dists/stable/%s/%s/%s'
+        expected = [
+            DirectorySection('directory'),
+            AptDebSection(
+                hpath % ('main', 'source', 'Sources.gz'),
+                None,
+                AptDebSourceStrategy(base_path)),
+            AptDebSection(
+                hpath % ('main', 'binary-i386', 'Packages.gz'),
+                None,
+                AptDebBinaryStrategy(base_path)),
+            AptDebSection(
+                hpath % ('contrib', 'source', 'Sources.gz'),
+                None,
+                AptDebSourceStrategy(base_path)),
+            AptDebSection(
+                hpath % ('contrib', 'binary-i386', 'Packages.gz'),
+                None,
+                AptDebBinaryStrategy(base_path))
+            ]
+
+        actual = list(world.iter_sections())
+        self.assert_equals_long(expected, actual)
+
+    def test_quote(self):
+        path = 'http://localhost/dists/stable/Z.gz'
+        quoted_path = 'http_localhost_dists_stable_Z.gz'
+
+        self.assert_equals_long(quoted_path, quote(path))

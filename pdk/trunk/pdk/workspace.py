@@ -28,13 +28,13 @@ import sys
 from pdk.version_control import VersionControl
 from pdk.source import RemoteSources
 from pdk.cache import Cache
-from pdk.channels import OutsideWorld
+from pdk.channels import OutsideWorldFactory, WorldData
 from pdk.exceptions import ConfigurationError, SemanticError, \
      CommandLineError
 from pdk.util import pjoin
 
 # current schema level for this pdk build
-schema_target = 2
+schema_target = 3
 
 def find_workspace_base(directory=None):
     """Locate the directory above the current directory, containing
@@ -133,6 +133,16 @@ def migrate(dummy):
         os.symlink(pjoin('etc', 'git'), '.git')
         os.symlink(pjoin('git', 'remotes'), pjoin('etc', 'sources'))
         open(pjoin('etc', 'schema'), 'w').write('2\n')
+        migrate(None)
+        return
+
+    if schema_number == 2:
+        os.makedirs(pjoin('etc', 'channels'))
+        channels_pickle = pjoin('etc', 'outside_world.cache')
+        if os.path.exists(channels_pickle):
+            os.remove(channels_pickle)
+        open(pjoin('etc', 'schema'), 'w').write('3\n')
+        return
 
 def info(ignore):
     """Report information about the local workspace"""
@@ -162,11 +172,12 @@ def create_workspace(workspace_root):
     ws = _Workspace(workspace_root)
     os.makedirs(ws.cache_dir)
     os.makedirs(ws.vc_dir)
+    os.makedirs(ws.channel_dir)
     vc = ws.vc
     vc.create()
     os.symlink(pjoin('etc', 'git'), pjoin(ws.location, '.git'))
     os.symlink(pjoin('git', 'remotes'), ws.sources_dir)
-    open(pjoin(ws.config_dir, 'schema'), 'w').write('2\n')
+    open(pjoin(ws.config_dir, 'schema'), 'w').write('%d\n' % schema_target)
     return ws
 
 
@@ -295,7 +306,7 @@ def world_update(args):
     if len(args) > 0:
         raise CommandLineError, 'update takes no arguments'
     workspace = current_workspace()
-    OutsideWorld.update_index(workspace)
+    workspace.world_update()
 
 def publish(args):
     """Publish the HEAD of this workspace to another workspace.
@@ -383,6 +394,7 @@ class _Workspace(object):
         self.cache_dir = pjoin(self.config_dir,'cache')
 
         self.channel_data_source = pjoin(self.config_dir, 'channels.xml')
+        self.channel_dir = pjoin(self.config_dir, 'channels')
         self.outside_world_store = pjoin(self.config_dir,
                                          'outside_world.cache')
 
@@ -399,10 +411,15 @@ class _Workspace(object):
         return VersionControl(self.location, self.vc_dir)
     vc = cached_property('vc', __create_vc)
 
-    def __create_channels(self):
+    def __create_world(self):
         """Get the outside world object for this workspace."""
-        return OutsideWorld.load_cached(self)
-    channels = cached_property('channels', __create_channels)
+        world_data = WorldData.load_from_stored(self.channel_data_source,
+                                                self.sources_dir)
+        factory = OutsideWorldFactory(world_data, self.channel_dir)
+        world = factory.create()
+        return world
+    world = cached_property('world', __create_world)
+    channels = world
 
     def add(self, name):
         """
@@ -446,5 +463,10 @@ class _Workspace(object):
         Get latest changes from version control
         """
         self.vc.update_from_remote(upstream_name)
+
+    def world_update(self):
+        """Update remote index files for outside world."""
+        self.world.fetch_world_data()
+
 
 # vim:ai:et:sts=4:sw=4:tw=0:

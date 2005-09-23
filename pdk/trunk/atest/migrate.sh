@@ -50,8 +50,9 @@ pushd schema1
     # stuff that should be present
     [ -d etc/cache/md5 ] || fail 'cache was not migrated properly'
     [ -e etc/channels.xml ] || fail 'channels.xml was not migrated.'
+    [ -d etc/channels ] || fail 'channels dir not created.'
     [ -e somefile ] || fail 'work dir content should be in base dir.'
-    [ 2 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+    [ 3 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
     [ -L etc/git  ] && fail 'etc/git should not be a symlink'
     [ -d etc/git/objects ] || fail 'etc/git should contain git info'
     [ -L .git ] || fail '.git should be a symlink'
@@ -63,3 +64,13 @@ pushd schema1
     [ -e etc/sources/hello ] || fail 'sources should be in etc/.'
 popd
 
+mkdir -p schema2/etc
+pushd schema2
+    echo 2 >etc/schema
+    touch etc/outside_world.cache
+    pdk migrate
+    [ -d etc/channels ] || fail 'channels dir not created.'
+    [ -e etc/outside_world.cache ] \
+        && fail 'outside_world.cache not removed.'
+    [ 3 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+popd

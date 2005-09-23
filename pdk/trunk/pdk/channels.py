@@ -17,37 +17,51 @@
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 """
-channels.py
+The outside world is divided into remote workspaces and channels.
 
-Channels are ways to acquire packages.
+Both of these break down into sections, which contain information about
+available packages.
 
-The only class here designed for use outside of this module is
-OutsideWorld.
+Remote workspaces are treated purely as piles of downloadable
+blobs. Channels contain more information about the packages available,
+and are useful as sources for resolving.
 
-Channel objects are transient. They only exist long enough to acquire
-and parse their index or package data, which may be remote. They behave
-as iterators, and do not need to be persistent.
+The result of parsing configuration is a WorldData object.
 
-Persistence of all the channels is managed by the OutsideWorld class.
+OutsideWorldFactory consumes WorldData to create OutsideWorld.
+
+OutsideWorld is able to filter all known packages by channel name and
+provides a filtered iterator to do so.
+
+OutsideWorld is also able to provide appropriate locator objects for a
+given blob_id.
+
+Locators take care of providing urls where packages may be
+downloaded. They also take care of finding new locators for extra
+files needed by dsc packages.
+
 """
 
 import os
 pjoin = os.path.join
+import re
 import rfc822
 import pycurl
 from cStringIO import StringIO
 from urlparse import urlsplit, urlunsplit
 from rfc822 import Message
-import cPickle
 from gzip import GzipFile
 from md5 import md5
-from itertools import chain
 from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError, SemanticError
 from pdk.util import cpath, gen_file_fragments
 from pdk.yaxml import parse_yaxml_file
-from pdk.package import get_package_type, UnknownPackageTypeError
+from pdk.package import deb, dsc, get_package_type, UnknownPackageTypeError
 from pdk.progress import ConsoleProgress, CurlAdapter
+
+def quote(raw):
+    '''Create a valid filename which roughly resembles the raw string.'''
+    return re.sub(r'[^A-Za-z0-9.-]+', '_', raw)
 
 class FileLocator(object):
     '''Represents a resource which can be imported into the cache.'''
@@ -56,7 +70,7 @@ class FileLocator(object):
         self.filename = filename
         self.blob_id = expected_blob_id
 
-    def make_extra_file_locator(self, filename, expected_blob_id):
+    def make_extra_file_locator(self, filename, expected_blob_id, dummy):
         '''Make a new locator which shares the base_uri or this locator.'''
         return FileLocator(self.base_uri, filename, expected_blob_id)
 
@@ -66,34 +80,176 @@ class FileLocator(object):
 
 class CacheFileLocator(object):
     '''Represents a remote cached resource for import into this cache.'''
-    def __init__(self, base_uri, filename, expected_blob_id, outside_world):
+    def __init__(self, base_uri, filename, expected_blob_id):
         self.base_uri = base_uri
         self.filename = filename
         self.blob_id = expected_blob_id
-        self.outside_world = outside_world
 
-    def make_extra_file_locator(self, dummy, expected_blob_id):
+    def make_extra_file_locator(self, dummy, expected_blob_id, world):
         '''Make a new locator for the given extra file.
 
         Hunt for the expected_blob_id in the world instead of looking
         for the given filename.
         '''
-        return self.outside_world.find_by_blob_id(expected_blob_id)
+        return world.find_by_blob_id(expected_blob_id)
 
     def __cmp__(self, other):
         return cmp((self.base_uri, self.filename, self.blob_id),
                    (other.base_uri, other.filename, other.blob_id))
 
-class PackageDirChannel(object):
-    """Generate package objects for every package found in a dir tree.
+def curl_acquire(url, write_handle):
+    '''Grab a potentially remote file via curl.'''
+    curl = pycurl.Curl()
+    curl.setopt(curl.URL, url)
+    curl.setopt(curl.WRITEDATA, write_handle)
+    progress = ConsoleProgress(url)
+    adapter = CurlAdapter(progress)
+    curl.setopt(curl.NOPROGRESS, False)
+    curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
+    curl.setopt(curl.FAILONERROR, True)
+    curl.perform()
 
-    yields three-tuple (package object, uri, unpathed filename)
-    """
-    def __init__(self, path):
-        self.path = path
+def make_comparable(cls, id_fields = None):
+    '''Makes a class comparable on the given identity fields.
 
-    def __iter__(self):
-        for root, dirnames, files in os.walk(self.path, topdown = True):
+    If the id_fields are omitted then the class must provide a
+    get_identity method which returns a tuple of values.
+    '''
+    if hasattr(cls, 'get_identity'):
+        get_identity = cls.get_identity
+    else:
+        def get_identity(self):
+            '''Return a tuple representing the "identity" of the object.'''
+            identity = []
+            for field in id_fields:
+                identity.append(getattr(self, field))
+            return tuple(identity)
+
+    def __cmp__(self, other):
+        class_cmp = cmp(self.__class__, other.__class__)
+        if class_cmp:
+            return class_cmp
+        self_id = get_identity(self)
+        other_id = get_identity(other)
+        return cmp(self_id, other_id)
+
+    def __hash__(self):
+        return hash(get_identity(self))
+
+    def __repr__(self):
+        return '<%s %r>' % (self.__class__.__name__, get_identity(self))
+
+    cls.__cmp__ = __cmp__
+    cls.__hash__ = __hash__
+    cls.__repr__ = __repr__
+    cls.__str__ = __repr__
+
+class AptDebSection(object):
+    '''Section for managing a single Packages or Sources file.
+
+    Requires a strategy object which controls whether the url will
+    be treated as Packages or Sources.
+    '''
+    def __init__(self, full_path, channel_file, strategy):
+        self.full_path = full_path
+        self.channel_file = channel_file
+        self.strategy = strategy
+
+    def get_identity(self):
+        '''Return an identity tuple for this object.'''
+        return (self.strategy.package_type, self.full_path)
+
+    def update(self):
+        '''Grab the remote file and store it locally.'''
+        handle = open(self.channel_file, 'w')
+        curl_acquire(self.full_path, handle)
+        handle.close()
+
+    def iter_package_info(self):
+        '''Iterate over ghost_package, blob_id, locator for this section.'''
+        if not os.path.exists(self.channel_file):
+            return
+        gunzipped = GzipFile(self.channel_file)
+
+        control_iterator = self.iter_apt_deb_control(gunzipped)
+        for package in \
+                self.iter_as_packages(control_iterator):
+            locator = self.strategy.get_locator(package)
+            package.contents['blob-id'] = locator.blob_id
+            yield package, locator.blob_id, locator
+
+        gunzipped.close()
+
+    def iter_apt_deb_control(handle):
+        """Given a file like object, yield its deb control-like stanzas."""
+        control = ''
+        for line in handle:
+            control += line
+            if not line.rstrip():
+                yield control
+                control = ''
+    iter_apt_deb_control = staticmethod(iter_apt_deb_control)
+
+    def iter_as_packages(self, control_iterator):
+        """For each control or header, yield a stream of package objects."""
+        for control in control_iterator:
+            yield self.strategy.package_type.parse(control, None)
+
+make_comparable(AptDebSection, ('full_path', 'base_path'))
+
+class AptDebBinaryStrategy(object):
+    '''Handle get_locator and package_type for AptDebSection
+
+    Used for Packages files.
+    '''
+    package_type = deb
+
+    def __init__(self, base_path):
+        self.base_path = base_path
+
+    def get_locator(self, package):
+        """Return base, filename, blob_id for a package"""
+        fields = Message(StringIO(package.raw))
+        return FileLocator(self.base_path, fields['filename'], \
+                           'md5:' + fields['md5sum'])
+
+
+class AptDebSourceStrategy(object):
+    '''Handle get_locator and package_type for AptDebSection
+
+    Used for Sources files.
+    '''
+    package_type = dsc
+
+    def __init__(self, base_path):
+        self.base_path = base_path
+
+    def get_locator(self, package):
+        """Return base, filename, blob_id for a package"""
+        for md5_sum, filename in package.extra_file:
+            fields = Message(StringIO(package.raw))
+            if filename.endswith('.dsc'):
+                base = self.base_path + fields['directory']
+                return FileLocator(base, filename, md5_sum)
+        raise SemanticError, 'no dsc found'
+
+class DirectorySection(object):
+    '''Section object for dealing with local directories as channels.'''
+    def __init__(self, full_path):
+        self.full_path = full_path
+
+    def update(self):
+        """Since the files are local, don't bother storing workspace state.
+        """
+        pass
+
+    def iter_package_info(self):
+        '''Iterate over ghost_package, blob_id, locator for this section.
+
+        The directory is visited recursively and in a repeatable order.
+        '''
+        for root, dirnames, files in os.walk(self.full_path,
+                                             topdown = True):
             dirnames.sort()
             files.sort()
             for candidate in files:
@@ -111,253 +267,247 @@ class PackageDirChannel(object):
                 blob_id = 'md5:' + md51_digest.hexdigest()
                 url = 'file://' + cpath(root)
                 locator = FileLocator(url, candidate, None)
-                yield package_type.parse(control, blob_id), locator
+                yield package_type.parse(control, blob_id), blob_id, locator
 
-class AptDebChannel(object):
-    '''Generate package objects for every stanza in an apt source.'''
-    def __init__(self, path, dist, components, archs):
-        self.path = path
-        self.dist = dist
-        self.components = components
-        self.archs = archs
+make_comparable(DirectorySection, ('full_path',))
 
-    def iter_apt_deb_control(handle):
-        """Given a file like object, yield its deb control-like stanzas."""
-        control = ''
-        for line in handle:
-            control += line
-            if not line.rstrip():
-                yield control
-                control = ''
-    iter_apt_deb_control = staticmethod(iter_apt_deb_control)
-
-    def iter_as_packages(control_iterator, package_type):
-        """For each control or header, yield a stream of package objects."""
-        for control in control_iterator:
-            yield package_type.parse(control, None)
-    iter_as_packages = staticmethod(iter_as_packages)
-
-    def __iter__(self):
-        for component in self.components:
-            for arch in self.archs:
-                for item in self.iter_apt_deb_slice(component, arch):
-                    yield item
-
-    def iter_apt_deb_slice(self, component, arch):
-        '''Generate metadata for a single url, dist, component, and arch.'''
-        # The navigation of the repo, loading of files, and parsing of 
-        # the Sources, Packages, et al, are a SIDE EFFECT of an 
-        # iterator wrapper? Hmmmm....
-        if arch == 'source':
-            target = 'Sources.gz'
-            arch_specific = 'source'
-            package_type = get_package_type(format='dsc')
-            def get_download_info(package):
-                """Return base, filename, blob_id for a package"""
-                for md5_sum, filename in package.extra_file:
-                    fields = Message(StringIO(package.raw))
-                    if filename.endswith('.dsc'):
-                        base = self.path + fields['directory']
-                        return FileLocator(base, filename, md5_sum)
-                raise SemanticError, 'no dsc found'
-        else:
-            target = 'Packages.gz'
-            arch_specific = 'binary-%s' % arch
-            package_type = get_package_type(format='deb')
-            def get_download_info(package):
-                """Return base, filename, blob_id for a package"""
-                fields = Message(StringIO(package.raw))
-                return FileLocator(self.path, fields['filename'], \
-                                   'md5:' + fields['md5sum'])
-
-        tag_file = StringIO()
-        url = self.path + pjoin('dists', self.dist, component,
-                                    arch_specific, target)
-        curl = pycurl.Curl()
-        curl.setopt(curl.URL, url)
-        curl.setopt(curl.WRITEFUNCTION, tag_file.write)
-        progress = ConsoleProgress(url)
-        adapter = CurlAdapter(progress)
-        curl.setopt(curl.NOPROGRESS, False)
-        curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
-        curl.perform()
-        tag_file.reset()
-        gunzipped = GzipFile(fileobj = tag_file)
-
-        control_iterator = self.iter_apt_deb_control(gunzipped)
-        for package in \
-                self.iter_as_packages(control_iterator, package_type):
-            locator = get_download_info(package)
-            package.contents['blob-id'] = locator.blob_id
-            yield package, locator
-
-class RemoteSource(object):
+class RemoteWorkspaceSection(object):
     '''Read the remote cache_info list from a source.'''
-    def __init__(self, path, outside_world):
-        self.path = path
-        self.outside_world = outside_world
+    def __init__(self, path, channel_file):
+        self.full_path = path
+        self.channel_file = channel_file
 
-    def __iter__(self):
-        cache_index = StringIO()
-        raw_url = self.path
-        scheme, netloc, raw_path, query, fragment = urlsplit(raw_url)
-        if not scheme:
-            scheme = 'file://'
-        path_parts = raw_path.split('/')
-        del path_parts[-1]
-        index_path = '/'.join(path_parts + ['cache', 'blob_list.gz'])
-        index_url = urlunsplit((scheme, netloc, index_path, query,
-                                fragment))
-        cache_path = '/'.join(path_parts + ['cache'])
-        cache_url = urlunsplit((scheme, netloc, cache_path, query,
-                                fragment))
-        curl = pycurl.Curl()
-        curl.setopt(curl.URL, index_url)
-        curl.setopt(curl.WRITEFUNCTION, cache_index.write)
-        progress = ConsoleProgress(cache_url)
-        adapter = CurlAdapter(progress)
-        curl.setopt(curl.NOPROGRESS, False)
-        curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
-        curl.perform()
-        cache_index.reset()
-        gunzipped = GzipFile(fileobj = cache_index)
+    def update(self):
+        '''Grab the remote file and store it locally.'''
+        index_url = '/'.join([self.full_path, 'cache', 'blob_list.gz'])
+        handle = open(self.channel_file, 'w')
+        curl_acquire(index_url, handle)
+        handle.close()
+
+    def iter_package_info(self):
+        '''Iterate over blob_id, locator for this section.
+
+        The package object is set to None as it is not know for this kind
+        of section.
+        '''
+        cache_url = '/'.join([self.full_path, 'cache'])
+        if not os.path.exists(self.channel_file):
+            return
+        gunzipped = GzipFile(self.channel_file)
+
         for line in gunzipped:
             blob_id, blob_path = line.strip().split()
-            locator = CacheFileLocator(cache_url, blob_path, blob_id,
-                                       self.outside_world)
-            yield blob_id, locator
+            locator = CacheFileLocator(cache_url, blob_path, blob_id)
+            yield None, blob_id, locator
 
-def create_channel(name, data_dict):
-    ''' Create a channel from the given data_dict.
+make_comparable(RemoteWorkspaceSection, ('path',))
 
-    Expects a data_dict containing at least "path" and "type"
-    keys. Other keys may be required depending on the type.
+class WorldData(object):
+    """Represents all confiuration data known about the outside world.
 
-    If type is "dir", then only "path" is required. Path should refer
-    to a directory containing packages.
+    Contructed from a dict in in the form of:
+        world_dict = {
+            'channels': { 'local': { 'type': 'dir',
+                                     'path': '.../directory' },
+                          'remote': { 'type': 'apt-deb',
+                                      'path': 'http://baseaptrepo/',
+                                      'dist': 'stable',
+                                      'components': 'main contrib non-free',
+                                      'archs': 'source i386' }
+                          },
+            'sources': { 'name': { 'type': 'source',
+                                   'path': 'http://pathtosource/' }
+                         }
+            }
 
-    If type is "apt-deb", then the following keys should be present:
-      { "path": http url
-        "dist": dist_name
-        "archs": space separated list of archs **including "source".**
-        "components": space separated list of apt components }
-    All parameters for apt-deb should be in a form similar to
-    sources.list. (except archs)
+    Use this object as an iterator to get at the more useful form of the
+    data.
 
-    '''
-    type_value = None
-    try:
-        type_value = data_dict['type']
-    except KeyError, message:
-        raise InputError('%s has no type' % name)
+    iter(world_data) -> [ name, data_dict]
+    data_dict is the individual data_dict for the given channel or source.
+    Each data_dict must have keys type and path. Certain types may require
+    more keys.
+    """
+    def __init__(self, world_dict):
+        self.world_dict = world_dict
 
-    try:
-        path = data_dict['path']
-        if type_value == 'apt-deb':
-            if path[-1] != "/":
-                raise InputError, "path in channels.xml must end in a slash"
-            dist = data_dict['dist']
-            components = data_dict['components'].split()
-            archs = data_dict['archs'].split()
-            return AptDebChannel(path, dist, components, archs)
-        elif type_value == 'dir':
-            return PackageDirChannel(path)
-        else:
-            raise InputError('channel %s has unrecognized type %s'
-                             % (name, type_value))
-    except KeyError, field:
-        message = 'channel "%s" missing field "%s"' % (name, str(field))
-        raise InputError(message)
+    def load_from_stored(channel_data_file, sources_dir):
+        '''Load and construct an object from file stored in a workspace.'''
+        world_dict = {'channels': {}, 'sources': {}}
 
-class OutsideWorld(object):
-    '''This object holds the downloaded state of all channels.
-    And loads the state.
-    And writest the state.
-    And returns a list of channels.
-    And indexes all files by blob ids.
-
-    It is intended to be loaded from a pickle file or rebuilt completely
-    and saved to a pickle file.
-    '''
-
-    def __init__(self):
-        self.by_blob_id = {}            # A flat space of all blobs
-        self.by_channel_name = {}       # tuples by channel name
-
-
-    def update_index(workspace):
-        '''Download new metadata and rewrite the pickle file.'''
         try:
-            channels = parse_yaxml_file(workspace.channel_data_source)
+            channels = parse_yaxml_file(channel_data_file)
         except ExpatError, message:
-            raise InputError("In %s, %s" % (workspace.channel_data_source,
-                                            message))
+            raise InputError("In %s, %s" % (channel_data_file, message))
         except IOError, error:
             if error.errno == 2:
                 # treat missing channels.xml as no channels needed.
                 channels = {}
+        world_dict['channels'] = channels
 
-        outside_world = OutsideWorld()
-        for name, data in channels.items():
-            channel = create_channel(name, data)
-            outside_world.update_with_channel(name, iter(channel))
-
-        for name in os.listdir(workspace.sources_dir):
-            source_file = os.path.join(workspace.sources_dir, name)
+        for name in os.listdir(sources_dir):
+            source_file = os.path.join(sources_dir, name)
             lookup = rfc822.Message(open(source_file))
-            path = lookup['URL']
-            source = RemoteSource(path, outside_world)
-            outside_world.update_with_source(iter(source))
-        outside_world.dump(workspace.outside_world_store)
-    update_index = staticmethod(update_index)
+            url = lookup['URL']
+            # take one path segment off the path portion of the url.
+            # specifically the git part of '.../etc/git'
+            scheme, netloc, raw_path, query, fragment = urlsplit(url)
+            if not scheme:
+                scheme = 'file://'
+            path_parts = raw_path.split('/')
+            del path_parts[-1]
+            fixed_path = '/'.join(path_parts)
+            fixed_url = urlunsplit((scheme, netloc, fixed_path, query,
+                                    fragment))
+            world_dict['sources'][name] = {'type': 'source',
+                                           'path': fixed_url}
 
-    def load_cached(workspace):
-        '''Read channel data from the pickle file.'''
-        result = None
+        return WorldData(world_dict)
+
+    load_from_stored = staticmethod(load_from_stored)
+
+    def __iter__(self):
+        for key, value in self.world_dict['channels'].iteritems():
+            yield key, value
+        for key, value in self.world_dict['sources'].iteritems():
+            yield 'source>' + key, value
+
+class OutsideWorldFactory(object):
+    """Creates an OutsideWorld object from WorldData and a channel_dir."""
+    def __init__(self, world_data, channel_dir):
+        self.world_data = world_data
+        self.channel_dir = channel_dir
+
+    def create(self):
+        """Create and return the OutsideWorld object."""
+        sections = {}
+        for name, data_dict in self.world_data:
+            sections[name] = []
+            for section in self.iter_sections(name, data_dict):
+                sections[name].append(section)
+
+        return OutsideWorld(sections)
+
+    def get_channel_file(self, path):
+        """Get the full path to the file representing the given path."""
+        return os.path.join(self.channel_dir, quote(path))
+
+    def iter_sections(self, channel_name, data_dict):
+        """Create sections for the given channel name and dict."""
+        type_value = None
         try:
-            result = cPickle.load(open(workspace.outside_world_store))
-        except IOError, error:
-            if error.errno == 2:
-                message = 'Missing "%s."\n' + \
-                          'Consider running pdk channel update.'
-                raise SemanticError(message % workspace.outside_world_store)
-        return result
-    load_cached = staticmethod(load_cached)
+            type_value = data_dict['type']
+        except KeyError, message:
+            raise InputError('%s has no type' % channel_name)
 
-    def update_with_channel(self, channel_name, channel_iterator):
-        '''Collect and index the contents of a channel.'''
-        self.by_channel_name[channel_name] = []
-        for ghost_package, locator in channel_iterator:
-            # ghost_package is a pdk.package.Package object but we don't
-            # have a file in the cache backing it.
-            found_filename = os.path.basename(locator.filename)
-            ghost_package.contents['found_filename'] = found_filename
-            self.by_channel_name[channel_name].append(ghost_package)
-            self.by_blob_id[ghost_package.blob_id] = locator
+        try:
+            path = data_dict['path']
+            if type_value == 'apt-deb':
+                if path[-1] != "/":
+                    message = "path in channels.xml must end in a slash"
+                    raise InputError, message
+                dist = data_dict['dist']
+                components = data_dict['components'].split()
+                archs = data_dict['archs'].split()
+                for component in components:
+                    for arch in archs:
+                        if arch == 'source':
+                            arch_part = 'source'
+                            filename = 'Sources.gz'
+                            strategy = AptDebSourceStrategy(path)
+                        else:
+                            arch_part = 'binary-%s' % arch
+                            filename = 'Packages.gz'
+                            strategy = AptDebBinaryStrategy(path)
 
-    def update_with_source(self, source_iterator):
-        '''Collect and index the contents of a source.'''
-        for blob_id, locator in source_iterator:
+                        parts = [path[:-1], 'dists', dist, component,
+                                 arch_part, filename]
+                        full_path = '/'.join(parts)
+                        channel_file = self.get_channel_file(full_path)
+                        yield AptDebSection(full_path, channel_file,
+                                            strategy)
+            elif type_value == 'dir':
+                yield DirectorySection(path)
+            elif type_value == 'source':
+                yield RemoteWorkspaceSection(path,
+                                             self.get_channel_file(path))
+            else:
+                raise InputError('channel %s has unrecognized type %s'
+                                 % (channel_name, type_value))
+        except KeyError, field:
+            message = 'channel "%s" missing field "%s"' % (channel_name,
+                                                           str(field))
+            raise InputError(message)
+
+class OutsideWorld(object):
+    '''This object represents the world outside the workspace.
+
+    To use find_by_blob_id, first call update_blob_id_locator.
+    '''
+    def __init__(self, sections):
+        self.sections = sections
+        self.by_blob_id = None
+
+    def fetch_world_data(self):
+        '''Update all remote source and channel data.'''
+        for section in self.iter_sections():
+            section.update()
+
+    def update_blob_id_locator(self):
+        '''Index blob_ids from local source and channel data.'''
+        self.by_blob_id = {}
+        for dummy, blob_id, locator in self.iter_raw_package_info():
             self.by_blob_id[blob_id] = locator
 
+    def iter_sections(self, section_names = None):
+        '''Iterate over stored sections for the given section_names.'''
+        if not section_names:
+            section_names = self.sections.keys()
+            section_names.sort()
+        for name in section_names:
+            try:
+                for section in self.sections[name]:
+                    yield section
+            except KeyError, e:
+                raise InputError("Unknown channel %s." % str(e))
+
+    def iter_raw_package_info(self, section_names = None):
+        '''Iterate over raw package_info from sections.
+
+        Sections are filtered by the given section_names.
+        '''
+        for section in self.iter_sections(section_names):
+            if hasattr(section, 'channel_file'):
+                if not os.path.exists(section.channel_file):
+                    message = 'Missing cached data. ' + \
+                              'Consider running pdk channel update.'
+                    raise SemanticError(message)
+            for item in  section.iter_package_info():
+                yield item
+
+    def iter_package_info(self, section_names = None):
+        '''Iterate over package and locator from sections.
+
+        Sections are filtered by the given section_names.
+        '''
+        package_info = self.iter_raw_package_info(section_names)
+        for ghost_package, dummy, locator in package_info:
+            # ghost_package is a pdk.package.Package object but we don't
+            # have a file in the cache backing it.
+            if not ghost_package:
+                continue
+            found_filename = os.path.basename(locator.filename)
+            ghost_package.contents['found_filename'] = found_filename
+            yield ghost_package, locator
+
+    def iter_packages(self, section_names = None):
+        '''Iterate over packages given from sections.
+
+        Sections are filtered by the given section_names.
+        '''
+        for package, dummy in self.iter_package_info(section_names):
+            yield package
+
     def find_by_blob_id(self, blob_id):
-        '''Find a package locator by blob_id.'''
+        '''Return a locator for the given blob_id.'''
         return self.by_blob_id[blob_id]
-
-    def get_package_list(self, channel_names):
-        '''Get a list of packages added under the given channel names.'''
-        if not channel_names:
-            channel_names = self.by_channel_name.keys()
-        try:
-            package_lists = [ self.by_channel_name[n]
-                              for n in channel_names ]
-        except KeyError, e:
-            raise InputError("Unknown channel %s." % str(e))
-        return list(chain(*package_lists))
-
-    def dump(self, filename):
-        '''Dump this object to the given file.'''
-        cPickle.dump(self, open(filename, 'w'), 2)
-
-
-
