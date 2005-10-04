@@ -123,11 +123,19 @@ class Package(object):
 
     def _get_values(self):
         '''Return an immutable value representing the full identity.'''
-        return tuple(['package'] + self.contents.items()
-                     + [self.package_type])
+        field_list = ('format', 'role', 'name', 'version', 'arch',
+                      'blob_id')
+        contents = [ getattr(self, f) for f in field_list
+                     if hasattr(self, f) ]
+        return tuple(['package'] + contents)
 
     def __hash__(self):
         return hash(self._get_values())
+
+    def __str__(self):
+        return '<Package %r>' % (self._get_values(),)
+
+    __repr__ = __str__
 
     def __cmp__(self, other):
         return cmp(self._get_values(), other._get_values())
@@ -158,6 +166,11 @@ class DebianVersion(object):
             other = DebianVersion(other)
         from smart.backends.deb.debver import vercmp as smart_vercmp
         return smart_vercmp(self.original_header, other.original_header)
+
+    def __str__(self):
+        return '<dver %r>' % self.full_version
+
+    __repr__ = __str__
 
 def sanitize_deb_header(header):
     """Normalize the whitespace around the deb header/control contents."""
@@ -302,6 +315,11 @@ class RPMVersion(object):
         if isinstance(other, basestring):
             other = RPMVersion(version_tuple = other.split('/'))
         return rpm_api.labelCompare(self.tuple, other.tuple)
+
+    def __str__(self):
+        return '<rver %r>' % self.full_version
+
+    __repr__ = __str__
 
 class _Rpm(object):
     """Handle binary rpm packages."""

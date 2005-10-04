@@ -73,7 +73,7 @@ class TestDiff(Test):
         expected = Set([ ('downgrade', a2, a1) ])
         self.assert_equals_long(expected, Set(diffs))
 
-    def test_diff_same_with_distractions(self):
+    def test_diff_with_distractions(self):
         a = MockPackage('a', '1', deb, arch = 'i386')
         b = MockPackage('b', '1', deb, arch = 'i386')
         a_arm = MockPackage('a', '1', deb, arch = 'arm')
@@ -88,5 +88,9 @@ class TestDiff(Test):
                          ('unchanged', b, b),
                          ('add', c, None),
                          ('drop', a_arm, None) ])
-        self.assert_equals_long(list(expected), list(Set(diffs)))
+        diffs = list(diffs)
+        diffs.sort()
+        expected = list(expected)
+        expected.sort()
+        self.assert_equals_long(expected, diffs)
 

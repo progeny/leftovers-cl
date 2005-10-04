@@ -116,7 +116,3 @@ class MockPackage(Package):
         contents.update(kw)
 
         super(self.__class__, self).__init__(contents, package_type)
-
-    def __repr__(self):
-        return 'Package: ' + str(self.contents) + ' -- ' + self.type
-

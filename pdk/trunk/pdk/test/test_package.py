@@ -258,3 +258,20 @@ class TestPickleablePackage(Test):
         blob = dumps(original, 2)
         unpickled = loads(blob)
         self.assert_equals_long(original.contents, unpickled.contents)
+
+class TestSortPackages(Test):
+    def test_sort(self):
+        def make_package(name, version, arch, package_type):
+            return Package({'name': name, 'version': DebianVersion(version),
+                            'arch': arch}, package_type)
+
+        deb_a1 = make_package('a', '1', 'i386', deb)
+        deb_a2 = make_package('a', '2', 'i386', deb)
+        deb_a2_arm = make_package('a', '2', 'arm', deb)
+        dsc_a1 = make_package('a', '1', 'i386', dsc)
+        dsc_a2 = make_package('a', '2', 'i386', dsc)
+
+        package_list = [ dsc_a2, deb_a2, deb_a1, deb_a2_arm, dsc_a1 ]
+        package_list.sort()
+        expected = [ deb_a1, deb_a2_arm, deb_a2, dsc_a1, dsc_a2 ]
+        self.assert_equals_long(expected, package_list)

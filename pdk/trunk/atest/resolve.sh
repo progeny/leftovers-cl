@@ -94,6 +94,7 @@ make_channel channel-1 ida_2.01-1.2_arm.deb ida_2.01-1.2.diff.gz \
 make_channel channel-2 apache2_2.0.53-5.diff.gz apache2_2.0.53-5.dsc \
     apache2_2.0.53.orig.tar.gz apache2-common_2.0.53-5_i386.deb \
     ethereal-common_0.9.4-1woody2_i386.deb \
+    ethereal-common_0.9.4-1woody2_ia64.deb \
     ethereal_0.9.4-1woody2.dsc \
     ethereal_0.9.4-1woody2.diff.gz \
     ethereal_0.9.4.orig.tar.gz
@@ -167,6 +168,11 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
       <meta>
         <test>data</test>
       </meta>
+      <deb ref="md5:d71f6a54b81e9a02fa90fe9d9f655fac">
+        <name>ethereal-common</name>
+        <version>0.9.4-1woody2</version>
+        <arch>ia64</arch>
+      </deb>
       <deb ref="md5:fead37813e0a8b27b2d198ed96a09e72">
         <name>ethereal-common</name>
         <version>0.9.4-1woody2</version>
@@ -275,7 +281,7 @@ cat >${channels} <<EOF
   <local>
     <type>apt-deb</type>
     <path>http://localhost:$SERVER_PORT/</path>
-    <archs>arm i386 source</archs>
+    <archs>arm i386 ia64 source</archs>
     <dist>apache</dist>
     <components>main</components>
   </local>
@@ -343,6 +349,11 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
       <meta>
         <test>data</test>
       </meta>
+      <deb ref="md5:d71f6a54b81e9a02fa90fe9d9f655fac">
+        <name>ethereal-common</name>
+        <version>0.9.4-1woody2</version>
+        <arch>ia64</arch>
+      </deb>
       <deb ref="md5:fead37813e0a8b27b2d198ed96a09e72">
         <name>ethereal-common</name>
         <version>0.9.4-1woody2</version>
