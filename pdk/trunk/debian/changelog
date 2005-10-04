@@ -1,3 +1,13 @@
+pdk (0.0.10) unstable; urgency=low
+
+  * New code.
+  * Push/pull.
+  * Better package ordering in component descriptors when resolving.
+  * Tweak acceptance test tarball to include new files.
+  * Fix atest situation resulting in some atests not working in -I mode.
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue,  4 Oct 2005 14:38:15 -0500
+
 pdk (0.0.9) unstable; urgency=low
 
   * New code.
