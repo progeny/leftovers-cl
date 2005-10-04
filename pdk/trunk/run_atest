@@ -149,6 +149,7 @@ run_test() {
         setup ${tmp_dir}
         export PACKAGES=${tmp_dir}/packages
 
+        mkdir -p ${tmp_dir}/bin
         PATH=${tmp_dir}/bin:$PATH
         PYTHONPATH=${tmp_dir}/lib/python2.3/site-packages:$PYTHONPATH
         export PYTHONPATH
