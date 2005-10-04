@@ -32,15 +32,11 @@ verify_new_workspace() {
 ./etc/git/HEAD
 ./etc/git/info/exclude
 ./etc/schema
-./etc/sources
 ./.git
 EOF
-    [ -d $dir/etc/git/remotes ]
-    [ "$(readlink $dir/etc/sources)" = git/remotes ]
-    ls $dir/etc/sources >/dev/null
     [ "$(readlink $dir/.git)" = etc/git ]
     [ -e $dir/.git/description ]
-    [ 3 = "$(cat $dir/etc/schema)" ]
+    [ 4 = "$(cat $dir/etc/schema)" ]
 }
 
 pdk workspace create || status=$?

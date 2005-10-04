@@ -347,21 +347,22 @@ class ComponentDescriptor(object):
         cache = workspace.cache
         world = workspace.world
         world.update_blob_id_locator()
-        for ref in self.iter_full_package_refs():
-            if ref.blob_id and ref.blob_id not in cache:
-                try:
-                    locator = world.find_by_blob_id(ref.blob_id)
-                except KeyError:
-                    raise SemanticError, \
-                        "could not find %s in any channel" % (ref.blob_id,)
-                cache.import_file(locator)
-                package = ref.load(cache)
-                if hasattr(package, 'extra_file'):
-                    for blob_id, filename in package.extra_file:
-                        make_extra = locator.make_extra_file_locator
-                        extra_locator = make_extra(filename, blob_id, world)
-                        cache.import_file(extra_locator)
+        blob_ids = [ r.blob_id for r in self.iter_full_package_refs()
+                     if r.blob_id and r.blob_id not in cache ]
+        workspace.acquire(blob_ids)
 
+        # now that we have all downloads done, pass through again looking
+        # for extra files
+        extra_blob_ids = []
+        for ref in self.iter_full_package_refs():
+            if not ref.blob_id:
+                continue
+            package = ref.load(cache)
+            if hasattr(package, 'extra_file'):
+                for extra_blob_id, dummy in package.extra_file:
+                    extra_blob_ids.append(extra_blob_id)
+        workspace.acquire(extra_blob_ids)
+        return
 
     def iter_package_refs(self):
         '''Yield all base package references in order.'''

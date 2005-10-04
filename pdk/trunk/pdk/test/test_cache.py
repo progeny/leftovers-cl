@@ -19,31 +19,12 @@
 import os
 import os.path
 from sets import Set
-from pdk.test.utest_util import Test, TempDirTest
+from pdk.test.utest_util import TempDirTest
 from pdk.channels import FileLocator
 from pdk.util import make_path_to
 import pdk.cache
 
 __revision__ = "$Progeny$"
-
-class TestReadAdapter(Test):
-    def test_read(self):
-        adapter = pdk.cache.ReadAdapter(['a', 'bc', 'def'])
-        self.assert_equal('', adapter.read(0))
-        self.assert_equal('a', adapter.read(1))
-        self.assert_equal('bc', adapter.read(2))
-        self.assert_equal('', adapter.read(0))
-        self.assert_equal('def', adapter.read(3))
-        self.assert_equal('', adapter.read(4))
-        self.assert_equal('', adapter.read(0))
-
-        adapter = pdk.cache.ReadAdapter(['a', 'bc', 'def'])
-        self.assert_equal('abc', adapter.read(3))
-        self.assert_equal('de', adapter.read(2))
-        self.assert_equal('', adapter.read(0))
-        self.assert_equal('f', adapter.read(1))
-        self.assert_equal('', adapter.read(4))
-        self.assert_equal('', adapter.read(0))
 
 class TestCache(TempDirTest):
     def test_construct(self):

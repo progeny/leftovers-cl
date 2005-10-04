@@ -52,16 +52,11 @@ pushd schema1
     [ -e etc/channels.xml ] || fail 'channels.xml was not migrated.'
     [ -d etc/channels ] || fail 'channels dir not created.'
     [ -e somefile ] || fail 'work dir content should be in base dir.'
-    [ 3 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
     [ -L etc/git  ] && fail 'etc/git should not be a symlink'
     [ -d etc/git/objects ] || fail 'etc/git should contain git info'
     [ -L .git ] || fail '.git should be a symlink'
     [ 'etc/git' = "$(readlink .git)" ] || '.git should point to etc/git'
-    [ -L etc/sources ] || fail 'etc/sources should be a symlink'
-    [ -e etc/sources/some-source ] \
-        || fail 'sources was not migrated properly'
-    touch etc/git/remotes/hello
-    [ -e etc/sources/hello ] || fail 'sources should be in etc/.'
+    [ 4 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
 popd
 
 mkdir -p schema2/etc
@@ -72,5 +67,14 @@ pushd schema2
     [ -d etc/channels ] || fail 'channels dir not created.'
     [ -e etc/outside_world.cache ] \
         && fail 'outside_world.cache not removed.'
-    [ 3 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+    [ 4 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+popd
+
+mkdir -p schema3/etc/git/remotes
+pushd schema3
+    echo 3 >etc/schema
+    ln -s $(pwd)/etc/git/remotes etc/sources
+    pdk migrate
+    [ -e etc/sources ] && fail 'sources should be removed from etc/'
+    [ 4 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
 popd

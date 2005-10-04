@@ -30,26 +30,21 @@ Cache contains .header files.
 
 __revision__ = "$Progeny$"
 
-import sys
 import os
 import os.path
+import stat
 import re
-from stat import ST_INO, ST_SIZE
-from itertools import chain
+from stat import ST_INO
 import sha
 import md5
 import gzip
 import pycurl
 from shutil import copy2
 from urlparse import urlparse
-from cStringIO import StringIO
 from tempfile import mkstemp
 from pdk.package import get_package_type
-from pdk.util import ensure_directory_exists, gen_fragments, \
-     gen_file_fragments, make_path_to, get_remote_file
-from pdk.progress import ConsoleProgress, CurlAdapter
+from pdk.util import ensure_directory_exists, make_path_to, get_remote_file
 from pdk.exceptions import SemanticError, ConfigurationError
-from pdk.channels import FileLocator
 
 # Debugging aids
 import pdk.log
@@ -127,6 +122,40 @@ class SimpleCache(object):
             result = os.path.exists(local_path)
         return result
 
+    def send_via_framer(self, blob_id, framer):
+        '''Send a blob via the given framer.'''
+        cache_file = self.file_path(blob_id)
+        mtime = os.stat(cache_file)[stat.ST_MTIME]
+        handle = open(cache_file)
+        framer.write_frame(blob_id)
+        framer.write_handle(handle)
+        handle.close()
+        framer.write_stream([str(mtime)])
+
+    def import_from_framer(self, framer):
+        '''Import a blob via the given framer.'''
+        while True:
+            local_filename = None
+            try:
+                first = framer.read_frame()
+                if first == 'done':
+                    framer.assert_end_of_stream();
+                    break
+                blob_id = first
+                local_filename = self.make_download_filename()
+                handle = open(local_filename, 'w')
+                for frame in framer.iter_stream():
+                    handle.write(frame)
+                handle.close()
+                mtime = int(framer.read_frame())
+                framer.assert_end_of_stream()
+                if mtime != -1:
+                    os.utime(local_filename, (mtime, mtime))
+                self.incorporate_file(local_filename, blob_id)
+            finally:
+                if local_filename and os.path.exists(local_filename):
+                    os.unlink(local_filename)
+
     def import_file(self, locator):
         '''Download and incorporate a potentially remote source.
 
@@ -138,8 +167,7 @@ class SimpleCache(object):
         '''
         local_filename = self.make_download_filename()
         try:
-            parts = [ p for p in (locator.base_uri, locator.filename) if p ]
-            full_url = '/'.join(parts)
+            full_url = locator.get_full_url()
             parts = urlparse(full_url)
             scheme = parts[0]
             if scheme in ('file', ''):
@@ -235,9 +263,21 @@ class SimpleCache(object):
         filepath = self.file_path(blob_id)
         return os.stat(filepath)[ST_INO]
 
+    def iter_sha1_ids(self):
+        """Iterate over the list of all the sha-1 ids in this cache."""
+        rexp = re.compile('sha-1:[a-fA-F0-9]+$')
+        for filename in self:
+            if rexp.match(filename):
+                yield filename
+
+    def get_index_file(self):
+        '''Return a the path to the blob index file.'''
+        index_file = os.path.join(self.path, 'blob_list.gz')
+        return index_file
+
     def write_index(self):
         """Write an index file describing the contents of the cache."""
-        index_file = os.path.join(self.path, 'blob_list.gz')
+        index_file = self.get_index_file()
         handle = gzip.open(index_file, 'w')
         regex = re.compile('(sha-1:|md5:)[a-fA-F0-9]+$')
         for filename in self:
@@ -261,49 +301,6 @@ class Cache(SimpleCache):
         "Return the filename of a blob's header file"
         fname = self.file_path(blob_id) + '.header'
         return fname
-    def push(self, remote_url):
-        """Execute a cache push."""
-        if remote_url.startswith('http://'):
-            pusher = NetPush(self)
-            curl = pycurl.Curl()
-            curl.setopt(curl.URL, remote_url)
-            curl.setopt(curl.POST, True)
-            curl.setopt(curl.HTTPHEADER, ['Content-Type: application/x-pdk',
-                                          'Transfer-Encoding: chunked',
-                                          'Content-Length:'])
-            curl.setopt(curl.READFUNCTION, \
-                        ReadAdapter(pusher.gen_offer()).read)
-            response = StringIO()
-            curl.setopt(curl.WRITEFUNCTION, response.write)
-            curl.setopt(curl.NOPROGRESS, False)
-            curl.setopt(curl.FAILONERROR, True)
-            progress = ConsoleProgress('push: ' + remote_url)
-            adapter = CurlAdapter(progress)
-            curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
-            curl.perform()
-
-            needed_blob_ids = response.getvalue().splitlines()
-            uploads = []
-            for blob_id in needed_blob_ids:
-                if blob_id:
-                    uploads.append(pusher.gen_upload(blob_id))
-
-            iterator = chain(*uploads)
-            curl.setopt(curl.READFUNCTION, ReadAdapter(iterator).read)
-            curl.setopt(curl.WRITEFUNCTION, sys.stdout.write)
-            curl.perform()
-            curl.close()
-        else:
-            # Perform a local push
-            destination = Cache(remote_url)
-            rexpr = re.compile('sha-1:[a-fA-F0-9]+$')
-            for blob_id in self:
-                if rexpr.match(blob_id) and blob_id not in destination:
-                    local_filename = self.file_path(blob_id)
-                    locator = FileLocator('', local_filename, blob_id)
-                    destination.import_file(locator)
-                    destination.write_index()
-
 
     def add_header(self, header, blob_id):
         """ write a header to a file, identified by blob_id"""
@@ -351,126 +348,5 @@ class Cache(SimpleCache):
 
         header = open(header_file).read()
         return package_type.parse(header, blob_id)
-
-########################################################################
-# Deal with file transfers
-#
-# Ultimately, this is not how this should be done.  There should be a
-# method on cache to import a file, and that method should use some of
-# this plumbing. It should determine whether the file is on the local
-# file system, a different filesystem, or a separate curl-accessible 
-# machine.  It should know whether to copy the file, and from where,
-# and it should link it into the cache.
-#
-# However, right now, there is at least separation between the Cache
-# proper, and all the file-copy plumbing.  But by all rights we need
-# to finish the refactoring.
-#
-
-def gen_payloads(handle):
-    """Read in the application/x-pdk protocol. Generate payload tuples.
-
-    Each tuple yielded is of the form (name, size, handle).
-    The caller is expected to know what to do with the handle (read
-    up to 'size' bytes, one presumes).
-    """
-    while 1:
-        line = handle.readline()
-        if not line:
-            break
-        name, size_string = line.strip().split()
-        size = int(size_string)
-        # Returns handle so the user can continue reading from the 
-        # file
-        yield (name, size, handle)
-        # Consume the trailing blank line, presumably left behind
-        # by the routine that called this one.
-        line = handle.readline()
-
-
-class ReadAdapter(object):
-    """Provide a file like read function over an iterator yielding strings.
-
-        blocks: an iterator yielding bytes of reasonable size.
-    """
-    def __init__(self, blocks):
-        self.blocks = iter(blocks)
-        self.buffer = ''
-
-    def read(self, size):
-        """Behave like the file.read function."""
-        for block in self.blocks:
-            self.buffer += block
-            if size <= len(self.buffer):
-                break
-
-        value = self.buffer[:size]
-        self.buffer = self.buffer[size:]
-        return value
-
-class NetPush(object):
-    """Push files between caches on separate machines.
-
-    Handles only low level details. This code only writes to file handles
-    and yields blocks of text.
-    """
-    def __init__(self, local_cache):
-        self.local_cache = local_cache
-
-    def gen_offer(self):
-        """Generate text blocks associated with offering blob-ids."""
-        payload = StringIO()
-        for blob_id in self.local_cache.iter_sha1_ids():
-            print >> payload, blob_id
-            # Awww, crap. We avoided loading all the ids, only to
-            # collect them in a big string here. :-(
-            # it's a pain that we need the size.
-        size = len(payload.getvalue())
-        payload.reset()
-        yield 'offer %d\n' % size
-        for block in gen_fragments(payload, size):
-            yield block
-        yield '\n'
-
-    def gen_upload(self, blob_id):
-        """Generate text blocks associated with uploading a cache file."""
-        filename = self.local_cache.file_path(blob_id)
-        size = os.stat(filename)[ST_SIZE]
-        yield '%s %d\n' % (blob_id, size)
-        for block in gen_file_fragments(filename):
-            yield block
-        yield '\n'
-
-    def receive(self):
-        """Receive offers and cache files.
-
-        On offer, scan the remote (local to me) cache and print out any
-        offered blob_ids not already in the remote (local to me) cache.
-
-        On blob_id, add it's contents to the remote (local to me) cache.
-        """
-        print 'Content-Type: text/plain'
-        print
-        for name, size, handle in gen_payloads(sys.stdin):
-            if name == 'offer':
-                # Received an offer, so return the list of blobs
-                # we don't already have
-                for blob_id in handle.read(size).splitlines():
-                    if blob_id not in self.local_cache:
-                        print blob_id
-            elif name.startswith('sha-1:'):
-                temp_file = self.local_cache.make_download_filename()
-                try:
-                    local_handle = open(temp_file, 'w')
-                    for block in gen_fragments(handle, size):
-                        local_handle.write(block)
-                    local_handle.close()
-                    locator = FileLocator('', temp_file, name)
-                    self.local_cache.import_file(locator)
-                finally:
-                    os.unlink(temp_file)
-        self.local_cache.write_index()
-        print
-
 
 # vim:ai:et:sts=4:sw=4:tw=0:

@@ -25,16 +25,15 @@ __revision__ = '$Progeny$'
 
 import os
 import sys
-from pdk.version_control import VersionControl
-from pdk.source import RemoteSources
+from pdk.version_control import VersionControl, CommitNotFound
 from pdk.cache import Cache
 from pdk.channels import OutsideWorldFactory, WorldData
 from pdk.exceptions import ConfigurationError, SemanticError, \
      CommandLineError
-from pdk.util import pjoin
+from pdk.util import pjoin, make_self_framer
 
 # current schema level for this pdk build
-schema_target = 3
+schema_target = 4
 
 def find_workspace_base(directory=None):
     """Locate the directory above the current directory, containing
@@ -142,6 +141,15 @@ def migrate(dummy):
         if os.path.exists(channels_pickle):
             os.remove(channels_pickle)
         open(pjoin('etc', 'schema'), 'w').write('3\n')
+        migrate(None)
+        return
+
+    if schema_number == 3:
+        sources_dir = pjoin('etc', 'sources')
+        if os.path.exists(sources_dir):
+            os.remove(sources_dir)
+        open(pjoin('etc', 'schema'), 'w').write('4\n')
+        migrate(None)
         return
 
 def info(ignore):
@@ -176,7 +184,6 @@ def create_workspace(workspace_root):
     vc = ws.vc
     vc.create()
     os.symlink(pjoin('etc', 'git'), pjoin(ws.location, '.git'))
-    os.symlink(pjoin('git', 'remotes'), ws.sources_dir)
     open(pjoin(ws.config_dir, 'schema'), 'w').write('%d\n' % schema_target)
     return ws
 
@@ -283,35 +290,36 @@ def update(ignore):
     ws.update()
     return ignore
 
-def update_from_remote(args):
+def pull(args):
     """
-    update_from_remote: Bring changes from REMOTE into the working copy.
-    usage: update [REMOTE]
+    pull: Bring changes from a remote workspace into this workspace.
+    usage: pull [upstream-name]
 
-      Bring working copy up-to-date with HEAD rev.
+    Bring working copy up-to-date with HEAD rev.
 
-    Valid options:
-    none
     """
     if len(args) != 1:
-        message = 'update_from_remote requires an upstream name.'
-        raise CommandLineError(message)
-    remote_name = args[0]
-    ws = current_workspace()
-    ws.update_from_remote(remote_name)
+        raise CommandLineError('requires a remote workspace path')
+    remote_path = args[0]
+    local = current_workspace()
+    local.pull(remote_path)
 
 # Externally-exposed function -- pdk channel update
 def world_update(args):
-    '''Read channels and sources and update our map of the outside world.'''
+    '''Read channels and sources and update our map of the outside world.
+    '''
+
     if len(args) > 0:
         raise CommandLineError, 'update takes no arguments'
     workspace = current_workspace()
     workspace.world_update()
 
-def publish(args):
+def push(args):
     """Publish the HEAD of this workspace to another workspace.
 
-    This command also pushes the cache.
+    This command also pushes the cache. The remote HEAD must appear in
+    the history of this HEAD or the remote workspace will reject the
+    push.
 
     This command takes a remote workspace path as an argument.
     """
@@ -319,29 +327,7 @@ def publish(args):
         raise CommandLineError('requires a remote workspace path')
     remote_path = args[0]
     local = current_workspace()
-    remote_cache_path = pjoin(remote_path, 'etc', 'cache')
-    local.cache.push(remote_cache_path)
-
-    remote_vc_path = pjoin(remote_path, 'etc', 'git')
-    local.vc.push(remote_vc_path)
-
-def subscribe(args):
-    """Subscribe to and initially update from a remote workspace.
-
-    This command takes a remote workspace and a symbolic name as
-    arguments. The name will be used as shorthand for the remote workspace
-    in future invocations.
-    """
-    if len(args) != 2:
-        raise CommandLineError('requires a remote workspace path and name')
-    remote_path, name = args
-    local = current_workspace()
-    local_source = RemoteSources(local)
-    remote_vc_path = os.path.join(remote_path, 'etc', 'git')
-    local_source.subscribe(remote_vc_path, name)
-    local.vc.update_from_remote(name)
-    world_update([])
-
+    local.push(remote_path)
 
 def cached_property(prop_name, create_fn):
     """Make a lazy property getter that memoizes it's value.
@@ -398,9 +384,6 @@ class _Workspace(object):
         self.outside_world_store = pjoin(self.config_dir,
                                          'outside_world.cache')
 
-        # actually a symlink to etc/git/remotes
-        self.sources_dir = pjoin(self.config_dir, 'sources')
-
     def __create_cache(self):
         """The cache for this workspace."""
         return Cache(self.cache_dir)
@@ -413,8 +396,7 @@ class _Workspace(object):
 
     def __create_world(self):
         """Get the outside world object for this workspace."""
-        world_data = WorldData.load_from_stored(self.channel_data_source,
-                                                self.sources_dir)
+        world_data = WorldData.load_from_stored(self.channel_data_source)
         factory = OutsideWorldFactory(world_data, self.channel_dir)
         world = factory.create()
         return world
@@ -458,15 +440,217 @@ class _Workspace(object):
         """
         self.vc.update()
 
-    def update_from_remote(self, upstream_name):
+    def pull(self, upstream_name):
         """
         Get latest changes from version control
         """
-        self.vc.update_from_remote(upstream_name)
+        section = self.world.get_workspace_section(upstream_name)
+        framer = section.get_framer()
+
+        local_commit_ids = self.vc.get_all_refs()
+        net = Net(framer, self)
+        new_head_id = net.send_pull_pack(local_commit_ids)
+        self.vc.import_pack_via_framer(framer)
+        self.vc.note_ref(upstream_name, new_head_id)
+        self.vc.merge(upstream_name)
+        net.send_pull_blob_list(section)
+        net.send_done()
+        framer.close()
+
+    def push(self, upstream_name):
+        """
+        Get latest changes from version control
+        """
+        section = self.world.get_workspace_section(upstream_name)
+        framer = section.get_framer()
+        head_id = self.vc.get_commit_id('HEAD')
+        try:
+            remote_head = self.vc.get_commit_id(upstream_name)
+            remote_commit_ids = self.vc.get_rev_list([remote_head])
+        except CommitNotFound:
+            remote_commit_ids = []
+        section = self.world.get_workspace_section(upstream_name)
+        remote_blob_ids = section.cache_adapter.blob_ids
+        net = Net(framer, self)
+        net.send_push_blobs(remote_blob_ids)
+        try:
+            net.send_push_pack(head_id, remote_commit_ids)
+        finally:
+            net.send_done()
+        framer.close()
 
     def world_update(self):
         """Update remote index files for outside world."""
         self.world.fetch_world_data()
 
+    def acquire(self, blob_ids):
+        '''Get cache adapters and use them to download package files.'''
+        for adapter in self.world.get_cache_adapters(blob_ids):
+            framer = adapter.adapt()
+            self.cache.import_from_framer(framer)
+
+class Net(object):
+    '''Encapsulates the details of most framer conversations.
+
+    send_* methods correspond to handle_* methods on remote processes.
+    (mostly)
+    '''
+    def __init__(self, framer, local_workspace):
+        self.framer = framer
+        self.ws = local_workspace
+
+    def send_done(self):
+        '''Indicate that we are done speaking with the remote process.'''
+        self.framer.write_stream(['done'])
+
+    def send_push_pack(self, head_id, remote_commit_ids):
+        '''Intitiate pushing of a pack file.
+
+        head_id is where the pack starts.
+        remote_commit_ids are what we do not need to send.
+        '''
+        self.framer.write_stream(['push-pack'])
+        self.framer.write_stream(['HEAD', head_id])
+        self.ws.vc.send_pack_via_framer(self.framer, [head_id],
+                                        remote_commit_ids)
+        self.framer.assert_frame('status')
+        status = self.framer.read_frame()
+        if status == 'ok':
+            pass
+        elif status == 'out-of-date':
+            raise SemanticError('Out of date. Run pdk pull and try again.')
+        else:
+            assert False, 'Unknown status: %s' % status
+
+    def handle_push_pack(self):
+        '''Receive a pack.
+
+        Send back an "out-of-date" status if the pack does not include
+        the current HEAD in its history.
+        '''
+        self.framer.assert_frame('HEAD')
+        head_id = self.framer.read_frame()
+        self.framer.assert_end_of_stream()
+
+        self.ws.vc.import_pack_via_framer(self.framer)
+        if self.ws.vc.is_valid_new_head(head_id):
+            self.ws.vc.merge(head_id)
+            self.framer.write_stream(['status', 'ok'])
+        else:
+            self.framer.write_stream(['status', 'out-of-date'])
+
+    def send_pull_pack(self, local_commit_ids):
+        '''Initiate pulling a pack file.
+
+        local_commit_ids are ids which do not need to be sent.
+        '''
+        self.framer.write_stream(['pull-pack'])
+        self.framer.write_stream(local_commit_ids)
+
+        self.framer.assert_frame('HEAD')
+        new_head_id = self.framer.read_frame()
+        self.framer.assert_end_of_stream()
+        return new_head_id
+
+    def handle_pull_pack(self):
+        '''Handle a pull pack request.'''
+        remote_commit_ids = list(self.framer.iter_stream())
+        head_id = self.ws.vc.get_commit_id('HEAD')
+        self.framer.write_stream(['HEAD', head_id])
+        self.ws.vc.send_pack_via_framer(self.framer, [head_id],
+                                     remote_commit_ids)
+
+    def send_pull_blob_list(self, section):
+        '''Initiate pulling the remote blob_list.'''
+        self.framer.write_stream(['pull-blob-list'])
+        handle = open(section.channel_file, 'w')
+        for frame in self.framer.iter_stream():
+            handle.write(frame)
+        handle.close()
+
+    def handle_pull_blob_list(self):
+        '''Handle a pull blob list request.'''
+        index_handle = open(self.ws.cache.get_index_file())
+        self.framer.write_handle(index_handle)
+        index_handle.close()
+
+    def handle_pull_blobs(self):
+        '''Handle a pull blobs request.'''
+        blob_ids = list(self.framer.iter_stream())
+        for blob_id in blob_ids:
+            self.ws.cache.send_via_framer(blob_id, self.framer)
+        self.framer.write_stream(['done'])
+
+    def send_push_blobs(self, remote_blob_ids):
+        '''Intitiate pushing blobs.'''
+        self.framer.write_stream(['push-blobs'])
+        cache = self.ws.cache
+        for blob_id in cache.iter_sha1_ids():
+            if blob_id in remote_blob_ids:
+                continue
+            cache.send_via_framer(blob_id, self.framer)
+        self.framer.write_stream(['done'])
+
+    def handle_push_blobs(self):
+        '''Handle a push blobs request.'''
+        cache = self.ws.cache
+        cache.import_from_framer(self.framer)
+        cache.write_index()
+
+    def listen_loop(self):
+        '''Start an "event loop" for handling requests.
+
+        Terminates on "done".
+        '''
+        handler_map = { 'push-pack': self.handle_push_pack,
+                        'push-blobs': self.handle_push_blobs,
+                        'pull-pack': self.handle_pull_pack,
+                        'pull-blob-list': self.handle_pull_blob_list,
+                        'pull-blobs': self.handle_pull_blobs, }
+
+        while 1:
+            first = self.framer.read_frame()
+            if first == 'done':
+                break
+            self.framer.assert_end_of_stream()
+            handler_map[first]()
+
+def listen(args):
+    '''Start an event loop for handling requests via standard in and out.
+
+    Not intended to be invoked by users.
+    '''
+    if len(args) != 1:
+        raise CommandLineError('requires a workspace path')
+    framer = make_self_framer()
+    local_workspace = _Workspace(args[0])
+    net = Net(framer, local_workspace)
+    net.listen_loop()
+
+def adapt(args):
+    '''Start an event loop for handling direct download requests.
+
+    Not intended to be invoked by users.
+    '''
+    if len(args) != 0:
+        raise CommandLineError('no arguments allowed')
+    framer = make_self_framer()
+    workspace = current_workspace()
+
+    downloads = []
+    while 1:
+        first = framer.read_frame()
+        if first == 'end-adapt':
+            break
+        blob_id = first
+        url = framer.read_frame()
+        downloads.append((blob_id, url))
+    framer.assert_end_of_stream()
+
+    for blob_id, url in downloads:
+        from pdk.channels import FileLocator
+        locator = FileLocator(url, None, blob_id)
+        workspace.cache.import_file(locator)
+    framer.write_stream(['done'])
 
 # vim:ai:et:sts=4:sw=4:tw=0:

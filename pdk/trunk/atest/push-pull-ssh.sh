@@ -21,25 +21,31 @@
 #
 # test having git and pdk cache-pull talk to a real apache2 server.
 
+cat >bin/ssh <<EOF
+#!/bin/sh
+# A mock ssh.
+# this script tested with rsync
+host="\$1"
+PS4='-- ssh \$host: '
+shift
+if [ -z "\$1" ]; then
+    echo >&2 "No ssh command given. Login not available."
+    exit 1
+fi
+if [ "\$host" != "localhost" ]; then
+    echo >&2 "Only localhost allowed!"
+    exit 1
+fi
+set -e
+set -x
+cd $tmp_dir
+"\$@"
+EOF
+chmod +x bin/ssh
+
 . atest/utils/repogen-fixture.sh
 
 set_up_repogen_fixture integration
-
-SERVER_PORT=$(unused_port 8110 8111 8112 8113 8114 8115 8116 8117 13847)
-
-create_apache_conf $SERVER_PORT
-
-pdk_bin=$(which pdk)
-cat >etc/svn.apache2.conf <<EOF
-ScriptAlias /telco/upload $pdk_bin
-Alias /telco/ $tmp_dir/production/
-PassEnv PATH PYTHONPATH
-# Tell the cgi where its cache is.
-SetEnv PDK_CACHE_PATH $tmp_dir/production/etc/cache
-EOF
-
-$apache2_bin -t -f etc/apache2/apache2.conf
-$apache2_bin -X -f etc/apache2/apache2.conf &
 
 # -----------------------------------------------------------
 # Bootstrap and do some "integration" work in the integration area.
@@ -52,7 +58,7 @@ pushd integration
 <channels>
   <production>
     <type>source</type>
-    <path>$tmp_dir/production</path>
+    <path>file://localhost/$tmp_dir/production</path>
   </production>
 </channels>
 EOF
@@ -84,7 +90,7 @@ pushd customer-work-area
 <channels>
   <progeny.com>
     <type>source</type>
-    <path>$tmp_dir/production</path>
+    <path>file://localhost/$tmp_dir/production</path>
   </progeny.com>
 </channels>
 EOF

@@ -48,11 +48,9 @@ class Pdk(command_base.CmdBase):
     LazyModuleRef = command_base.LazyModuleRef
     do_audit = LazyModuleRef('pdk.audit','audit')
     do_init = LazyModuleRef('pdk.services', 'init')
-    do_publish = LazyModuleRef('pdk.workspace', 'publish')
-    do_subscribe = LazyModuleRef('pdk.workspace', 'subscribe')
+    do_push = LazyModuleRef('pdk.workspace', 'push')
+    do_pull = LazyModuleRef('pdk.workspace', 'pull')
     do_update = LazyModuleRef('pdk.workspace', 'update')
-    do_update_from_remote = LazyModuleRef('pdk.workspace', \
-                                          'update_from_remote')
     do_commit = LazyModuleRef('pdk.workspace', 'commit')
     do_add = LazyModuleRef('pdk.workspace', 'add')
     do_remove = LazyModuleRef('pdk.workspace', 'remove')
@@ -132,6 +130,14 @@ class Pdk(command_base.CmdBase):
             args[0] = 'world_update'
         self.module_command(workspace, args)
 
+    def do_remote(self, args):
+        """
+        Perform actions from the perspective of a remote workspace.
+        Not designed for user invocation.
+        """
+        from pdk import workspace
+        self.module_command(workspace, args)
+
     def module_help(self, module, args):
         """
         Provide a general function that supports help for
@@ -192,14 +198,10 @@ if __name__ == '__main__':
     main_args = sys.argv or []
     pdk = Pdk()
 
-    # are we being invoked as a cgi?
-    if 'GATEWAY_INTERFACE' in os.environ:
-        main_args = ['pdk', 'cachereceive', os.environ['PDK_CACHE_PATH'] ]
-    else:
-        # Add plug-in commands
-        plugin_files = [ x for x in plugin_locations
-                            if os.path.exists(x) ]
-        command_base.load_addins(pdk, *plugin_files)
+    # Add plug-in commands
+    plugin_files = [ x for x in plugin_locations
+                        if os.path.exists(x) ]
+    command_base.load_addins(pdk, *plugin_files)
 
     if len(main_args) == 1:
         pdk.cmdloop() 

@@ -27,15 +27,13 @@ __revision__ = "$Progeny$"
 import os
 import sys
 import inspect
-import popen2
-import shutil
 import stat
 import pycurl
 from cElementTree import ElementTree
 from elementtree.ElementTree import XMLTreeBuilder
 from xml.sax.writer import XmlWriter
 from pdk.progress import ConsoleProgress, CurlAdapter
-from pdk.exceptions import ConfigurationError, CommandLineError
+from pdk.exceptions import ConfigurationError, SemanticError, InputError
 
 normpath = os.path.normpath
 
@@ -387,33 +385,181 @@ def relative_path(base_dir, file_path):
     if os.path.isdir(result):
         result += "/"
     return result
-    
-def shell_command(command_string, stdin = None, debug = False):
-    """
-    run a shell command
 
-    stdin is text to copy to the command's stdin pipe. If null,
-        nothing is sent.
-    """
-    process = popen2.Popen3(command_string, capturestderr = True)
+#-----------------------------------------------------------------------
+# Process management
 
-    # Copy input to process, if any.
-    if stdin:
-        shutil.copyfileobj(stdin, process.tochild)
-    process.tochild.close()
+def get_pipe_ends():
+    '''Wrap the output of os.pipe() in proper python file objects.'''
+    read_fd, write_fd = os.pipe()
+    return os.fdopen(read_fd), os.fdopen(write_fd, 'w')
 
-    result = process.wait()
+def noop():
+    '''Do nothing.'''
+    pass
 
-    output = process.fromchild.read()
-    if debug:
-        error = process.childerr.read()
-        print >> sys.stderr, '###+', command_string
-        print >> sys.stderr, '###1', output
-        print >> sys.stderr, '###2', error
-        print >> sys.stderr, '##$!', result
-    if result:
-        raise CommandLineError, 'command "%s" failed' % command_string
-    return output
+def get_waiter(pid, command):
+    '''Get a closure which waits on a pid and checks its status.
+
+    Command is used for the error message in the exception raised if
+    wait returns non-zero status.
+    '''
+    def _wait():
+        '''A closure. Calling it waits on a remote process.
+
+        If the remote process has non-zero status, an exception
+        will be raised.
+        '''
+        dummy, status = os.waitpid(pid, 0)
+        if status:
+            message = 'command "%s" failed: %d' % (command, status)
+            raise SemanticError, message
+
+        return pid
+    return _wait
+
+def execv(execv_args, set_up = noop):
+    '''Fork and exec.
+
+    Returns pipes for input and output, and a closure which waits on
+    the pid.
+
+    The set_up function is called just before exec.
+
+    Execv args should be a tuple/list in the form:
+    [binary, [exec args]]
+    '''
+    child_in_read, child_in_write = os.pipe()
+    parent_in_read, parent_in_write = os.pipe()
+    pid = os.fork()
+    if pid:
+        # parent
+        os.close(child_in_read)
+        os.close(parent_in_write)
+
+        _wait = get_waiter(pid, execv_args)
+
+        return os.fdopen(child_in_write, 'w'), \
+               os.fdopen(parent_in_read), \
+               _wait
+    else:
+        # child
+        os.close(child_in_write)
+        os.close(parent_in_read)
+        os.dup2(child_in_read, 0)
+        os.dup2(parent_in_write, 1)
+        set_up()
+        os.execv(*execv_args)
+
+def shell_command(command, set_up = noop):
+    '''Fork and execute a shell command.
+
+    Returns pipes for input and output, and a closure which waits on
+    the pid.
+
+    The set_up function is called just before execing the shell.
+    '''
+    shell_cmd = '{ %s ; } ' % command
+    execv_args = ('/bin/sh', ['/bin/sh', '-c', shell_cmd])
+    return execv(execv_args, set_up)
+
+
+class Framer(object):
+    '''Represents "frames" of data travelling over pipes.
+
+    On close a framer closes its pipes and calls the waiter function.
+
+    Frames sent should arrive intact on the remote end.
+
+    Streams are a series of non-zero length frames followed by a zero
+    length frame.
+
+    Use of this class usually involves a pair of framers running in
+    separate processes. The framers are given custody of the pipes
+    between the processes and are responsible for marshalling well
+    defined frames of data between the processes.
+    '''
+    def __init__(self, remote_in, remote_out, waiter):
+        self.remote_in = remote_in
+        self.remote_out = remote_out
+        self.waiter = waiter
+
+    def write_frame(self, data):
+        '''Write the given to self.remote_out as a frame.'''
+        self.remote_in.write('%s\n' % len(data))
+        self.remote_in.write(data)
+        self.remote_in.write('\n\n')
+
+    def write_stream(self, iterable):
+        '''Write and terminate a whole stream of frames.
+
+        The iterable should return a series of strings.
+        The iterable should never return a zero length string.
+        '''
+        for item in iterable:
+            self.write_frame(str(item))
+        self.end_stream()
+
+    def write_handle(self, handle):
+        '''Read data from a handle in blocks and send it as a stream.'''
+        for fragment in gen_fragments(handle):
+            self.write_frame(fragment)
+        self.end_stream()
+
+    def end_stream(self):
+        '''Send a frame which terminates a stream.'''
+        self.write_frame('')
+        self.remote_in.flush()
+
+    def read_frame(self):
+        '''Retreive a sent frame. This method blocks.'''
+        len_line = self.remote_out.readline()
+        if not len_line:
+            raise InputError('Unexpected EOF')
+        length = int(len_line.strip())
+        data = self.remote_out.read(length)
+        self.remote_out.read(2)
+        return data
+
+    def assert_frame(self, expected):
+        '''Read a frame and assert that it matches an expected value.'''
+        actual = self.read_frame()
+        if expected != actual:
+            message = 'expected "%s" got "%s"' % (expected, actual)
+            raise InputError(message)
+
+    def assert_end_of_stream(self):
+        '''Read a frame and assert that it ends a stream.'''
+        self.assert_frame('')
+
+    def iter_stream(self):
+        '''Yield all the non terminating blocks in a steam.'''
+        while 1:
+            frame = self.read_frame()
+            if frame == '':
+                break
+            else:
+                yield frame
+
+    def close(self):
+        '''Close the underlying pipes and call the waiter function.'''
+        self.remote_in.close()
+        self.remote_out.close()
+        self.waiter()
+
+def make_self_framer():
+    '''Make a framer connected to stdin and stdout. Waiter is a noop.'''
+    return Framer(sys.stdout, sys.stdin, noop)
+
+def make_fs_framer(workspace_path):
+    '''Make a framer running pdk remote listen on a remote workspace.'''
+    command = "pdk remote listen %s" % workspace_path
+    return Framer(*shell_command(command, noop))
+
+def make_ssh_framer(host, remote_path):
+    '''Make a framer using ssh to run pdk remote listen on a remote host.'''
+    command = "ssh %s pdk remote listen %s" % (host, remote_path)
+    return Framer(*shell_command(command, noop))
 
 def moo(args):
     """our one easter-egg, used primarily for plugin testing"""

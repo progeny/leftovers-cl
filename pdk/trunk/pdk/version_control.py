@@ -25,16 +25,19 @@ Part of the PDK suite
 __revision__ = '$Progeny$'
 
 import os
+from sets import Set
 from cStringIO import StringIO
 from pdk.exceptions import SemanticError
-from pdk.util import shell_command
-from pdk.util import relative_path, pjoin
+from pdk.util import relative_path, pjoin, shell_command
 
 ## version_control
 ## Author:  Glen Smith
 ## Date:    23 June 2005
 ## Version: 0.0.1
 
+class CommitNotFound(SemanticError):
+    '''Raised when a caller attempts to operate on a non-existent commit.'''
+    pass
 
 class VersionControl(object):
     """
@@ -54,38 +57,11 @@ class VersionControl(object):
         Command is executed with cwd set to self.work_dir, and
         env variable GIT_DIR pointed at self.vc_dir.
         """
-        child_in_read, child_in_write = os.pipe()
-        parent_in_read, parent_in_write = os.pipe()
-        pid = os.fork()
-        if pid:
-            # parent
-            os.close(child_in_read)
-            os.close(parent_in_write)
-
-            def _wait():
-                '''A closure. Calling it waits on the remote process.
-
-                If the remote process has non-zero status, an exception
-                will be raised.
-                '''
-                dummy, status = os.waitpid(pid, 0)
-                if status:
-                    raise SemanticError, 'command "%s" failed: %d' \
-                          % (command, status)
-
-            return os.fdopen(child_in_write, 'w'), \
-                   os.fdopen(parent_in_read), \
-                   _wait
-        else:
-            # child
-            os.close(child_in_write)
-            os.close(parent_in_read)
-            os.dup2(child_in_read, 0)
-            os.dup2(parent_in_write, 1)
+        def set_up_child():
+            '''Child process should chdir [work]; and set GIT_DIR.'''
             os.chdir(self.work_dir)
-            shell_cmd = '{ %s ; } ' % command
-            os.execve('/bin/sh', ['/bin/sh', '-c', shell_cmd],
-                      {'GIT_DIR': self.vc_dir})
+            os.environ.update({'GIT_DIR': self.vc_dir})
+        return shell_command(command, set_up_child)
 
     def shell_to_string(self, command):
         """Execute self.popen2; capture stdout as a string.
@@ -174,8 +150,8 @@ class VersionControl(object):
         """
         start_dir = os.getcwd()
         try:
-            shell_command('git-read-tree HEAD')
-            shell_command('git-checkout-cache -a')
+            self.shell_to_string('git-read-tree HEAD')
+            self.shell_to_string('git-checkout-cache -a')
         finally:
             os.chdir(start_dir)
 
@@ -219,5 +195,104 @@ class VersionControl(object):
         '''Is this a "new" (no commits) git repository?'''
         head_file = pjoin(self.vc_dir, 'HEAD')
         return not os.path.exists(head_file)
+
+    def get_all_refs(self):
+        '''List all raw commit_ids found under the git refs directory.'''
+        command_string = 'git-rev-parse --all'
+        output = self.shell_to_string(command_string)
+        commit_ids = [ i.strip() for i in output.split() ]
+        return commit_ids
+
+    def is_valid_new_head(self, new_head):
+        '''Does this new head_id include the old head_id in its history.'''
+        if self.is_new():
+            return True
+        new_revs = self.get_rev_list([new_head])
+        old_head = self.get_commit_id('HEAD')
+        return old_head in new_revs
+
+    def filter_refs(self, raw_refs):
+        '''Return a list of refs that are given and present.
+
+        Applies only to commit ids.
+        '''
+        refs = Set(raw_refs)
+        head_ids = self.get_all_refs()
+        refs_here = self.get_rev_list(head_ids)
+        return refs_here & refs
+
+    def get_rev_list(self, head_ids):
+        '''Invoke git-rev-list on the given commit_ids.'''
+        command = 'git-rev-list ' + ' '.join(head_ids)
+        output = self.shell_to_string(command)
+        refs_here = Set([ i.strip() for i in output.split() ])
+        return refs_here
+
+    def get_pack_handle(self, refs_wanted, raw_refs_not_needed):
+        '''Return a file handle + waiter streaming a git pack.'''
+
+        refs_not_needed = self.filter_refs(raw_refs_not_needed)
+        command_string = 'git-rev-list --objects '
+        for ref in refs_wanted:
+            command_string += '%s ' % ref
+        for ref in refs_not_needed:
+            command_string += '^%s ' % ref
+        command_string += '| git-pack-objects --stdout'
+        self.shell_to_string(command_string)
+        remote_in, remote_out, wait = self.popen2(command_string)
+        remote_in.close()
+        return remote_out, wait
+
+    def get_unpack_handle(self):
+        '''Return a file handle + waiter for receiving a git pack.'''
+        command_string = 'git-unpack-objects'
+        remote_in, remote_out, wait = self.popen2(command_string)
+        remote_out.close()
+        return remote_in, wait
+
+    def send_pack_via_framer(self, framer, target_ids, unneeded_ids):
+        '''Send a pack via the given framer.'''
+        handle, waiter = self.get_pack_handle(target_ids, unneeded_ids)
+        framer.write_handle(handle)
+        handle.close()
+        handle.close()
+        waiter()
+
+    def import_pack_via_framer(self, framer):
+        '''Import a pack from the given framer.'''
+        handle, waiter = self.get_unpack_handle()
+        for frame in framer.iter_stream():
+            handle.write(frame)
+        handle.close()
+        waiter()
+
+    def get_commit_id(self, ref_name):
+        '''Return the commit_id for a given name.'''
+        command_string = 'git-rev-parse %s' % ref_name
+        commit_id = self.shell_to_string(command_string).strip()
+        if commit_id == ref_name:
+            raise CommitNotFound('not commit for "%s"' % ref_name)
+        return commit_id
+
+    def note_ref(self, upstream_name, commit_id):
+        '''Note a commit id as refs/heads/[upstream_name].'''
+        head_file = pjoin(self.vc_dir, 'refs', 'heads', upstream_name)
+        handle = open(head_file, 'w')
+        print >> handle, commit_id
+        handle.close()
+
+    def merge(self, new_head_id):
+        '''Do a merge from HEAD to new_head_id.
+
+        Do a plain checkout for new repositories.
+        '''
+        if self.is_new():
+            command_string = 'git checkout -b master -f %s' \
+                             % new_head_id
+        else:
+            current_head_id = self.get_commit_id('HEAD')
+            command_string = "git resolve %s %s 'merge'" \
+                             % (current_head_id, new_head_id)
+        self.shell_to_string(command_string)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

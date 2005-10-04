@@ -212,12 +212,15 @@ cat > empty.xml <<EOF
   </contents>
 </component>
 EOF
-rm -rf foo
 
 pdk repogen empty.xml || status=$?
 tear_down
 
-set_up "update_from_remote with no upstream name" 2
-pdk update_from_remote || status=$?
+set_up "push with no upstream name" 2
+pdk push || status=$?
+tear_down
+
+set_up "pull with no upstream name" 2
+pdk pull || status=$?
 tear_down
 

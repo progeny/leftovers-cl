@@ -67,38 +67,36 @@ class TestOutsideWorld(Test):
 class TestChannelFilenames(Test):
     def test_iter_sections(self):
         world_dict = {
-            'channels': { 'local': { 'type': 'dir',
-                                     'path': 'directory' },
-                          'remote': { 'type': 'apt-deb',
-                                      'path': 'http://localhost/',
-                                      'dist': 'stable',
-                                      'components': 'main contrib',
-                                      'archs': 'source i386' }
-                          },
-            'sources': {}
+            'local': { 'type': 'dir',
+                       'path': 'directory' },
+            'remote': { 'type': 'apt-deb',
+                        'path': 'http://localhost/',
+                        'dist': 'stable',
+                        'components': 'main contrib',
+                        'archs': 'source i386' }
             }
         world_data = WorldData(world_dict)
         world = OutsideWorldFactory(world_data, 'zzz/zzz').create()
         base_path = 'http://localhost/'
         hpath = base_path + 'dists/stable/%s/%s/%s'
         expected = [
-            DirectorySection('directory'),
+            DirectorySection('directory', None),
             AptDebSection(
                 hpath % ('main', 'source', 'Sources.gz'),
                 None,
-                AptDebSourceStrategy(base_path)),
+                AptDebSourceStrategy(base_path), None),
             AptDebSection(
                 hpath % ('main', 'binary-i386', 'Packages.gz'),
                 None,
-                AptDebBinaryStrategy(base_path)),
+                AptDebBinaryStrategy(base_path), None),
             AptDebSection(
                 hpath % ('contrib', 'source', 'Sources.gz'),
                 None,
-                AptDebSourceStrategy(base_path)),
+                AptDebSourceStrategy(base_path), None),
             AptDebSection(
                 hpath % ('contrib', 'binary-i386', 'Packages.gz'),
                 None,
-                AptDebBinaryStrategy(base_path))
+                AptDebBinaryStrategy(base_path), None)
             ]
 
         actual = list(world.iter_sections())
