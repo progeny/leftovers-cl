@@ -48,6 +48,9 @@ setup_initial() {
         rm -rf build/
         python setup.py     --quiet build --build-base=${tdir}/tmp-build \
             install --prefix=${tdir}
+        echo "import compileall; " \
+             "compileall.compile_dir('${tdir}/lib', quiet=True)" \
+            | python
         rm -rf ${tdir}/tmp-build
     fi
     ln -s ${dev_dir}/atest/packages ${tdir}
