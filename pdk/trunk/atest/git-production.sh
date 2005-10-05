@@ -90,6 +90,10 @@ pushd customer-work-area
 EOF
     pdk pull progeny.com
     pdk download progeny.com/apache.xml
+    for file in $(find etc/cache -type f | grep -v .header$); do
+        compare_timestamps $file ../integration/$file
+        compare_timestamps $file ../production/$file
+    done
     pdk repogen progeny.com/apache.xml
 
 # -----------------------------------------------------------
