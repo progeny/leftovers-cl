@@ -1,3 +1,13 @@
+pdk (0.0.11) unstable; urgency=low
+
+  * Add udeb support.
+  * Really fix package ordering.
+  * Test that debian-installer is populated only when needed.
+  * Test that blob timestamps are preserved when pulled from remote
+    workspaces.
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed,  5 Oct 2005 13:56:13 -0500
+
 pdk (0.0.10) unstable; urgency=low
 
   * New code.
