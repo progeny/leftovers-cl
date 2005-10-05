@@ -703,7 +703,7 @@ class PackageReference(object):
         Returns a blank string if no arch was given.
         '''
         return ('arch' in self and self['arch']) or ''
-    arch = property(get_version)
+    arch = property(get_arch)
 
     def get_rule(self):
         '''Construct a rule object for this reference.'''
@@ -718,7 +718,10 @@ class PackageReference(object):
 
     def __identity_tuple(self):
         '''Return a tuple to help cmp and hash handle this object.'''
-        return self.package_type.role_string, self.name, self.blob_id, \
+        return self.package_type.format_string, \
+               self.package_type.role_string, \
+               self.package_type.type_string, \
+               self.name, self.version, self.arch, self.blob_id, \
                tuple(self.fields), tuple(self.predicates), \
                tuple(self.children)
 

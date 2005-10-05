@@ -168,15 +168,15 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
       <meta>
         <test>data</test>
       </meta>
-      <deb ref="md5:d71f6a54b81e9a02fa90fe9d9f655fac">
-        <name>ethereal-common</name>
-        <version>0.9.4-1woody2</version>
-        <arch>ia64</arch>
-      </deb>
       <deb ref="md5:fead37813e0a8b27b2d198ed96a09e72">
         <name>ethereal-common</name>
         <version>0.9.4-1woody2</version>
         <arch>i386</arch>
+      </deb>
+      <deb ref="md5:d71f6a54b81e9a02fa90fe9d9f655fac">
+        <name>ethereal-common</name>
+        <version>0.9.4-1woody2</version>
+        <arch>ia64</arch>
       </deb>
       <dsc ref="md5:3422eaafcc0c6790921c2fadcfb45c21">
         <name>ethereal</name>
@@ -349,15 +349,15 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
       <meta>
         <test>data</test>
       </meta>
-      <deb ref="md5:d71f6a54b81e9a02fa90fe9d9f655fac">
-        <name>ethereal-common</name>
-        <version>0.9.4-1woody2</version>
-        <arch>ia64</arch>
-      </deb>
       <deb ref="md5:fead37813e0a8b27b2d198ed96a09e72">
         <name>ethereal-common</name>
         <version>0.9.4-1woody2</version>
         <arch>i386</arch>
+      </deb>
+      <deb ref="md5:d71f6a54b81e9a02fa90fe9d9f655fac">
+        <name>ethereal-common</name>
+        <version>0.9.4-1woody2</version>
+        <arch>ia64</arch>
       </deb>
       <dsc ref="md5:3422eaafcc0c6790921c2fadcfb45c21">
         <name>ethereal</name>
