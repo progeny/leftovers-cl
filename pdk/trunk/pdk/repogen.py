@@ -35,6 +35,7 @@ from pdk.exceptions import SemanticError, InputError, CommandLineError, \
                 IntegrityFault
 import pdk.log as log
 from pdk.util import ensure_directory_exists, pjoin, LazyWriter
+from pdk.package import udeb
 
 logger = log.get_logger()
 
@@ -109,6 +110,15 @@ class DebianPoolInjector(object):
         self.section = section
         self.repo_dir = pjoin(repo_dir)
 
+    def get_subsection(self):
+        '''Get the repo subsection for this package.
+
+        Used for udebs to divert their metadata into debian-installer.
+        '''
+        if self.package.package_type == udeb:
+            return 'debian-installer'
+        else:
+            return None
 
     def get_pool_dir(self):
         """Return the top-level absolute path for the pool."""
@@ -448,23 +458,41 @@ class DebianDirectPoolRepo(DebianPoolRepo):
     """Create a full repository from a Debian pool.  Use injectors
     both to create the pool on the fly and to write the indexes."""
 
+    def _iter_file_list_keys(self):
+        '''Yield a series of keys suitable for use as file_list keys.
+
+        See get_file_lists.
+        '''
+        for arch in self.arches:
+            for section in self.sections:
+                if arch == "source":
+                    yield (section, None, arch)
+                else:
+                    for subsection in (None, 'debian-installer'):
+                        yield (section, subsection, arch)
+
     def get_file_lists(self):
         """Get a dictionary of LazyWriters keyed by section and arch.
 
-        Key format is (section, arch)
+        Key format is (section, subsection, arch)
+
+        Subsection should be None or 'debian-installer'.
         """
         lists = {}
-        for arch in self.arches:
-            for section in self.sections:
-                key = (section, arch)
-                if arch == "source":
-                    file_name = "%s/%s/source/Sources" \
-                                % (self.dist, section)
+        for key in self._iter_file_list_keys():
+            section, subsection, arch = key
+            if arch == "source":
+                file_name = "%s/%s/source/Sources" \
+                            % (self.dist, section)
+            else:
+                if subsection:
+                    file_name = "%s/%s/%s/binary-%s/Packages" \
+                                % (self.dist, section, subsection, arch)
                 else:
                     file_name = "%s/%s/binary-%s/Packages" \
                                 % (self.dist, section, arch)
-                full_name = pjoin(self.repo_dir, file_name)
-                lists[key] = LazyWriter(full_name)
+            full_name = pjoin(self.repo_dir, file_name)
+            lists[key] = LazyWriter(full_name)
         return lists
 
 
@@ -483,7 +511,8 @@ class DebianDirectPoolRepo(DebianPoolRepo):
     def write_to_lists(self, injector):
         """Record this package in the appropriate file lists."""
         for arch in injector.get_architectures(self.arches):
-            handle = self.file_lists[(injector.section, arch)]
+            subsection = injector.get_subsection()
+            handle = self.file_lists[(injector.section, subsection, arch)]
             handle.write("".join(injector.get_apt_header()))
 
 

@@ -56,7 +56,8 @@ from pdk.exceptions import InputError, SemanticError
 from pdk.util import cpath, gen_file_fragments, get_remote_file, \
      shell_command, Framer, make_fs_framer, make_ssh_framer
 from pdk.yaxml import parse_yaxml_file
-from pdk.package import deb, dsc, get_package_type, UnknownPackageTypeError
+from pdk.package import deb, udeb, dsc, get_package_type, \
+     UnknownPackageTypeError
 
 def quote(raw):
     '''Create a valid filename which roughly resembles the raw string.'''
@@ -294,6 +295,12 @@ class AptDebBinaryStrategy(object):
         return FileLocator(self.base_path, fields['filename'], \
                            'md5:' + fields['md5sum'])
 
+class AptUDebBinaryStrategy(AptDebBinaryStrategy):
+    '''Handle get_locator and package_type for AptDebSection
+
+    Used for Packages files in debian-installer sections. (udebs)
+    '''
+    package_type = udeb
 
 class AptDebSourceStrategy(object):
     '''Handle get_locator and package_type for AptDebSection
@@ -518,14 +525,22 @@ class OutsideWorldFactory(object):
                 archs = data_dict['archs'].split()
                 for component in components:
                     for arch in archs:
+                        # note that '/debian-installer' is treated as
+                        # kind of "magic" here, because it is a magic name
+                        # in debian repos.
                         if arch == 'source':
+                            if '/debian-installer' in component:
+                                continue
                             arch_part = 'source'
                             filename = 'Sources.gz'
                             strategy = AptDebSourceStrategy(path)
                         else:
                             arch_part = 'binary-%s' % arch
                             filename = 'Packages.gz'
-                            strategy = AptDebBinaryStrategy(path)
+                            if '/debian-installer' in component:
+                                strategy = AptUDebBinaryStrategy(path)
+                            else:
+                                strategy = AptDebBinaryStrategy(path)
 
                         parts = [path[:-1], 'dists', dist, component,
                                  arch_part, filename]

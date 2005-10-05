@@ -287,6 +287,20 @@ class _Deb(object):
 
 deb = _Deb()
 
+class _UDeb(_Deb):
+    '''Handle udeb packages. (special binary)'''
+    type_string = 'udeb'
+    format_string = 'deb'
+    role_string = 'binary'
+
+    def get_filename(self, package):
+        """Return a udeb filename for use in an apt repo."""
+        version_string = package.version.string_without_epoch
+        return '%s_%s_%s.udeb' % (package.name, version_string,
+                                    package.arch)
+
+udeb = _UDeb()
+
 def get_rpm_header(handle):
     """Extract an rpm header from an rpm package file."""
     ts = rpm_api.TransactionSet('/', rpm_api._RPMVSF_NODIGESTS
@@ -373,6 +387,8 @@ def get_package_type(filename = '', format = ''):
     """Return a packge type for a filename or package reference format."""
     if filename.endswith('.deb') or format == 'deb':
         return deb
+    elif filename.endswith('.udeb') or format == 'udeb':
+        return udeb
     elif filename.endswith('.dsc') or format == 'dsc':
         return dsc
     elif filename.endswith('.src.rpm') or format == 'srpm':

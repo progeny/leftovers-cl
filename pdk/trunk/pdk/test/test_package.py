@@ -21,7 +21,8 @@ from pdk.test.utest_util import Test
 from cPickle import dumps, loads
 
 from pdk.package import \
-     Package, get_package_type, deb, dsc, srpm, rpm, sanitize_deb_header, \
+     Package, get_package_type, udeb, deb, dsc, srpm, rpm, \
+     sanitize_deb_header, \
      UnknownPackageTypeError, synthesize_version_string, DebianVersion
 
 __revision__ = "$Progeny$"
@@ -172,11 +173,13 @@ Files:
 class TestGetPackageType(Test):
     def test_get_package_type(self):
         self.assert_equal(deb, get_package_type(filename = 'a.deb'))
+        self.assert_equals(udeb, get_package_type(filename = 'a.udeb'))
         self.assert_equal(dsc, get_package_type(filename = 'a.dsc'))
         self.assert_equals(srpm, get_package_type(filename = 'a.src.rpm'))
         self.assert_equals(rpm, get_package_type(filename = 'a.rpm'))
 
         self.assert_equals(deb, get_package_type(format = 'deb'))
+        self.assert_equals(udeb, get_package_type(format = 'udeb'))
         self.assert_equals(dsc, get_package_type(format = 'dsc'))
         self.assert_equals(srpm, get_package_type(format = 'srpm'))
         self.assert_equals(rpm, get_package_type(format = 'rpm'))

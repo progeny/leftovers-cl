@@ -403,7 +403,7 @@ class ComponentDescriptor(object):
         Returns true for elements representing both concrete and abstract
         references.
         '''
-        return rule_element.tag in ('deb', 'dsc', 'rpm', 'srpm')
+        return rule_element.tag in ('deb', 'udeb', 'dsc', 'rpm', 'srpm')
 
     def build_package_ref(self, ref_element):
         '''Return a package_ref given an element.
@@ -598,7 +598,9 @@ def get_dsc_child_condition_data(package):
     """Get child condition data for a dsc."""
     return [ ('sp_name', package.name),
              ('sp_version', package.version.full_version),
-             ('type', 'deb') ]
+             [ 'or',
+               ('type', 'deb'),
+               ('type', 'udeb') ] ]
 
 def get_rpm_child_condition_data(package):
     """Get child condition data for an rpm."""
@@ -621,11 +623,12 @@ def get_general_fields(package):
 def get_child_condition(package, ref):
     """Get child condition data for any package."""
     condition_fn = get_child_condition_fn(package)
-    child_condition = build_and_condition(condition_fn(package))
+    child_condition = build_condition(condition_fn(package))
     return OrCondition([child_condition, ref.rule.condition])
 
 child_condition_fn_map = {
     'deb': get_deb_child_condition_data,
+    'udeb': get_deb_child_condition_data,
     'dsc': get_dsc_child_condition_data,
     'rpm': get_rpm_child_condition_data,
     'srpm': get_srpm_child_condition_data }
@@ -633,13 +636,26 @@ def get_child_condition_fn(package):
     """Determine which child condition function to use on a package."""
     return child_condition_fn_map[package.type]
 
-def build_and_condition(condition_data):
+condition_type_map = {
+    'and': AndCondition,
+    'or': OrCondition
+    }
+def build_condition(raw_condition_data):
     """Build an 'and' condition from a list of tuples."""
-    and_condition = AndCondition([])
-    conditions = and_condition.conditions
-    for name, value in condition_data:
-        conditions.append(FieldMatchCondition(name, value))
-    return and_condition
+    if isinstance(raw_condition_data[0], basestring):
+        condition_type = raw_condition_data[0]
+        condition_data = raw_condition_data[1:]
+    else:
+        condition_type = 'and'
+        condition_data = raw_condition_data
+    condition = condition_type_map[condition_type]([])
+    for item in condition_data:
+        if isinstance(item, tuple):
+            name, value = item
+            condition.conditions.append(FieldMatchCondition(name, value))
+        else:
+            condition.conditions.append(build_condition(item))
+    return condition
 
 
 class PackageReference(object):
@@ -707,13 +723,13 @@ class PackageReference(object):
 
     def get_rule(self):
         '''Construct a rule object for this reference.'''
-        all_fields = []
+        all_fields = ['and']
         if self.blob_id:
             all_fields.append(('blob-id', self.blob_id))
 
         all_fields.extend(self.fields)
         all_fields.append(('type', self.package_type.type_string))
-        return Rule(build_and_condition(all_fields), self.predicates)
+        return Rule(build_condition(all_fields), self.predicates)
     rule = property(get_rule)
 
     def __identity_tuple(self):

@@ -388,6 +388,7 @@ ignore_message() {
 ignore_message '^pdk.package:W0704:.*: Except doesn.t do anything'
 ignore_message '^pdk.package:W0232:.*:_Dsc:'
 ignore_message '^pdk.package:W0232:.*:_Deb:'
+ignore_message '^pdk.package:W0232:.*:_UDeb:'
 ignore_message '^pdk.package:W0232:.*:_SRpm:'
 ignore_message '^pdk.package:W0232:.*:_Rpm:'
 

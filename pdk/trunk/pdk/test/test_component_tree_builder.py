@@ -91,12 +91,14 @@ class TestComponentTreeBuilder(Test):
         builder = ComponentDescriptor(None)
 
         deb_rule = Element('deb')
+        udeb_rule = Element('udeb')
         dsc_rule = Element('dsc')
         rpm_rule = Element('rpm')
         srpm_rule = Element('srpm')
         component_rule = Element('component')
 
         assert builder.is_package_ref(deb_rule)
+        assert builder.is_package_ref(udeb_rule)
         assert builder.is_package_ref(dsc_rule)
         assert builder.is_package_ref(rpm_rule)
         assert builder.is_package_ref(srpm_rule)

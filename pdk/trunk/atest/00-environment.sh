@@ -22,7 +22,8 @@
 # check that the available test data is up to date.
 # also check that the required software is available.
 
-(cd packages && openssl sha1 *) | LANG=C sort >catalog.txt
+(cd packages && find * -type f | xargs openssl sha1) \
+    | LANG=C sort >catalog.txt
 diff -u - catalog.txt <<EOF
 SHA1(abook_0.5.3-2.diff.gz)= 4f069d2b926621964216125a1cce4ece213f177e
 SHA1(abook_0.5.3-2.dsc)= c585ffdbf641a6f4d5d895314af2826a0a4421c0
@@ -37,6 +38,53 @@ SHA1(apache2_2.0.53-5.diff.gz)= 9f4be3925441f006f8ee2054d96303cdcdac9b0a
 SHA1(apache2_2.0.53-5.dsc)= 9d26152e78ca33a3d435433c67644b52ae4c670c
 SHA1(apache2_2.0.53.orig.tar.gz)= 214867c073d2bd43ed8374c9f34fa5532a9d7de0
 SHA1(centos-release-4-1.2.i386.rpm)= 664bad7feb664492d9bdb497528db590dcd9021b
+SHA1(discover/discover-udeb_2.0.7-2.1_alpha.udeb)= 205b0cb9ebd350b78cba275d3aaba064867e4500
+SHA1(discover/discover-udeb_2.0.7-2.1_arm.udeb)= 4e3070c28d4b511a4ccc30a3f679fc664b19f181
+SHA1(discover/discover-udeb_2.0.7-2.1_hppa.udeb)= dd219775694cb2ff2269830eac0ec60d52d97066
+SHA1(discover/discover-udeb_2.0.7-2.1_i386.udeb)= 60380ed45b9db43b4d120d08bb395ccd4126035e
+SHA1(discover/discover-udeb_2.0.7-2.1_ia64.udeb)= 7e1bcc93526fca55d01e60d08cb4e24d45172036
+SHA1(discover/discover-udeb_2.0.7-2.1_m68k.udeb)= ca7f70f24a25e5beb730e21b54d9321bb605b3e3
+SHA1(discover/discover-udeb_2.0.7-2.1_mips.udeb)= 47f9ccd7366c176648f1fea4d15dbca6b540c9f4
+SHA1(discover/discover-udeb_2.0.7-2.1_mipsel.udeb)= 013c30387419a8ea8174453e47ce2801873a519a
+SHA1(discover/discover-udeb_2.0.7-2.1_powerpc.udeb)= 6a41dbccb55b5daf0af0ce5b81ffe39b8b725050
+SHA1(discover/discover-udeb_2.0.7-2.1_s390.udeb)= 15e49d6ce91a8d6c8ab4ed6237eb99807833c40c
+SHA1(discover/discover-udeb_2.0.7-2.1_sparc.udeb)= ad21b380d01a119b55d2e7a295a14707bcb49726
+SHA1(discover/discover_2.0.7-2.1.diff.gz)= e30c402ab34a4dd9fc9a7e5aa164dc57ddeb44ae
+SHA1(discover/discover_2.0.7-2.1.dsc)= 6239400144e4f4fcf89d476c44a1b6795a5857e5
+SHA1(discover/discover_2.0.7-2.1_alpha.deb)= 0a06c901a40c57ce868d8cbc7c0e1f798ac1c65e
+SHA1(discover/discover_2.0.7-2.1_arm.deb)= 6b9088922c961953e5aa02b9d404e19508d03713
+SHA1(discover/discover_2.0.7-2.1_hppa.deb)= 159b1948501188e5a11bd065a9b10de51e96f818
+SHA1(discover/discover_2.0.7-2.1_i386.deb)= 9d85fb240f097ef1ee07f84aad9c48e4fe286e71
+SHA1(discover/discover_2.0.7-2.1_ia64.deb)= a8574a789b9df13d40cd0116df9287f7b7d6647c
+SHA1(discover/discover_2.0.7-2.1_m68k.deb)= 612d3f2947f5f2ec7e15001c38277c11e8058602
+SHA1(discover/discover_2.0.7-2.1_mips.deb)= 7811baa1fa4fa610020688c8dd2208c5d9d21eb4
+SHA1(discover/discover_2.0.7-2.1_mipsel.deb)= 9de1a8ba08049ede29748eb356d79cf150dad5d8
+SHA1(discover/discover_2.0.7-2.1_powerpc.deb)= fe5ca1a63af62f8d4c3b956b461e79c602208b83
+SHA1(discover/discover_2.0.7-2.1_s390.deb)= 3037825da6772c33c1bd5607da328b740d76f9e3
+SHA1(discover/discover_2.0.7-2.1_sparc.deb)= 887ea11e165520223d3ad035e12e6435c8597237
+SHA1(discover/discover_2.0.7.orig.tar.gz)= bd18ac1b93408b670e97fd163f25fb3c21b92952
+SHA1(discover/libdiscover-dev_2.0.7-2.1_alpha.deb)= 0639ab8edfafd0b7e7a69a6d91086922494c4c37
+SHA1(discover/libdiscover-dev_2.0.7-2.1_arm.deb)= 6cd104640646b3256f5b4040a7d770f7e04a9d8e
+SHA1(discover/libdiscover-dev_2.0.7-2.1_hppa.deb)= 99b5fd6d6446b76478ddc52f8f62250fa068063a
+SHA1(discover/libdiscover-dev_2.0.7-2.1_i386.deb)= 535c48e76ea81c094ff99aaeca0a103c9d53d897
+SHA1(discover/libdiscover-dev_2.0.7-2.1_ia64.deb)= 39e4e5a1d2cc6ed56954958aa60f703e4f5496fe
+SHA1(discover/libdiscover-dev_2.0.7-2.1_m68k.deb)= 8385ddafb17098739219b990708be56e0c23b827
+SHA1(discover/libdiscover-dev_2.0.7-2.1_mips.deb)= b7b2b9de863d2200791563027325522aa9b6ef45
+SHA1(discover/libdiscover-dev_2.0.7-2.1_mipsel.deb)= 53b1039286277bbc71ef46ae9464451daaf74076
+SHA1(discover/libdiscover-dev_2.0.7-2.1_powerpc.deb)= e96319a0521d5130895d3a1525dd853d51c514fd
+SHA1(discover/libdiscover-dev_2.0.7-2.1_s390.deb)= 1890609354230a433bf5a443417429a6defee418
+SHA1(discover/libdiscover-dev_2.0.7-2.1_sparc.deb)= 964f791b59ab943cf06e4fdf12a0696fa5d0812e
+SHA1(discover/libdiscover2_2.0.7-2.1_alpha.deb)= 48b5493dbf0255fcee3eb205076226deb5ea40ec
+SHA1(discover/libdiscover2_2.0.7-2.1_arm.deb)= 029640e277d41f0df8f02f3eff1e4e9a54f6b590
+SHA1(discover/libdiscover2_2.0.7-2.1_hppa.deb)= a425bec9afd8ddcef135cbf4c380b4d826fdd9d9
+SHA1(discover/libdiscover2_2.0.7-2.1_i386.deb)= 85e580d1c4dad388aa7100df999e28f277167f33
+SHA1(discover/libdiscover2_2.0.7-2.1_ia64.deb)= 6217b7ad6c3d059c292c6df4ce6e3cc9db1d324e
+SHA1(discover/libdiscover2_2.0.7-2.1_m68k.deb)= 1c9e2c2606585ce937e6245e370415cb9705b42c
+SHA1(discover/libdiscover2_2.0.7-2.1_mips.deb)= bc3c38378ae036cb4f31a82b58c861b9d4b218df
+SHA1(discover/libdiscover2_2.0.7-2.1_mipsel.deb)= a9434c53e576443aeb8e879a659b2ca68dabfdac
+SHA1(discover/libdiscover2_2.0.7-2.1_powerpc.deb)= 8158b047e9f3317067997057979492dc0dad5b36
+SHA1(discover/libdiscover2_2.0.7-2.1_s390.deb)= c6b082cd3558fe3f0c40b6125b31c339e44655d4
+SHA1(discover/libdiscover2_2.0.7-2.1_sparc.deb)= 512ca5395d1e40987e312e37b7d46f8a99fff97e
 SHA1(emacs-defaults_1.1.dsc)= 9f4468e5a0f9a99df82083ba856483ba66f007a8
 SHA1(emacs-defaults_1.1.tar.gz)= 9ec95718a49fd7f1a8a745c3673b5386349f3f77
 SHA1(emacs-defaults_1.1_all.deb)= 95155bda2cb225f94401e6f82ec3261f094111f0
