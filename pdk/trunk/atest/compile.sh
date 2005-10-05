@@ -109,3 +109,6 @@ for filename in ida_2.01-1.2.dsc \
     grep ${filename} repo/dists/stable/contrib/source/Sources
     assert_exists ${repo_path}/${filename}
 done
+
+[ -e repo/dists/stable/main/debian-installer ] \
+    && fail 'debian-installer directory should not be created'
