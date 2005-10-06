@@ -486,8 +486,7 @@ class _Workspace(object):
     def acquire(self, blob_ids):
         '''Get cache adapters and use them to download package files.'''
         for adapter in self.world.get_cache_adapters(blob_ids):
-            framer = adapter.adapt()
-            self.cache.import_from_framer(framer)
+            adapter.adapt(self.cache)
 
 class Net(object):
     '''Encapsulates the details of most framer conversations.
@@ -626,31 +625,5 @@ def listen(args):
     local_workspace = _Workspace(args[0])
     net = Net(framer, local_workspace)
     net.listen_loop()
-
-def adapt(args):
-    '''Start an event loop for handling direct download requests.
-
-    Not intended to be invoked by users.
-    '''
-    if len(args) != 0:
-        raise CommandLineError('no arguments allowed')
-    framer = make_self_framer()
-    workspace = current_workspace()
-
-    downloads = []
-    while 1:
-        first = framer.read_frame()
-        if first == 'end-adapt':
-            break
-        blob_id = first
-        url = framer.read_frame()
-        downloads.append((blob_id, url))
-    framer.assert_end_of_stream()
-
-    for blob_id, url in downloads:
-        from pdk.channels import FileLocator
-        locator = FileLocator(url, None, blob_id)
-        workspace.cache.import_file(locator)
-    framer.write_stream(['done'])
 
 # vim:ai:et:sts=4:sw=4:tw=0:

@@ -73,19 +73,16 @@ class URLCacheAdapter(object):
         '''Assign the given blob_finders {blob_id: url} to this adapter.'''
         self.blob_finders.update(blob_finders)
 
-    def adapt(self):
-        '''Get a framer ready to stream blobs to a cache.
+    def adapt(self, cache):
+        '''Import assigned blobs into the cache.
 
         Actually the framer strems zero blobs, as the "remote" side of
         the framer is downloading files directly into the cache.
         '''
-        framer = Framer(*shell_command('pdk remote adapt'))
         for blob_id, url in self.blob_finders.iteritems():
-            framer.write_frame(blob_id)
-            framer.write_frame(url)
-        framer.write_frame('end-adapt')
-        framer.end_stream()
-        return framer
+            if blob_id not in cache:
+                locator = FileLocator(url, None, blob_id)
+                cache.import_file(locator)
 
 class LocalWorkspaceCacheAdapter(object):
     '''A cache adapter for working with a remote workspace on this machine.
@@ -98,14 +95,14 @@ class LocalWorkspaceCacheAdapter(object):
         '''Assign the given blob_ids to this adapter.'''
         self.blob_ids = blob_ids
 
-    def adapt(self):
-        '''Return a framer ready to stream the assigned blobs.'''
+    def adapt(self, cache):
+        '''Use a framer to stream the assigned blobs into a cache.'''
         framer = Framer(*shell_command('pdk remote listen %s'
                                          % self.path))
         framer.write_stream(['pull-blobs'])
         framer.write_stream(self.blob_ids)
         framer.write_stream(['done'])
-        return framer
+        cache.import_from_framer(framer)
 
 class SshWorkspaceCacheAdapter(object):
     '''A cache adapter for working with a remote workspace via ssh.
@@ -119,14 +116,14 @@ class SshWorkspaceCacheAdapter(object):
         '''Assign the given blob_ids to this adapter.'''
         self.blob_ids = blob_ids
 
-    def adapt(self):
-        '''Return a framer ready to stream the assigned blobs.'''
+    def adapt(self, cache):
+        '''Use a framer to stream the assigned blobs into a cache.'''
         framer = Framer(*shell_command('ssh %s pdk remote listen %s'
                                          % (self.host, self.path)))
         framer.write_stream(['pull-blobs'])
         framer.write_stream(self.blob_ids)
         framer.write_stream(['done'])
-        return framer
+        cache.import_from_framer(framer)
 
 class FileLocator(object):
     '''Represents a resource which can be imported into the cache.'''
