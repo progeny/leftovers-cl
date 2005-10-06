@@ -193,7 +193,8 @@ plugin_locations = [
     , ".pdk_plugins"
 ]
 
-if __name__ == '__main__':
+def main():
+    '''Entry point to pdk.'''
     filterwarnings('ignore', category = FutureWarning)
     main_args = sys.argv or []
     pdk = Pdk()
@@ -209,5 +210,7 @@ if __name__ == '__main__':
         fn_name = 'do_%s' % main_args[1]
         pdk.run_one_command(fn_name, main_args)
 
+if __name__ == '__main__':
+    main()
 
 # vim:ai:et:sts=4:sw=4:tw=0:
