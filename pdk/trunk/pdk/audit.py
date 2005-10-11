@@ -136,11 +136,15 @@ def audit(argv):
             sha1_digest.update(block)
             md5_digest.update(block)
         handle.close()
+
+        prefixes = []
         for blob_id in blob_ids:
             if blob_id.startswith('sha-1'):
+                prefixes.append('sha-1')
                 arbiter.warrant(ChecksumMatches(blob_id),
                                 'sha-1:' + sha1_digest.hexdigest(), 'cache')
             elif blob_id.startswith('md5'):
+                prefixes.append('md5')
                 arbiter.warrant(ChecksumMatches(blob_id),
                                 'md5:' + md5_digest.hexdigest(), 'cache')
             else:
@@ -150,6 +154,11 @@ def audit(argv):
                     , ('md5:', 'sha-1:')
                     , 'unknown prefix'
                     )
+        prefixes.sort()
+        if prefixes != ['md5', 'sha-1']:
+            digests = (md5_digest.hexdigest(), sha1_digest.hexdigest())
+            arbiter.note_problem(tuple(blob_ids), digests,
+                                 'not hard linked properly')
 
     arbiter.note_leftovers()
 

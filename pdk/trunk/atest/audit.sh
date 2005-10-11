@@ -104,6 +104,8 @@ LANG=C sort <pdk_audit.raw.txt >pdk_audit.txt
 echo ""
 
 cat > expected.txt <<EOF
+('duh',)|('2b00042f7481c7b056c4b410d28f33cf', '7d97e98f8af710c7e7fe703abc8f639e0ee507c4')|not hard linked properly
+('sha-1:9f4be3925441f006f8ee2054d96303cdcdac9b0a',)|('0d060d66b3a1e6ec0b9c58e995f7b9f7', '9f4be3925441f006f8ee2054d96303cdcdac9b0a')|not hard linked properly
 deb,emacs-defaults,1.1||missing source
 duh|('md5:', 'sha-1:')|unknown prefix
 duh||checksum mismatch
