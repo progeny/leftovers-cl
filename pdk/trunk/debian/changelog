@@ -1,3 +1,10 @@
+pdk (0.0.12) unstable; urgency=low
+
+  * Fix problem where download seems to forget it already has files.
+  * Regain a little download performance.
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed, 12 Oct 2005 12:53:41 -0500
+
 pdk (0.0.11) unstable; urgency=low
 
   * Add udeb support.
