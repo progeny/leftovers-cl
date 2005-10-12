@@ -374,6 +374,13 @@ rm -r ${cachedir}/md5/*
 # "Download" missing packages.
 pdk download apache.xml
 
+# Download a second time.
+pdk download apache.xml 2>stderr.txt
+
+# Stderr should be empty. In particular, there should be no progress bars.
+diff -u stderr.txt - <<EOF
+EOF
+
 for file in $(find ${cachedir} -type f); do
     perms=$(stat -c '%a' $file)
     [ 664 = "$perms" ] || bail "wrong permissions $perms for $file"
