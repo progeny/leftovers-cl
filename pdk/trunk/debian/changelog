@@ -1,3 +1,9 @@
+pdk (0.0.13) unstable; urgency=low
+
+  * Restructure channel handling to be more CPU efficient.
+
+ -- Darrin Thompson <darrint@progeny.com>  Fri, 14 Oct 2005 15:52:07 -0500
+
 pdk (0.0.12) unstable; urgency=low
 
   * Fix problem where download seems to forget it already has files.
