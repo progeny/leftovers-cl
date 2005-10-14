@@ -345,8 +345,6 @@ class ComponentDescriptor(object):
         """
         workspace = current_workspace()
         cache = workspace.cache
-        world = workspace.world
-        world.update_blob_id_locator()
         blob_ids = [ r.blob_id for r in self.iter_full_package_refs()
                      if r.blob_id and r.blob_id not in cache ]
         workspace.acquire(blob_ids)

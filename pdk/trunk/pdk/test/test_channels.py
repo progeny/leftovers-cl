@@ -16,53 +16,16 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-from cStringIO import StringIO
 from pdk.test.utest_util import Test
 
-from pdk.channels import OutsideWorld, FileLocator, \
+from pdk.channels import \
      DirectorySection, AptDebBinaryStrategy, AptDebSourceStrategy, \
      AptDebSection, OutsideWorldFactory, WorldData, quote
-
-class TestAptDebControl(Test):
-    def test_iter_apt_deb_control(self):
-        packages = 'a\n\nb\nc\r\n\n'
-        iter_apt_deb_control = AptDebSection.iter_apt_deb_control
-        actual = list(iter_apt_deb_control(StringIO(packages)))
-        expected = ['a\n\n', 'b\nc\r\n\n']
-        self.assert_equals_long(actual, expected)
 
 class MockPackage(object):
     def __init__(self, blob_id):
         self.blob_id = blob_id
         self.contents = {}
-
-class TestOutsideWorld(Test):
-    def test_update_blob_id_locator(self):
-        a = MockPackage('a')
-        b = MockPackage('b')
-        c = MockPackage('c')
-        fl = FileLocator
-        section_data  = [ (a, 'a', fl('uri:a', 'a.deb', None)),
-                          (b, 'b', fl('uri:b', 'b.deb', None)),
-                          (c, 'c', fl('uri:c', 'c.deb', None)) ]
-        class MockSection(object):
-            def iter_package_info(self):
-                return section_data
-
-        sections = { 'local': [MockSection()] }
-
-        data = OutsideWorld(sections)
-        data.update_blob_id_locator()
-
-        self.assert_equals(fl('uri:b', 'b.deb', None),
-                           data.find_by_blob_id('b'))
-        self.assert_equals(fl('uri:a', 'a.deb', None),
-                           data.find_by_blob_id('a'))
-        self.assert_equals(fl('uri:c', 'c.deb', None),
-                           data.find_by_blob_id('c'))
-
-        self.assert_equals_long([ i[0] for i in section_data ],
-                                list(data.iter_packages(['local'])))
 
 class TestChannelFilenames(Test):
     def test_iter_sections(self):
@@ -80,23 +43,27 @@ class TestChannelFilenames(Test):
         base_path = 'http://localhost/'
         hpath = base_path + 'dists/stable/%s/%s/%s'
         expected = [
-            DirectorySection('directory', None),
-            AptDebSection(
+            ('local', DirectorySection('directory')),
+            ('remote',
+             AptDebSection(
                 hpath % ('main', 'source', 'Sources.gz'),
                 None,
-                AptDebSourceStrategy(base_path), None),
-            AptDebSection(
+                AptDebSourceStrategy(base_path))),
+            ('remote',
+             AptDebSection(
                 hpath % ('main', 'binary-i386', 'Packages.gz'),
                 None,
-                AptDebBinaryStrategy(base_path), None),
-            AptDebSection(
+                AptDebBinaryStrategy(base_path))),
+            ('remote',
+             AptDebSection(
                 hpath % ('contrib', 'source', 'Sources.gz'),
                 None,
-                AptDebSourceStrategy(base_path), None),
-            AptDebSection(
+                AptDebSourceStrategy(base_path))),
+            ('remote',
+             AptDebSection(
                 hpath % ('contrib', 'binary-i386', 'Packages.gz'),
                 None,
-                AptDebBinaryStrategy(base_path), None)
+                AptDebBinaryStrategy(base_path)))
             ]
 
         actual = list(world.iter_sections())

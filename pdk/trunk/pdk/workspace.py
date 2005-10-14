@@ -30,7 +30,7 @@ from pdk.cache import Cache
 from pdk.channels import OutsideWorldFactory, WorldData
 from pdk.exceptions import ConfigurationError, SemanticError, \
      CommandLineError
-from pdk.util import pjoin, make_self_framer
+from pdk.util import pjoin, make_self_framer, cached_property
 
 # current schema level for this pdk build
 schema_target = 4
@@ -329,40 +329,6 @@ def push(args):
     local = current_workspace()
     local.push(remote_path)
 
-def cached_property(prop_name, create_fn):
-    """Make a lazy property getter that memoizes it's value.
-
-    The prop_name is used to create an internal symbol. When debugging
-    the name should be visible so it should normally match the user
-    visible property name.
-
-    The create_fn should point to a private function which returns a
-    new object. The same object will be used on successive calls to
-    the property getter.
-
-    The doc string of create_fn will be used as the property's doc string.
-
-    Usage is simlar to the built in property function.
-
-    name = cached_value('name', __create_name)
-    # where __create_name is a function returning some object
-    """
-    private_name = '__' + prop_name
-    def _get_property(self):
-        '''Takes care of property getting details.
-
-        Memoizes the result of create_fn.
-        '''
-        if hasattr(self, private_name):
-            value = getattr(self, private_name)
-        else:
-            value = None
-        if not value:
-            value = create_fn(self)
-            setattr(self, private_name, value)
-        return value
-    return property(_get_property, doc = create_fn.__doc__)
-
 class _Workspace(object):
     """
     Library interface to pdk workspace
@@ -459,7 +425,7 @@ class _Workspace(object):
 
     def push(self, upstream_name):
         """
-        Get latest changes from version control
+        Get push local history to a remote workspace.
         """
         section = self.world.get_workspace_section(upstream_name)
         framer = section.get_framer()
@@ -469,8 +435,8 @@ class _Workspace(object):
             remote_commit_ids = self.vc.get_rev_list([remote_head])
         except CommitNotFound:
             remote_commit_ids = []
-        section = self.world.get_workspace_section(upstream_name)
-        remote_blob_ids = section.cache_adapter.blob_ids
+        remote_blob_ids = [ r.blob_id for r in self.world.raw_package_info
+                            if r.section_name == upstream_name ]
         net = Net(framer, self)
         net.send_push_blobs(remote_blob_ids)
         try:
@@ -484,9 +450,9 @@ class _Workspace(object):
         self.world.fetch_world_data()
 
     def acquire(self, blob_ids):
-        '''Get cache adapters and use them to download package files.'''
-        for adapter in self.world.get_cache_adapters(blob_ids):
-            adapter.adapt(self.cache)
+        '''Get cache loaders and use them to download package files.'''
+        for loader in self.world.get_cache_loaders(blob_ids):
+            loader.load(self.cache)
 
 class Net(object):
     '''Encapsulates the details of most framer conversations.

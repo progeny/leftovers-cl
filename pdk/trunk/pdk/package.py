@@ -25,14 +25,13 @@ packages.
 """
 
 import re
-import rfc822
-from cStringIO import StringIO as stringio
 from pdk.exceptions import InputError
 
 # Obviously at least one of these two needs to work for PDK to be useful.
 try:
     # for working with deb packages
     import apt_inst
+    import apt_pkg
     import smart.backends.deb.debver as debver
     from GnuPGInterface import GnuPG as gpg
 except ImportError:
@@ -176,6 +175,21 @@ def sanitize_deb_header(header):
     """Normalize the whitespace around the deb header/control contents."""
     return header.strip() + '\n'
 
+class DebTags(object):
+    '''Wraps an apt tags section object with more pythonic dict operations.
+    '''
+    def __init__(self, apt_tags):
+        self.tags = apt_tags
+
+    def __contains__(self, item):
+        return bool(self.tags.has_key(item))
+
+    def __getitem__(self, attribute):
+        if self.tags.has_key(attribute):
+            return self.tags.get(attribute)
+        else:
+            raise LookupError(attribute)
+
 class _Dsc(object):
     """Handle debian source packages (dsc file + friends)."""
     type_string = 'dsc'
@@ -184,10 +198,16 @@ class _Dsc(object):
 
     def parse(self, control, blob_id):
         """Parse control file contents. Returns a package object."""
-        handle = stringio(control)
-        message = rfc822.Message(handle)
+        tags = apt_pkg.ParseSection(control)
+        return self.parse_tags(tags, blob_id)
 
-        raw_file_list = message['Files']
+    def parse_tags(self, apt_tags, blob_id):
+        '''Parse an apt tags section object directly.
+
+        Returns a package object.
+        '''
+        tags = DebTags(apt_tags)
+        raw_file_list = tags['Files']
         extra_files = []
         for line in raw_file_list.strip().splitlines():
             (md5sum, dummy, name) = line.strip().split()
@@ -195,19 +215,22 @@ class _Dsc(object):
         extra_files = tuple(extra_files)
 
         # be tolerant of both dsc's and apt source stanzas.
-        if 'Source' in message:
-            name = message['Source']
+        if 'Source' in tags:
+            name = tags['Source']
         else:
-            name = message['Package']
+            name = tags['Package']
 
-        version = DebianVersion(message['Version'])
+        version = DebianVersion(tags['Version'])
 
         fields = { 'blob-id': blob_id,
                    'name': name,
                    'version': version,
-                   'arch': message['Architecture'],
-                   'extra-file': extra_files,
-                   'raw': control }
+                   'arch': tags['Architecture'],
+                   'extra-file': extra_files }
+
+        if 'Directory' in tags:
+            fields['directory'] = tags['Directory']
+
         return Package(fields, self)
 
     def extract_header(self, filename):
@@ -249,28 +272,41 @@ class _Deb(object):
 
     def parse(self, control, blob_id):
         """Parse control file contents. Returns a package object."""
-        handle = stringio(control)
-        message = rfc822.Message(handle)
+        tags = apt_pkg.ParseSection(control)
+        return self.parse_tags(tags, blob_id)
 
-        name = message['Package']
-        version = DebianVersion(message['Version'])
+    def parse_tags(self, apt_tags, blob_id):
+        '''Parse an apt tags section object directly.
+
+        Returns a package object.
+        '''
+        tags = DebTags(apt_tags)
+        name = tags['Package']
+        version = DebianVersion(tags['Version'])
 
         sp_name = name
         sp_version = version
-        if 'Source' in message:
-            sp_name = message['Source']
+        if 'Source' in tags:
+            sp_name = tags['Source']
             if re.search(r'\(', sp_name):
                 match = re.match(r'(\S+)\s*\((.*)\)', sp_name)
                 (sp_name, sp_raw_version) = match.groups()
                 sp_version = DebianVersion(sp_raw_version)
 
-        return Package({ 'blob-id': blob_id,
-                         'name': name,
-                         'version': version,
-                         'sp-name' : sp_name,
-                         'sp-version' : sp_version,
-                         'arch': message['Architecture'],
-                         'raw': control }, self)
+        contents = { 'blob-id': blob_id,
+                     'name': name,
+                     'version': version,
+                     'sp-name' : sp_name,
+                     'sp-version' : sp_version,
+                     'arch': tags['Architecture'] }
+
+        if 'MD5Sum' in tags:
+            contents['raw_md5sum'] = tags['MD5Sum']
+
+        if 'Filename' in tags:
+            contents['raw_filename'] = tags['Filename']
+
+        return Package(contents, self)
 
     def extract_header(self, filename):
         """Extract control file contents from a deb package."""
@@ -354,8 +390,7 @@ class _Rpm(object):
                          'name': header[rpm_api.RPMTAG_NAME],
                          'version': RPMVersion(header),
                          'arch': header[rpm_api.RPMTAG_ARCH],
-                         'source-rpm': source_rpm,
-                         'raw': raw_header }, self)
+                         'source-rpm': source_rpm }, self)
 
     def extract_header(self, filename):
         """Extract an rpm header from an rpm package file."""

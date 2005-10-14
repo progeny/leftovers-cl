@@ -48,7 +48,41 @@ def caller():
     func = record[3]
     text = record[4]
     return "%s(%d):%s:%s" % (source, line, func, text)
-    
+
+def cached_property(prop_name, create_fn):
+    """Make a lazy property getter that memoizes it's value.
+
+    The prop_name is used to create an internal symbol. When debugging
+    the name should be visible so it should normally match the user
+    visible property name.
+
+    The create_fn should point to a private function which returns a
+    new object. The same object will be used on successive calls to
+    the property getter.
+
+    The doc string of create_fn will be used as the property's doc string.
+
+    Usage is simlar to the built in property function.
+
+    name = cached_value('name', __create_name)
+    # where __create_name is a function returning some object
+    """
+    private_name = '__' + prop_name
+    def _get_property(self):
+        '''Takes care of property getting details.
+
+        Memoizes the result of create_fn.
+        '''
+        if hasattr(self, private_name):
+            value = getattr(self, private_name)
+        else:
+            value = None
+        if not value:
+            value = create_fn(self)
+            setattr(self, private_name, value)
+        return value
+    return property(_get_property, doc = create_fn.__doc__)
+
 # These _must_ come from "real" python elementtree
 from elementtree.ElementTree import Comment as et_comment
 from elementtree.ElementTree import ProcessingInstruction \

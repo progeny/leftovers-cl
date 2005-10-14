@@ -45,16 +45,14 @@ files needed by dsc packages.
 import os
 pjoin = os.path.join
 import re
-from sets import Set
-from cStringIO import StringIO
 from urlparse import urlsplit
-from rfc822 import Message
 from gzip import GzipFile
 from md5 import md5
+import apt_pkg
 from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError, SemanticError
 from pdk.util import cpath, gen_file_fragments, get_remote_file, \
-     shell_command, Framer, make_fs_framer, make_ssh_framer
+     shell_command, Framer, make_fs_framer, make_ssh_framer, cached_property
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import deb, udeb, dsc, get_package_type, \
      UnknownPackageTypeError
@@ -63,78 +61,92 @@ def quote(raw):
     '''Create a valid filename which roughly resembles the raw string.'''
     return re.sub(r'[^A-Za-z0-9.-]+', '_', raw)
 
-class URLCacheAdapter(object):
-    '''A cache adapter which downloads raw files via curl or direct copy.
+class MissingChannelDataError(SemanticError):
+    '''Raised when a required channel data file is missing.
+
+    Only used for real channels, not remote workspaces.
     '''
-    def __init__(self):
-        self.blob_finders = {}
+    pass
 
-    def assign(self, blob_finders):
-        '''Assign the given blob_finders {blob_id: url} to this adapter.'''
-        self.blob_finders.update(blob_finders)
+class LoaderFactory(tuple):
+    '''Captures parameters to later create a cache loader.
 
-    def adapt(self, cache):
+    cls is the cache loader class. Remaining parameters are passed to
+    the constructor of the cache loader.
+
+    The objects should be memory efficient, comparable, and hashable.
+    '''
+    def __new__(cls, loader_class, *params):
+        return tuple.__new__(cls, (loader_class, tuple(params)))
+
+    def create_loader(self, locators):
+        '''Create a locator with the captured pa'''
+        loader_class, params = self
+        return loader_class(locators = locators, *params)
+
+class URLCacheLoader(object):
+    '''A cache loader which downloads raw files via curl or direct copy.
+    '''
+    def __init__(self, locators):
+        self.locators = locators
+
+    def load(self, cache):
         '''Import assigned blobs into the cache.
 
         Actually the framer strems zero blobs, as the "remote" side of
         the framer is downloading files directly into the cache.
         '''
-        for blob_id, url in self.blob_finders.iteritems():
-            if blob_id not in cache:
-                locator = FileLocator(url, None, blob_id)
+        for locator in self.locators:
+            if locator.blob_id not in cache:
                 cache.import_file(locator)
 
-class LocalWorkspaceCacheAdapter(object):
-    '''A cache adapter for working with a remote workspace on this machine.
+class LocalWorkspaceCacheLoader(object):
+    '''A cache loader for working with a remote workspace on this machine.
     '''
-    def __init__(self, path):
+    def __init__(self, path, locators):
         self.path = path
-        self.blob_ids = Set()
+        self.locators = locators
 
-    def assign(self, blob_ids):
-        '''Assign the given blob_ids to this adapter.'''
-        self.blob_ids = blob_ids
-
-    def adapt(self, cache):
+    def load(self, cache):
         '''Use a framer to stream the assigned blobs into a cache.'''
+        blob_ids = [ l.blob_id for l in self.locators ]
         framer = Framer(*shell_command('pdk remote listen %s'
                                          % self.path))
         framer.write_stream(['pull-blobs'])
-        framer.write_stream(self.blob_ids)
+        framer.write_stream(blob_ids)
         framer.write_stream(['done'])
         cache.import_from_framer(framer)
 
-class SshWorkspaceCacheAdapter(object):
-    '''A cache adapter for working with a remote workspace via ssh.
+class SshWorkspaceCacheLoader(object):
+    '''A cache loader for working with a remote workspace via ssh.
     '''
-    def __init__(self, host, path):
+    def __init__(self, host, path, locators):
         self.host = host
         self.path = path
-        self.blob_ids = Set()
+        self.locators = locators
 
-    def assign(self, blob_ids):
-        '''Assign the given blob_ids to this adapter.'''
-        self.blob_ids = blob_ids
-
-    def adapt(self, cache):
+    def load(self, cache):
         '''Use a framer to stream the assigned blobs into a cache.'''
+        blob_ids = [ l.blob_id for l in self.locators ]
         framer = Framer(*shell_command('ssh %s pdk remote listen %s'
                                          % (self.host, self.path)))
         framer.write_stream(['pull-blobs'])
-        framer.write_stream(self.blob_ids)
+        framer.write_stream(blob_ids)
         framer.write_stream(['done'])
         cache.import_from_framer(framer)
 
 class FileLocator(object):
     '''Represents a resource which can be imported into the cache.'''
-    def __init__(self, base_uri, filename, expected_blob_id):
+    def __init__(self, base_uri, filename, expected_blob_id, factory):
         self.base_uri = base_uri
         self.filename = filename
         self.blob_id = expected_blob_id
+        self.loader_factory = factory
 
-    def make_extra_file_locator(self, filename, expected_blob_id, dummy):
+    def make_extra_file_locator(self, filename, expected_blob_id):
         '''Make a new locator which shares the base_uri or this locator.'''
-        return FileLocator(self.base_uri, filename, expected_blob_id)
+        return FileLocator(self.base_uri, filename, expected_blob_id,
+                           self.loader_factory)
 
     def __cmp__(self, other):
         return cmp((self.base_uri, self.filename, self.blob_id),
@@ -147,18 +159,11 @@ class FileLocator(object):
 
 class CacheFileLocator(object):
     '''Represents a remote cached resource for import into this cache.'''
-    def __init__(self, base_uri, filename, expected_blob_id):
+    def __init__(self, base_uri, filename, expected_blob_id, factory):
         self.base_uri = base_uri
         self.filename = filename
         self.blob_id = expected_blob_id
-
-    def make_extra_file_locator(self, dummy, expected_blob_id, world):
-        '''Make a new locator for the given extra file.
-
-        Hunt for the expected_blob_id in the world instead of looking
-        for the given filename.
-        '''
-        return world.find_by_blob_id(expected_blob_id)
+        self.loader_factory = factory
 
     def __cmp__(self, other):
         return cmp((self.base_uri, self.filename, self.blob_id),
@@ -210,11 +215,11 @@ class AptDebSection(object):
     Requires a strategy object which controls whether the url will
     be treated as Packages or Sources.
     '''
-    def __init__(self, full_path, channel_file, strategy, cache_adapter):
+
+    def __init__(self, full_path, channel_file, strategy):
         self.full_path = full_path
         self.channel_file = channel_file
         self.strategy = strategy
-        self.cache_adapter = cache_adapter
 
     def get_identity(self):
         '''Return an identity tuple for this object.'''
@@ -227,52 +232,32 @@ class AptDebSection(object):
     def iter_package_info(self):
         '''Iterate over ghost_package, blob_id, locator for this section.'''
         if not os.path.exists(self.channel_file):
-            return
-        gunzipped = GzipFile(self.channel_file)
-
-        control_iterator = self.iter_apt_deb_control(gunzipped)
+            raise MissingChannelDataError, self.channel_file
+        tags_iterator = self.iter_apt_tags()
         for package in \
-                self.iter_as_packages(control_iterator):
+                self.iter_as_packages(tags_iterator):
             locator = self.strategy.get_locator(package)
             package.contents['blob-id'] = locator.blob_id
             yield package, locator.blob_id, locator
-
-        gunzipped.close()
-
-    def iter_apt_deb_control(handle):
-        """Given a file like object, yield its deb control-like stanzas."""
-        control = ''
-        for line in handle:
-            control += line
-            if not line.rstrip():
-                yield control
-                control = ''
-    iter_apt_deb_control = staticmethod(iter_apt_deb_control)
-
-    def iter_as_packages(self, control_iterator):
-        """For each control or header, yield a stream of package objects."""
-        for control in control_iterator:
-            yield self.strategy.package_type.parse(control, None)
-
-    def assign_to_cache_adapter(self, blob_ids):
-        '''Note available blobs and urls in the cache adapter.'''
-        blob_finder = {}
-        remaining_ids = Set(blob_ids)
-        for package, blob_id, locator in self.iter_package_info():
-            if blob_id in remaining_ids:
-                remaining_ids.remove(blob_id)
-                blob_finder[blob_id] = locator.get_full_url()
             if hasattr(package, 'extra_file'):
                 for extra_blob_id, extra_filename in package.extra_file:
-                    if extra_blob_id in remaining_ids:
-                        remaining_ids.remove(extra_blob_id)
-                        make_extra = locator.make_extra_file_locator
-                        extra_locator = make_extra(extra_filename,
-                                                   extra_blob_id, None)
-                        blob_finder[extra_blob_id] = \
-                            extra_locator.get_full_url()
-        self.cache_adapter.assign(blob_finder)
-        return self.cache_adapter, remaining_ids
+                    make_extra = locator.make_extra_file_locator
+                    extra_locator = make_extra(extra_filename,
+                                               extra_blob_id)
+                    yield None, extra_blob_id, extra_locator
+
+    def iter_apt_tags(self):
+        '''Iterate over apt tag section objects in self.channel_file.'''
+        handle = os.popen('gunzip <%s' % self.channel_file)
+        apt_iterator = apt_pkg.ParseTagFile(handle)
+        while apt_iterator.Step():
+            yield apt_iterator.Section
+        handle.close()
+
+    def iter_as_packages(self, tags_iterator):
+        """For each control or header, yield a stream of package objects."""
+        for tags in tags_iterator:
+            yield self.strategy.package_type.parse_tags(tags, None)
 
 make_comparable(AptDebSection, ('full_path', 'base_path'))
 
@@ -282,15 +267,15 @@ class AptDebBinaryStrategy(object):
     Used for Packages files.
     '''
     package_type = deb
+    loader_factory = LoaderFactory(URLCacheLoader)
 
     def __init__(self, base_path):
         self.base_path = base_path
 
     def get_locator(self, package):
         """Return base, filename, blob_id for a package"""
-        fields = Message(StringIO(package.raw))
-        return FileLocator(self.base_path, fields['filename'], \
-                           'md5:' + fields['md5sum'])
+        return FileLocator(self.base_path, package.raw_filename, \
+                           'md5:' + package.raw_md5sum, self.loader_factory)
 
 class AptUDebBinaryStrategy(AptDebBinaryStrategy):
     '''Handle get_locator and package_type for AptDebSection
@@ -305,6 +290,7 @@ class AptDebSourceStrategy(object):
     Used for Sources files.
     '''
     package_type = dsc
+    loader_factory = LoaderFactory(URLCacheLoader)
 
     def __init__(self, base_path):
         self.base_path = base_path
@@ -312,17 +298,19 @@ class AptDebSourceStrategy(object):
     def get_locator(self, package):
         """Return base, filename, blob_id for a package"""
         for md5_sum, filename in package.extra_file:
-            fields = Message(StringIO(package.raw))
             if filename.endswith('.dsc'):
-                base = self.base_path + fields['directory']
-                return FileLocator(base, filename, md5_sum)
+                base = self.base_path + package.directory
+                return FileLocator(base, filename, md5_sum,
+                                   self.loader_factory)
         raise SemanticError, 'no dsc found'
 
 class DirectorySection(object):
     '''Section object for dealing with local directories as channels.'''
-    def __init__(self, full_path, cache_adapter):
+
+    loader_factory = LoaderFactory(URLCacheLoader)
+
+    def __init__(self, full_path):
         self.full_path = full_path
-        self.cache_adapter = cache_adapter
 
     def update(self):
         """Since the files are local, don't bother storing workspace state.
@@ -352,29 +340,17 @@ class DirectorySection(object):
                     md51_digest.update(block)
                 blob_id = 'md5:' + md51_digest.hexdigest()
                 url = 'file://' + cpath(root)
-                locator = FileLocator(url, candidate, None)
+                locator = FileLocator(url, candidate, None,
+                                      self.loader_factory)
                 package = package_type.parse(control, blob_id)
                 yield package, blob_id, locator
-
-    def assign_to_cache_adapter(self, blob_ids):
-        '''Note available blobs and urls in the cache adapter.'''
-        blob_finder = {}
-        remaining_ids = Set(blob_ids)
-        for package, blob_id, locator in self.iter_package_info():
-            if blob_id in remaining_ids:
-                remaining_ids.remove(blob_id)
-                blob_finder[blob_id] = locator.get_full_url()
-            if hasattr(package, 'extra_file'):
-                for extra_blob_id, extra_filename in package.extra_file:
-                    if extra_blob_id in remaining_ids:
-                        remaining_ids.remove(extra_blob_id)
+                if hasattr(package, 'extra_file'):
+                    for extra_blob_id, extra_filename in package.extra_file:
                         make_extra = locator.make_extra_file_locator
                         extra_locator = make_extra(extra_filename,
-                                                   extra_blob_id, None)
-                        blob_finder[extra_blob_id] = \
-                            extra_locator.get_full_url()
-        self.cache_adapter.assign(blob_finder)
-        return self.cache_adapter, remaining_ids
+                                                   extra_blob_id)
+                        yield None, extra_blob_id, extra_locator
+
 
 make_comparable(DirectorySection, ('full_path',))
 
@@ -386,10 +362,11 @@ class RemoteWorkspaceSection(object):
 
         parts = urlsplit(self.full_path)
         if parts[1]:
-            self.cache_adapter = SshWorkspaceCacheAdapter(parts[1],
-                                                          parts[2])
+            self.loader_factory = LoaderFactory(SshWorkspaceCacheLoader,
+                                                parts[1], parts[2])
         else:
-            self.cache_adapter = LocalWorkspaceCacheAdapter(self.full_path)
+            self.loader_factory = LoaderFactory(LocalWorkspaceCacheLoader,
+                                                self.full_path)
 
     def update(self):
         '''A noop for this section type.
@@ -411,19 +388,9 @@ class RemoteWorkspaceSection(object):
 
         for line in gunzipped:
             blob_id, blob_path = line.strip().split()
-            locator = CacheFileLocator(cache_url, blob_path, blob_id)
+            locator = CacheFileLocator(cache_url, blob_path, blob_id,
+                                       self.loader_factory)
             yield None, blob_id, locator
-
-    def assign_to_cache_adapter(self, blob_ids):
-        '''Note available blobs in the cache adapter.'''
-        found_ids = Set()
-        remaining_ids = Set(blob_ids)
-        for dummy, blob_id, dummy in self.iter_package_info():
-            if blob_id in blob_ids:
-                remaining_ids.remove(blob_id)
-                found_ids.add(blob_id)
-        self.cache_adapter.assign(found_ids)
-        return self.cache_adapter, remaining_ids
 
     def get_framer(self):
         '''Get a framer suitable for communicating with this workspace.'''
@@ -505,7 +472,6 @@ class OutsideWorldFactory(object):
     def iter_sections(self, channel_name, data_dict):
         """Create sections for the given channel name and dict."""
         type_value = None
-        url_adapter = URLCacheAdapter()
         try:
             type_value = data_dict['type']
         except KeyError, message:
@@ -544,9 +510,9 @@ class OutsideWorldFactory(object):
                         full_path = '/'.join(parts)
                         channel_file = self.get_channel_file(full_path)
                         yield AptDebSection(full_path, channel_file,
-                                            strategy, url_adapter)
+                                            strategy)
             elif type_value == 'dir':
-                yield DirectorySection(path, url_adapter)
+                yield DirectorySection(path)
             elif type_value == 'source':
                 yield RemoteWorkspaceSection(path,
                                              self.get_channel_file(path))
@@ -558,14 +524,25 @@ class OutsideWorldFactory(object):
                                                            str(field))
             raise InputError(message)
 
-class OutsideWorld(object):
-    '''This object represents the world outside the workspace.
+class WorldItem(object):
+    '''Represents a single package/locator item in the outside world.
 
-    To use find_by_blob_id, first call update_blob_id_locator.
+    Some items have no package object.
+
+    When package is present it is a "ghost", meaning we can query it
+    like a pdk.package.Package object, but we do not have a file in
+    the cache backing it.
     '''
+    def __init__(self, section_name, package, blob_id, locator):
+        self.section_name = section_name
+        self.package = package
+        self.blob_id = blob_id
+        self.locator = locator
+
+class OutsideWorld(object):
+    '''This object represents the world outside the workspace.'''
     def __init__(self, sections):
         self.sections = sections
-        self.by_blob_id = None
 
     def get_workspace_section(self, name):
         '''Get the named workspace section.'''
@@ -576,39 +553,59 @@ class OutsideWorld(object):
             raise SemanticError('%s is a channel, not a workspace' % name)
         return section
 
-    def get_cache_adapters(self, blob_ids):
-        '''Get a set of cache adapters for the given blob_ids.
+    def get_cache_loaders(self, blob_ids):
+        '''Get a set of cache loaders for the given blob_ids.
 
-        Each adapter roughly corresponds to a download session.
+        Each loader roughly corresponds to a download session.
         '''
-        remaining_blob_ids = Set(blob_ids)
-        cache_adapters = []
-        for section in self.iter_sections():
-            cache_adapter, remaining_blob_ids = \
-                section.assign_to_cache_adapter(remaining_blob_ids)
-            cache_adapters.append(cache_adapter)
-
-        if remaining_blob_ids:
-            if len(remaining_blob_ids) > 2:
-                ellipsis = ' ...'
+        locators = []
+        for blob_id in blob_ids:
+            if blob_id in self.by_blob_id:
+                locators.append(self.by_blob_id[blob_id])
             else:
-                ellipsis = ''
-            raise SemanticError, \
-                  "could not find %s%s in any channel" \
-                  % (list(remaining_blob_ids)[0], ellipsis)
+                raise SemanticError, \
+                      "could not find %s in any channel" % blob_id
 
-        return cache_adapters
+        by_factory = {}
+        for locator in locators:
+            locator_list = by_factory.setdefault(locator.loader_factory, [])
+            locator_list.append(locator)
+
+        cache_loaders = []
+        for factory, locators in by_factory.iteritems():
+            cache_loaders.append(factory.create_loader(locators))
+        return cache_loaders
 
     def fetch_world_data(self):
         '''Update all remote source and channel data.'''
-        for section in self.iter_sections():
+        for dummy, section in self.iter_sections():
             section.update()
 
-    def update_blob_id_locator(self):
+    def __create_raw_package_info(self):
+        '''Capture the full state of all sections.'''
+        raw_package_info = []
+        try:
+            for section_name, section in self.iter_sections():
+                section_iterator = section.iter_package_info()
+                for ghost, blob_id, locator in section_iterator:
+                    item = WorldItem(section_name, ghost, blob_id, locator)
+                    raw_package_info.append(item)
+        except MissingChannelDataError:
+            message = 'Missing cached data. ' + \
+                      'Consider running pdk channel update. ' + \
+                      '(%s)' % section_name
+            raise SemanticError(message)
+        return raw_package_info
+    raw_package_info = cached_property('raw_package_info',
+                                       __create_raw_package_info)
+
+    def __create_by_blob_id(self):
         '''Index blob_ids from local source and channel data.'''
-        self.by_blob_id = {}
-        for dummy, blob_id, locator in self.iter_raw_package_info():
-            self.by_blob_id[blob_id] = locator
+        by_blob_id = {}
+        for record in self.raw_package_info:
+            by_blob_id[record.blob_id] = record.locator
+        return by_blob_id
+    by_blob_id = cached_property('by_blob_id', __create_by_blob_id)
 
     def iter_sections(self, section_names = None):
         '''Iterate over stored sections for the given section_names.'''
@@ -618,38 +615,25 @@ class OutsideWorld(object):
         for name in section_names:
             try:
                 for section in self.sections[name]:
-                    yield section
+                    yield name, section
             except KeyError, e:
                 raise InputError("Unknown channel %s." % str(e))
 
-    def iter_raw_package_info(self, section_names = None):
-        '''Iterate over raw package_info from sections.
-
-        Sections are filtered by the given section_names.
-        '''
-        for section in self.iter_sections(section_names):
-            if hasattr(section, 'channel_file'):
-                if not os.path.exists(section.channel_file):
-                    message = 'Missing cached data. ' + \
-                              'Consider running pdk channel update.'
-                    raise SemanticError(message)
-            for item in  section.iter_package_info():
-                yield item
-
-    def iter_package_info(self, section_names = None):
+    def iter_package_info(self, given_section_names = None):
         '''Iterate over package and locator from sections.
 
         Sections are filtered by the given section_names.
         '''
-        package_info = self.iter_raw_package_info(section_names)
-        for ghost_package, dummy, locator in package_info:
-            # ghost_package is a pdk.package.Package object but we don't
-            # have a file in the cache backing it.
-            if not ghost_package:
+        section_names = [ t[0]
+                          for t in self.iter_sections(given_section_names) ]
+        for record in self.raw_package_info:
+            if not record.package:
                 continue
-            found_filename = os.path.basename(locator.filename)
-            ghost_package.contents['found_filename'] = found_filename
-            yield ghost_package, locator
+            if not record.section_name in section_names:
+                continue
+            found_filename = os.path.basename(record.locator.filename)
+            record.package.contents['found_filename'] = found_filename
+            yield record.package, record.locator
 
     def iter_packages(self, section_names = None):
         '''Iterate over packages given from sections.
@@ -658,7 +642,3 @@ class OutsideWorld(object):
         '''
         for package, dummy in self.iter_package_info(section_names):
             yield package
-
-    def find_by_blob_id(self, blob_id):
-        '''Return a locator for the given blob_id.'''
-        return self.by_blob_id[blob_id]
