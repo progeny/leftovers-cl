@@ -32,6 +32,7 @@ pushd multi-version
         $PACKAGES/ethereal-common_0.9.4-1woody6_i386.deb \
         $PACKAGES/ethereal-common_0.9.4-1woody6_ia64.deb \
         $PACKAGES/ethereal_0.9.4-1woody5.dsc \
+        $PACKAGES/ethereal_0.9.4-1woody5.diff.gz \
         $PACKAGES/ethereal_0.9.4-1woody5_i386.deb \
         $PACKAGES/ethereal_0.9.4-1woody5_ia64.deb \
         $PACKAGES/ethereal_0.9.4-1woody6.diff.gz \
