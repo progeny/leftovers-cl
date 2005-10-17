@@ -561,7 +561,7 @@ class OutsideWorld(object):
         locators = []
         for blob_id in blob_ids:
             if blob_id in self.by_blob_id:
-                locators.append(self.by_blob_id[blob_id])
+                locators.append(self.by_blob_id[blob_id].locator)
             else:
                 raise SemanticError, \
                       "could not find %s in any channel" % blob_id
@@ -575,6 +575,11 @@ class OutsideWorld(object):
         for factory, locators in by_factory.iteritems():
             cache_loaders.append(factory.create_loader(locators))
         return cache_loaders
+
+    def get_backed_cache(self, cache):
+        '''Return a ChannelBackedCache for this object and the given cache.
+        '''
+        return ChannelBackedCache(self, cache)
 
     def fetch_world_data(self):
         '''Update all remote source and channel data.'''
@@ -600,10 +605,16 @@ class OutsideWorld(object):
                                        __create_raw_package_info)
 
     def __create_by_blob_id(self):
-        '''Index blob_ids from local source and channel data.'''
+        '''Index blob_ids from local source and channel data.
+
+        When more than one record represents a blob_id,
+        try to ensure that records with package objects are referenced.
+        '''
         by_blob_id = {}
         for record in self.raw_package_info:
-            by_blob_id[record.blob_id] = record.locator
+            if record.blob_id not in by_blob_id or \
+               not by_blob_id[record.blob_id].package:
+                by_blob_id[record.blob_id] = record
         return by_blob_id
     by_blob_id = cached_property('by_blob_id', __create_by_blob_id)
 
@@ -642,3 +653,29 @@ class OutsideWorld(object):
         '''
         for package, dummy in self.iter_package_info(section_names):
             yield package
+
+class ChannelBackedCache(object):
+    '''Impersonate a cache but use both channels and cache to load packages.
+    '''
+    def __init__(self, world, cache):
+        self.world = world
+        self.cache = cache
+
+    def load_package(self, blob_id, type_string):
+        '''Behave like Cache.load_packages.
+
+        Tries to load from local cache before looking for a package object
+        in the channels.
+        '''
+        if blob_id in self.cache:
+            return self.cache.load_package(blob_id, type_string)
+
+        if blob_id in self.world.by_blob_id:
+            item = self.world.by_blob_id[blob_id]
+            if item.package:
+                return item.package
+
+        message = "Can't find package (%s, %s).\n" % (type_string, blob_id)
+        message += 'Consider reverting and reattempting this command.'
+        raise SemanticError(message)
+

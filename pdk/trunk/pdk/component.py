@@ -24,7 +24,9 @@ machine modifying components.
 
 """
 import os
+import optparse
 from sets import Set
+from itertools import chain
 from pdk.util import write_pretty_xml, parse_xml
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, CompositeRule, AndCondition, OrCondition, \
@@ -35,8 +37,8 @@ from pdk.exceptions import PdkException, CommandLineError, InputError, \
 from xml.parsers.expat import ExpatError
 from pdk.log import get_logger
 from pdk.workspace import current_workspace
-
-
+from pdk.semdiff import print_report, print_bar_separated, print_man, \
+     iter_diffs, iter_diffs_meta
 
 def dumpmeta(component_refs):
     """Print all component metadata to standard out."""
@@ -57,6 +59,66 @@ def dumpmeta(component_refs):
                 print '|'.join([ref, type_string, name, key, value])
 
 
+def run_resolve(raw_args, assert_resolved, abstract_constraint):
+    '''Take care of details of running descriptor.resolve.
+
+    raw_args - passed from command handlers
+    do_assert - warn if any references are not resolved
+    show_report - show a human readable report of what was done
+    dry_run - do not save the component after we are finished
+    '''
+    parser = optparse.OptionParser()
+    parser.add_option(
+                         "-R"
+                         , "--no-report"
+                         , action="store_false"
+                         , dest="show_report"
+                         , default=True
+                         , help="Don't bother showing the report."
+                     )
+    parser.add_option(
+                         "-n"
+                         , "--dry-run"
+                         , action="store_false"
+                         , dest="save_component_changes"
+                         , default=True
+                         , help="Don't save changes after processing."
+                     )
+    parser.add_option(
+                         "-m"
+                         , "--machine-readable"
+                         , action="store_true"
+                         , dest="machine_readable"
+                         , default=False
+                         , help="Make the output machine readable."
+                     )
+    opts, args = parser.parse_args(args = raw_args)
+
+    if len(args) < 1:
+        raise CommandLineError, 'component descriptor required'
+    workspace = current_workspace()
+    component_name = workspace.reorient_filename(args[0])
+    os.chdir(workspace.location)
+    descriptor = ComponentDescriptor(component_name)
+    channel_names = args[1:]
+    package_list = list(workspace.world.iter_packages(channel_names))
+    descriptor.resolve(package_list, abstract_constraint)
+    descriptor.setify_child_references()
+
+    if assert_resolved:
+        descriptor._assert_resolved()
+
+    if opts.show_report:
+        if opts.machine_readable:
+            printer = print_bar_separated
+        else:
+            printer = print_man
+
+        descriptor.diff_self(workspace, printer)
+
+    if opts.save_component_changes:
+        descriptor.write()
+
 def resolve(args):
     """resolve resolves abstract package references
 
@@ -73,19 +135,7 @@ def resolve(args):
 
     A warning is given if any unresolved references remain.
     """
-    if len(args) < 1:
-        raise CommandLineError, 'component descriptor required'
-    workspace = current_workspace()
-    component_name = args[0]
-    descriptor = ComponentDescriptor(component_name)
-    channel_names = args[1:]
-    world = workspace.world
-    package_list = list(world.iter_packages(channel_names))
-    descriptor.resolve(package_list, True)
-    descriptor.setify_child_references()
-
-    descriptor._assert_resolved()
-    descriptor.write()
+    run_resolve(args, True, True)
 
 def upgrade(args):
     """upgrade upgrades concrete package references by package version
@@ -100,19 +150,7 @@ def upgrade(args):
     If no channel names are given, resolve uses all channels to
     resolve references.
     """
-    if len(args) < 1:
-        raise CommandLineError, 'component descriptor required'
-    workspace = current_workspace()
-    component_name = args[0]
-    descriptor = ComponentDescriptor(component_name)
-    channel_names = args[1:]
-    world = workspace.world
-    package_list = list(world.iter_packages(channel_names))
-    descriptor.resolve(package_list, False)
-    descriptor.setify_child_references()
-
-    descriptor.write()
-
+    run_resolve(args, False, False)
 
 def download(args):
     """
@@ -129,6 +167,92 @@ def download(args):
     descriptor = ComponentDescriptor(args[0])
     descriptor.download()
 
+def semdiff(argv):
+    """Return bar separated lines representing meaningful component changes.
+
+    Diff works against version control, two arbitrary components, or a
+    component and a set of channels.
+
+    Usage: pdk semdiff [-m] [-c channel]* component [component]
+
+    Note: When comparing against version control, only the named
+    component is retrieved from version control. Sub components are
+    found in the work area.
+
+    -c can be specified multiple times to compare against a set of
+     channels.
+
+    -m makes the output machine readable.
+    """
+    workspace = current_workspace()
+    cat = workspace.vc.cat
+    cache = workspace.cache
+    parser = optparse.OptionParser()
+    parser.add_option(
+                         "-c"
+                         , "--channel"
+                         , action="append"
+                         , dest="channels"
+                         , type="string"
+                         , help="A channel name."
+                     )
+
+    parser.add_option(
+                         "-m"
+                         , "--machine-readable"
+                         , action="store_true"
+                         , dest="machine_readable"
+                         , default=False
+                         , help="Make the output machine readable."
+                     )
+
+    opts, args = parser.parse_args(args=argv)
+
+    if opts.machine_readable:
+        printer = print_bar_separated
+    else:
+        printer = print_man
+
+    if opts.channels:
+        ref = args[0]
+        desc = ComponentDescriptor(args[0])
+        component = desc.load(cache)
+        old_package_list = component.direct_packages
+        world = workspace.world
+        new_package_list = list(world.iter_packages(opts.channels))
+        old_meta = {}
+        new_meta = {}
+    elif len(args) == 1:
+        ref = args[0]
+        # Get old
+        old_desc = ComponentDescriptor(ref, cat(ref))
+        old_component = old_desc.load(cache)
+        old_package_list = old_component.direct_packages
+        old_meta = old_component.meta
+        # Get new
+        new_desc = ComponentDescriptor(ref)
+        new_component = new_desc.load(cache)
+        new_package_list = new_component.direct_packages
+        new_meta = new_component.meta
+    elif len(args) == 2:
+        ref = args[1]
+        # get old
+        old_desc = ComponentDescriptor(args[0])
+        old_component = old_desc.load(cache)
+        old_package_list = old_component.direct_packages
+        old_meta = old_component.meta
+        # Get new
+        new_desc = ComponentDescriptor(args[1])
+        new_component = new_desc.load(cache)
+        new_package_list = new_component.direct_packages
+        new_meta = new_component.meta
+    else:
+        raise CommandLineError("Argument list is invalid")
+
+    diffs = iter_diffs(old_package_list, new_package_list)
+    diffs_meta = iter_diffs_meta(old_meta, new_meta)
+    data = chain(diffs, diffs_meta)
+    printer(ref, data)
 
 class ComponentDescriptor(object):
     """Represents a component descriptor object.
@@ -197,7 +321,7 @@ class ComponentDescriptor(object):
                         if not concrete_ref.verify(cache):
                             message = 'Concrete package does not ' \
                                       'meet expected constraints: %s' \
-                                      % concrete_ref.blob_id, package.name
+                                      % concrete_ref.blob_id, package
                             raise SemanticError(message)
                         local_rules.append(concrete_ref.rule)
                 elif isinstance(ref, ComponentReference):
@@ -569,6 +693,13 @@ class ComponentDescriptor(object):
                                            False)
         self.requires = self.read_multifield(component_element, 'requires')
         self.provides = self.read_multifield(component_element, 'provides')
+
+    def diff_self(self, workspace, printer):
+        '''Run semdiff between self and its previously written state.'''
+        orig_descriptor = ComponentDescriptor(self.filename)
+        c_cache = workspace.world.get_backed_cache(workspace.cache)
+        print_report(orig_descriptor.load(c_cache), self.load(c_cache),
+                     printer)
 
 
 class Component(object):

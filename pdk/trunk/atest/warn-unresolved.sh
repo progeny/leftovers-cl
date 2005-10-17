@@ -61,7 +61,7 @@ cat >apache.xml <<EOF
 </component>
 EOF
 
-pdk resolve apache.xml 2>&1 | cut -d ' ' -f 3- >errors
+pdk resolve -R apache.xml 2>&1 | cut -d ' ' -f 3- >errors
 diff -u - errors <<EOF
 WARNING Unresolved references remain in apache.xml
 WARNING No dsc where [name] is 'ida' AND [type] is 'dsc'
@@ -80,5 +80,5 @@ cat >apache.xml <<EOF
 </component>
 EOF
 
-pdk resolve apache.xml 2>errors
+pdk resolve -R apache.xml 2>errors
 egrep "WARNING.*unresolved" errors && bail 'no warning expected'

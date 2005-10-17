@@ -141,7 +141,7 @@ EOF
 </component>
 EOF
 
-    pdk upgrade ethereal.xml channel2
+    pdk upgrade ethereal.xml channel2 -m >report.txt
 
     diff -u - ethereal.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
@@ -199,5 +199,18 @@ EOF
     </dsc>
   </contents>
 </component>
+EOF
+
+    LANG=C sort report.txt >sorted-report.txt
+    diff -u - sorted-report.txt <<EOF
+upgrade|deb|ethereal-common|0.9.4-1woody5|0.9.4-1woody6|i386|ethereal.xml
+upgrade|deb|ethereal-common|0.9.4-1woody5|0.9.4-1woody6|ia64|ethereal.xml
+upgrade|deb|ethereal-dev|0.9.4-1woody5|0.9.4-1woody6|i386|ethereal.xml
+upgrade|deb|ethereal-dev|0.9.4-1woody5|0.9.4-1woody6|ia64|ethereal.xml
+upgrade|deb|ethereal|0.9.4-1woody5|0.9.4-1woody6|i386|ethereal.xml
+upgrade|deb|ethereal|0.9.4-1woody5|0.9.4-1woody6|ia64|ethereal.xml
+upgrade|deb|tethereal|0.9.4-1woody5|0.9.4-1woody6|i386|ethereal.xml
+upgrade|deb|tethereal|0.9.4-1woody5|0.9.4-1woody6|ia64|ethereal.xml
+upgrade|dsc|ethereal|0.9.4-1woody5|0.9.4-1woody6|any|ethereal.xml
 EOF
 popd

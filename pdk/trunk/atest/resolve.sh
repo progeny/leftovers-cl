@@ -145,8 +145,38 @@ EOF
 
 pdk channel update
 
-pdk resolve apache.xml channel-1
-pdk resolve apache.xml channel-2
+# Make sure dry run creates a report but doesn't change anything.
+cp apache.xml old-apache.xml
+pdk resolve apache.xml channel-1 -m >test-report.txt -n
+diff -u old-apache.xml apache.xml
+
+pdk resolve apache.xml channel-1 -m >report.txt
+# Here's where we test the dry run report
+diff -u test-report.txt report.txt
+pdk resolve apache.xml channel-2 -m >>report.txt
+LANG=C sort report.txt >sorted-report.txt
+
+# Check that the semdiff report comes out as expected.
+# The downgrade line is an artifact: two different source packages in
+# the same file with the same name.
+diff -u - sorted-report.txt <<EOF
+add|deb|apache2-common|2.0.53-5|i386|apache.xml
+add|deb|ethereal-common|0.9.4-1woody2|i386|apache.xml
+add|deb|ethereal-common|0.9.4-1woody2|ia64|apache.xml
+add|deb|ida|2.01-1.2|arm|apache.xml
+add|dsc|apache2|2.0.53-5|any|apache.xml
+add|dsc|ida|2.01-1.2|any|apache.xml
+downgrade|dsc|ethereal|0.9.4-1woody4|0.9.4-1woody2|any|apache.xml
+meta-add|deb|ethereal-common|i386|test|data
+meta-add|deb|ethereal-common|ia64|test|data
+meta-add|deb|tethereal|ia64|comment|this whole section should be left alone
+unchanged|deb|ida|2.01-1.2|2.01-1.2|arm|apache.xml
+unchanged|deb|tethereal|0.9.4-1woody4|0.9.4-1woody4|ia64|apache.xml
+unchanged|deb|tethereal|0.9.4-1woody4|0.9.4-1woody4|ia64|apache.xml
+unchanged|dsc|ethereal|0.9.4-1woody4|0.9.4-1woody4|any|apache.xml
+unchanged|dsc|ethereal|0.9.4-1woody4|0.9.4-1woody4|any|apache.xml
+unchanged|dsc|ida|2.01-1.2|2.01-1.2|any|apache.xml
+EOF
 
 # Check that the result is what we expect
 # Note, xml comments are not preseved.

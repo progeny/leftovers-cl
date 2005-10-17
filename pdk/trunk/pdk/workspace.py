@@ -30,7 +30,8 @@ from pdk.cache import Cache
 from pdk.channels import OutsideWorldFactory, WorldData
 from pdk.exceptions import ConfigurationError, SemanticError, \
      CommandLineError
-from pdk.util import pjoin, make_self_framer, cached_property
+from pdk.util import pjoin, make_self_framer, cached_property, \
+     relative_path
 
 # current schema level for this pdk build
 schema_target = 4
@@ -368,6 +369,10 @@ class _Workspace(object):
         return world
     world = cached_property('world', __create_world)
     channels = world
+
+    def reorient_filename(self, filename):
+        '''Return the given path relative to self.location.'''
+        return relative_path(self.location, filename)
 
     def add(self, name):
         """

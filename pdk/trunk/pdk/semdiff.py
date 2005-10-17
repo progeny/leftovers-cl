@@ -23,13 +23,9 @@ Houses functionality used in calculating and outputting semantic diffs.
 """
 
 import os
-import optparse
 from sets import Set
 from itertools import chain
-from pdk.component import ComponentDescriptor
-from pdk.workspace import current_workspace
 from pdk.package import Package
-from pdk.exceptions import CommandLineError
 
 def index_by_fields(packages, fields):
     """Scan packages, return a dict indexed by the given fields."""
@@ -148,95 +144,16 @@ def iter_diffs_meta(old_meta, new_meta):
         yield (event_names[event_type], item, None)
 
 
-def add_my_options(parser):
-    '''Set up the parser options for the semdiff command.'''
-    parser.add_option(
-                         "-c"
-                         , "--channel"
-                         , action="append"
-                         , dest="channels"
-                         , type="string"
-                         , help="A channel name."
-                     )
-
-    parser.add_option(
-                         "-m"
-                         , "--machine-readable"
-                         , action="store_true"
-                         , dest="machine_readable"
-                         , default=False
-                         , help="Make the output machine readable."
-                     )
-
-def semdiff(argv):
-    """Return bar separated lines representing meaningful component changes.
-
-    Diff works against version control, two arbitrary components, or a
-    component and a set of channels.
-
-    Usage: pdk semdiff [-m] [-c channel]* component [component]
-
-    Note: When comparing against version control, only the named
-    component is retrieved from version control. Sub components are
-    found in the work area.
-
-    -c can be specified multiple times to compare against a set of
-     channels.
-
-    -m makes the output machine readable.
-    """
-    workspace = current_workspace()
-    cat = workspace.vc.cat
-    cache = workspace.cache
-    parser = optparse.OptionParser()
-    add_my_options(parser)
-    opts, args = parser.parse_args(args=argv)
-
-    if opts.machine_readable:
-        printer = print_bar_separated
-    else:
-        printer = print_man
-
-    if opts.channels:
-        ref = args[0]
-        desc = ComponentDescriptor(args[0])
-        component = desc.load(cache)
-        old_package_list = component.direct_packages
-        world = workspace.world
-        new_package_list = list(world.iter_packages(opts.channels))
-        old_meta = {}
-        new_meta = {}
-    elif len(args) == 1:
-        ref = args[0]
-        # Get old
-        old_desc = ComponentDescriptor(ref, cat(ref))
-        old_component = old_desc.load(cache)
-        old_package_list = old_component.direct_packages
-        old_meta = old_component.meta
-        # Get new
-        new_desc = ComponentDescriptor(ref)
-        new_component = new_desc.load(cache)
-        new_package_list = new_component.direct_packages
-        new_meta = new_component.meta
-    elif len(args) == 2:
-        ref = args[1]
-        # get old
-        old_desc = ComponentDescriptor(args[0])
-        old_component = old_desc.load(cache)
-        old_package_list = old_component.direct_packages
-        old_meta = old_component.meta
-        # Get new
-        new_desc = ComponentDescriptor(args[1])
-        new_component = new_desc.load(cache)
-        new_package_list = new_component.direct_packages
-        new_meta = new_component.meta
-    else:
-        raise CommandLineError("Argument list is invalid")
-
+def print_report(old_component, new_component, printer):
+    '''Print a human readable report diffing two components.'''
+    old_package_list = old_component.direct_packages
+    old_meta = old_component.meta
+    new_package_list = new_component.direct_packages
+    new_meta = new_component.meta
     diffs = iter_diffs(old_package_list, new_package_list)
     diffs_meta = iter_diffs_meta(old_meta, new_meta)
     data = chain(diffs, diffs_meta)
-    printer(ref, data)
+    printer(new_component.ref, data)
 
 def print_man(ref, data):
     """Write groff source '-mmandoc -t' for the diff."""
