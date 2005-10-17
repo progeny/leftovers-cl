@@ -312,17 +312,47 @@ class ComponentDescriptor(object):
             new_child_list.sort()
             parent_ref.children = new_child_list
 
-    def resolve(self, package_list):
-        """Resolve abstract references by searching the given package list.
-        """
-        child_conditions = []
+    def _get_parent_match_information(self, package_list):
+        '''Creates "match tuples" associating packages with matched refs.
+
+        tuple looks like: (package, ref)
+        '''
+        match_information = []
+
         # first run the packages through base level package references.
         for ghost_package in package_list:
             for ref in self.iter_package_refs():
                 if ref.rule.condition.evaluate(ghost_package):
-                    child_condition = get_child_condition(ghost_package,
-                                                          ref)
-                    child_conditions.append((child_condition, ref))
+                    match_information.append((ghost_package, ref))
+        return match_information
+
+    def _resolve_conflicting_matches(self, parent_matches):
+        '''Apply policy when the same ref matches more than one package.
+
+        Current policy is roughly the same as debian. Use the "newest" package.
+        '''
+        def _cmp_matches(a, b):
+            '''Compare two match tuples.'''
+            return -cmp(a[0].version, b[0].version)
+
+        parent_matches.sort(_cmp_matches)
+        last_ref = None
+        child_conditions = []
+        for this_match in parent_matches:
+            ghost_package, ref = this_match
+            if last_ref is not None and ref == last_ref:
+                # skip this record as a newer one has already been found.
+                continue
+            child_condition = get_child_condition(ghost_package, ref)
+            child_conditions.append((child_condition, this_match[1]))
+            last_ref = ref
+        return child_conditions
+
+    def resolve(self, package_list):
+        """Resolve abstract references by searching the given package list.
+        """
+        parent_matches = self._get_parent_match_information(package_list)
+        child_conditions = self._resolve_conflicting_matches(parent_matches)
 
         # run through all the packages again, this time using the
         # child_conditions of new references.
@@ -337,7 +367,6 @@ class ComponentDescriptor(object):
                         predicate = ('filename', found_filename)
                         new_child_ref.predicates.append(predicate)
                     ref.children.append(new_child_ref)
-
 
     def download(self):
         """
@@ -622,7 +651,13 @@ def get_child_condition(package, ref):
     """Get child condition data for any package."""
     condition_fn = get_child_condition_fn(package)
     child_condition = build_condition(condition_fn(package))
-    return OrCondition([child_condition, ref.rule.condition])
+    # Always pin the the child's parent to a single version.
+    # Someday we may need a more sophisticated mechanism for RPM.
+    # I'm just not sure. -dt
+    parent_version = package.version.full_version
+    parent_condition = build_condition(ref.fields +
+                                       [('version', parent_version)])
+    return OrCondition([child_condition, parent_condition])
 
 child_condition_fn_map = {
     'deb': get_deb_child_condition_data,
