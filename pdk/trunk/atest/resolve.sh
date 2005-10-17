@@ -20,7 +20,7 @@
 # $Progeny$
 #
 # The resolve command should transform abstract references to concrete
-# references.
+# references. It should leave concrete references alone.
 
 . atest/test_lib.sh
 . atest/utils/test_channel.sh
@@ -84,6 +84,22 @@ cat >apache.xml <<EOF
         <test>data</test>
       </meta>
     </deb>
+    <!-- this should be left alone -->
+    <deb>
+      <name>tethereal</name>
+      <meta>
+        <comment>this whole section should be left alone</comment>
+      </meta>
+      <deb ref="md5:904fce57cb39662e9560f0143d326bb8">
+        <name>tethereal</name>
+        <version>0.9.4-1woody4</version>
+        <arch>ia64</arch>
+      </deb>
+      <dsc ref="md5:a6456b3e20f44a3f53256bf722c010cd">
+        <name>ethereal</name>
+        <version>0.9.4-1woody4</version>
+      </dsc>
+    </deb>
   </contents>
 </component>
 EOF
@@ -97,7 +113,16 @@ make_channel channel-2 apache2_2.0.53-5.diff.gz apache2_2.0.53-5.dsc \
     ethereal-common_0.9.4-1woody2_ia64.deb \
     ethereal_0.9.4-1woody2.dsc \
     ethereal_0.9.4-1woody2.diff.gz \
-    ethereal_0.9.4.orig.tar.gz
+    ethereal_0.9.4.orig.tar.gz \
+    ethereal_0.9.4-1woody5.dsc \
+    ethereal_0.9.4-1woody5.diff.gz \
+    tethereal_0.9.4-1woody5_ia64.deb
+
+make_channel channel-3 \
+    ethereal_0.9.4-1woody4.dsc \
+    ethereal_0.9.4-1woody4.diff.gz \
+    ethereal_0.9.4.orig.tar.gz \
+    tethereal_0.9.4-1woody4_ia64.deb
 
 # Add a channel for the package directory
 cat >${channels} <<EOF
@@ -111,6 +136,10 @@ cat >${channels} <<EOF
     <type>dir</type>
     <path>$(pwd)/channel-2</path>
   </channel-2>
+  <channel-3>
+    <type>dir</type>
+    <path>$(pwd)/channel-3</path>
+  </channel-3>
 </channels>
 EOF
 
@@ -181,6 +210,21 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
       <dsc ref="md5:3422eaafcc0c6790921c2fadcfb45c21">
         <name>ethereal</name>
         <version>0.9.4-1woody2</version>
+      </dsc>
+    </deb>
+    <deb>
+      <name>tethereal</name>
+      <meta>
+        <comment>this whole section should be left alone</comment>
+      </meta>
+      <deb ref="md5:904fce57cb39662e9560f0143d326bb8">
+        <name>tethereal</name>
+        <version>0.9.4-1woody4</version>
+        <arch>ia64</arch>
+      </deb>
+      <dsc ref="md5:a6456b3e20f44a3f53256bf722c010cd">
+        <name>ethereal</name>
+        <version>0.9.4-1woody4</version>
       </dsc>
     </deb>
   </contents>
@@ -269,6 +313,22 @@ cat >apache.xml <<EOF
       <meta>
         <test>data</test>
       </meta>
+    </deb>
+    <!-- this should be left alone -->
+    <deb>
+      <name>tethereal</name>
+      <meta>
+        <comment>this whole section should be left alone</comment>
+      </meta>
+      <deb ref="md5:904fce57cb39662e9560f0143d326bb8">
+        <name>tethereal</name>
+        <version>0.9.4-1woody4</version>
+        <arch>ia64</arch>
+      </deb>
+      <dsc ref="md5:a6456b3e20f44a3f53256bf722c010cd">
+        <name>ethereal</name>
+        <version>0.9.4-1woody4</version>
+      </dsc>
     </deb>
   </contents>
 </component>
@@ -362,6 +422,21 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
       <dsc ref="md5:3422eaafcc0c6790921c2fadcfb45c21">
         <name>ethereal</name>
         <version>0.9.4-1woody2</version>
+      </dsc>
+    </deb>
+    <deb>
+      <name>tethereal</name>
+      <meta>
+        <comment>this whole section should be left alone</comment>
+      </meta>
+      <deb ref="md5:904fce57cb39662e9560f0143d326bb8">
+        <name>tethereal</name>
+        <version>0.9.4-1woody4</version>
+        <arch>ia64</arch>
+      </deb>
+      <dsc ref="md5:a6456b3e20f44a3f53256bf722c010cd">
+        <name>ethereal</name>
+        <version>0.9.4-1woody4</version>
       </dsc>
     </deb>
   </contents>

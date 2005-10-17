@@ -63,13 +63,12 @@ def resolve(args):
     *This needs a detailed usage message*
 
     If the command succeeds, the component will be modified in place.
-    Abstract references will be rewritten to concrete references, and
-    missing constraint elements will be placed.
+    Abstract references will be populated with concrete references.
 
     The command takes a single component descriptor followed by zero
     or more channel names.
 
-    If not channel names are given, resolve uses all channels to
+    If no channel names are given, resolve uses all channels to
     resolve references.
 
     A warning is given if any unresolved references remain.
@@ -82,10 +81,36 @@ def resolve(args):
     channel_names = args[1:]
     world = workspace.world
     package_list = list(world.iter_packages(channel_names))
-    descriptor.resolve(package_list)
+    descriptor.resolve(package_list, True)
     descriptor.setify_child_references()
 
     descriptor._assert_resolved()
+    descriptor.write()
+
+def upgrade(args):
+    """upgrade upgrades concrete package references by package version
+
+    *This needs a detailed usage message*
+
+    If the command succeeds, the component will be modified in place.
+
+    The command takes a single component descriptor followed by zero
+    or more channel names.
+
+    If no channel names are given, resolve uses all channels to
+    resolve references.
+    """
+    if len(args) < 1:
+        raise CommandLineError, 'component descriptor required'
+    workspace = current_workspace()
+    component_name = args[0]
+    descriptor = ComponentDescriptor(component_name)
+    channel_names = args[1:]
+    world = workspace.world
+    package_list = list(world.iter_packages(channel_names))
+    descriptor.resolve(package_list, False)
+    descriptor.setify_child_references()
+
     descriptor.write()
 
 
@@ -312,7 +337,7 @@ class ComponentDescriptor(object):
             new_child_list.sort()
             parent_ref.children = new_child_list
 
-    def _get_parent_match_information(self, package_list):
+    def _get_parent_matches(self, package_list, abstract_constraint):
         '''Creates "match tuples" associating packages with matched refs.
 
         tuple looks like: (package, ref)
@@ -321,7 +346,7 @@ class ComponentDescriptor(object):
 
         # first run the packages through base level package references.
         for ghost_package in package_list:
-            for ref in self.iter_package_refs():
+            for ref in self.iter_package_refs(abstract_constraint):
                 if ref.rule.condition.evaluate(ghost_package):
                     match_information.append((ghost_package, ref))
         return match_information
@@ -329,7 +354,8 @@ class ComponentDescriptor(object):
     def _resolve_conflicting_matches(self, parent_matches):
         '''Apply policy when the same ref matches more than one package.
 
-        Current policy is roughly the same as debian. Use the "newest" package.
+        Current policy is roughly the same as debian. Use the "newest"
+        package.
         '''
         def _cmp_matches(a, b):
             '''Compare two match tuples.'''
@@ -348,11 +374,19 @@ class ComponentDescriptor(object):
             last_ref = ref
         return child_conditions
 
-    def resolve(self, package_list):
+    def resolve(self, package_list, abstract_constraint):
         """Resolve abstract references by searching the given package list.
+
+        abstract_constraint is passed to self.iter_package_refs().
         """
-        parent_matches = self._get_parent_match_information(package_list)
+        parent_matches = self._get_parent_matches(package_list,
+                                                  abstract_constraint)
         child_conditions = self._resolve_conflicting_matches(parent_matches)
+
+        # run through the new list of matched refs and clear the child
+        # lists.
+        for dummy, ref in child_conditions:
+            ref.children = []
 
         # run through all the packages again, this time using the
         # child_conditions of new references.
@@ -391,9 +425,17 @@ class ComponentDescriptor(object):
         workspace.acquire(extra_blob_ids)
         return
 
-    def iter_package_refs(self):
-        '''Yield all base package references in order.'''
+    def iter_package_refs(self, abstract_constraint = None):
+        '''Yield all base package references in order.
+
+        If abstract_constraint is provided (and not None) then that
+        value will be a constraint on the is_abstract() method of the
+        refs. If a reference does no match the constraint, it is skipped.
+        '''
         for dummy, ref in self.enumerate_package_refs():
+            if abstract_constraint is not None:
+                if bool(abstract_constraint) != bool(ref.is_abstract()):
+                    continue
             yield ref
 
 
