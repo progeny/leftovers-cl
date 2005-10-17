@@ -1,3 +1,13 @@
+pdk (0.0.14) unstable; urgency=low
+
+  * Only take the newest thing when resolving.
+  * Add upgrade command for only upgrading concrete references.
+  * Limit resolve behavior to operate only on abstract references.
+  * Make upgrade and resolve report on their actions.
+  * Provide a -n option to both commands for "dry run".
+
+ -- Darrin Thompson <darrint@progeny.com>  Mon, 17 Oct 2005 17:04:44 -0500
+
 pdk (0.0.13) unstable; urgency=low
 
   * Restructure channel handling to be more CPU efficient.
