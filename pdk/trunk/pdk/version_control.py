@@ -155,6 +155,24 @@ class VersionControl(object):
         finally:
             os.chdir(start_dir)
 
+    def status(self, exclude):
+        '''
+        Send git status information to standard out.
+        '''
+        exclude_glob = pjoin(relative_path(self.work_dir, exclude), '*')
+        output = self.shell_to_string('git status || true')
+        output_list = list(Set(output.splitlines()))
+        # Strip #[tab] from lines, keep only lines which had #[tab]
+        output_list = [ i[2:] for i in output_list if i.startswith('#\t') ]
+
+        command = 'git ls-files --exclude=%s --others' % exclude_glob
+        output = self.shell_to_string(command)
+        output_list.extend([ 'unknown: %s' % i
+                             for i in output.splitlines() ])
+        output_list.sort()
+        for line in output_list:
+            print line
+
     def update_from_remote(self, upstream_name):
         """
         update the version control by pulling from remote sources.

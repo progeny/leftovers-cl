@@ -291,6 +291,14 @@ def update(ignore):
     ws.update()
     return ignore
 
+def status(dummy):
+    """
+    status: Show the current version control status of files in this
+    work area.
+    """
+    ws = current_workspace()
+    ws.status()
+
 def pull(args):
     """
     pull: Bring changes from a remote workspace into this workspace.
@@ -411,6 +419,12 @@ class _Workspace(object):
         """
         self.vc.update()
 
+    def status(self):
+        """
+        Show version control status of files in work area.
+        """
+        self.vc.status(self.config_dir)
+
     def pull(self, upstream_name):
         """
         Get latest changes from version control
@@ -484,13 +498,13 @@ class Net(object):
         self.ws.vc.send_pack_via_framer(self.framer, [head_id],
                                         remote_commit_ids)
         self.framer.assert_frame('status')
-        status = self.framer.read_frame()
-        if status == 'ok':
+        op_status = self.framer.read_frame()
+        if op_status == 'ok':
             pass
-        elif status == 'out-of-date':
+        elif op_status == 'out-of-date':
             raise SemanticError('Out of date. Run pdk pull and try again.')
         else:
-            assert False, 'Unknown status: %s' % status
+            assert False, 'Unknown status: %s' % op_status
 
     def handle_push_pack(self):
         '''Receive a pack.

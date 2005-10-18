@@ -50,6 +50,7 @@ class Pdk(command_base.CmdBase):
     do_init = LazyModuleRef('pdk.services', 'init')
     do_push = LazyModuleRef('pdk.workspace', 'push')
     do_pull = LazyModuleRef('pdk.workspace', 'pull')
+    do_status = LazyModuleRef('pdk.workspace', 'status')
     do_update = LazyModuleRef('pdk.workspace', 'update')
     do_commit = LazyModuleRef('pdk.workspace', 'commit')
     do_add = LazyModuleRef('pdk.workspace', 'add')
