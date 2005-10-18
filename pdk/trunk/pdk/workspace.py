@@ -299,6 +299,13 @@ def status(dummy):
     ws = current_workspace()
     ws.status()
 
+def log(args):
+    """
+    log: Show version control history.
+    """
+    ws = current_workspace()
+    ws.log(args)
+
 def pull(args):
     """
     pull: Bring changes from a remote workspace into this workspace.
@@ -424,6 +431,12 @@ class _Workspace(object):
         Show version control status of files in work area.
         """
         self.vc.status(self.config_dir)
+
+    def log(self, limits):
+        """
+        Show version control history.
+        """
+        self.vc.log(limits)
 
     def pull(self, upstream_name):
         """

@@ -173,6 +173,16 @@ class VersionControl(object):
         for line in output_list:
             print line
 
+    def log(self, limits):
+        '''
+        Send commit messages to standard out.
+        '''
+        limit_string = ' '.join([ '^%s' % l for l in limits ])
+        command = 'git-rev-list HEAD %s' % limit_string
+        revs = self.shell_to_string(command).splitlines()
+        for rev in revs:
+            print self.shell_to_string('git-cat-file commit %s' % rev)
+
     def update_from_remote(self, upstream_name):
         """
         update the version control by pulling from remote sources.
