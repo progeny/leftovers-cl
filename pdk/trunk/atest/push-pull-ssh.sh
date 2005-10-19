@@ -63,7 +63,7 @@ pushd integration
 </channels>
 EOF
     pdk add progeny.com/apache.xml
-    pdk commit "git-production commit"
+    pdk commit -m "git-production commit"
 
     pdk repogen progeny.com/apache.xml
 
@@ -108,7 +108,7 @@ EOF
 
     echo GARBAGE >>progeny.com/apache.xml
 
-    pdk commit "git-production testing"
+    pdk commit -m "git-production testing"
 
     # Send change from customer to integration.
     git diff HEAD^ >patch.txt
@@ -125,7 +125,7 @@ popd
 pushd integration
     # No direct pdk support for this. This case is an outlier.
     git-apply patch.txt
-    pdk commit "Required commit remark"
+    pdk commit -m "Required commit remark"
 
 # -----------------------------------------------------------
 # Push from integration to production (again)

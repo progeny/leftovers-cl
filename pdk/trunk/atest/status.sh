@@ -34,7 +34,7 @@ pushd a
 </channels>
 EOF
     pdk add progeny.com/apache.xml
-    pdk commit "git-production commit"
+    pdk commit -m "git-production commit"
 
     pdk repogen progeny.com/apache.xml
 
@@ -52,7 +52,7 @@ EOF
 modified: progeny.com/apache.xml
 unknown: a
 EOF
-    pdk commit 'a local change'
+    pdk commit -m 'a local change'
     pdk status >etc/output.txt
     diff -u - etc/output.txt <<EOF
 unknown: a

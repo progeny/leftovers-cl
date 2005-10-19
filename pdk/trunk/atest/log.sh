@@ -25,7 +25,7 @@ set_up_repogen_fixture a
 pdk workspace create b
 pushd a
     pdk add progeny.com/apache.xml
-    pdk commit "Initial Commit"
+    pdk commit -m "Initial Commit"
 
     pdk repogen progeny.com/apache.xml
 
@@ -47,7 +47,7 @@ EOF
         || fail 'Should find initial commit'
 
     echo '<!-- comment -->' >>progeny.com/apache.xml
-    pdk commit 'a local change'
+    pdk commit -m 'a local change'
 
     pdk log | grep "Initial Commit" \
         || fail 'Should still find initial commit'

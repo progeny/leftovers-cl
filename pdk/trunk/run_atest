@@ -153,6 +153,8 @@ run_test() {
         PATH=${tmp_dir}/bin:$PATH
         PYTHONPATH=${tmp_dir}/lib/python2.3/site-packages:$PYTHONPATH
         export PYTHONPATH
+        EDITOR=false
+        export EDITOR
 
         cd ${tmp_dir}
         echo "------------------------------------"

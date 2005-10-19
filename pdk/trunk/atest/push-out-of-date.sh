@@ -68,17 +68,17 @@ pushd alice
 a
 EOF
     pdk add somefile
-    pdk commit ''
+    pdk commit -m 'Initial Alice Commit'
 
     pdk push production
 popd
 
 pushd bob
     pdk pull production
-    cat >somefile <<EOF
+    cat >>somefile <<EOF
 c
 EOF
-    pdk commit ''
+    pdk commit -m 'Initial Bob Commit'
     # don't push yet
 popd
 
@@ -86,7 +86,7 @@ pushd alice
     cat >>somefile <<EOF
 b
 EOF
-    pdk commit ''
+    pdk commit -m 'Alice Modification'
     pdk push production
 popd
 

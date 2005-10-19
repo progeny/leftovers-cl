@@ -452,7 +452,7 @@ def get_waiter(pid, command):
         return pid
     return _wait
 
-def execv(execv_args, set_up = noop):
+def execv(execv_args, set_up = noop, pipes = True):
     '''Fork and exec.
 
     Returns pipes for input and output, and a closure which waits on
@@ -463,29 +463,32 @@ def execv(execv_args, set_up = noop):
     Execv args should be a tuple/list in the form:
     [binary, [exec args]]
     '''
-    child_in_read, child_in_write = os.pipe()
-    parent_in_read, parent_in_write = os.pipe()
+    if pipes:
+        child_in_read, child_in_write = os.pipe()
+        parent_in_read, parent_in_write = os.pipe()
     pid = os.fork()
     if pid:
         # parent
-        os.close(child_in_read)
-        os.close(parent_in_write)
-
         _wait = get_waiter(pid, execv_args)
-
-        return os.fdopen(child_in_write, 'w'), \
-               os.fdopen(parent_in_read), \
-               _wait
+        if pipes:
+            os.close(child_in_read)
+            os.close(parent_in_write)
+            return os.fdopen(child_in_write, 'w'), \
+                   os.fdopen(parent_in_read), \
+                   _wait
+        else:
+            return _wait
     else:
         # child
-        os.close(child_in_write)
-        os.close(parent_in_read)
-        os.dup2(child_in_read, 0)
-        os.dup2(parent_in_write, 1)
+        if pipes:
+            os.close(child_in_write)
+            os.close(parent_in_read)
+            os.dup2(child_in_read, 0)
+            os.dup2(parent_in_write, 1)
         set_up()
         os.execv(*execv_args)
 
-def shell_command(command, set_up = noop):
+def shell_command(command, set_up = noop, pipes = True):
     '''Fork and execute a shell command.
 
     Returns pipes for input and output, and a closure which waits on
@@ -495,8 +498,7 @@ def shell_command(command, set_up = noop):
     '''
     shell_cmd = '{ %s ; } ' % command
     execv_args = ('/bin/sh', ['/bin/sh', '-c', shell_cmd])
-    return execv(execv_args, set_up)
-
+    return execv(execv_args, set_up, pipes)
 
 class Framer(object):
     '''Represents "frames" of data travelling over pipes.

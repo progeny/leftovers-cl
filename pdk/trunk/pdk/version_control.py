@@ -26,6 +26,7 @@ __revision__ = '$Progeny$'
 
 import os
 from sets import Set
+from commands import mkarg
 from cStringIO import StringIO
 from pdk.exceptions import SemanticError
 from pdk.util import relative_path, pjoin, shell_command
@@ -48,7 +49,7 @@ class VersionControl(object):
         self.work_dir = work_path
         self.vc_dir = git_path
 
-    def popen2(self, command):
+    def popen2(self, command, pipes = True):
         """Forks off a pdk command.
 
         Returns handles to stdin and standard out.
@@ -61,7 +62,7 @@ class VersionControl(object):
             '''Child process should chdir [work]; and set GIT_DIR.'''
             os.chdir(self.work_dir)
             os.environ.update({'GIT_DIR': self.vc_dir})
-        return shell_command(command, set_up_child)
+        return shell_command(command, set_up_child, pipes)
 
     def shell_to_string(self, command):
         """Execute self.popen2; capture stdout as a string.
@@ -109,40 +110,37 @@ class VersionControl(object):
         self.shell_to_string('rm ' + name)
         self.update()
 
-    def commit(self, remark):
+    def commit(self, commit_message_file, commit_message, files):
         """
         call git commands to commit local work
         """
-        head_file = pjoin(self.vc_dir, 'HEAD')
+        if commit_message_file:
+            message_opt = '-F %s' % mkarg(commit_message_file)
+        elif commit_message:
+            message_opt = '-m ' + mkarg(commit_message)
+        else:
+            message_opt = ''
 
-        parent_id = None
-
-        if os.path.exists(head_file):
-            the_file = file(head_file, 'r')
-            parent_id = the_file.read().strip()
-            the_file.close()
-
-        work_dir = self.work_dir
-        files = self.shell_to_string('git-diff-files --name-only').split()
-        files = [ relative_path(work_dir, item) for item in files ]
-        self.shell_to_string('git-update-cache ' + ' '.join(files))
-
-        sha1 = self.shell_to_string('git-write-tree').strip()
-
-        commit_cmd = 'git-commit-tree ' + sha1
-        if parent_id:
-            commit_cmd += ' -p ' + str(parent_id)
-        remote_in, remote_out, wait = self.popen2(commit_cmd)
-        remote_in.write(remark)
-        remote_in.close()
-        commit_id = remote_out.read()
-        remote_out.close()
-        wait()
-
-        the_file = file(head_file, 'w')
-        the_file.write(str(commit_id))
-        the_file.close()
-
+        if files:
+            shell_script = '''
+set -e
+git-update-index --add --remove %(files)s
+GIT_INDEX_FILE=%(index_file)s
+export GIT_INDEX_FILE
+git-read-tree HEAD
+git-update-index --add --remove %(files)s
+git-commit %(message_opt)s
+rm $GIT_INDEX_FILE
+unset GIT_INDEX_FILE''' \
+            % { 'index_file': pjoin(self.vc_dir, '.pdk_tmp_index'),
+                'files': ''.join([mkarg(f) for f in files]),
+                'message_opt': message_opt }
+            wait = self.popen2(shell_script, False)
+            wait()
+        else:
+            command = 'git commit %s -a' % message_opt
+            wait = self.popen2(command, False)
+            wait()
 
     def update(self):
         """

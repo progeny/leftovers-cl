@@ -42,7 +42,7 @@ pushd customer
 #          remove the file, and "update" from version control
 
     pdk add JS5.xml
-    pdk commit Jam Session 5 testing
+    pdk commit -m 'Jam Session 5 testing'
     rm JS5.xml
     pdk update
 
@@ -58,7 +58,7 @@ pushd customer
 # execute: commit the change to version control
 #          remove the file, and update from vc
 
-    pdk commit Jam Session 5 testing
+    pdk commit -m 'Jam Session 5 testing'
     rm JS5.xml
     pdk update
 
@@ -97,7 +97,7 @@ pushd customer
 # execute: remove a file from version control
 
     pdk remove JS5.xml
-    pdk commit Jam Session 5 testing
+    pdk commit -m 'Jam Session 5 testing'
 
 # evaluate: see if the file was actually removed
 

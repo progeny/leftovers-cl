@@ -73,7 +73,7 @@ pdk add ethereal.xml
 pdk add meta-info.xml
 pdk add product.xml
 
-pdk commit 'Starting point for diff.'
+pdk commit -m 'Starting point for diff.'
 
 semdiff_report ethereal.xml
 
@@ -81,7 +81,7 @@ cp ethereal2.xml ethereal.xml
 
 semdiff_report ethereal.xml
 
-pdk commit ''
+pdk commit -m 'Commit changes.'
 
 cp ethereal1.xml ethereal.xml
 

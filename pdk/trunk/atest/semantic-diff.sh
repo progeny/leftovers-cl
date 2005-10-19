@@ -32,7 +32,7 @@ cd test-semdiff
 
 cp timex-12.xml time.xml
 pdk add time.xml
-pdk commit 'message'
+pdk commit -m 'message'
 
 pdk semdiff -m time.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
@@ -47,7 +47,7 @@ upgrade|rpm|adjtimex|/1.13/12|/1.13/13|i386|time.xml
 upgrade|srpm|adjtimex|/1.13/12|/1.13/13|x86_64|time.xml
 EOF
 
-pdk commit 'message'
+pdk commit -m 'message'
 
 cp timex-12.xml time.xml
 pdk semdiff -m time.xml | LANG=C sort >semdiff.txt
@@ -56,7 +56,7 @@ downgrade|rpm|adjtimex|/1.13/13|/1.13/12|i386|time.xml
 downgrade|srpm|adjtimex|/1.13/13|/1.13/12|x86_64|time.xml
 EOF
 
-pdk commit 'message'
+pdk commit -m 'message'
 
 cp timex-12-nosrc.xml time.xml
 pdk semdiff -m time.xml | grep -v ^unchanged \
@@ -65,7 +65,7 @@ diff -u - semdiff.txt <<EOF
 drop|srpm|adjtimex|/1.13/12|x86_64|time.xml
 EOF
 
-pdk commit 'message'
+pdk commit -m 'message'
 
 cp timex-12.xml time.xml
 pdk semdiff -m time.xml | grep -v ^unchanged \
@@ -74,7 +74,7 @@ diff -u - semdiff.txt <<EOF
 add|srpm|adjtimex|/1.13/12|x86_64|time.xml
 EOF
 
-pdk commit 'message'
+pdk commit -m 'message'
 
 # --------------------------------
 # Test semdiff with debs.
@@ -82,7 +82,7 @@ pdk commit 'message'
 
 cp ethereal1.xml ethereal.xml
 pdk add ethereal.xml
-pdk commit 'message'
+pdk commit -m 'message'
 
 pdk semdiff -m ethereal.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
@@ -103,7 +103,7 @@ upgrade|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
 upgrade|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|any|ethereal.xml
 EOF
 
-pdk commit 'message'
+pdk commit -m 'message'
 
 cp ethereal1.xml ethereal.xml
 pdk semdiff -m ethereal.xml | LANG=C sort >semdiff.txt
@@ -115,7 +115,7 @@ downgrade|deb|tethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal.xml
 downgrade|dsc|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|any|ethereal.xml
 EOF
 
-pdk commit 'message'
+pdk commit -m 'message'
 
 cp ethereal1-missing.xml ethereal.xml
 pdk semdiff -m ethereal.xml | grep -v ^unchanged \
@@ -124,7 +124,7 @@ diff -u - semdiff.txt <<EOF
 drop|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal.xml
 EOF
 
-pdk commit 'message'
+pdk commit -m 'message'
 
 cp ethereal1.xml ethereal.xml
 pdk semdiff -m ethereal.xml | grep -v ^unchanged \
@@ -133,4 +133,4 @@ diff -u - semdiff.txt <<EOF
 add|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal.xml
 EOF
 
-pdk commit 'message'
+pdk commit -m 'message'

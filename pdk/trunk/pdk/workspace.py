@@ -25,6 +25,7 @@ __revision__ = '$Progeny$'
 
 import os
 import sys
+import optparse
 from pdk.version_control import VersionControl, CommitNotFound
 from pdk.cache import Cache
 from pdk.channels import OutsideWorldFactory, WorldData
@@ -271,11 +272,24 @@ def commit(args):
     A log message must be provided.
 
     Valid options:
-    none
+    -m --commit-msg        A commit message.
+    -f --commit-msg-file   A file containing the commit message.
     """
-    remark = args[0]
+    parser = optparse.OptionParser()
+    parser.add_option(
+                         "-f"
+                         , "--commit-msg-file"
+                         , dest="commit_msg_file"
+                         , help="File containing a prewritten " + \
+                         "commit message.")
+    parser.add_option(
+                         "-m"
+                         , "--commit-msg"
+                         , dest="commit_msg"
+                         , help="Commit message to use")
+    opts, files = parser.parse_args(args = args)
     ws = current_workspace()
-    ws.commit(remark)
+    ws.commit(opts.commit_msg_file, opts.commit_msg, files)
 
 def update(ignore):
     """
@@ -413,11 +427,11 @@ class _Workspace(object):
         """
         return self.vc.revert(name)
 
-    def commit(self, remark):
+    def commit(self, commit_msg_file, commit_msg, files):
         """
         Commit changes to version control
         """
-        self.vc.commit(remark)
+        self.vc.commit(commit_msg_file, commit_msg, files)
         self.cache.write_index()
 
     def update(self):

@@ -70,7 +70,7 @@ pdk download ethereal.xml
 
 pdk add ethereal.xml
 pdk add meta-info.xml
-pdk commit 'Starting point for diff.'
+pdk commit -m 'Starting point for diff.'
 
 # Nothing should have changed yet.
 pdk semdiff -m ethereal.xml | LANG=C sort >semdiff.txt
@@ -102,7 +102,7 @@ meta-drop|deb|ethereal|i386|predicate|test-stage-1
 upgrade|deb|ethereal|0.9.4-1woody2|0.9.4-1woody3|i386|ethereal.xml
 EOF
 
-pdk commit ''
+pdk commit -m 'Commit changes.'
 
 rm -r channel
 mkdir channel
