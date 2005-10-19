@@ -127,7 +127,10 @@ set -e
 git-update-index --add --remove %(files)s
 GIT_INDEX_FILE=%(index_file)s
 export GIT_INDEX_FILE
-git-read-tree HEAD
+head=$(git-rev-parse --revs-only HEAD)
+if [ -n "$head" ]; then
+    git-read-tree $head
+fi
 git-update-index --add --remove %(files)s
 git-commit %(message_opt)s
 rm $GIT_INDEX_FILE

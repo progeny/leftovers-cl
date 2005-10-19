@@ -114,4 +114,14 @@ EOF
 
 popd
 
+rm -rf vc
+
+pdk workspace create vc
+pushd vc
+    # watch for regression where you couldn't do an initial commit by
+    # naming files with the commit command.
+    echo 1 >>a
+    pdk commit -m 'Initial commit' a
+popd
+
 # vim:ai:et:sts=4:sw=4:tw=0:
