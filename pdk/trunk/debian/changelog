@@ -1,3 +1,11 @@
+pdk (0.0.15) unstable; urgency=low
+
+  * Add log and status commands.
+  * Rework commit command to use an editor by default.
+  * Allow commit to commit specific files only.
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed, 19 Oct 2005 16:23:19 -0500
+
 pdk (0.0.14) unstable; urgency=low
 
   * Only take the newest thing when resolving.
