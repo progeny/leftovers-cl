@@ -1,0 +1,12 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/buildcore.mk
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/python-distutils.mk
+
+clean::
+	rm -f atest.tar
+
+install/pdk::
+	tar c --exclude=atest/packages --exclude=.svn atest \
+		run_atest utest.py >atest.tar
