@@ -21,14 +21,26 @@
 # build.
 
 set -e
+set -x
 
 clean() {
     if [ -n "$tmp_dir" ]; then
         rm -r $tmp_dir
     fi
+    if [ -n "$export_dir" ]; then
+        rm -r $export_dir
+    fi
 }
 
 trap clean 0 1 2 3 15
+
+dev_dir=$(pwd)
+
+expr='s/.*(\([^-]*\)\(-.*\)\?).*/\1/'
+version=$(sed -e "$expr" -e '1 q' <debian/changelog)
+export_dir=$(pwd)/pdk-$version
+svn export . $export_dir
+cd $export_dir
 
 sh clean.sh
 debuild -us -uc -I.svn
@@ -36,7 +48,6 @@ debc
 sudo debi
 
 tmp_dir=$(mktemp -dt release.XXXXXX)
-dev_dir=$(pwd)
 
 cd $tmp_dir
 tar zxvf /usr/share/doc/pdk/atest.tar.gz
