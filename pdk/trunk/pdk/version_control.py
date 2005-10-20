@@ -25,9 +25,9 @@ Part of the PDK suite
 __revision__ = '$Progeny$'
 
 import os
+import re
 from sets import Set
 from commands import mkarg
-from cStringIO import StringIO
 from pdk.exceptions import SemanticError
 from pdk.util import relative_path, pjoin, shell_command
 
@@ -39,6 +39,21 @@ from pdk.util import relative_path, pjoin, shell_command
 class CommitNotFound(SemanticError):
     '''Raised when a caller attempts to operate on a non-existent commit.'''
     pass
+
+class popen_wrap_handle(object):
+    '''Delegate calls to handle, but on close(), call waiter.
+    '''
+    def __init__(self, handle, waiter):
+        self.__handle = handle
+        self.__waiter = waiter
+
+    def close(self):
+        '''Close handle and call waiter.'''
+        self.__handle.close()
+        self.__waiter()
+
+    def __getattr__(self, attr):
+        return getattr(self.__handle, attr)
 
 class VersionControl(object):
     """
@@ -200,16 +215,26 @@ unset GIT_INDEX_FILE''' \
 
     def cat(self, filename):
         '''Get the unchanged version of the given filename.'''
-        command = 'git-diff-files ' + filename
-        git_result = self.shell_to_string(command).strip()
-        if git_result:
-            parts = git_result.split()
-            git_blob_id = parts[2]
-            result = StringIO(self.shell_to_string('git-cat-file blob %s'
-                                                     % git_blob_id))
+        if self.is_new():
+            message = 'Empty version control. Need an initial commit.'
+            raise SemanticError(message)
+
+        command = 'git-ls-tree HEAD'
+        lines = self.shell_to_string(command).splitlines()
+        matching_lines = [ l for l in lines
+                           if re.search(r'\t%s' % filename, l) ]
+        matches = len(matching_lines)
+        if matches == 0:
+            raise SemanticError('No file by that name in version HEAD')
+        elif matches == 1:
+            fields = matching_lines[0].split()
+            blob = fields[2]
+            command = 'git-cat-file blob %s' % blob
+            remote_in, remote_out, waiter = self.popen2(command)
+            remote_in.close()
+            return popen_wrap_handle(remote_out, waiter)
         else:
-            result = open(filename)
-        return result
+            raise StandardError('Got multiple matching lines, %r' % lines)
 
     def push(self, remote):
         '''Push local commits to a remote git.'''

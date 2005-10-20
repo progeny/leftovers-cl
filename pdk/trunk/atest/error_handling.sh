@@ -128,7 +128,7 @@ set_up "Process an ill-formed component descriptor" 3
 cat > bad_component.xml << EOF
 <?xml version="1.0"?>
 EOF
-pdk semdiff ./bad_component.xml  || status=$?
+pdk semdiff ./bad_component.xml ./bad_component.xml  || status=$?
 tear_down
 
 set_up "Process a more reasonable ill-formed component descriptor" 3
@@ -143,7 +143,7 @@ cat > ethereal.xml << EOF
   
 </component>
 EOF
-pdk semdiff ethereal.xml  || status=$?
+pdk semdiff ethereal.xml ethereal.xml || status=$?
 tear_down
 
 set_up "Cache miss" 4
