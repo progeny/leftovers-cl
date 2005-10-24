@@ -55,8 +55,7 @@ cp ${tmp_dir}/atest/abstract_comps/emacs.xml progeny.com
 pdk resolve progeny.com/apache.xml
 pdk resolve progeny.com/emacs.xml
 
-pdk download progeny.com/apache.xml
-pdk download progeny.com/emacs.xml
+pdk download progeny.com/apache.xml progeny.com/emacs.xml
 
 pdk audit progeny.com/apache.xml progeny.com/emacs.xml \
     >pdk_audit.txt || {

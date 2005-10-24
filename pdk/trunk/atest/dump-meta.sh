@@ -27,24 +27,19 @@
 set_up_repogen_fixture test-repogen
 cd test-repogen
 
-pdk dumpmeta python.xml | diff -u /dev/null -
+pdk dumpmeta progeny.com/python.xml | diff -u /dev/null -
+
+
 
 # rewrite component descriptor but with metadata.
-cat >python.xml <<EOF
+cat >includemeta.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
   <meta>
     <other>value</other>
   </meta>
   <contents>
-    <deb ref="sha-1:6d7cf6eeaa67da461a35ebfba9351a7c1a7720eb">
-      <name>python</name>
-      <version>2.3.3-6</version>
-    </deb>
-    <dsc ref="sha-1:ff9e54736ff8bb385c053a006c3a550c8f20674c">
-      <name>python-defaults</name>
-      <version>2.3.3-6</version>
-    </dsc>
+    <component>progeny.com/python.xml</component>
     <deb>
       <name>python</name>
       <meta>
@@ -55,9 +50,9 @@ cat >python.xml <<EOF
 </component>
 EOF
 
-pdk dumpmeta python.xml >metadump.txt
+pdk dumpmeta includemeta.xml >metadump.txt
 
 diff -u - metadump.txt <<EOF
-sha-1:6d7cf6eeaa67da461a35ebfba9351a7c1a7720eb|deb|python|key|value
-python.xml|component||other|value
+md5:f390c2d3e8bc211a3d797b045c1ca4a0|deb|python|key|value
+includemeta.xml|component||other|value
 EOF

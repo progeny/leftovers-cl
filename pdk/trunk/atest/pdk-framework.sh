@@ -45,4 +45,5 @@ pdk >pdk-framework.out 2>pdk-framework.err<<EOF
 resolve
 !echo marker
 EOF
-grep -q marker pdk-framework.out && grep -q "Syntax Error" pdk-framework.err
+grep -q marker pdk-framework.out && grep -qi "in a workspace" \
+    pdk-framework.err || fail 'did not receive expected error'

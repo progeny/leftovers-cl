@@ -134,6 +134,8 @@ def add_wrapper(function):
         except ConfigurationError, message:
             logger.error("Configuration/setup error: %s" % message)
             failure_type = 5
+        except SystemExit, status:
+            failure_type = status
         except:
             traceback.print_exc(sys.stderr)
             logger.error("Unknown error")

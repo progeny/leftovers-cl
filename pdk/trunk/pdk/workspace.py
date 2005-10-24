@@ -26,6 +26,8 @@ __revision__ = '$Progeny$'
 import os
 import sys
 import optparse
+from itertools import chain
+from pdk.package import Package
 from pdk.version_control import VersionControl, CommitNotFound
 from pdk.cache import Cache
 from pdk.channels import OutsideWorldFactory, WorldData
@@ -33,6 +35,9 @@ from pdk.exceptions import ConfigurationError, SemanticError, \
      CommandLineError
 from pdk.util import pjoin, make_self_framer, cached_property, \
      relative_path
+from pdk.semdiff import print_bar_separated, print_man, \
+     iter_diffs, iter_diffs_meta
+from pdk.component import ComponentDescriptor
 
 # current schema level for this pdk build
 schema_target = 4
@@ -190,12 +195,124 @@ def create_workspace(workspace_root):
     return ws
 
 
+class command_args(object):
+    '''Represents common operations on results from optparse.'''
+    def __init__(self, opts, args):
+        self.opts = opts
+        self.args = args
+
+    def get_new_directory(self):
+        '''Get a new directory.
+
+        The directory must not already exist.
+        '''
+        new_dir = self.pop_arg('new directory')
+        if os.path.exists(new_dir):
+            raise SemanticError('Already exists: "%s"' % new_dir)
+        return new_dir
+
+    def get_one_reoriented_file(self, workspace):
+        '''Get exactly one filename, reoriented to the workspace. '''
+        if len(self.args) != 1:
+            raise CommandLineError('requires a single filename')
+        return workspace.reorient_filename(self.pop_arg('filename'))
+
+    def get_reoriented_files(self, workspace, minimum = 1):
+        '''Get a minimum number of filenames, reoriented to the workspace.
+        '''
+        if len(self.args) < minimum:
+            message = 'Must provide at least %d filename.' % minimum
+            raise CommandLineError(message)
+        return [ workspace.reorient_filename(f) for f in self.args ]
+
+    def pop_arg(self, description):
+        '''Remove an argument from self.args.
+
+        description is used to form more friendly error messages.
+        '''
+        if len(self.args) == 0:
+            raise CommandLineError('required argument: %s', description)
+        return self.args.pop(0)
+
+class command_args_spec(object):
+    '''Factory for creating command_args objects.
+
+    The spec is a series of strings. For details of which strings are
+    available read the source code to the create function.
+    '''
+    def __init__(self, usage, *spec):
+        self.usage = usage
+        self.spec = spec
+
+    def create(self, raw_args):
+        '''Create a new command_args object, processing raw_args.'''
+        parser = optparse.OptionParser(usage = self.usage)
+        op = parser.add_option
+        for item in self.spec:
+            if item == 'commit-msg':
+                op('-f', '--commit-msg-file',
+                   dest = 'commit_msg_file',
+                   help = 'File containing a prewritten commit message.',
+                   metavar = 'FILE')
+
+                op("-m", "--commit-msg",
+                   dest = "commit_msg",
+                   help = "Commit message to use",
+                   metavar = 'MESSAGE')
+
+            elif item == 'channels':
+                op("-c", "--channel",
+                   action = "append",
+                   dest = "channels",
+                   type = "string",
+                   help = "A channel name.")
+
+            elif item == 'machine-readable':
+                op("-m", "--machine-readable",
+                   action = "store_true",
+                   dest = "machine_readable",
+                   default = False,
+                   help = "Make the output machine readable.")
+
+            elif item == 'no-report':
+                op("-R", "--no-report",
+                   action = "store_false",
+                   dest = "show_report",
+                   default = True,
+                   help = "Don't bother showing the report.")
+
+            elif item == 'dry-run':
+                op("-n", "--dry-run",
+                   action = "store_false",
+                   dest = "save_component_changes",
+                   default = True,
+                   help = "Don't save changes after processing.")
+
+        opts, args = parser.parse_args(args = raw_args)
+        return command_args(opts, args)
+
+def make_invokable(fn, *spec):
+    '''Make the given function an "invokable".
+
+    Spec strings are optional and may directly follow the function argument.
+
+    Invokables are special because their --help options work properly
+    based on the command spec and function doc string.
+    '''
+    def _invoke(raw_args):
+        '''Actually invoke the function.'''
+        doc_string = fn.__doc__.strip()
+        args = command_args_spec(doc_string, *spec).create(raw_args)
+        fn(args)
+    return _invoke
+
 # For external linkage
 def create(args):
-    """
-    cmd front-end for the workspace create function
+    """usage: pdk workspace create DIRECTORY
 
-    args = [target_path]
+    Creates a new workspace for pdk.
+
+    The directory should not exist.
     """
     # Friends don't let friends nest workspaces.
     if currently_in_a_workspace():
@@ -204,92 +321,82 @@ def create(args):
             % os.getcwd()
             )
 
+    new_workspace_dir = args.get_new_directory()
     if not args:
         raise CommandLineError("requires an argument")
-    create_workspace(args[0])
+    create_workspace(new_workspace_dir)
+
+create = make_invokable(create)
 
 def add(args):
-    """
-    add: Put the file under version control, scheduling it
-    for addition to repository.  It will be added in next commit.
-    usage: add filename
+    """usage: pdk add FILES
 
-    Valid options:
-    none
+    Put files under version control, scheduling it for addition to the
+    repository.  It will be added on the next commit.
     """
-    name = args[0]
     ws = current_workspace()
-    return ws.add(name)
+    files = args.get_reoriented_files(ws, 0)
+    return ws.add(files)
+
+add = make_invokable(add)
 
 def remove(args):
-    """
-    remove: Remove  a file from version control.
-    usage: remove FILE
+    """usage: pdk remove FILES
 
-    The item specified by FILE is scheduled for deletion upon
-    the next commit.  A files that has not been committed is 
-    immediately removed from the working copy.
-
-    Valid options:
-    none
+    Remove files from version control. The removal is essentially
+    noted in the changeset of the next commit.
     """
-    name = args[0]
     ws = current_workspace()
-    return ws.remove(name)
+    files = args.get_reoriented_files(ws, 0)
+    return ws.remove(files)
+
+remove = make_invokable(remove)
 
 def cat(args):
-    """
-    cat: Output the content of specified file from the
-    version control repository.
-    usage: cat FILE
+    """usage: pdk cat FILE
 
-    Valid options:
-    none
+    Output the content of specified file from the HEAD commit in
+    version control.
     """
-    name = args[0]
     ws = current_workspace()
+    name = args.get_one_reoriented_file(ws)
     result = ws.cat(name).read().strip()
     print >> sys.stdout, result
     return result
 
-def revert(args):
-    """
-    revert: Restore pristine working copy file (undo most local edits).
-    usage: revert FILE
+cat = make_invokable(cat)
 
-    Valid options:
-    none
+def revert(args):
+    """usage: pdk revert FILES
+
+    Restore pristine copies of files from the HEAD commit in version
+    control.
     """
-    name = args[0]
     ws = current_workspace()
-    return ws.revert(name)
+    files = args.get_reoriented_files(ws, 1)
+    return ws.revert(files)
+
+revert = make_invokable(revert)
 
 def commit(args):
-    """
-    commit: Send changes from your working copy to the repository.
-    usage: commit FILE MESSAGE
+    """usage: pdk commit [options] FILES
 
-    A log message must be provided.
+    Commit changes to files in the work area.
 
-    Valid options:
-    -m --commit-msg        A commit message.
-    -f --commit-msg-file   A file containing the commit message.
+    If FILES are present, the scope of the commit is limited to these
+    files. If it is empty, all commit-worthy files are committed.
+
+    Naming files which have not been added will work and can be
+    considered a shortcut around the pdk add command.
+
+    If no commit message is provided through options, $EDITOR will be
+    invoked to obtain a commit message.
     """
-    parser = optparse.OptionParser()
-    parser.add_option(
-                         "-f"
-                         , "--commit-msg-file"
-                         , dest="commit_msg_file"
-                         , help="File containing a prewritten " + \
-                         "commit message.")
-    parser.add_option(
-                         "-m"
-                         , "--commit-msg"
-                         , dest="commit_msg"
-                         , help="Commit message to use")
-    opts, files = parser.parse_args(args = args)
     ws = current_workspace()
-    ws.commit(opts.commit_msg_file, opts.commit_msg, files)
+    files = args.get_reoriented_files(ws, 0)
+    ws.commit(args.opts.commit_msg_file, args.opts.commit_msg, files)
+
+commit = make_invokable(commit, 'commit-msg')
 
 def update(ignore):
     """
@@ -359,6 +466,185 @@ def push(args):
     local = current_workspace()
     local.push(remote_path)
 
+def semdiff(args):
+    """usage: pdk semdiff [options] COMPONENT [COMPONENT]
+
+    Return a report containing meaningful component changes.
+
+    Works against version control, two arbitrary components, or a
+    component and a set of channels.
+
+    Caveat: When comparing against version control, only the named
+    component is retrieved from version control. Sub components are
+    found in the work area. This could affect metadata differences.
+    """
+    workspace = current_workspace()
+    cache = workspace.cache
+    files = args.get_reoriented_files(workspace)
+
+    if args.opts.machine_readable:
+        printer = print_bar_separated
+    else:
+        printer = print_man
+
+    get_desc = workspace.get_component_descriptor
+    if args.opts.channels:
+        ref = files[0]
+        desc = get_desc(ref)
+        component = desc.load(cache)
+        old_package_list = component.direct_packages
+        world = workspace.world
+        new_package_list = list(world.iter_packages(args.opts.channels))
+        old_meta = {}
+        new_meta = {}
+    elif len(files) == 1:
+        ref = files[0]
+        # Get old
+        old_desc = get_desc(ref, workspace.vc.cat(ref))
+        old_component = old_desc.load(cache)
+        old_package_list = old_component.direct_packages
+        old_meta = old_component.meta
+        # Get new
+        new_desc = get_desc(ref)
+        new_component = new_desc.load(cache)
+        new_package_list = new_component.direct_packages
+        new_meta = new_component.meta
+    elif len(files) == 2:
+        ref = files[1]
+        # get old
+        old_desc = get_desc(files[0])
+        old_component = old_desc.load(cache)
+        old_package_list = old_component.direct_packages
+        old_meta = old_component.meta
+        # Get new
+        new_desc = get_desc(files[1])
+        new_component = new_desc.load(cache)
+        new_package_list = new_component.direct_packages
+        new_meta = new_component.meta
+    else:
+        raise CommandLineError("Argument list is invalid")
+
+    diffs = iter_diffs(old_package_list, new_package_list)
+    diffs_meta = iter_diffs_meta(old_meta, new_meta)
+    data = chain(diffs, diffs_meta)
+    printer(ref, data)
+
+semdiff = make_invokable(semdiff, 'machine-readable', 'channels')
+
+def dumpmeta(args):
+    """usgage: pdk dumpmeta COMPONENTS
+
+    Prints all component metadata to standard out.
+    """
+    workspace = current_workspace()
+    get_desc = workspace.get_component_descriptor
+    cache = workspace.cache
+    component_refs = args.get_reoriented_files(workspace)
+    for component_ref in component_refs:
+        component = get_desc(component_ref).load(cache)
+        for item in component.meta:
+            predicates = component.meta[item]
+            for key, value in predicates.iteritems():
+                if isinstance(item, Package):
+                    ref = item.blob_id
+                    name = item.name
+                    type_string = item.type
+                else:
+                    ref = item.ref
+                    name = ''
+                    type_string = 'component'
+                print '|'.join([ref, type_string, name, key, value])
+
+dumpmeta = make_invokable(dumpmeta)
+
+def run_resolve(args, assert_resolved, abstract_constraint):
+    '''Take care of details of running descriptor.resolve.
+
+    raw_args - passed from command handlers
+    do_assert - warn if any references are not resolved
+    show_report - show a human readable report of what was done
+    dry_run - do not save the component after we are finished
+    '''
+    workspace = current_workspace()
+    get_desc = workspace.get_component_descriptor
+    component_names = args.get_reoriented_files(workspace)
+    os.chdir(workspace.location)
+    for component_name in component_names:
+        descriptor = get_desc(component_name)
+        channel_names = args.opts.channels
+        package_list = list(workspace.world.iter_packages(channel_names))
+        descriptor.resolve(package_list, abstract_constraint)
+        descriptor.setify_child_references()
+
+        if assert_resolved:
+            descriptor._assert_resolved()
+
+        if args.opts.show_report:
+            if args.opts.machine_readable:
+                printer = print_bar_separated
+            else:
+                printer = print_man
+
+            descriptor.diff_self(workspace, printer)
+
+        if args.opts.save_component_changes:
+            descriptor.write()
+
+def resolve(args):
+    """usage: pdk resolve COMPONENTS
+
+    Resolves abstract package references.
+
+    If the command succeeds, the component will be modified in
+    place. Abstract package references will be populated with concrete
+    references.
+
+    If no channel names are given, resolve uses all channels to
+    resolve references.
+
+    A warning is given if any unresolved references remain.
+    """
+    run_resolve(args, True, True)
+
+resolve = make_invokable(resolve, 'machine-readable', 'no-report',
+                         'dry-run', 'channels')
+
+def upgrade(args):
+    """usage: pdk upgrade COMPONENTS
+
+    Upgrades concrete package references by package version.
+
+    If the command succeeds, the component will be modified in
+    place. Package references with concrete children will be examined
+    to see if channels can provide newer packages. If this is the
+    case, all concrete refrences which are grouped by an abstract
+    reference are removed and replaced with references to newer
+    pacakges.
+
+    If no channel names are given, resolve uses all channels to
+    resolve references.
+    """
+    run_resolve(args, False, False)
+
+upgrade = make_invokable(upgrade, 'machine-readable', 'no-report',
+                         'dry-run', 'channels')
+
+def download(args):
+    """usage: pdk download FILES
+
+    Acquire copies of the package files needed by the descriptor
+    FILES. The needed package files will be located based on the
+    package indexes of configured channels.
+    """
+    workspace = current_workspace()
+    get_desc = workspace.get_component_descriptor
+    component_names = args.get_reoriented_files(workspace)
+    for component_name in component_names:
+        descriptor = get_desc(component_name)
+        descriptor.download(workspace)
+
+download = make_invokable(download)
+
 class _Workspace(object):
     """
     Library interface to pdk workspace
@@ -403,17 +689,17 @@ class _Workspace(object):
         '''Return the given path relative to self.location.'''
         return relative_path(self.location, filename)
 
-    def add(self, name):
+    def add(self, files):
         """
         Add an item to local version control
         """
-        return self.vc.add(name)
+        return self.vc.add(files)
 
-    def remove(self, name):
+    def remove(self, files):
         """
         Remove an item from local version control
         """
-        return self.vc.remove(name)
+        return self.vc.remove(files)
 
     def cat(self, name):
         """
@@ -421,11 +707,11 @@ class _Workspace(object):
         """
         return self.vc.cat(name)
 
-    def revert(self, name):
+    def revert(self, files):
         """
         Remove an item from local version control
         """
-        return self.vc.revert(name)
+        return self.vc.revert(files)
 
     def commit(self, commit_msg_file, commit_msg, files):
         """
@@ -499,6 +785,12 @@ class _Workspace(object):
         '''Get cache loaders and use them to download package files.'''
         for loader in self.world.get_cache_loaders(blob_ids):
             loader.load(self.cache)
+
+    def get_component_descriptor(self, oriented_name, handle = None):
+        '''Using oriented_name, create a new component descriptor object.'''
+        if not handle:
+            handle = open(pjoin(self.location, oriented_name))
+        return ComponentDescriptor(oriented_name, handle)
 
 class Net(object):
     '''Encapsulates the details of most framer conversations.

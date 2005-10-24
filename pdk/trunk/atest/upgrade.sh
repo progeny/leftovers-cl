@@ -81,7 +81,7 @@ EOF
 </component>
 EOF
 
-    pdk resolve ethereal.xml channel1
+    pdk resolve ethereal.xml -c channel1
 
     diff -u - ethereal.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
@@ -141,7 +141,7 @@ EOF
 </component>
 EOF
 
-    pdk upgrade ethereal.xml channel2 -m >report.txt
+    pdk upgrade ethereal.xml -c channel2 -m >report.txt
 
     diff -u - ethereal.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>

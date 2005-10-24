@@ -96,16 +96,68 @@ pushd customer
 # setup:
 # execute: remove a file from version control
 
-    pdk remove JS5.xml
+    pdk remove JS5.xml || status=$?
+    [ -f 'JS5.xml' ] || fail 'JS5.xml should still exist after pdk remove.'
+    [ "$status" = 4 ] || fail 'pdk remove should fail when file exists'
     pdk commit -m 'Jam Session 5 testing'
 
-# evaluate: see if the file was actually removed
+    rm JS5.xml
+    pdk remove JS5.xml
+    pdk commit -m 'remove JS5'
 
-    pdk update
-    test -f JS5.xml || gone=1
-    if [ "$gone" != "1" ]; then
-        bail "pdk remove JS5.xml failed"
-    fi
+    pdk status | egrep -q '^unknown: JS5.xml' \
+        && fail 'JS5 should not be in version control.'
+
+    cp JS5-1.xml JS5.xml
+    pdk commit -m 'add it back' JS5.xml
+    rm JS5.xml
+    pdk remove JS5.xml
+    pdk commit -m 'remove it with commit arg.' JS5.xml
+    pdk status | egrep -q '^unknown: JS5.xml' \
+        && fail 'JS5 should not be in version control.'
+
+    cp JS5-1.xml a
+    cp JS5-1.xml b
+
+    pdk commit -m 'add two files: a b' a b
+    rm a
+    pdk commit -m 'rm a with args only' a \
+        && fail 'should not be able to rm with args only'
+
+    pdk status | egrep -q '^deleted: a' \
+        && fail 'a should be in "deleted" state.'
+
+    rm b
+    pdk remove a b
+    pdk commit -m 'rm both files at once.'
+
+    pdk status | egrep -q '^unknown: a' \
+        && fail 'a should not be in version control.'
+    pdk status | egrep -q '^unknown: b' \
+        && fail 'b should not be in version control.'
+
+
+# do a more rigorous test of revert
+
+    echo >>a 1
+    echo >>b 1
+    echo >>c 1
+    pdk commit -m 'add a and b' a b c
+    echo >>a 2
+    echo >>b 2
+    echo >>c 2
+    pdk revert a c
+
+    diff -u - a <<EOF
+1
+EOF
+    diff -u - b <<EOF
+1
+2
+EOF
+    diff -u - c <<EOF
+1
+EOF
 
 # -----------------------------------------------------------
 # More functions that need to be tested:

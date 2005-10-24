@@ -154,16 +154,18 @@ EOF
 </component>
 EOF
 
-    pdk resolve progeny.com/apache.xml
-    pdk resolve progeny.com/ida.xml
-    pdk resolve progeny.com/emacs.xml
-    pdk resolve progeny.com/python.xml
-    pdk resolve progeny.com/time.xml
-    pdk download progeny.com/apache.xml
-    pdk download progeny.com/ida.xml
-    pdk download progeny.com/emacs.xml
-    pdk download progeny.com/python.xml
-    pdk download progeny.com/time.xml
+    pdk resolve -R \
+        progeny.com/apache.xml \
+        progeny.com/ida.xml \
+        progeny.com/emacs.xml \
+        progeny.com/python.xml \
+        progeny.com/time.xml
+    pdk download \
+        progeny.com/apache.xml \
+        progeny.com/ida.xml \
+        progeny.com/emacs.xml \
+        progeny.com/python.xml \
+        progeny.com/time.xml
 
     popd
 }

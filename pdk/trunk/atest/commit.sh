@@ -124,4 +124,25 @@ pushd vc
     pdk commit -m 'Initial commit' a
 popd
 
+rm -rf vc
+
+# also test multiple args to add and commit
+pdk workspace create vc
+pushd vc
+    echo 1 >>a
+    echo 1 >>b
+    echo 1 >>c
+    echo 1 >>d
+    pdk add a b
+    pdk commit -m "multi arg add"
+    assert_status "after add + raw" 1 1 1 1 <<EOF
+unknown: c
+unknown: d
+EOF
+
+    pdk commit -m "multi arg commit" b c d
+    assert_status "after add + raw" 1 1 1 1 <<EOF
+EOF
+popd
+
 # vim:ai:et:sts=4:sw=4:tw=0:

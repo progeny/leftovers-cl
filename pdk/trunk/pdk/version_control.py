@@ -28,7 +28,7 @@ import os
 import re
 from sets import Set
 from commands import mkarg
-from pdk.exceptions import SemanticError
+from pdk.exceptions import SemanticError, InputError
 from pdk.util import relative_path, pjoin, shell_command
 
 ## version_control
@@ -100,35 +100,102 @@ class VersionControl(object):
         self.shell_to_string('git-init-db')
         os.makedirs(pjoin(self.vc_dir, 'remotes'))
 
-    def add(self, name):
+    def add(self, files):
         """
         Initialize version control
         """
-        name = relative_path(self.work_dir, name)
-        cmd = 'git-update-cache --add %s' % name
+        files = ' '.join([ mkarg(f) for f in files])
+        cmd = 'git-update-index --add -- %s' % files
         return self.shell_to_string(cmd)
 
-    def remove(self, name):
+    def remove(self, files):
         """
         Initialize version control
         """
-        name = relative_path(self.work_dir, name)
-        self.shell_to_string('rm ' + name)
-        cmd = 'git-update-cache --remove %s' % name
+        for name in files:
+            if os.path.exists(pjoin(self.work_dir, name)):
+                message = 'File %s exists. Remove it and retry.' % name
+                raise SemanticError(message)
+        shell_files = ' '.join([ mkarg(f) for f in files ])
+        cmd = 'git-update-index --remove -- %s' % shell_files
         return self.shell_to_string(cmd)
 
-    def revert(self, name):
+    def get_file_args(self, files):
+        '''Join files into a single shell quoted string.'''
+        return ''.join([ mkarg(f) for f in files ])
+
+    def revert(self, files):
         """
         Initialize version control
         """
-        name = relative_path(self.work_dir, name)
-        self.shell_to_string('rm ' + name)
-        self.update()
+        file_args = self.get_file_args(files)
+        command = 'git-ls-tree -z HEAD %s' % file_args
+        output = self.shell_to_string(command)
+        fields = output.split('\0')
+
+        for field in fields:
+            if not field.strip():
+                continue
+            try:
+                mode, kind, blob_id, filename, = field.split()
+            except ValueError:
+                raise InputError('Unexpected git output: %r' % field)
+            if kind != 'blob':
+                continue
+
+            update_command = 'git-update-index --cacheinfo %s %s %s' \
+                             % (mode, blob_id, mkarg(filename))
+            self.shell_to_string(update_command)
+            checkout_command = 'git-checkout-index -f -- %s' \
+                               % mkarg(filename)
+            self.shell_to_string(checkout_command)
+
+    def iter_diff_files(self, cmd):
+        '''Iterate over null terminated results of git-diff-*.
+
+        Yields status, filename; where status is the status code from
+        git-diff-*.
+
+        The command passed should contain -z, as this function assumes
+        null terminated output.
+        '''
+        output = self.shell_to_string(cmd)
+        fields = output.split('\0')
+        while fields:
+            info = fields.pop(0)
+            if not info.strip():
+                return
+            # strip colon
+            info = info[1:]
+            info_fields = info.split()
+            status = info_fields[4]
+            # in the future, handle renames and copies
+            file_name = fields.pop(0)
+            yield status, file_name
+
+    def assert_no_unexpected_removals(self, files = None):
+        '''Make sure not files have mysteriously disappeared.
+
+        This should be used to guard commits from accidentally
+        removing files.
+        '''
+        command = 'git-diff-files -z '
+        if not files:
+            files = ''.join([ mkarg(f) for f in files ])
+            command += files
+
+        for status, file_name in self.iter_diff_files(command):
+            if status == 'D':
+                message = 'File "%s" missing. Restore or ' % file_name + \
+                          'mark for removal with pdk remove.'
+                raise SemanticError, message
 
     def commit(self, commit_message_file, commit_message, files):
         """
         call git commands to commit local work
         """
+        self.assert_no_unexpected_removals(files)
+
         if commit_message_file:
             message_opt = '-F %s' % mkarg(commit_message_file)
         elif commit_message:
@@ -156,6 +223,7 @@ unset GIT_INDEX_FILE''' \
             wait = self.popen2(shell_script, False)
             wait()
         else:
+            # check to make sure we don't accidentally remove files.
             command = 'git commit %s -a' % message_opt
             wait = self.popen2(command, False)
             wait()

@@ -71,4 +71,13 @@ pushd vc
     grep -i 'commit' errors.txt
 popd
 
+rm -rf vc
+
+pdk workspace create vc
+pushd vc
+    pdk cat a b 2>errors.txt || status=$?
+    [ "$status" = 2 ] || fail "cat with too many arguments should fail"
+    grep -i 'single filename' errors.txt
+popd
+
 # vim:ai:et:sts=4:sw=4:tw=0:

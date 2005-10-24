@@ -147,13 +147,13 @@ pdk channel update
 
 # Make sure dry run creates a report but doesn't change anything.
 cp apache.xml old-apache.xml
-pdk resolve apache.xml channel-1 -m >test-report.txt -n
+pdk resolve apache.xml -c channel-1 -m >test-report.txt -n
 diff -u old-apache.xml apache.xml
 
-pdk resolve apache.xml channel-1 -m >report.txt
+pdk resolve apache.xml -c channel-1 -m >report.txt
 # Here's where we test the dry run report
 diff -u test-report.txt report.txt
-pdk resolve apache.xml channel-2 -m >>report.txt
+pdk resolve apache.xml -c channel-2 -m >>report.txt
 LANG=C sort report.txt >sorted-report.txt
 
 # Check that the semdiff report comes out as expected.

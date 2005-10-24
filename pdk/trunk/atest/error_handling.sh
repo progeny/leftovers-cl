@@ -181,7 +181,7 @@ pdk channel update
 pdk download cache-miss.xml || status=$?
 tear_down
 
-set_up "Don't give necessary arguments" 3
+set_up "Use nonexistant channel" 3
 cat > component.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -201,7 +201,7 @@ cat > etc/channels.xml <<EOF
 </channels>
 EOF
 pdk channel update
-pdk resolve component.xml bar || status=$?
+pdk resolve component.xml -c bar || status=$?
 tear_down
 
 set_up "repogen an empty component" 3

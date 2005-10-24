@@ -62,7 +62,7 @@ cat >xsok.xml <<EOF
 EOF
 
 pdk channel update 
-pdk resolve xsok.xml channel-1 channel-2
+pdk resolve xsok.xml -c channel-1 -c channel-2
 
 cat >expected <<EOF
 <?xml version="1.0" encoding="utf-8"?>
