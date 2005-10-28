@@ -26,6 +26,7 @@ packages.
 
 import re
 from pdk.exceptions import InputError
+from pdk.rules import AndCondition, FieldMatchCondition
 
 # Obviously at least one of these two needs to work for PDK to be useful.
 try:
@@ -46,20 +47,39 @@ except ImportError:
 
 __revision__ = "$Progeny$"
 
+and_c = AndCondition
+f_c = FieldMatchCondition
+
 class Package(object):
     """Represents a logical package.
 
     Fields may be accessed as attributes or items, and dashes are
     converted to underscores as needed.
     """
-    __slots__ = ('contents', 'package_type', 'version')
-    def __init__(self, contents, package_type):
-        self.contents = dict(contents)
+    __slots__ = ('meta', 'package_type', '_blob_id', '_hash', 'contents')
+    def __init__(self, meta, package_type, blob_id):
+        self.meta = meta
         self.package_type = package_type
-        self.version = self.contents['version']
+        # Initializing to make pylint happy.
+        self._blob_id = None
+        self._hash = None
+
+        self.blob_id = blob_id
+        self.contents = self.meta.get_group(self)
+
+    def set_blob_id(self, blob_id):
+        """Set the blob_id and update the internal hash."""
+        self._blob_id = blob_id
+        self._hash = hash(self._get_identity())
+
+    def get_blob_id(self):
+        """Get the blob_id"""
+        return self._blob_id
+
+    blob_id = property(get_blob_id, set_blob_id)
 
     def find_key(self, key):
-        """Be forgiving about key lookups. s/-/_/g"""
+        """Be forgiving about key lookups. s/_/-/g"""
         if key in self.contents:
             return key
         dashed_key = str(key).replace('_', '-')
@@ -85,7 +105,7 @@ class Package(object):
     def __getitem__(self, key):
         special_version_names = {'version.epoch': 'epoch',
                                  'version.version': 'version',
-                                 'version.release': 'release' }
+                                 'version.release': 'release'}
         if key in special_version_names:
             return getattr(self.version, special_version_names[key])
 
@@ -99,7 +119,10 @@ class Package(object):
 
     def get_filename(self):
         """Defer filename calculation to the package type object."""
-        return self.package_type.get_filename(self)
+        if 'filename' in self.contents:
+            return self.contents['filename']
+        else:
+            return self.package_type.get_filename(self)
     filename = property(get_filename)
 
     def get_type(self):
@@ -109,7 +132,10 @@ class Package(object):
 
     def get_format(self):
         """Defer the format string to the package type object."""
-        return self.package_type.format_string
+        if 'format' in self.contents:
+            return self.contents['format']
+        else:
+            return self.package_type.format_string
     format = property(get_format)
 
     def get_role(self):
@@ -128,22 +154,30 @@ class Package(object):
                      if hasattr(self, f) ]
         return tuple(['package'] + contents)
 
+    def _get_identity(self):
+        '''Return the minimal identity for this object.'''
+        return (self.package_type, self._blob_id)
+
     def __hash__(self):
-        return hash(self._get_values())
+        return self._hash
 
     def __str__(self):
-        return '<Package %r>' % (self._get_values(),)
-
+        try:
+            return '<Package %r>' % ((self.name, self.version, self.arch,
+                                      self.type,),)
+        except AttributeError, message:
+            return '<Package incomplete "%s">' % message
     __repr__ = __str__
 
     def __cmp__(self, other):
         return cmp(self._get_values(), other._get_values())
 
-    def __getstate__(self):
-        return (self.contents, self.package_type)
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ \
+               and self._get_identity() == other._get_identity()
 
-    def __setstate__(self, state):
-        self.__init__(*state)
+# evil hack so that getattr and hasattr will work for blob DASH id
+setattr(Package, 'blob-id', property(lambda self: self.blob_id))
 
 def split_deb_version(raw_version):
     """Break a debian version string into it's component parts."""
@@ -151,6 +185,8 @@ def split_deb_version(raw_version):
 
 class DebianVersion(object):
     """A comparable Debian package version number."""
+    __slots__ = ('original_header', 'epoch', 'version', 'release',
+                 'string_without_epoch', 'full_version')
     def __init__(self, original_header):
         self.original_header = original_header
         self.epoch, self.version, self.release = \
@@ -175,63 +211,58 @@ def sanitize_deb_header(header):
     """Normalize the whitespace around the deb header/control contents."""
     return header.strip() + '\n'
 
-class DebTags(object):
-    '''Wraps an apt tags section object with more pythonic dict operations.
-    '''
-    def __init__(self, apt_tags):
-        self.tags = apt_tags
-
-    def __contains__(self, item):
-        return bool(self.tags.has_key(item))
-
-    def __getitem__(self, attribute):
-        if self.tags.has_key(attribute):
-            return self.tags.get(attribute)
-        else:
-            raise LookupError(attribute)
-
 class _Dsc(object):
     """Handle debian source packages (dsc file + friends)."""
     type_string = 'dsc'
     format_string = 'deb'
     role_string = 'source'
 
-    def parse(self, control, blob_id):
+    def parse(self, meta, control, blob_id):
         """Parse control file contents. Returns a package object."""
         tags = apt_pkg.ParseSection(control)
-        return self.parse_tags(tags, blob_id)
+        return self.parse_tags(meta, tags, blob_id)
 
-    def parse_tags(self, apt_tags, blob_id):
+    def parse_tags(self, meta, apt_tags, blob_id):
         '''Parse an apt tags section object directly.
 
         Returns a package object.
         '''
-        tags = DebTags(apt_tags)
-        raw_file_list = tags['Files']
-        extra_files = []
-        for line in raw_file_list.strip().splitlines():
-            (md5sum, dummy, name) = line.strip().split()
-            extra_files.append(('md5:' + md5sum, name))
-        extra_files = tuple(extra_files)
+        tags = apt_tags
+        fields = []
+        for tag, l_tag in [ (t, t.lower()) for t in apt_tags.keys() ]:
+            if l_tag in ('source', 'package'):
+                # be tolerant of both dsc's and apt source stanzas.
+                dom, key, value = 'deb', 'name', tags[tag]
+            elif l_tag == 'files':
+                raw_file_list = tags['Files']
+                extra_files = []
+                for line in raw_file_list.strip().splitlines():
+                    (md5sum, dummy, name) = line.strip().split()
+                    extra_files.append(('md5:' + md5sum, name))
+                extra_files = tuple(extra_files)
+                dom, key, value = '', 'extra-file', extra_files
+            elif l_tag == 'version':
+                dom, key, value = 'deb', 'version', DebianVersion(tags[tag])
+            elif l_tag == 'architecture':
+                dom, key, value = 'deb', 'arch', tags[tag]
+            elif l_tag == 'directory':
+                dom, key, value = 'deb', 'directory', tags[tag]
+            else:
+                dom, key, value = 'deb', tag, tags[tag]
+            fields.append((dom, key, value))
 
-        # be tolerant of both dsc's and apt source stanzas.
-        if 'Source' in tags:
-            name = tags['Source']
-        else:
-            name = tags['Package']
+        for raw_blob_id, filename in extra_files:
+            if filename.endswith('.dsc'):
+                fields.append(('', 'raw_filename', filename))
+                found_blob_id = raw_blob_id
+                break
 
-        version = DebianVersion(tags['Version'])
+        if not blob_id and found_blob_id:
+            blob_id = found_blob_id
 
-        fields = { 'blob-id': blob_id,
-                   'name': name,
-                   'version': version,
-                   'arch': tags['Architecture'],
-                   'extra-file': extra_files }
-
-        if 'Directory' in tags:
-            fields['directory'] = tags['Directory']
-
-        return Package(fields, self)
+        package = Package(meta, self, blob_id)
+        meta.set_group(package, fields)
+        return package
 
     def extract_header(self, filename):
         """Extract control file contents from a dsc file."""
@@ -270,43 +301,59 @@ class _Deb(object):
     format_string = 'deb'
     role_string = 'binary'
 
-    def parse(self, control, blob_id):
+    def parse(self, meta, control, blob_id):
         """Parse control file contents. Returns a package object."""
         tags = apt_pkg.ParseSection(control)
-        return self.parse_tags(tags, blob_id)
+        return self.parse_tags(meta, tags, blob_id)
 
-    def parse_tags(self, apt_tags, blob_id):
+    def parse_tags(self, meta, apt_tags, blob_id):
         '''Parse an apt tags section object directly.
 
         Returns a package object.
         '''
-        tags = DebTags(apt_tags)
-        name = tags['Package']
-        version = DebianVersion(tags['Version'])
+        tags = apt_tags
 
-        sp_name = name
-        sp_version = version
-        if 'Source' in tags:
-            sp_name = tags['Source']
-            if re.search(r'\(', sp_name):
-                match = re.match(r'(\S+)\s*\((.*)\)', sp_name)
-                (sp_name, sp_raw_version) = match.groups()
-                sp_version = DebianVersion(sp_raw_version)
+        sp_name, sp_version = None, None
 
-        contents = { 'blob-id': blob_id,
-                     'name': name,
-                     'version': version,
-                     'sp-name' : sp_name,
-                     'sp-version' : sp_version,
-                     'arch': tags['Architecture'] }
+        fields = []
+        for tag, l_tag in [ (t, t.lower()) for t in tags.keys() ]:
+            if l_tag == 'package':
+                name = tags[tag]
+                dom, key, value = 'deb', 'name', name
+            elif l_tag == 'source':
+                sp_name = tags[tag]
+                if re.search(r'\(', sp_name):
+                    match = re.match(r'(\S+)\s*\((.*)\)', sp_name)
+                    (sp_name, sp_raw_version) = match.groups()
+                    sp_version = DebianVersion(sp_raw_version)
+            elif l_tag == 'version':
+                version = DebianVersion(tags[tag])
+                dom, key, value = 'deb', 'version', version
+            elif l_tag == 'architecture':
+                dom, key, value = 'deb', 'arch', tags[tag]
+            elif l_tag == 'md5sum':
+                found_blob_id = 'md5:' + tags[tag]
+            elif l_tag == 'filename':
+                dom, key, value = '', 'raw_filename', tags[tag]
+            else:
+                dom, key, value = 'deb', tag, tags[tag]
+            fields.append((dom, key, value))
 
-        if 'MD5Sum' in tags:
-            contents['raw_md5sum'] = tags['MD5Sum']
+        if not sp_name:
+            sp_name = name
 
-        if 'Filename' in tags:
-            contents['raw_filename'] = tags['Filename']
+        if not sp_version:
+            sp_version = version
 
-        return Package(contents, self)
+        fields.append(('', 'sp-name', sp_name))
+        fields.append(('', 'sp-version', sp_version))
+
+        if not blob_id and found_blob_id:
+            blob_id = found_blob_id
+
+        package = Package(meta, self, blob_id)
+        meta.set_group(package, fields)
+        return package
 
     def extract_header(self, filename):
         """Extract control file contents from a deb package."""
@@ -347,6 +394,8 @@ def get_rpm_header(handle):
 
 class RPMVersion(object):
     """A comparable RPM package version."""
+    __slots__ = ('epoch', 'version', 'release', 'string_without_epoch',
+                 'full_version', 'tuple')
     def __init__(self, header = None, version_tuple = None):
         if header:
             if header[rpm_api.RPMTAG_EPOCH]:
@@ -377,7 +426,7 @@ class _Rpm(object):
     format_string = 'rpm'
     role_string = 'binary'
 
-    def parse(self, raw_header, blob_id):
+    def parse(self, meta, raw_header, blob_id):
         """Parse an rpm header. Returns a package object."""
         header = rpm_api.headerLoad(raw_header)
         source_rpm = header[rpm_api.RPMTAG_SOURCERPM]
@@ -386,11 +435,13 @@ class _Rpm(object):
         if source_rpm == []:
             source_rpm = None
 
-        return Package({ 'blob-id': blob_id,
-                         'name': header[rpm_api.RPMTAG_NAME],
-                         'version': RPMVersion(header),
-                         'arch': header[rpm_api.RPMTAG_ARCH],
-                         'source-rpm': source_rpm }, self)
+        package = Package(meta, self, blob_id)
+        meta.set(package, 'rpm', 'name', header[rpm_api.RPMTAG_NAME])
+        meta.set(package, 'rpm', 'version', RPMVersion(header))
+        meta.set(package, 'rpm', 'arch', header[rpm_api.RPMTAG_ARCH])
+        meta.set(package, 'rpm', 'source-rpm', source_rpm)
+
+        return package
 
     def extract_header(self, filename):
         """Extract an rpm header from an rpm package file."""

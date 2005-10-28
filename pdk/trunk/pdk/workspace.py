@@ -36,8 +36,8 @@ from pdk.exceptions import ConfigurationError, SemanticError, \
 from pdk.util import pjoin, make_self_framer, cached_property, \
      relative_path
 from pdk.semdiff import print_bar_separated, print_man, \
-     iter_diffs, iter_diffs_meta
-from pdk.component import ComponentDescriptor
+     iter_diffs, iter_diffs_meta, field_filter
+from pdk.component import ComponentDescriptor, ComponentMeta
 
 # current schema level for this pdk build
 schema_target = 4
@@ -490,37 +490,37 @@ def semdiff(args):
     get_desc = workspace.get_component_descriptor
     if args.opts.channels:
         ref = files[0]
+        old_meta = ComponentMeta()
         desc = get_desc(ref)
-        component = desc.load(cache)
+        component = desc.load(old_meta, cache)
         old_package_list = component.direct_packages
         world = workspace.world
         new_package_list = list(world.iter_packages(args.opts.channels))
-        old_meta = {}
         new_meta = {}
     elif len(files) == 1:
         ref = files[0]
         # Get old
+        old_meta = ComponentMeta()
         old_desc = get_desc(ref, workspace.vc.cat(ref))
-        old_component = old_desc.load(cache)
+        old_component = old_desc.load(old_meta, cache)
         old_package_list = old_component.direct_packages
-        old_meta = old_component.meta
         # Get new
+        new_meta = ComponentMeta()
         new_desc = get_desc(ref)
-        new_component = new_desc.load(cache)
+        new_component = new_desc.load(new_meta, cache)
         new_package_list = new_component.direct_packages
-        new_meta = new_component.meta
     elif len(files) == 2:
         ref = files[1]
         # get old
-        old_desc = get_desc(files[0])
-        old_component = old_desc.load(cache)
+        old_meta = ComponentMeta()
+        old_desc = get_desc(old_meta, files[0])
+        old_component = old_desc.load(old_meta, cache)
         old_package_list = old_component.direct_packages
-        old_meta = old_component.meta
         # Get new
+        new_meta = ComponentMeta()
         new_desc = get_desc(files[1])
-        new_component = new_desc.load(cache)
+        new_component = new_desc.load(new_meta, cache)
         new_package_list = new_component.direct_packages
-        new_meta = new_component.meta
     else:
         raise CommandLineError("Argument list is invalid")
 
@@ -541,10 +541,13 @@ def dumpmeta(args):
     cache = workspace.cache
     component_refs = args.get_reoriented_files(workspace)
     for component_ref in component_refs:
-        component = get_desc(component_ref).load(cache)
-        for item in component.meta:
-            predicates = component.meta[item]
+        meta = ComponentMeta()
+        get_desc(component_ref).load(meta, cache)
+        for item in meta:
+            predicates = meta[item]
             for key, value in predicates.iteritems():
+                if key in field_filter:
+                    continue
                 if isinstance(item, Package):
                     ref = item.blob_id
                     name = item.name
@@ -553,7 +556,7 @@ def dumpmeta(args):
                     ref = item.ref
                     name = ''
                     type_string = 'component'
-                print '|'.join([ref, type_string, name, key, value])
+                print '|'.join([ref, type_string, name, key, str(value)])
 
 dumpmeta = make_invokable(dumpmeta)
 

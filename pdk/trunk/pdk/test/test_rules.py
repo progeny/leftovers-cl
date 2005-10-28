@@ -16,8 +16,8 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-from pdk.test.utest_util import Test
-from pdk.package import Package
+from pdk.test.utest_util import Test, MockPackage
+from pdk.package import deb
 
 from pdk.rules import FieldMatchCondition, AndCondition, OrCondition, \
      OneMatchMetacondition, TrueCondition, Rule, CompositeRule
@@ -32,10 +32,10 @@ class ConditionsAndRulesFixture(Test):
         self.or_condition = OrCondition([self.name_condition,
                                          self.version_condition])
 
-        self.a1 = Package({'name': 'a', 'version': '1'}, None)
-        self.a2 = Package({'name': 'a', 'version': '2'}, None)
-        self.b1 = Package({'name': 'b', 'version': '1'}, None)
-        self.b2 = Package({'name': 'b', 'version': '2'}, None)
+        self.a1 = MockPackage('a', '1', deb)
+        self.a2 = MockPackage('a', '2', deb)
+        self.b1 = MockPackage('b', '1', deb)
+        self.b2 = MockPackage('b', '2', deb)
 
         self.all_packages = [ self.a1, self.a2, self.b1, self.b2 ]
 

@@ -30,7 +30,7 @@ import optparse
 from sets import Set
 from itertools import chain
 from pdk import workspace
-from pdk.component import ComponentDescriptor, Metafilter
+from pdk.component import ComponentDescriptor, ComponentMeta
 from pdk.exceptions import SemanticError, InputError, CommandLineError, \
                 IntegrityFault
 import pdk.log as log
@@ -44,19 +44,45 @@ __revision__ = "$Progeny$"
 # The following lists are derived from the field sort order in apt.
 # As of apt 0.5.28.1, that is in apt-pkg/tagfile.cc, starting at
 # line 363.
-package_field_order = [ "Package", "Essential", "Status", "Priority",
-                        "Section", "Installed-Size", "Maintainer",
-                        "Architecture", "Source", "Version", "Replaces",
-                        "Provides", "Depends", "Pre-Depends", "Recommends",
-                        "Suggests", "Conflicts", "Conffiles", "Filename",
-                        "Size", "MD5Sum", "SHA1Sum", "Description" ]
+deb_binary_field_order = [
+    "Package", 'name', "Essential", "Status", "Priority",
+    "Section", "Installed-Size", "Maintainer",
+    "Architecture", 'arch', "Source", "Version", 'version', "Replaces",
+    "Provides", "Depends", "Pre-Depends", "Recommends",
+    "Suggests", "Conflicts", "Conffiles", "Filename",
+    "Size", "MD5Sum", "SHA1Sum", "Description" ]
 
-source_field_order = [ "Package", "Source", "Binary", "Version", "Priority",
-                       "Section", "Maintainer", "Build-Depends",
-                       "Build-Depends-Indep", "Build-Conflicts",
-                       "Build-Conflicts-Indep", "Architecture",
-                       "Standards-Version", "Format", "Directory", "Files" ]
+deb_source_field_order = [
+    "Package", "Source", 'name', "Binary", "Version", 'version', "Priority",
+    "Section", "Maintainer", "Build-Depends",
+    "Build-Depends-Indep", "Build-Conflicts",
+    "Build-Conflicts-Indep", "Architecture", 'arch',
+    "Standards-Version", "Format", "Directory", "Files" ]
 
+def make_deb_field_comparator(field_order):
+    """Make a comparator which sorts apt fields into order
+
+    Fields not appearing in the given order are sorted and placed
+    after all the given fields.
+    """
+    field_order_dict = dict([ (f, i) for i, f in enumerate(field_order) ])
+    def _comparator(field_a, field_b):
+        """Field comparing closure."""
+        try:
+            return cmp(field_order_dict[field_a], field_order_dict[field_b])
+        except KeyError:
+            a_in_dict = field_a in field_order_dict
+            b_in_dict = field_b in field_order_dict
+            if not a_in_dict and not b_in_dict:
+                return cmp(field_a, field_b)
+            elif a_in_dict:
+                return -1
+            else:
+                return 1
+    return _comparator
+
+deb_source_field_cmp = make_deb_field_comparator(deb_source_field_order)
+deb_binary_field_cmp = make_deb_field_comparator(deb_binary_field_order)
 
 def compile_product(component_name):
     """Compile the product described by the component."""
@@ -68,9 +94,10 @@ def compile_product(component_name):
                    'apt-deb': compiler.create_debian_pool_repo,
                    'raw': compiler.create_raw_package_dump_repo }
 
-    product = ComponentDescriptor(component_name).load(cache)
-    if product in product.meta:
-        contents = dict(product.meta[product])
+    meta = ComponentMeta()
+    product = ComponentDescriptor(component_name).load(meta, cache)
+    if product in meta:
+        contents = meta[product].as_dict()
     else:
         contents = {}
 
@@ -193,91 +220,74 @@ class DebianPoolInjector(object):
 
         return (size, digest)
 
-
-    def header_transform(self, headers):
-        """Transform the raw dpkg headers into headers suitable for apt."""
-
-        # Get the data we need to add to the headers.
-        # Type:
-        is_source = self.package.role == "source"
-
-        # Relative path:
-        pool_path = self.get_relative_pool_path()
-        if not is_source:
-            pool_path = os.path.join(pool_path, self.package.filename)
-
-        # File size and MD5:
-        (size, md5_digest) = self.get_file_size_and_hash()
-
-        # Most transformations happen on single-line fields, and
-        # multi-line fields are always at the end of the headers.
-        # Thus, we split the headers into two groups.
-        multis = []
-        singles = []
-        in_multi = False
-        for line in headers:
-            if in_multi:
-                multis.append(line)
-            else:
-                if re.search(r':\s*$', line) or re.search(r'^ ', line):
-                    in_multi = True
-                    multis.append(line)
-                else:
-                    singles.append(line)
-
-        # Now transform the singles into a list of tuples.
-        singles_tuples = [tuple(re.split(r':\s+', x, 1)) for x in singles]
-
-        # Change the tuple list as needed, outputting to a dict.
-        singles_dict_out = {}
-
-        for (field, value) in singles_tuples:
-            if is_source and field == "Source":
-                singles_dict_out["Package"] = value
-            else:
-                singles_dict_out[field] = value
-
-        # Append extra fields.
-        if is_source:
-            singles_dict_out["Directory"] = pool_path + "\n"
-        else:
-            singles_dict_out["Size"] = "%d\n" % (size,)
-            singles_dict_out["Filename"] = pool_path + "\n"
-            singles_dict_out["MD5Sum"] = md5_digest + "\n"
-
-        # Only multi-line header change: if this is source, add
-        # information for the .dsc file.
-        if is_source:
-            multis.append(" %s %d %s\n" % (md5_digest, size,
-                                           self.package.filename))
-
-        # Change singles back into a list of lines.
-        singles = []
-        if is_source:
-            field_order = source_field_order
-        else:
-            field_order = package_field_order
-        for key in field_order:
-            if singles_dict_out.has_key(key):
-                singles.append("%s: %s" % (key, singles_dict_out[key]))
-
-        # Recombine with the multis and return.
-        return singles + multis
-
+    def get_source_file_line(self, blob_id, filename):
+        """Return a line appropriate for a single Sources 'Files:' entry."""
+        md5sum = re.match('md5:(.*)', blob_id).group(1)
+        return ' %s %d %s' \
+               % (md5sum, self.cache.get_size(blob_id), filename)
 
     def get_apt_header(self):
         """Return the full apt header for the package the object
         handles.
         """
+        apt_fields = {}
+        # I'm not entirely sure about this, as we are tangling apt
+        # knowledge with deb knowledge.
+        for field in self.package.contents.get_domain_predicates('deb'):
+            if field == 'name':
+                key, value = 'Package', self.package.name
+            elif field == 'version':
+                key, value = 'Version', self.package.version.full_version
+            elif field == 'arch':
+                key, value = 'Architecture', self.package.arch
+            else:
+                key, value = field, self.package[field]
+            apt_fields[key] = value
 
-        header_fn = self.cache.get_header_filename(self.package.blob_id)
-        header_info = open(header_fn)
-        header_lines = header_info.readlines()
-        header_info.close()
-        header_lines = self.header_transform(header_lines)
-        header_lines.append("\n")
+        pool_path_dir = self.get_relative_pool_path()
+        (size, md5_digest) = self.get_file_size_and_hash()
+        if self.package.role == 'binary':
+            field_cmp = deb_binary_field_cmp
+            pool_path = os.path.join(pool_path_dir, self.package.filename)
+
+            sp_name_str = self.package.sp_name
+            if self.package.sp_version != self.package.version:
+                sp_version_str = self.package.sp_version.full_version
+                source_value = '%s (%s)' % (sp_name_str, sp_version_str)
+            else:
+                source_value = sp_name_str
+            apt_fields['Source'] = source_value
+
+            apt_fields["Size"] = str(size)
+            apt_fields["Filename"] = pool_path
+            apt_fields["MD5Sum"] = md5_digest
+        else:
+            field_cmp = deb_source_field_cmp
+            pool_path = pool_path_dir
+            apt_fields["Directory"] = pool_path
+            extra_files = ['']
+            blob_id = self.package.blob_id
+            filename = self.package.filename
+            extra_files.append(self.get_source_file_line(blob_id, filename))
+            for blob_id, filename in self.package.extra_file:
+                extra_files.append(self.get_source_file_line(blob_id,
+                                                             filename))
+            extra_files_str = '\n'.join(extra_files)
+            apt_fields["Files"] = extra_files_str
+
+        sorted_fields = list(apt_fields)
+        sorted_fields.sort(field_cmp)
+
+        header_lines = []
+        for key in sorted_fields:
+            value = apt_fields[key]
+            if value and value[0].isspace():
+                spacer = ''
+            else:
+                spacer = ' '
+            header_lines.append('%s:%s%s\n' % (key, spacer, value))
+        header_lines.append('\n')
         return header_lines
-
 
     def get_architectures(self, available_archs):
         """Return the architecture this package supports."""
@@ -653,17 +663,9 @@ class Compiler:
             packages_dict = { 'main': product.packages }
 
 
-        filtered_packages_dict = {}
-        for apt_component, packages in packages_dict.items():
-            new_list = [ Metafilter(product.meta, p) for p in packages ]
-            filtered_packages_dict[apt_component] = new_list
-
-        packages_dict = filtered_packages_dict
-
         sections = packages_dict.keys()
         all_packages = Set(chain(*packages_dict.values()))
         arches = self.deb_scan_arches(all_packages)
-
         # Set True to use apt-ftparchive, False to use the direct version.
         cwd = os.getcwd()
         suitepath = pjoin('dists', suite)
@@ -689,8 +691,7 @@ class Compiler:
     def create_raw_package_dump_repo(self, component, dummy):
         """Link all the packages in the product to the repository."""
         os.mkdir('repo')
-        for raw_package in component.packages:
-            package = Metafilter(component.meta, raw_package)
+        for package in component.packages:
             os.link(self.cache.file_path(package.blob_id),
                     os.path.join('repo', package.filename)
                     )
@@ -703,11 +704,10 @@ class Compiler:
 
         format = contents['format']
         lines = []
-        for raw_package in component.packages:
-            cache_location = self.cache.file_path(raw_package.blob_id)
-            filtered = Metafilter(component.meta, raw_package)
-            package = overlay_getitem(filtered, cache_location, '')
-            lines.append(format % package)
+        for package in component.packages:
+            cache_location = self.cache.file_path(package.blob_id)
+            overlaid_package = overlay_getitem(package, cache_location, '')
+            lines.append(format % overlaid_package)
         lines.sort()
         for line in lines:
             print line

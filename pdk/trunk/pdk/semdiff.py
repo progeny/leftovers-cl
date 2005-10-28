@@ -27,6 +27,16 @@ from sets import Set
 from itertools import chain
 from pdk.package import Package
 
+field_filter = Set([
+    'Architecture', 'Binary', 'Build-Conflicts', 'Build-Conflicts-Indep',
+    'Build-Depends', 'Build-Depends-Indep', 'Conffiles', 'Conflicts',
+    'Depends', 'Description', 'Directory', 'Essential', 'Filename', 'Files',
+    'Format', 'Installed-Size', 'MD5Sum', 'Maintainer', 'Package',
+    'Pre-Depends', 'Priority', 'Provides', 'Recommends', 'Replaces',
+    'SHA1Sum', 'Section', 'Size', 'Source', 'Standards-Version', 'Status',
+    'Suggests', 'Version', 'Uploaders', 'arch', 'name', 'extra-file',
+    'source-rpm', 'sp-name', 'sp-version', 'version'])
+
 def index_by_fields(packages, fields):
     """Scan packages, return a dict indexed by the given fields."""
     index = {}
@@ -126,7 +136,8 @@ def get_joinable_meta_list(meta):
         predicates = meta[package]
         new_key = get_meta_key(package)
         for predicate, target in predicates.iteritems():
-            yield new_key, predicate, target
+            if predicate not in field_filter:
+                yield new_key, predicate, target
 
 def iter_diffs_meta(old_meta, new_meta):
     """Detect additions and drops of metadata items.
@@ -144,12 +155,10 @@ def iter_diffs_meta(old_meta, new_meta):
         yield (event_names[event_type], item, None)
 
 
-def print_report(old_component, new_component, printer):
+def print_report(old_meta, old_component, new_meta, new_component, printer):
     '''Print a human readable report diffing two components.'''
     old_package_list = old_component.direct_packages
-    old_meta = old_component.meta
     new_package_list = new_component.direct_packages
-    new_meta = new_component.meta
     diffs = iter_diffs(old_package_list, new_package_list)
     diffs_meta = iter_diffs_meta(old_meta, new_meta)
     data = chain(diffs, diffs_meta)
@@ -239,7 +248,7 @@ def get_meta_presence_fields(data):
     """Get fields used for added and dropped metadata."""
     key, predicate, target = data
     name, type_str, arch = key
-    return(type_str, name, arch, predicate, target)
+    return (type_str, name, arch, predicate, str(target))
 
 def get_package_diff_fields(old_package, new_package, ref):
     """Get fields used for package veresion changes."""

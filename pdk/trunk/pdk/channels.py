@@ -56,6 +56,7 @@ from pdk.util import cpath, gen_file_fragments, get_remote_file, \
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import deb, udeb, dsc, get_package_type, \
      UnknownPackageTypeError
+from pdk.meta import ComponentMeta
 
 def quote(raw):
     '''Create a valid filename which roughly resembles the raw string.'''
@@ -237,7 +238,7 @@ class AptDebSection(object):
         for package in \
                 self.iter_as_packages(tags_iterator):
             locator = self.strategy.get_locator(package)
-            package.contents['blob-id'] = locator.blob_id
+            package.blob_id = locator.blob_id
             yield package, locator.blob_id, locator
             if hasattr(package, 'extra_file'):
                 for extra_blob_id, extra_filename in package.extra_file:
@@ -257,7 +258,8 @@ class AptDebSection(object):
     def iter_as_packages(self, tags_iterator):
         """For each control or header, yield a stream of package objects."""
         for tags in tags_iterator:
-            yield self.strategy.package_type.parse_tags(tags, None)
+            meta = ComponentMeta()
+            yield self.strategy.package_type.parse_tags(meta, tags, None)
 
 make_comparable(AptDebSection, ('full_path', 'base_path'))
 
@@ -274,8 +276,8 @@ class AptDebBinaryStrategy(object):
 
     def get_locator(self, package):
         """Return base, filename, blob_id for a package"""
-        return FileLocator(self.base_path, package.raw_filename, \
-                           'md5:' + package.raw_md5sum, self.loader_factory)
+        return FileLocator(self.base_path, package.raw_filename,
+                           package.blob_id, self.loader_factory)
 
 class AptUDebBinaryStrategy(AptDebBinaryStrategy):
     '''Handle get_locator and package_type for AptDebSection
@@ -297,12 +299,9 @@ class AptDebSourceStrategy(object):
 
     def get_locator(self, package):
         """Return base, filename, blob_id for a package"""
-        for md5_sum, filename in package.extra_file:
-            if filename.endswith('.dsc'):
-                base = self.base_path + package.directory
-                return FileLocator(base, filename, md5_sum,
-                                   self.loader_factory)
-        raise SemanticError, 'no dsc found'
+        base = self.base_path + package.directory
+        return FileLocator(base, package.raw_filename, package.blob_id,
+                           self.loader_factory)
 
 class DirectorySection(object):
     '''Section object for dealing with local directories as channels.'''
@@ -342,7 +341,8 @@ class DirectorySection(object):
                 url = 'file://' + cpath(root)
                 locator = FileLocator(url, candidate, None,
                                       self.loader_factory)
-                package = package_type.parse(control, blob_id)
+                meta = ComponentMeta()
+                package = package_type.parse(meta, control, blob_id)
                 yield package, blob_id, locator
                 if hasattr(package, 'extra_file'):
                     for extra_blob_id, extra_filename in package.extra_file:
@@ -643,7 +643,8 @@ class OutsideWorld(object):
             if not record.section_name in section_names:
                 continue
             found_filename = os.path.basename(record.locator.filename)
-            record.package.contents['found_filename'] = found_filename
+            record.package.contents.set('', 'found_filename',
+                                        found_filename)
             yield record.package, record.locator
 
     def iter_packages(self, section_names = None):
@@ -661,14 +662,14 @@ class ChannelBackedCache(object):
         self.world = world
         self.cache = cache
 
-    def load_package(self, blob_id, type_string):
+    def load_package(self, meta, blob_id, type_string):
         '''Behave like Cache.load_packages.
 
         Tries to load from local cache before looking for a package object
         in the channels.
         '''
         if blob_id in self.cache:
-            return self.cache.load_package(blob_id, type_string)
+            return self.cache.load_package(meta, blob_id, type_string)
 
         if blob_id in self.world.by_blob_id:
             item = self.world.by_blob_id[blob_id]

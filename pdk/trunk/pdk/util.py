@@ -42,12 +42,14 @@ def caller():
 
     Very useful during debugging.
     """
-    record = inspect.stack()[2] # caller's caller
+    stack = inspect.stack()
+    record = stack[2] # caller's caller
     source = os.path.basename(record[1])
     line = record[2]
     func = record[3]
     text = record[4]
-    return "%s(%d):%s:%s" % (source, line, func, text)
+    stack_size = len(stack)
+    return "%s(%d):%d:%s:%s" % (source, line, stack_size, func, text)
 
 def cached_property(prop_name, create_fn):
     """Make a lazy property getter that memoizes it's value.

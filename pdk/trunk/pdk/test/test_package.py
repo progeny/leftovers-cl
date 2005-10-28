@@ -17,11 +17,11 @@
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 from sets import Set
-from pdk.test.utest_util import Test
-from cPickle import dumps, loads
+from pdk.test.utest_util import Test, MockPackage
 
+from pdk.component import ComponentMeta
 from pdk.package import \
-     Package, get_package_type, udeb, deb, dsc, srpm, rpm, \
+     get_package_type, udeb, deb, dsc, srpm, rpm, \
      sanitize_deb_header, \
      UnknownPackageTypeError, synthesize_version_string, DebianVersion
 
@@ -29,8 +29,8 @@ __revision__ = "$Progeny$"
 
 class TestPackageClass(Test):
     def test_emulation_behaviors(self):
-        p = Package({'a' : 1, 'b' : 2, 'ccc': 3, 'd-d': 4, 'version': None},
-                    None)
+        p = MockPackage('name', '2', deb,
+                        **{'a' : 1, 'b' : 2, 'ccc': 3, 'd-d': 4})
         self.assert_equal(1, p.a)
         self.assert_equal(2, p.b)
         self.assert_equal(3, p.ccc)
@@ -47,7 +47,7 @@ class TestPackageClass(Test):
         assert 'd-d' in p
         assert 'd_d' in p
 
-        self.assert_equal(5, len(p))
+        self.assert_equal(6, len(p))
 
         try:
             p.z
@@ -62,18 +62,17 @@ class TestPackageClass(Test):
             pass
 
     def test_package_is_hashable(self):
-        p = Package({'a' : 1, 'b' : 2, 'ccc': 3, 'd-d': 4, 'version': None},
-                    None)
+        p = MockPackage('a', '1', deb)
         Set([p])
 
     def test_get_file(self):
         class MockType(object):
+            format_string = 'deb'
             def get_filename(self, dummy):
                 return 'asdfjkl'
 
         package_type = MockType()
-        p = Package({'name': 'a', 'version': '2.3', 'release': '1.1',
-                     'format': 'deb', 'arch': 'i386'}, package_type)
+        p = MockPackage('a', '2.3-1.1', package_type, arch ='i386')
         self.assert_equal('asdfjkl', p.filename)
 
 class TestDeb(Test):
@@ -88,7 +87,8 @@ Description: abc
  jkl mno
 
 """
-        package = deb.parse(header, 'zzz')
+        meta = ComponentMeta()
+        package = deb.parse(meta, header, 'zzz')
         self.assert_equal(deb, package.package_type)
         self.assert_equal('zzz', package.blob_id)
         self.assertEquals('name', package.name)
@@ -119,7 +119,8 @@ Description: asdf
  Then more stuff.
 
 """
-        package = deb.parse(header, 'zzz')
+        meta = ComponentMeta()
+        package = deb.parse(meta, header, 'zzz')
         self.assertEquals('a', package['sp-name'])
 
     def test_has_source_version(self):
@@ -135,7 +136,8 @@ Description: asdf
  Then more stuff.
 
 """
-        package = deb.parse(header, 'zzz')
+        meta = ComponentMeta()
+        package = deb.parse(meta, header, 'zzz')
         self.assertEquals('a', package['sp-name'])
         self.assertEquals(None, package.sp_version.epoch)
         self.assertEquals('0.24', package.sp_version.version)
@@ -153,7 +155,8 @@ Files:
  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 111 zippy.orig.tar.gz
 
 """
-        package = dsc.parse(header, 'zzz')
+        meta = ComponentMeta()
+        package = dsc.parse(meta, header, 'zzz')
         self.assert_equal(dsc, package.package_type)
         self.assert_equal('zzz', package.blob_id)
         self.assertEquals('zippy', package.name)
@@ -207,12 +210,10 @@ class TestSanitizeDebHeader(Test):
 
 class TestGetFile(Test):
     def test_get_file(self):
-        p = Package({'name': 'a', 'version': DebianVersion('2.3-1'),
-                     'arch': 'i386'}, None)
+        p = MockPackage('a', DebianVersion('2.3-1'), deb, arch = 'i386')
         self.assert_equal('a_2.3-1_i386.deb', deb.get_filename(p))
         self.assert_equal('a_2.3-1.dsc', dsc.get_filename(p))
-        p = Package({'name': 'a', 'version': DebianVersion('1:2.3'),
-                     'arch': 'i386'}, None)
+        p = MockPackage('a', DebianVersion('1:2.3'), deb, arch = 'i386')
         self.assert_equal('a_2.3_i386.deb', deb.get_filename(p))
         self.assert_equal('a_2.3.dsc', dsc.get_filename(p))
 
@@ -252,21 +253,10 @@ class TestPackageVersionCmp(Test):
         self.assert_equal('1.2', old.version)
         self.assert_equal('3', old.release)
 
-class TestPickleablePackage(Test):
-    def test_new(self):
-        '''Package.__new__ is needed for setting state from pickle.
-        Done wrong, packge.contents causes a stack overflow.
-        '''
-        original = Package({'version': '2'}, deb)
-        blob = dumps(original, 2)
-        unpickled = loads(blob)
-        self.assert_equals_long(original.contents, unpickled.contents)
-
 class TestSortPackages(Test):
     def test_sort(self):
         def make_package(name, version, arch, package_type):
-            return Package({'name': name, 'version': DebianVersion(version),
-                            'arch': arch}, package_type)
+            return MockPackage(name, version, package_type, arch = arch)
 
         deb_a1 = make_package('a', '1', 'i386', deb)
         deb_a2 = make_package('a', '2', 'i386', deb)

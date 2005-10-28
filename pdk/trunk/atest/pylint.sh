@@ -391,6 +391,8 @@ ignore_message '^pdk.package:W0232:.*:_Deb:'
 ignore_message '^pdk.package:W0232:.*:_UDeb:'
 ignore_message '^pdk.package:W0232:.*:_SRpm:'
 ignore_message '^pdk.package:W0232:.*:_Rpm:'
+ignore_message '^pdk.package:E0201:.*:Package.*'
+ignore_message '^pdk.package:E0601:.*:.*self.*'
 
 ignore_message '^pdk.component:W0302:.*'
 
@@ -404,6 +406,8 @@ ignore_message '^pdk.audit:W0613:.*get_problem_fields'
 ignore_message '^pdk.repogen:E0101:.*:DebianReleaseWriter'
 ignore_message '^pdk.rules:W0131:.*evaluate.*'
 ignore_message '^pdk.rules:W0232:.*: Class has no __init__ method'
+
+ignore_message '^pdk.meta:E0201:.*:_ComponentMetaGroup'
 
 # for unit tests only
 ignore_message '^pdk.test..*:E0201:.*assert_'

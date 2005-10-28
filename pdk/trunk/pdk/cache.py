@@ -34,7 +34,7 @@ import os
 import os.path
 import stat
 import re
-from stat import ST_INO
+from stat import ST_INO, ST_SIZE
 import sha
 import md5
 import gzip
@@ -263,6 +263,11 @@ class SimpleCache(object):
         filepath = self.file_path(blob_id)
         return os.stat(filepath)[ST_INO]
 
+    def get_size(self, blob_id):
+        """Return the inode of a file given blob_id"""
+        filepath = self.file_path(blob_id)
+        return os.stat(filepath)[ST_SIZE]
+
     def iter_sha1_ids(self):
         """Iterate over the list of all the sha-1 ids in this cache."""
         rexp = re.compile('sha-1:[a-fA-F0-9]+$')
@@ -324,7 +329,7 @@ class Cache(SimpleCache):
             os.unlink(temp_path)
 
 
-    def load_package(self, blob_id, package_format):
+    def load_package(self, meta, blob_id, package_format):
         """Load the raw header data into memory from a package
         """
         package_type = get_package_type(format = package_format)
@@ -347,6 +352,6 @@ class Cache(SimpleCache):
             self.add_header(header, blob_id)
 
         header = open(header_file).read()
-        return package_type.parse(header, blob_id)
+        return package_type.parse(meta, header, blob_id)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

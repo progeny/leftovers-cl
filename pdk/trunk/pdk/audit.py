@@ -28,7 +28,7 @@ from sets import Set
 import sha
 import md5
 import pdk.workspace as workspace
-from pdk.component import ComponentDescriptor
+from pdk.component import ComponentDescriptor, ComponentMeta
 import optparse
 import pdk.log as log
 from pdk.exceptions import IntegrityFault
@@ -65,6 +65,7 @@ def audit(argv):
     arbiter = Arbiter(note_problem)
 
     for component_name in args:
+        meta = ComponentMeta()
         def _note_blob_id(blob_id):
             """Make common predictions and warrants for blob_id.
 
@@ -75,7 +76,7 @@ def audit(argv):
 
         # Get the set of packages in the component
         descriptor = ComponentDescriptor(component_name)
-        component = descriptor.load(my_cache)
+        component = descriptor.load(meta, my_cache)
         set_of_packages = component.packages
 
         # predict expected blob_ids and headers

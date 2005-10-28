@@ -24,6 +24,7 @@ machine modifying components.
 
 """
 import os
+import re
 from sets import Set
 from pdk.util import write_pretty_xml, parse_xml
 from cElementTree import ElementTree, Element, SubElement
@@ -31,6 +32,7 @@ from pdk.rules import Rule, CompositeRule, AndCondition, OrCondition, \
      FieldMatchCondition
 from pdk.package import get_package_type
 from pdk.exceptions import PdkException, InputError, SemanticError
+from pdk.meta import ComponentMeta
 from xml.parsers.expat import ExpatError
 from pdk.log import get_logger
 from pdk.semdiff import print_report 
@@ -53,14 +55,14 @@ class ComponentDescriptor(object):
             try:
                 tree = parse_xml(handle)
             except ExpatError, message:
-                raise InputError(message)
+                raise InputError(str(message))
 
         else:
             if os.path.exists(filename):
                 try:
                     tree = parse_xml(filename)
                 except ExpatError, message:
-                    raise InputError(filename, message)
+                    raise InputError(filename, str(message))
             else:
                 message = 'Component descriptor "%s" does not exist.' \
                           % filename
@@ -77,8 +79,9 @@ class ComponentDescriptor(object):
 
         self.build_component_descriptor(tree.getroot())
 
-    def load(self, cache):
-        """Instantiate a component object tree for this descriptor."""
+    def load_raw(self, meta, cache):
+        """Build up the raw component/package tree but don't fire any rules.
+        """
         component = Component(self.filename)
         field_names = ('id', 'name', 'description', 'requires', 'provides')
         for field_name in field_names:
@@ -96,18 +99,13 @@ class ComponentDescriptor(object):
                         local_rules.append(ref.rule)
                         refs = ref.children
                     for concrete_ref in refs:
-                        package = concrete_ref.load(cache)
+                        package = concrete_ref.load(meta, cache)
                         component.packages.append(package)
                         component.direct_packages.append(package)
-                        if not concrete_ref.verify(cache):
-                            message = 'Concrete package does not ' \
-                                      'meet expected constraints: %s' \
-                                      % concrete_ref.blob_id, package
-                            raise SemanticError(message)
                         local_rules.append(concrete_ref.rule)
                 elif isinstance(ref, ComponentReference):
                     child_descriptor = ref.load()
-                    child_component = child_descriptor.load(cache)
+                    child_component = child_descriptor.load_raw(meta, cache)
                     component.direct_components.append(child_component)
                     component.components.append(child_component)
                     component.components.extend(child_component.components)
@@ -125,15 +123,40 @@ class ComponentDescriptor(object):
             raise SemanticError(group_message)
 
         component.rules.extend(local_rules)
+        return component
+
+    def parse_domain(raw_string):
+        """Parse the domain and value out of a raw meta value."""
+        match = re.match(r'(.*?)\.(.*)', raw_string)
+        if match:
+            return (match.group(1), match.group(2))
+        else:
+            return ('', raw_string)
+
+    parse_domain = staticmethod(parse_domain)
+
+    def load(self, meta, cache):
+        """Instantiate a component object tree for this descriptor."""
+        component = self.load_raw(meta, cache)
         uber_rule = CompositeRule(component.rules)
+
+        # fire rule on all packages
         for package in component.packages:
-            for package, key, value in uber_rule.fire(package):
-                component.meta.update({package: {key: value}})
+            for package, raw_predicate, target in uber_rule.fire(package):
+                domain, predicate = self.parse_domain(raw_predicate)
+                meta.set(package, domain, predicate, target)
+
+        # fire rule on all components
         for decendent_component in component.components:
-            for found_component, key, value in \
+            for found_component, raw_predicate, target in \
                     uber_rule.fire(decendent_component):
-                component.meta.update({found_component: {key: value}})
-        component.meta.update({component: dict(self.meta)})
+                domain, predicate = self.parse_domain(raw_predicate)
+                meta.set(found_component, domain, predicate, target)
+
+        # add local metadata last
+        for raw_predicate, target in self.meta:
+            domain, predicate = self.parse_domain(raw_predicate)
+            meta.set(component, domain, predicate, target)
 
         return component
 
@@ -318,11 +341,12 @@ class ComponentDescriptor(object):
 
         # now that we have all downloads done, pass through again looking
         # for extra files
+        meta = ComponentMeta()
         extra_blob_ids = []
         for ref in self.iter_full_package_refs():
             if not ref.blob_id:
                 continue
-            package = ref.load(cache)
+            package = ref.load(meta, cache)
             if hasattr(package, 'extra_file'):
                 for extra_blob_id, dummy in package.extra_file:
                     extra_blob_ids.append(extra_blob_id)
@@ -478,8 +502,10 @@ class ComponentDescriptor(object):
         '''Run semdiff between self and its previously written state.'''
         orig_descriptor = ComponentDescriptor(self.filename)
         c_cache = workspace.world.get_backed_cache(workspace.cache)
-        print_report(orig_descriptor.load(c_cache), self.load(c_cache),
-                     printer)
+        meta1 = ComponentMeta()
+        meta2 = ComponentMeta()
+        print_report(meta1, orig_descriptor.load(meta1, c_cache),
+                     meta2, self.load(meta2, c_cache), printer)
 
 
 class Component(object):
@@ -491,11 +517,11 @@ class Component(object):
     __slots__ = ('ref', 'type',
                  'id', 'name', 'description', 'requires', 'provides',
                  'packages', 'direct_packages',
-                 'components', 'direct_components', 'meta', 'rules')
+                 'components', 'direct_components', 'rules')
     identity_fields = ('ref', 'type',
                        'id', 'name', 'description', 'requires', 'provides',
                        'direct_packages',
-                       'direct_components', 'meta')
+                       'direct_components')
 
     def __init__(self, ref):
         self.ref = ref
@@ -511,7 +537,6 @@ class Component(object):
         self.components = []
         self.direct_packages = []
         self.direct_components = []
-        self.meta = ComponentMeta()
         self.rules = []
 
     def _get_values(self):
@@ -528,44 +553,6 @@ class Component(object):
 
     def __hash__(self):
         return hash(self._get_values())
-
-
-class ComponentMeta(object):
-    """Represents overridable component metadata.
-
-    This object behaves like a dict of dicts of strings with limited
-    write capabilities.
-
-    Use the update method to add/override existing data. Using the update
-    method to copy data directly from one object to another should result in
-    a proper shallow copy, at least where the two first two levels of dicts
-    are concerned.
-    """
-    def __init__(self):
-        self.data = {}
-
-    def update(self, new_items):
-        """Copy/override new_items into current data"""
-        for key in new_items:
-            if key not in self.data:
-                self.data[key] = {}
-            self.data[key].update(new_items[key])
-
-    def __getitem__(self, index):
-        """Retrieve a data item."""
-        return self.data[index]
-
-    def __iter__(self):
-        """Return an iterator. Imitates iter(dict)."""
-        return iter(self.data)
-
-    def __nonzero__(self):
-        """Does this object contain any data? Imitates bool(dict)."""
-        return bool(self.data)
-
-    def __repr__(self):
-        """Return a string represntation of the underlying dict."""
-        return repr(self.data)
 
 
 def get_deb_child_condition_data(package):
@@ -660,17 +647,16 @@ class PackageReference(object):
                                 fields, [])
     from_package = staticmethod(from_package)
 
-    def verify(self, cache):
-        '''Check if the referred to package meets the rule criteria.'''
-        if self.blob_id:
-            return self.rule.condition.evaluate(self.load(cache))
-        else:
-            return True
-
-    def load(self, cache):
+    def load(self, meta, cache):
         '''Load the package associated with this ref.'''
-        return cache.load_package(self.blob_id,
-                                  self.package_type.type_string)
+        package = cache.load_package(meta, self.blob_id,
+                                     self.package_type.type_string)
+        if not(self.rule.condition.evaluate(package)):
+            message = 'Concrete package does not ' + \
+                      'meet expected constraints: %s' \
+                      % package.blob_id
+            raise SemanticError(message)
+        return package
 
     def is_abstract(self):
         '''Return true if this package reference is abstact.'''
@@ -744,38 +730,5 @@ class ComponentReference(object):
     def load(self):
         '''Instantiate the ComponentDescriptor object for this reference.'''
         return ComponentDescriptor(self.filename)
-
-class Metafilter(object):
-    '''Delegates attribute and item lookups through metadata.
-
-    Wraps other objects and provides __getattr__ and __getitem__.
-
-    If the provided metadata has data for the given key or attribute, the
-    metadata value is provided. Otherwise, the provided object handles
-    the key or attribute normally.
-    '''
-    def __init__(self, meta, filteree):
-        self.__meta = meta
-        self.__filteree = filteree
-
-    def __getattr__(self, name):
-        return self.__try_meta(name) or getattr(self.__filteree, name)
-
-    def __getitem__(self, name):
-        return self.__try_meta(name) or self.__filteree[name]
-
-    def __try_meta(self, name):
-        '''Try to find the named attribute/item in metadata.
-
-        Returns the found value on success, None on failure.
-        '''
-        if self.__filteree in self.__meta:
-            meta_dict = self.__meta[self.__filteree]
-            if name in meta_dict:
-                return meta_dict[name]
-        return None
-
-    def __repr__(self):
-        return '<Metafilter (%s)>' % self.__filteree
 
 # vim:ai:et:sts=4:sw=4:tw=0:

@@ -29,6 +29,7 @@ from pdk.test.test_rules import *
 from pdk.test.test_component_tree_builder import *
 from pdk.test.test_diff import *
 from pdk.test.test_progress import *
+from pdk.test.test_meta import *
 
 if __name__ == "__main__":
     unittest.main()

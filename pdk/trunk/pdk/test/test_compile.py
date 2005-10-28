@@ -22,6 +22,7 @@ from pdk.test.utest_util import TempDirTest
 from pdk.cache import Cache
 from pdk.util import pjoin, cpath
 from pdk.package import Package
+from pdk.component import ComponentMeta
 
 from pdk.repogen import DebianReleaseWriter, LazyWriter, \
      DebianDirectPoolRepo, DebianPoolInjector, Compiler
@@ -88,6 +89,7 @@ class CacheFixture(TempDirTest):
 class DebianPoolFixture(CacheFixture):
     def set_up(self):
         super(DebianPoolFixture, self).set_up()
+        self.meta = ComponentMeta()
         self.repo = DebianDirectPoolRepo(pjoin(self.work_dir, '.'),
                                          'dists/happy',
                                          Set(['i386', 'sparc', 'source']),
@@ -168,12 +170,12 @@ class TestDebianPoolInjector(DebianPoolFixture):
         super(TestDebianPoolInjector, self).set_up()
 
         blob_id = 'sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b'
-        self.bin = self.cache.load_package(blob_id, 'deb')
+        self.bin = self.cache.load_package(self.meta, blob_id, 'deb')
         self.bin_injector = DebianPoolInjector(self.cache, self.bin, 'main',
                                                self.repo.repo_dir)
 
         blob_id = 'sha-1:9d26152e78ca33a3d435433c67644b52ae4c670c'
-        self.src = self.cache.load_package(blob_id, 'dsc')
+        self.src = self.cache.load_package(self.meta, blob_id, 'dsc')
         self.src_injector = DebianPoolInjector(self.cache, self.src, 'main',
                                                self.repo.repo_dir)
 
