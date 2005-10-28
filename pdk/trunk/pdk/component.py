@@ -47,8 +47,14 @@ class ComponentDescriptor(object):
 
     Use load(cache) to instantiate trees of Component objects.
     """
-    def __init__(self, filename, handle = None):
+    def __init__(self, filename, handle = None, get_desc = None):
         self.filename = filename
+
+        if get_desc:
+            self.get_desc = get_desc
+        else:
+            self.get_desc = ComponentDescriptor
+
         if filename is None:
             tree = ElementTree(element = Element('component'))
         elif handle:
@@ -104,7 +110,7 @@ class ComponentDescriptor(object):
                         component.direct_packages.append(package)
                         local_rules.append(concrete_ref.rule)
                 elif isinstance(ref, ComponentReference):
-                    child_descriptor = ref.load()
+                    child_descriptor = ref.load(self.get_desc)
                     child_component = child_descriptor.load_raw(meta, cache)
                     component.direct_components.append(child_component)
                     component.components.append(child_component)
@@ -727,8 +733,8 @@ class ComponentReference(object):
     def __init__(self, filename):
         self.filename = filename
 
-    def load(self):
+    def load(self, get_desc):
         '''Instantiate the ComponentDescriptor object for this reference.'''
-        return ComponentDescriptor(self.filename)
+        return get_desc(self.filename)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

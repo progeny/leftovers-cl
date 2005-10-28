@@ -27,7 +27,11 @@
 set_up_repogen_fixture test-repogen
 cd test-repogen
 
-pdk repogen product.xml
+# should still work from a subdirectory
+mkdir tmp
+cd tmp
+pdk repogen ../product.xml
+cd -
 
 [ -d './repo' ] || fail "mising repo directory"
 

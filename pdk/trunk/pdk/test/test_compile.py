@@ -93,13 +93,14 @@ class DebianPoolFixture(CacheFixture):
         self.repo = DebianDirectPoolRepo(pjoin(self.work_dir, '.'),
                                          'dists/happy',
                                          Set(['i386', 'sparc', 'source']),
-                                         Set(['main', 'contrib']))
+                                         Set(['main', 'contrib']),
+                                         os.path.join(self.work_dir,
+                                                      'repo'))
 
 class TestDebianPoolRepo(DebianPoolFixture):
     def test_repo_and_tmp_dir(self):
         self.assert_equal(pjoin(self.work_dir, 'repo'), self.repo.repo_dir)
-        self.assert_equal(pjoin(self.work_dir, 'tmp', 'repo', 'dists',
-                                'happy'),
+        self.assert_equal(pjoin(self.work_dir, 'tmp', 'dists', 'happy'),
                           self.repo.tmp_dir)
 
     def test_lazy_writer(self):

@@ -26,13 +26,11 @@ import os.path
 from time import strftime, gmtime
 import re
 import md5
-import optparse
 from sets import Set
 from itertools import chain
-from pdk import workspace
-from pdk.component import ComponentDescriptor, ComponentMeta
-from pdk.exceptions import SemanticError, InputError, CommandLineError, \
-                IntegrityFault
+from commands import mkarg
+from pdk.component import ComponentMeta
+from pdk.exceptions import SemanticError, InputError, IntegrityFault
 import pdk.log as log
 from pdk.util import ensure_directory_exists, pjoin, LazyWriter
 from pdk.package import udeb
@@ -84,10 +82,17 @@ def make_deb_field_comparator(field_order):
 deb_source_field_cmp = make_deb_field_comparator(deb_source_field_order)
 deb_binary_field_cmp = make_deb_field_comparator(deb_binary_field_order)
 
-def compile_product(component_name):
-    """Compile the product described by the component."""
+def compile_product(component_name, cache, repo_dir, get_desc):
+    """Compile the product described by the component.
 
-    cache = workspace.current_workspace().cache
+    component_name is a component to load and compile a repo from.
+
+    cache is the package cache
+
+    repo_dir should be an absolute directory were the repo will be
+    created.
+    """
+
     compiler = Compiler(cache)
 
     repo_types = { 'report': compiler.dump_report,
@@ -95,7 +100,7 @@ def compile_product(component_name):
                    'raw': compiler.create_raw_package_dump_repo }
 
     meta = ComponentMeta()
-    product = ComponentDescriptor(component_name).load(meta, cache)
+    product = get_desc(component_name).load(meta, cache)
     if product in meta:
         contents = meta[product].as_dict()
     else:
@@ -120,10 +125,10 @@ def compile_product(component_name):
         raise InputError, message
     repo_type = repo_types[repo_type_string]
 
-    if os.path.exists('repo'):
-        os.system('rm -rf repo')
+    if os.path.exists(repo_dir):
+        os.system('rm -rf %s' % mkarg(repo_dir))
 
-    repo_type(product, contents)
+    repo_type(product, contents, repo_dir)
 
 class DebianPoolInjector(object):
     """This class handles the details of putting a package into a
@@ -334,27 +339,20 @@ class DebianPoolRepo(object):
 
     WARNING: Deprecated!  Use DebianDirectPoolRepo instead."""
 
-    repo_dir_name = 'repo'
     tmp_dir_name = 'tmp'
 
-    def __init__(self, work_dir, dist, arches, sections):
+    def __init__(self, work_dir, dist, arches, sections, repo_dir):
         self.work_dir = work_dir
         self.dist = dist
         self.arches = arches
         self.sections = sections
+        self.repo_dir = repo_dir
         self.file_lists = self.get_file_lists()
-
-
-    def get_repo_dir(self):
-        """Return the top level repo directory."""
-        return os.path.join(self.work_dir, self.repo_dir_name)
-    repo_dir = property(get_repo_dir)
 
 
     def get_tmp_dir(self):
         """Return the path for a temporary work area."""
-        return os.path.join(self.work_dir, self.tmp_dir_name
-                            , self.repo_dir_name, self.dist)
+        return os.path.join(self.work_dir, self.tmp_dir_name, self.dist)
     tmp_dir = property(get_tmp_dir)
 
 
@@ -628,7 +626,7 @@ class Compiler:
         return arches
 
 
-    def create_debian_pool_repo(self, product, provided_contents):
+    def create_debian_pool_repo(self, product, provided_contents, repo_dir):
         """Do the work of creating a pool repo given packages."""
 
         # some sane defaults for contents
@@ -670,9 +668,11 @@ class Compiler:
         cwd = os.getcwd()
         suitepath = pjoin('dists', suite)
         if False:
-            repo = DebianPoolRepo(cwd, suitepath, arches, sections)
+            repo = DebianPoolRepo(cwd, suitepath, arches, sections,
+                                  repo_dir)
         else:
-            repo = DebianDirectPoolRepo(cwd, suitepath, arches, sections)
+            repo = DebianDirectPoolRepo(cwd, suitepath, arches, sections,
+                                        repo_dir)
 
         search_path = pjoin(repo.repo_dir, repo.dist)
         contents['archive'] = suite
@@ -688,15 +688,15 @@ class Compiler:
         repo.write_repo()
         repo.write_releases(writer)
 
-    def create_raw_package_dump_repo(self, component, dummy):
+    def create_raw_package_dump_repo(self, component, dummy, repo_dir):
         """Link all the packages in the product to the repository."""
-        os.mkdir('repo')
+        os.mkdir(repo_dir)
         for package in component.packages:
             os.link(self.cache.file_path(package.blob_id),
-                    os.path.join('repo', package.filename)
+                    os.path.join(repo_dir, package.filename)
                     )
 
-    def dump_report(self, component, contents):
+    def dump_report(self, component, contents, dummy):
         """Instead of building a repo, dump a report of component contents.
         """
         if 'format' not in contents:
@@ -712,18 +712,6 @@ class Compiler:
         for line in lines:
             print line
         print
-
-def generate(argv):
-    """
-    Generate a file-system repository for a linux product
-    """
-    my_parser = optparse.OptionParser()
-    opts, args = my_parser.parse_args(args=argv)
-    logger.info(str(opts), str(args))
-    if not args:
-        raise CommandLineError("No product file name given")
-    product_file = args[0]
-    compile_product(product_file)
 
 class overlay_getitem(object):
     """A dict like delegator that returns a default for missing keys.

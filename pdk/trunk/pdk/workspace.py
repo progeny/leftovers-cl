@@ -32,12 +32,13 @@ from pdk.version_control import VersionControl, CommitNotFound
 from pdk.cache import Cache
 from pdk.channels import OutsideWorldFactory, WorldData
 from pdk.exceptions import ConfigurationError, SemanticError, \
-     CommandLineError
+     CommandLineError, InputError
 from pdk.util import pjoin, make_self_framer, cached_property, \
      relative_path
 from pdk.semdiff import print_bar_separated, print_man, \
      iter_diffs, iter_diffs_meta, field_filter
 from pdk.component import ComponentDescriptor, ComponentMeta
+from pdk.repogen import compile_product
 
 # current schema level for this pdk build
 schema_target = 4
@@ -288,6 +289,12 @@ class command_args_spec(object):
                    default = True,
                    help = "Don't save changes after processing.")
 
+            elif item == 'output-dest':
+                op('-o', '--out-file', '--out-dest',
+                   dest = 'output_dest',
+                   help = "Destination for output.",
+                   metavar = "DEST")
+
         opts, args = parser.parse_args(args = raw_args)
         return command_args(opts, args)
 
@@ -327,6 +334,23 @@ def create(args):
     create_workspace(new_workspace_dir)
 
 create = make_invokable(create)
+
+def repogen(args):
+    """usage: pdk repogen COMPONENT
+
+    Generate a file-system repository for a linux product.
+    """
+    ws = current_workspace()
+    product_file = args.get_one_reoriented_file(ws)
+    get_desc = ws.get_component_descriptor
+    if args.opts.output_dest:
+        repo_dir = pjoin(ws.location,
+                         ws.reorient_filename(args.opts.output_dest))
+    else:
+        repo_dir = pjoin(ws.location, 'repo')
+    compile_product(product_file, ws.cache, repo_dir, get_desc)
+
+repogen = make_invokable(repogen, 'output-dest')
 
 def add(args):
     """usage: pdk add FILES
@@ -792,8 +816,15 @@ class _Workspace(object):
     def get_component_descriptor(self, oriented_name, handle = None):
         '''Using oriented_name, create a new component descriptor object.'''
         if not handle:
-            handle = open(pjoin(self.location, oriented_name))
-        return ComponentDescriptor(oriented_name, handle)
+            full_path = pjoin(self.location, oriented_name)
+            if os.path.exists(full_path):
+                handle = open(full_path)
+            else:
+                message = 'Component descriptor "%s" does not exist.' \
+                          % oriented_name
+                raise InputError(message)
+        return ComponentDescriptor(oriented_name, handle,
+                                   self.get_component_descriptor)
 
 class Net(object):
     '''Encapsulates the details of most framer conversations.
