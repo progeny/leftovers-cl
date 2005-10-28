@@ -1,0 +1,219 @@
+#!/usr/bin/python
+#   Copyright 2005 Progeny Linux Systems, Inc.
+#
+#   This file is part of PDK.
+#
+#   PDK is free software; you can redistribute it and/or modify it
+#   under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   PDK is distributed in the hope that it will be useful, but WITHOUT
+#   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+#   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+#   License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with PDK; if not, write to the Free Software Foundation,
+#   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+
+"""
+pdk
+
+This is the command line controller for all pdk.
+"""
+
+__revision__ = '$Progeny$'
+
+import os
+import sys
+import pdk.log as log
+import pdk.command_base as command_base
+from pdk.exceptions import ConfigurationError
+from pdk.util import assert_python_version
+assert_python_version()
+
+from warnings import filterwarnings
+logger = log.get_logger()
+
+## pdk.py
+## Author:  Glen Smith
+## Date:    15 April 2005
+## Version: 0.0.1
+
+
+class Pdk(command_base.CmdBase):
+    """This is the main command object"""
+
+    LazyModuleRef = command_base.LazyModuleRef
+    do_audit = LazyModuleRef('pdk.audit','audit')
+    do_init = LazyModuleRef('pdk.services', 'init')
+    do_push = LazyModuleRef('pdk.workspace', 'push')
+    do_pull = LazyModuleRef('pdk.workspace', 'pull')
+    do_status = LazyModuleRef('pdk.workspace', 'status')
+    do_log = LazyModuleRef('pdk.workspace', 'log')
+    do_update = LazyModuleRef('pdk.workspace', 'update')
+    do_commit = LazyModuleRef('pdk.workspace', 'commit')
+    do_add = LazyModuleRef('pdk.workspace', 'add')
+    do_remove = LazyModuleRef('pdk.workspace', 'remove')
+    do_revert = LazyModuleRef('pdk.workspace', 'revert')
+    do_cat = LazyModuleRef('pdk.workspace', 'cat')
+    ##do_checkin = LazyModuleRef('pdk.version_control', 'checkin')
+    do_repogen = LazyModuleRef('pdk.workspace','repogen')
+    do_dumpmeta = LazyModuleRef('pdk.workspace', 'dumpmeta')
+    do_semdiff = LazyModuleRef('pdk.workspace', 'semdiff')
+    do_resolve = LazyModuleRef('pdk.workspace', 'resolve')
+    do_upgrade = LazyModuleRef('pdk.workspace', 'upgrade')
+    do_download = LazyModuleRef('pdk.workspace', 'download')
+    #temporary utility
+    do_migrate = LazyModuleRef('pdk.workspace', 'migrate')
+
+    def __init__(self):
+        """
+        Set up the command dictionary for pdk
+        """
+        def set_prompt():
+            """
+            Setup the shell prompt
+            """
+            from pdk import workspace
+            from pdk.util import relative_path
+            try:
+                ws = workspace.current_workspace()
+                ws_name = "[" + os.path.basename(ws.location) + "]"
+                cwd = os.getcwd()
+                rel = "(" + relative_path(ws.location, cwd) + ")"
+            except ConfigurationError:
+                ws_name = "[no workspace]"
+                rel = "()"
+            self.prompt = "pdk=" + ws_name + rel + "=>>"
+
+        command_base.CmdBase.__init__(self)
+        self.intro  = "Welcome to pdk!"  ## defaults to None
+        self._hist    = []      ## No history yet
+        self._locals  = {}      ## Initialize execution namespace for user
+        self._globals = {}
+        set_prompt()
+
+
+    def module_command(self, module, args):
+        """
+        Provide a general function that supports
+        commands of the form
+        pdk object command [args]
+        """
+        if args:
+            arg_list = command_base._get_args_as_list(args)
+            if hasattr(module, arg_list[0]):
+                mod_func = getattr(module, arg_list[0])
+                mod_func(arg_list[1:])
+            else:
+                print >> sys.stderr, "no such module"
+        else:
+            print >> sys.stderr, "What do you want to do with " + \
+                   module.__name__ + " ?"
+
+    def do_workspace(self, args):
+        """
+        Perform an action on a workspace
+        General usage:
+        pdk workspace command args
+        """
+        from pdk import workspace
+        self.module_command(workspace, args)
+
+    def do_channel(self, args):
+        """
+        Perform an action on channel(s)
+        General usage:
+        pdk channel command args
+        """
+        from pdk import workspace
+        if args[0] == 'update':
+            args[0] = 'world_update'
+        self.module_command(workspace, args)
+
+    def do_remote(self, args):
+        """
+        Perform actions from the perspective of a remote workspace.
+        Not designed for user invocation.
+        """
+        from pdk import workspace
+        self.module_command(workspace, args)
+
+    def module_help(self, module, args):
+        """
+        Provide a general function that supports help for
+        commands of the form
+        pdk help object command [args]
+        """
+        arg_list = args
+        if hasattr(module, 'help_' + arg_list[0]):
+            help_func = getattr(module, 'help_' + arg_list[0])
+            help_func(arg_list[1:])
+        elif hasattr(module, arg_list[0]):
+            doc = getattr(module, arg_list[0]).__doc__
+            if doc:
+                self.stdout.write("%s\n"%str(doc))
+            else:
+                self.stdout.write("%s\n"%str(self.nohelp % (arg_list[0],)))
+        else:
+            self.stdout.write("%s\n"%str(self.nohelp % (arg_list[0],)))
+
+    def help_workspace(self, *args):
+        """
+        Dispatch help requests for commands of the form
+        pdk help workspace command args
+        """
+        if args:
+            arg_list = args[0]
+            from pdk import workspace
+            self.module_help(workspace, arg_list)
+        else:
+            print self.do_workspace.__doc__
+
+    ## Command definitions to support Cmd object functionality ##
+
+    def do_help(self, args):
+        """Get help on commands
+           'help' or '?' with no arguments prints a list of commands for which help is available
+           'help <command>' or '? <command>' gives help on <command>
+        """
+        if args:
+            arg_list = command_base._get_args_as_list(args)
+            if len(arg_list) > 1 and hasattr(self, 'help_' + arg_list[0]):
+                help_func = getattr(self, 'help_' + arg_list[0])
+                help_func(arg_list[1:])
+            else:
+                command_base.CmdBase.do_help(self, arg_list[0])
+        else:
+            command_base.CmdBase.do_help(self, '')
+
+
+plugin_locations = [
+    "~/.pdk_addins"
+    , ".pdk_addins"
+    , ".pdk_plugins"
+]
+
+def main():
+    '''Entry point to pdk.'''
+    filterwarnings('ignore', category = FutureWarning)
+    main_args = sys.argv or []
+    pdk = Pdk()
+
+    # Add plug-in commands
+    plugin_files = [ x for x in plugin_locations
+                        if os.path.exists(x) ]
+    command_base.load_addins(pdk, *plugin_files)
+
+    if len(main_args) == 1:
+        pdk.cmdloop() 
+    else:
+        fn_name = 'do_%s' % main_args[1]
+        pdk.run_one_command(fn_name, main_args)
+
+if __name__ == '__main__':
+    main()
+
+# vim:ai:et:sts=4:sw=4:tw=0:
