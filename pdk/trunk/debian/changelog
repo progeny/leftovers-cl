@@ -1,3 +1,14 @@
+pdk (0.0.16) unstable; urgency=low
+
+  * Make many pdk commands have more consitent interfaces.
+  * Make said pdk commands work in subdirectories.
+  * Update command help texts.
+  * Add domains to metadata.
+  * Add -o option to repogen so the user can control where it dumps its
+    output.
+
+ -- Darrin Thompson <darrint@progeny.com>  Fri, 28 Oct 2005 11:38:37 -0500
+
 pdk (0.0.15) unstable; urgency=low
 
   * Add log and status commands.
