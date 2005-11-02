@@ -1,5 +1,6 @@
 find . -name "*.pyc" -o -name "*.pyo" -o -name "*~" \
-    -o -name "*.snap.tar.gz" -o -name "*.html" | xargs -r rm -f
+    -o -name "*.snap.tar.gz" -o -name "*.html" -o -name "*.fw.sh" \
+    -o -name "*.lis" | xargs -r rm -f
 rm -rf build/
 rm -rf atest.log.d
 rm -f atest.log future.log

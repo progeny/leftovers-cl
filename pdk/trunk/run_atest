@@ -179,6 +179,12 @@ while true; do
     esac
 done
 
+# freshen tests from doc directory
+rm -f atest/*.fw.sh
+for test in $(ls doc/*.fw); do
+    fw +Q +L -T +U $test
+done
+
 if [ -z "$*" ]; then
     # If no tests listed, run all tests
     tests=$(ls atest/*.sh)

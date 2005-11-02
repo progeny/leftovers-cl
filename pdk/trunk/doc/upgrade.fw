@@ -1,87 +1,41 @@
-#   Copyright 2005 Progeny Linux Systems, Inc.
-#
-#   This file is part of PDK.
-#
-#   PDK is free software; you can redistribute it and/or modify it
-#   under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or
-#   (at your option) any later version.
-#
-#   PDK is distributed in the hope that it will be useful, but WITHOUT
-#   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-#   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
-#   License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with PDK; if not, write to the Free Software Foundation,
-#   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+@!   Copyright 2005 Progeny Linux Systems, Inc.
+@!
+@!   This file is part of PDK.
+@!
+@!   PDK is free software; you can redistribute it and/or modify it
+@!   under the terms of the GNU General Public License as published by
+@!   the Free Software Foundation; either version 2 of the License, or
+@!   (at your option) any later version.
+@!
+@!   PDK is distributed in the hope that it will be useful, but WITHOUT
+@!   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+@!   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+@!   License for more details.
+@!
+@!   You should have received a copy of the GNU General Public License
+@!   along with PDK; if not, write to the Free Software Foundation,
+@!   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# The upgrade command should upgrade concrete references. It should
-# leave abstract references alone.
+@p indentation = none
 
-pdk workspace create multi-version
-pushd multi-version
-    mkdir channel1
-    cp \
-        $PACKAGES/ethereal-dev_0.9.4-1woody5_i386.deb \
-        $PACKAGES/ethereal-dev_0.9.4-1woody5_ia64.deb \
-        $PACKAGES/ethereal-common_0.9.4-1woody5_i386.deb \
-        $PACKAGES/ethereal-common_0.9.4-1woody5_ia64.deb \
-        $PACKAGES/ethereal_0.9.4-1woody5.dsc \
-        $PACKAGES/ethereal_0.9.4-1woody5.diff.gz \
-        $PACKAGES/ethereal_0.9.4-1woody5_i386.deb \
-        $PACKAGES/ethereal_0.9.4-1woody5_ia64.deb \
-        $PACKAGES/ethereal_0.9.4.orig.tar.gz \
-        $PACKAGES/tethereal_0.9.4-1woody5_i386.deb \
-        $PACKAGES/tethereal_0.9.4-1woody5_ia64.deb \
-        channel1
+@A@<The Upgrade Command@>
 
-    mkdir channel2
-    cp \
-        $PACKAGES/ethereal-dev_0.9.4-1woody6_i386.deb \
-        $PACKAGES/ethereal-dev_0.9.4-1woody6_ia64.deb \
-        $PACKAGES/ethereal-common_0.9.4-1woody6_i386.deb \
-        $PACKAGES/ethereal-common_0.9.4-1woody6_ia64.deb \
-        $PACKAGES/ethereal_0.9.4-1woody6.diff.gz \
-        $PACKAGES/ethereal_0.9.4-1woody6.dsc \
-        $PACKAGES/ethereal_0.9.4-1woody6_i386.deb \
-        $PACKAGES/ethereal_0.9.4-1woody6_ia64.deb \
-        $PACKAGES/ethereal_0.9.4.orig.tar.gz \
-        $PACKAGES/tethereal_0.9.4-1woody6_i386.deb \
-        $PACKAGES/tethereal_0.9.4-1woody6_ia64.deb \
-        $PACKAGES/abook_0.5.3-2.diff.gz \
-        $PACKAGES/abook_0.5.3-2.dsc \
-        $PACKAGES/abook_0.5.3-2_s390.deb \
-        $PACKAGES/abook_0.5.3.orig.tar.gz \
-        channel2
+In this test we run upgrade to demonstrate a basic upgrade.
 
-    cat >etc/channels.xml <<EOF
-<?xml version="1.0"?>
-<channels>
-  <channel1>
-    <type>dir</type>
-    <path>channel1</path>
-  </channel1>
-  <channel2>
-    <type>dir</type>
-    <path>channel2</path>
-  </channel2>
-</channels>
-EOF
+Our goal is to make sure that packages are upgraded as expected, and
+abstract references are left alone.
 
-    pdk channel update
+@t table_of_contents
 
-    cat >ethereal.xml <<EOF
-<?xml version="1.0"?>
-<component>
-  <contents>
-    <dsc>abook</dsc>
-    <dsc>ethereal</dsc>
-  </contents>
-</component>
-EOF
+@B
 
-    pdk resolve ethereal.xml -c channel1
+Before showing the full test script, we'll look carefully at the
+before and after for the upgraded component.
+
+This is the "before" version of the component. The abook reference is
+still abstract at this point.
+
+@$@<Verify Before Upgrade@>==@{
 
     diff -u - ethereal.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
@@ -140,9 +94,14 @@ EOF
   </contents>
 </component>
 EOF
+@}
 
-    pdk upgrade ethereal.xml -c channel2 -m >report.txt
+@B
 
+This is how the component should look like after upgrade. The versions
+of the packages are higher, and the abook reference is still abstract.
+
+@$@<Verify After Upgrade@>==@{
     diff -u - ethereal.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
@@ -200,7 +159,104 @@ EOF
   </contents>
 </component>
 EOF
+@}
 
+@B
+
+The way the channels are set up is key to this test.
+
+The channels are arranged so that a new package is introduced in the
+second channel. The second channel will be used for pdk upgrade. The
+abook package is bait.
+
+@$@<Set Up Channels@>==@{
+    mkdir channel1
+    cp \
+        $PACKAGES/ethereal-dev_0.9.4-1woody5_i386.deb \
+        $PACKAGES/ethereal-dev_0.9.4-1woody5_ia64.deb \
+        $PACKAGES/ethereal-common_0.9.4-1woody5_i386.deb \
+        $PACKAGES/ethereal-common_0.9.4-1woody5_ia64.deb \
+        $PACKAGES/ethereal_0.9.4-1woody5.dsc \
+        $PACKAGES/ethereal_0.9.4-1woody5.diff.gz \
+        $PACKAGES/ethereal_0.9.4-1woody5_i386.deb \
+        $PACKAGES/ethereal_0.9.4-1woody5_ia64.deb \
+        $PACKAGES/ethereal_0.9.4.orig.tar.gz \
+        $PACKAGES/tethereal_0.9.4-1woody5_i386.deb \
+        $PACKAGES/tethereal_0.9.4-1woody5_ia64.deb \
+        channel1
+
+    mkdir channel2
+    cp \
+        $PACKAGES/ethereal-dev_0.9.4-1woody6_i386.deb \
+        $PACKAGES/ethereal-dev_0.9.4-1woody6_ia64.deb \
+        $PACKAGES/ethereal-common_0.9.4-1woody6_i386.deb \
+        $PACKAGES/ethereal-common_0.9.4-1woody6_ia64.deb \
+        $PACKAGES/ethereal_0.9.4-1woody6.diff.gz \
+        $PACKAGES/ethereal_0.9.4-1woody6.dsc \
+        $PACKAGES/ethereal_0.9.4-1woody6_i386.deb \
+        $PACKAGES/ethereal_0.9.4-1woody6_ia64.deb \
+        $PACKAGES/ethereal_0.9.4.orig.tar.gz \
+        $PACKAGES/tethereal_0.9.4-1woody6_i386.deb \
+        $PACKAGES/tethereal_0.9.4-1woody6_ia64.deb \
+        $PACKAGES/abook_0.5.3-2.diff.gz \
+        $PACKAGES/abook_0.5.3-2.dsc \
+        $PACKAGES/abook_0.5.3-2_s390.deb \
+        $PACKAGES/abook_0.5.3.orig.tar.gz \
+        channel2
+
+    cat >etc/channels.xml <<EOF
+<?xml version="1.0"?>
+<channels>
+  <channel1>
+    <type>dir</type>
+    <path>channel1</path>
+  </channel1>
+  <channel2>
+    <type>dir</type>
+    <path>channel2</path>
+  </channel2>
+</channels>
+EOF
+
+    pdk channel update
+
+@}
+
+@B
+
+This is the main test script.
+
+Notice the resolve followed by upgrade against the baited channel.
+
+@$@<Actual Test@>+=@{
+pdk workspace create multi-version
+pushd multi-version
+
+@<Set Up Channels@>
+
+    cat >ethereal.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <dsc>abook</dsc>
+    <dsc>ethereal</dsc>
+  </contents>
+</component>
+EOF
+
+    pdk resolve ethereal.xml -c channel1
+
+@<Verify Before Upgrade@>
+
+    pdk upgrade ethereal.xml -c channel2 -m >report.txt
+
+@<Verify After Upgrade@>
+
+@}
+
+Now we double check the report generated by upgrade.
+
+@$@<Actual Test@>+=@{
     LANG=C sort report.txt >sorted-report.txt
     diff -u - sorted-report.txt <<EOF
 upgrade|deb|ethereal-common|0.9.4-1woody5|0.9.4-1woody6|i386|ethereal.xml
@@ -214,3 +270,9 @@ upgrade|deb|tethereal|0.9.4-1woody5|0.9.4-1woody6|ia64|ethereal.xml
 upgrade|dsc|ethereal|0.9.4-1woody5|0.9.4-1woody6|any|ethereal.xml
 EOF
 popd
+
+@}
+
+@O@<atest/upgrade.fw.sh@>==@{
+@<Actual Test@>
+@}
