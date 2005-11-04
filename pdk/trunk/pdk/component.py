@@ -25,6 +25,7 @@ machine modifying components.
 """
 import os
 import re
+from itertools import chain
 from sets import Set
 from pdk.util import write_pretty_xml, parse_xml
 from cElementTree import ElementTree, Element, SubElement
@@ -271,7 +272,7 @@ class ComponentDescriptor(object):
             new_child_list.sort()
             parent_ref.children = new_child_list
 
-    def _get_parent_matches(self, package_list, abstract_constraint):
+    def _get_parent_matches(self, world_index, abstract_constraint):
         '''Creates "match tuples" associating packages with matched refs.
 
         tuple looks like: (package, ref)
@@ -279,13 +280,23 @@ class ComponentDescriptor(object):
         match_information = []
 
         # first run the packages through base level package references.
-        for ghost_package in package_list:
-            for ref in self.iter_package_refs(abstract_constraint):
+        for ref in self.iter_package_refs(abstract_constraint):
+            if ref.name:
+                item_list = world_index.get_candidates('name', ref.name)
+            else:
+                item_list = world_index.get_all_candidates()
+                message = 'Using unoptimized package list. ' + \
+                          'This operation may take a long time.\n' + \
+                          ' condition = %r' % ref.rule.condition
+                logger = get_logger()
+                logger.warn(message)
+            for item in item_list:
+                ghost_package = item.package
                 if ref.rule.condition.evaluate(ghost_package):
                     match_information.append((ghost_package, ref))
         return match_information
 
-    def _resolve_conflicting_matches(self, parent_matches):
+    def _resolve_conflicting_matches(self, world_index, parent_matches):
         '''Apply policy when the same ref matches more than one package.
 
         Current policy is roughly the same as debian. Use the "newest"
@@ -303,29 +314,40 @@ class ComponentDescriptor(object):
             if last_ref is not None and ref == last_ref:
                 # skip this record as a newer one has already been found.
                 continue
-            child_condition = get_child_condition(ghost_package, ref)
-            child_conditions.append((child_condition, this_match[1]))
+            child_condition, candidate_key_info = \
+                get_child_condition(ghost_package, ref)
+
+            parent_candidates = world_index.get_candidates('name', ref.name)
+            key_field, key_value = candidate_key_info
+            child_candidates = world_index.get_candidates(key_field,
+                                                          key_value)
+            candidates = chain(parent_candidates, child_candidates)
+            child_conditions.append((child_condition, this_match[1],
+                                     candidates))
             last_ref = ref
         return child_conditions
 
-    def resolve(self, package_list, abstract_constraint):
+    def resolve(self, world_index, abstract_constraint):
         """Resolve abstract references by searching the given package list.
 
         abstract_constraint is passed to self.iter_package_refs().
         """
-        parent_matches = self._get_parent_matches(package_list,
+        parent_matches = self._get_parent_matches(world_index,
                                                   abstract_constraint)
-        child_conditions = self._resolve_conflicting_matches(parent_matches)
+        child_conditions = self._resolve_conflicting_matches(world_index,
+                                                             parent_matches)
 
         # run through the new list of matched refs and clear the child
         # lists.
-        for dummy, ref in child_conditions:
+        for child_condition in child_conditions:
+            ref = child_condition[1]
             ref.children = []
 
         # run through all the packages again, this time using the
         # child_conditions of new references.
-        for ghost_package in package_list:
-            for child_condition, ref in child_conditions:
+        for child_condition, ref, candidate_items in child_conditions:
+            for item in candidate_items:
+                ghost_package = item.package
                 if child_condition.evaluate(ghost_package):
                     new_child_ref = \
                         PackageReference.from_package(ghost_package)
@@ -569,8 +591,8 @@ def get_deb_child_condition_data(package):
 
 def get_dsc_child_condition_data(package):
     """Get child condition data for a dsc."""
-    return [ ('sp_name', package.name),
-             ('sp_version', package.version.full_version),
+    return [ ('sp-name', package.name),
+             ('sp-version', package.version.full_version),
              [ 'or',
                ('type', 'deb'),
                ('type', 'udeb') ] ]
@@ -603,7 +625,8 @@ def get_child_condition(package, ref):
     parent_version = package.version.full_version
     parent_condition = build_condition(ref.fields +
                                        [('version', parent_version)])
-    return OrCondition([child_condition, parent_condition])
+    key_info = condition_fn(package)[0]
+    return OrCondition([child_condition, parent_condition]), key_info
 
 child_condition_fn_map = {
     'deb': get_deb_child_condition_data,

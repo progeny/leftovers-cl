@@ -1,3 +1,12 @@
+pdk (0.0.17) unstable; urgency=low
+
+  * Generate some atests from documentation.
+  * Add Suggests and Build-Depends for funnelweb.
+  * Ship generated docs with deb package.
+  * Increase performance of resolve and upgrade commands.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu,  3 Nov 2005 20:39:16 -0500
+
 pdk (0.0.16) unstable; urgency=low
 
   * Make many pdk commands have more consitent interfaces.

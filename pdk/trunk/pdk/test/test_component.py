@@ -496,8 +496,8 @@ class TestPackageRef(Test):
         version = DebianVersion('1-2')
         apache_dsc = MockPackage('apache', version, dsc, 'sha-1:aaa')
 
-        expected = [ ('sp_name', 'apache'),
-                     ('sp_version', '1-2'),
+        expected = [ ('sp-name', 'apache'),
+                     ('sp-version', '1-2'),
                      [ 'or',
                        ('type', 'deb'),
                        ('type', 'udeb') ] ]

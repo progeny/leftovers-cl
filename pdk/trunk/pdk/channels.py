@@ -559,9 +559,10 @@ class OutsideWorld(object):
         Each loader roughly corresponds to a download session.
         '''
         locators = []
+        by_blob_id = self.all_package_info.by_blob_id
         for blob_id in blob_ids:
-            if blob_id in self.by_blob_id:
-                locators.append(self.by_blob_id[blob_id].locator)
+            if blob_id in by_blob_id:
+                locators.append(by_blob_id[blob_id].locator)
             else:
                 raise SemanticError, \
                       "could not find %s in any channel" % blob_id
@@ -586,37 +587,22 @@ class OutsideWorld(object):
         for dummy, section in self.iter_sections():
             section.update()
 
-    def __create_raw_package_info(self):
-        '''Capture the full state of all sections.'''
-        raw_package_info = []
-        try:
-            for section_name, section in self.iter_sections():
-                section_iterator = section.iter_package_info()
-                for ghost, blob_id, locator in section_iterator:
-                    item = WorldItem(section_name, ghost, blob_id, locator)
-                    raw_package_info.append(item)
-        except MissingChannelDataError:
-            message = 'Missing cached data. ' + \
-                      'Consider running pdk channel update. ' + \
-                      '(%s)' % section_name
-            raise SemanticError(message)
-        return raw_package_info
-    raw_package_info = cached_property('raw_package_info',
-                                       __create_raw_package_info)
+    def __create_all_package_info(self):
+        '''Capture the full state of all sections. Index it.
 
-    def __create_by_blob_id(self):
-        '''Index blob_ids from local source and channel data.
-
-        When more than one record represents a blob_id,
-        try to ensure that records with package objects are referenced.
+        Returns a tuple containing the raw data + all indexes.
         '''
-        by_blob_id = {}
-        for record in self.raw_package_info:
-            if record.blob_id not in by_blob_id or \
-               not by_blob_id[record.blob_id].package:
-                by_blob_id[record.blob_id] = record
-        return by_blob_id
-    by_blob_id = cached_property('by_blob_id', __create_by_blob_id)
+        data = IndexedWorldData.build(self.iter_sections())
+        return data
+    all_package_info = cached_property('all_package_info',
+                                       __create_all_package_info)
+
+    def get_limited_index(self, given_section_names):
+        '''Return IndexedWorldData like object but limited by channel names.
+        '''
+        section_names = [ t[0]
+                          for t in self.iter_sections(given_section_names) ]
+        return LimitedWorldDataIndex(self.all_package_info, section_names)
 
     def iter_sections(self, section_names = None):
         '''Iterate over stored sections for the given section_names.'''
@@ -629,31 +615,6 @@ class OutsideWorld(object):
                     yield name, section
             except KeyError, e:
                 raise InputError("Unknown channel %s." % str(e))
-
-    def iter_package_info(self, given_section_names = None):
-        '''Iterate over package and locator from sections.
-
-        Sections are filtered by the given section_names.
-        '''
-        section_names = [ t[0]
-                          for t in self.iter_sections(given_section_names) ]
-        for record in self.raw_package_info:
-            if not record.package:
-                continue
-            if not record.section_name in section_names:
-                continue
-            found_filename = os.path.basename(record.locator.filename)
-            record.package.contents.set('', 'found_filename',
-                                        found_filename)
-            yield record.package, record.locator
-
-    def iter_packages(self, section_names = None):
-        '''Iterate over packages given from sections.
-
-        Sections are filtered by the given section_names.
-        '''
-        for package, dummy in self.iter_package_info(section_names):
-            yield package
 
 class ChannelBackedCache(object):
     '''Impersonate a cache but use both channels and cache to load packages.
@@ -671,8 +632,9 @@ class ChannelBackedCache(object):
         if blob_id in self.cache:
             return self.cache.load_package(meta, blob_id, type_string)
 
-        if blob_id in self.world.by_blob_id:
-            item = self.world.by_blob_id[blob_id]
+        by_blob_id = self.world.all_package_info.by_blob_id
+        if blob_id in by_blob_id:
+            item = by_blob_id[blob_id]
             if item.package:
                 return item.package
 
@@ -680,3 +642,93 @@ class ChannelBackedCache(object):
         message += 'Consider reverting and reattempting this command.'
         raise SemanticError(message)
 
+class IndexedWorldData(object):
+    '''Wrap up storing all the channel data.
+
+    Provides a number of field indexes on an otherwise too large list
+    of WorldDataItems.
+    '''
+    def __init__(self, raw_package_info, field_indexes, by_blob_id):
+        self.raw_package_info = raw_package_info
+        self.field_indexes = field_indexes
+        self.by_blob_id = by_blob_id
+
+    def get_candidates(self, key_field, key, section_names):
+        '''Get a list of WorldDataItems.
+
+        Use the index named by key_field, with the given key. Return
+        only the list of items found by that key.
+        '''
+        index = self.field_indexes[key_field]
+
+        candidate_list = index.get(key, [])
+        for item in candidate_list:
+            if item.section_name in section_names:
+                yield item
+
+    def build(sections_iterator):
+        '''Build up IndexedWorldData from the data in the given sections.
+        '''
+        raw_package_info = []
+        field_indexes = {}
+        indexed_fields = ('name', 'sp-name', 'source-rpm', 'filename')
+        for field in indexed_fields:
+            field_indexes[field] = {}
+        by_blob_id = {}
+        try:
+            for section_name, section in sections_iterator:
+                section_iterator = section.iter_package_info()
+                for ghost, blob_id, locator in section_iterator:
+                    item = WorldItem(section_name, ghost, blob_id, locator)
+                    raw_package_info.append(item)
+
+                    if ghost:
+                        found_filename = os.path.basename(locator.filename)
+                        ghost.contents.set('', 'found_filename',
+                                           found_filename)
+                        for field in indexed_fields:
+                            try:
+                                key = ghost[field]
+                            except KeyError:
+                                continue
+                            index = field_indexes[field]
+                            package_list = index.setdefault(key, [])
+                            package_list.append(item)
+
+                    if blob_id not in by_blob_id or \
+                       not by_blob_id[blob_id].package:
+                        by_blob_id[blob_id] = item
+
+            return IndexedWorldData(raw_package_info, field_indexes,
+                                    by_blob_id)
+        except MissingChannelDataError:
+            message = 'Missing cached data. ' + \
+                      'Consider running pdk channel update. ' + \
+                      '(%s)' % section_name
+            raise SemanticError(message)
+
+    build = staticmethod(build)
+
+class LimitedWorldDataIndex(object):
+    '''Essentially impersonate IndexedWorldData but filter outputs.
+
+    Does basically everything IndexedWorldData does, but all outputs are
+    filtered by the given list of channel names.
+    '''
+    def __init__(self, data_index, channel_names):
+        self.data_index = data_index
+        self.channel_names = channel_names
+
+    def get_candidates(self, key_field, key):
+        '''See IndexedWorldData.get_candidates.
+
+        Filters output by self.channel_names.
+        '''
+        return self.data_index.get_candidates(key_field, key,
+                                              self.channel_names)
+
+    def get_all_candidates(self):
+        '''Get a list of all package candidates filtered by channel name.'''
+        for item in self.data_index.raw_package_info:
+            if item.section_name in self.channel_names:
+                yield item

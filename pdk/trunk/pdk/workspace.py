@@ -518,8 +518,9 @@ def semdiff(args):
         desc = get_desc(ref)
         component = desc.load(old_meta, cache)
         old_package_list = component.direct_packages
-        world = workspace.world
-        new_package_list = list(world.iter_packages(args.opts.channels))
+        world_index = workspace.world.get_limited_index(args.opts.channels)
+        new_package_list = [ i.package
+                             for i in world_index.get_all_candidates() ]
         new_meta = {}
     elif len(files) == 1:
         ref = files[0]
@@ -599,8 +600,8 @@ def run_resolve(args, assert_resolved, abstract_constraint):
     for component_name in component_names:
         descriptor = get_desc(component_name)
         channel_names = args.opts.channels
-        package_list = list(workspace.world.iter_packages(channel_names))
-        descriptor.resolve(package_list, abstract_constraint)
+        world_index = workspace.world.get_limited_index(channel_names)
+        descriptor.resolve(world_index, abstract_constraint)
         descriptor.setify_child_references()
 
         if assert_resolved:
@@ -794,7 +795,8 @@ class _Workspace(object):
             remote_commit_ids = self.vc.get_rev_list([remote_head])
         except CommitNotFound:
             remote_commit_ids = []
-        remote_blob_ids = [ r.blob_id for r in self.world.raw_package_info
+        raw_package_info = self.world.all_package_info.raw_package_info
+        remote_blob_ids = [ r.blob_id for r in raw_package_info
                             if r.section_name == upstream_name ]
         net = Net(framer, self)
         net.send_push_blobs(remote_blob_ids)

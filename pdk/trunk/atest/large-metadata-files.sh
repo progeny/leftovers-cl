@@ -74,5 +74,117 @@ EOF
    </contents>
 </component>
 EOF
+
+cat >many.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <dsc>3dchess</dsc>
+    <dsc>3ddesktop</dsc>
+    <dsc>44bsd-rdist</dsc>
+    <dsc>6tunnel</dsc>
+    <dsc>855resolution</dsc>
+    <dsc>9menu</dsc>
+    <dsc>9wm</dsc>
+    <dsc>a2ps</dsc>
+    <dsc>a2ps-perl-ja</dsc>
+    <dsc>a52dec</dsc>
+    <dsc>aa3d</dsc>
+    <dsc>aalib</dsc>
+    <dsc>aap</dsc>
+    <dsc>aatv</dsc>
+    <dsc>abc2ps</dsc>
+    <dsc>abcde</dsc>
+    <dsc>abcm2ps</dsc>
+    <dsc>abcmidi</dsc>
+    <dsc>abicheck</dsc>
+    <dsc>abind</dsc>
+    <dsc>abiword</dsc>
+    <dsc>abntex</dsc>
+    <dsc>abook</dsc>
+    <dsc>aboot</dsc>
+    <dsc>aboot-installer</dsc>
+    <dsc>aca</dsc>
+    <dsc>acct</dsc>
+    <dsc>ace</dsc>
+    <dsc>ace-of-penguins</dsc>
+    <dsc>acepack</dsc>
+    <dsc>acfax</dsc>
+    <dsc>acheck</dsc>
+    <dsc>acheck-rules</dsc>
+    <dsc>acheck-rules-fr</dsc>
+    <dsc>achilles</dsc>
+    <dsc>achims-guestbook</dsc>
+    <dsc>acidlab</dsc>
+    <dsc>acidwarp</dsc>
+    <dsc>ack</dsc>
+    <dsc>acl</dsc>
+    <dsc>acl2</dsc>
+    <dsc>aclock.app</dsc>
+    <dsc>acm</dsc>
+    <dsc>acm4</dsc>
+    <dsc>aconnectgui</dsc>
+    <dsc>acorn-fdisk</dsc>
+    <dsc>acovea</dsc>
+    <dsc>acovea-results</dsc>
+    <dsc>acpi</dsc>
+    <dsc>acpid</dsc>
+    <dsc>ada-mode</dsc>
+    <dsc>ada-reference-manual</dsc>
+    <dsc>adabrowse</dsc>
+    <dsc>adacgi</dsc>
+    <dsc>adasockets</dsc>
+    <dsc>addresses-for-gnustep</dsc>
+    <dsc>adduser</dsc>
+    <dsc>adduser-ng</dsc>
+    <dsc>adesklets</dsc>
+    <dsc>adjtimex</dsc>
+    <dsc>admesh</dsc>
+    <dsc>adns</dsc>
+    <dsc>adolc</dsc>
+    <dsc>adtool</dsc>
+    <dsc>advi</dsc>
+    <dsc>adzapper</dsc>
+    <dsc>aee</dsc>
+    <dsc>aegis</dsc>
+    <dsc>aegis-virus-scanner</dsc>
+    <dsc>aeromail</dsc>
+    <dsc>aespipe</dsc>
+    <dsc>aewan</dsc>
+    <dsc>aewm</dsc>
+    <dsc>aewm++</dsc>
+    <dsc>aewm++-goodies</dsc>
+    <dsc>af</dsc>
+    <dsc>afbackup</dsc>
+    <dsc>affiche</dsc>
+    <dsc>affix</dsc>
+    <dsc>affix-kernel</dsc>
+    <dsc>afio</dsc>
+    <dsc>aft</dsc>
+    <dsc>afterstep</dsc>
+    <dsc>agenda.app</dsc>
+    <dsc>aget</dsc>
+    <dsc>aggregate</dsc>
+    <dsc>agistudio</dsc>
+    <dsc>agsync</dsc>
+    <dsc>aide</dsc>
+    <dsc>aiksaurus</dsc>
+    <dsc>aime</dsc>
+    <dsc>aime-doc</dsc>
+    <dsc>aircrack</dsc>
+    <dsc>airsnort</dsc>
+    <dsc>airstrike</dsc>
+    <dsc>aish</dsc>
+    <dsc>akregator</dsc>
+    <dsc>aladin</dsc>
+    <dsc>alamin</dsc>
+    <dsc>albatross</dsc>
+  </contents>
+</component>
+EOF
+
     pdk download progeny.com/hello.xml
+    pdk resolve many.xml
+    pdk upgrade many.xml
+
 popd
