@@ -169,10 +169,11 @@ run_test() {
 }
 
 future_tests=""
-args=$(getopt -o qI -- "$@")
+args=$(getopt -o dqI -- "$@")
 eval set -- "$args"
 while true; do
     case "$1" in
+        -d) shift; docs_only=1 ;;
         -I) shift; unset install_in_sandbox ;;
         -q) shift; quiet=1 ;;
         --) shift; break;;
@@ -184,6 +185,10 @@ rm -f atest/*.fw.sh
 for test in $(ls doc/*.fw); do
     fw +Q +L -T +U $test
 done
+
+if [ -n "$docs_only" ]; then
+    exit 0
+fi
 
 if [ -z "$*" ]; then
     # If no tests listed, run all tests

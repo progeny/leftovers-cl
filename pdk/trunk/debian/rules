@@ -8,5 +8,6 @@ clean::
 	rm -f atest.tar
 
 install/pdk::
+	sh run_atest -d
 	tar c --exclude=atest/packages --exclude=.svn atest \
 		run_atest utest.py doc/*.fw >atest.tar
