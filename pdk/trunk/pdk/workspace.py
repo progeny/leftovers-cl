@@ -36,7 +36,7 @@ from pdk.exceptions import ConfigurationError, SemanticError, \
 from pdk.util import pjoin, make_self_framer, cached_property, \
      relative_path
 from pdk.semdiff import print_bar_separated, print_man, \
-     iter_diffs, iter_diffs_meta, field_filter
+     iter_diffs, iter_diffs_meta, field_filter, filter_data
 from pdk.component import ComponentDescriptor, ComponentMeta
 from pdk.repogen import compile_product
 
@@ -295,6 +295,17 @@ class command_args_spec(object):
                    help = "Destination for output.",
                    metavar = "DEST")
 
+            elif item == 'show-unchanged':
+                op('--show-unchanged',
+                   action = "store_true",
+                   dest = 'show_unchanged',
+                   default = False,
+                   help = "Show unchanged items in report.")
+
+            else:
+                assert False, "Unknown command line specification. '%s'" \
+                       % item
+
         opts, args = parser.parse_args(args = raw_args)
         return command_args(opts, args)
 
@@ -551,10 +562,11 @@ def semdiff(args):
 
     diffs = iter_diffs(old_package_list, new_package_list)
     diffs_meta = iter_diffs_meta(old_meta, new_meta)
-    data = chain(diffs, diffs_meta)
+    data = filter_data(chain(diffs, diffs_meta), args.opts.show_unchanged)
     printer(ref, data)
 
-semdiff = make_invokable(semdiff, 'machine-readable', 'channels')
+semdiff = make_invokable(semdiff, 'machine-readable', 'channels',
+                         'show-unchanged')
 
 def dumpmeta(args):
     """usgage: pdk dumpmeta COMPONENTS
@@ -613,7 +625,8 @@ def run_resolve(args, assert_resolved, abstract_constraint):
             else:
                 printer = print_man
 
-            descriptor.diff_self(workspace, printer)
+            descriptor.diff_self(workspace, printer,
+                                 args.opts.show_unchanged)
 
         if args.opts.save_component_changes:
             descriptor.write()
@@ -635,7 +648,7 @@ def resolve(args):
     run_resolve(args, True, True)
 
 resolve = make_invokable(resolve, 'machine-readable', 'no-report',
-                         'dry-run', 'channels')
+                         'dry-run', 'channels', 'show-unchanged')
 
 def upgrade(args):
     """usage: pdk upgrade COMPONENTS
@@ -655,7 +668,7 @@ def upgrade(args):
     run_resolve(args, False, False)
 
 upgrade = make_invokable(upgrade, 'machine-readable', 'no-report',
-                         'dry-run', 'channels')
+                         'dry-run', 'channels', 'show-unchanged')
 
 def download(args):
     """usage: pdk download FILES

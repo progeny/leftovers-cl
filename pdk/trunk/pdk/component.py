@@ -526,14 +526,15 @@ class ComponentDescriptor(object):
         self.requires = self.read_multifield(component_element, 'requires')
         self.provides = self.read_multifield(component_element, 'provides')
 
-    def diff_self(self, workspace, printer):
+    def diff_self(self, workspace, printer, show_unchanged):
         '''Run semdiff between self and its previously written state.'''
         orig_descriptor = ComponentDescriptor(self.filename)
         c_cache = workspace.world.get_backed_cache(workspace.cache)
         meta1 = ComponentMeta()
         meta2 = ComponentMeta()
         print_report(meta1, orig_descriptor.load(meta1, c_cache),
-                     meta2, self.load(meta2, c_cache), printer)
+                     meta2, self.load(meta2, c_cache), show_unchanged,
+                     printer)
 
 
 class Component(object):

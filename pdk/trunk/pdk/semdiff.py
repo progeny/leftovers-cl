@@ -154,14 +154,20 @@ def iter_diffs_meta(old_meta, new_meta):
     for event_type, item in list_merge(old_joinable, new_joinable):
         yield (event_names[event_type], item, None)
 
+def filter_data(data, show_unchanged):
+    '''If show_unchanged is False, filter out unchanged items.'''
+    for item in data:
+        if show_unchanged or item[0] != 'unchanged':
+            yield item
 
-def print_report(old_meta, old_component, new_meta, new_component, printer):
+def print_report(old_meta, old_component, new_meta, new_component,
+                 show_unchanged, printer):
     '''Print a human readable report diffing two components.'''
     old_package_list = old_component.direct_packages
     new_package_list = new_component.direct_packages
     diffs = iter_diffs(old_package_list, new_package_list)
     diffs_meta = iter_diffs_meta(old_meta, new_meta)
-    data = chain(diffs, diffs_meta)
+    data = filter_data(chain(diffs, diffs_meta), show_unchanged)
     printer(new_component.ref, data)
 
 def print_man(ref, data):

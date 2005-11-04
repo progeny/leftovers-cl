@@ -30,31 +30,42 @@ cd test-semdiff
 # Test semdiff with rpms.
 # --------------------------------
 
-pdk semdiff -m timex-12.xml timex-12.xml | LANG=C sort >semdiff.txt
+# once without --show-unchanged
+pdk semdiff -m timex-12.xml timex-12.xml \
+    | LANG=C sort >semdiff.txt
+diff -u - semdiff.txt <<EOF
+EOF
+
+pdk semdiff --show-unchanged -m timex-12.xml timex-12.xml \
+    | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 unchanged|rpm|adjtimex|/1.13/12|/1.13/12|i386|timex-12.xml
 unchanged|srpm|adjtimex|/1.13/12|/1.13/12|x86_64|timex-12.xml
 EOF
 
-pdk semdiff -m timex-12.xml timex-13.xml | LANG=C sort >semdiff.txt
+pdk semdiff --show-unchanged -m timex-12.xml timex-13.xml \
+    | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 upgrade|rpm|adjtimex|/1.13/12|/1.13/13|i386|timex-13.xml
 upgrade|srpm|adjtimex|/1.13/12|/1.13/13|x86_64|timex-13.xml
 EOF
 
-pdk semdiff -m timex-13.xml timex-12.xml | LANG=C sort >semdiff.txt
+pdk semdiff --show-unchanged -m timex-13.xml timex-12.xml \
+    | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 downgrade|rpm|adjtimex|/1.13/13|/1.13/12|i386|timex-12.xml
 downgrade|srpm|adjtimex|/1.13/13|/1.13/12|x86_64|timex-12.xml
 EOF
 
-pdk semdiff -m timex-12.xml timex-12-nosrc.xml | grep -v ^unchanged \
+pdk semdiff --show-unchanged -m timex-12.xml timex-12-nosrc.xml \
+    | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 drop|srpm|adjtimex|/1.13/12|x86_64|timex-12-nosrc.xml
 EOF
 
-pdk semdiff -m timex-12-nosrc.xml timex-12.xml | grep -v ^unchanged \
+pdk semdiff --show-unchanged -m timex-12-nosrc.xml timex-12.xml \
+    | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 add|srpm|adjtimex|/1.13/12|x86_64|timex-12.xml
@@ -64,7 +75,8 @@ EOF
 # Test semdiff with debs.
 # --------------------------------
 
-pdk semdiff -m ethereal1.xml ethereal1.xml | LANG=C sort >semdiff.txt
+pdk semdiff --show-unchanged -m ethereal1.xml ethereal1.xml \
+    | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 unchanged|deb|ethereal-common|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal1.xml
 unchanged|deb|ethereal-dev|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal1.xml
@@ -73,7 +85,8 @@ unchanged|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|ia64|ethereal1.xml
 unchanged|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny1|any|ethereal1.xml
 EOF
 
-pdk semdiff -m ethereal1.xml ethereal2.xml | LANG=C sort >semdiff.txt
+pdk semdiff --show-unchanged -m ethereal1.xml ethereal2.xml \
+    | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 upgrade|deb|ethereal-common|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal2.xml
 upgrade|deb|ethereal-dev|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal2.xml
@@ -82,7 +95,8 @@ upgrade|deb|tethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal2.xml
 upgrade|dsc|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|any|ethereal2.xml
 EOF
 
-pdk semdiff -m ethereal2.xml ethereal1.xml | LANG=C sort >semdiff.txt
+pdk semdiff --show-unchanged -m ethereal2.xml ethereal1.xml \
+    | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 downgrade|deb|ethereal-common|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal1.xml
 downgrade|deb|ethereal-dev|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal1.xml
@@ -91,13 +105,15 @@ downgrade|deb|tethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|ia64|ethereal1.xml
 downgrade|dsc|ethereal|0.9.13-1.0progeny2|0.9.13-1.0progeny1|any|ethereal1.xml
 EOF
 
-pdk semdiff -m ethereal1.xml ethereal1-missing.xml | grep -v ^unchanged \
+pdk semdiff --show-unchanged -m ethereal1.xml ethereal1-missing.xml \
+    | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 drop|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal1-missing.xml
 EOF
 
-pdk semdiff -m ethereal1-missing.xml ethereal1.xml | grep -v ^unchanged \
+pdk semdiff --show-unchanged -m ethereal1-missing.xml ethereal1.xml \
+    | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 add|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal1.xml

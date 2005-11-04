@@ -73,7 +73,7 @@ pdk add meta-info.xml
 pdk commit -m 'Starting point for diff.'
 
 # Nothing should have changed yet.
-pdk semdiff -m ethereal.xml | LANG=C sort >semdiff.txt
+pdk semdiff --show-unchanged -m ethereal.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 unchanged|deb|ethereal|0.9.4-1woody2|0.9.4-1woody2|i386|ethereal.xml
 EOF
@@ -96,7 +96,7 @@ pdk channel update
 pdk resolve ethereal.xml
 pdk download ethereal.xml
 
-pdk semdiff -m ethereal.xml | LANG=C sort >semdiff.txt
+pdk semdiff --show-unchanged -m ethereal.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 meta-drop|deb|ethereal|i386|predicate|test-stage-1
 upgrade|deb|ethereal|0.9.4-1woody2|0.9.4-1woody3|i386|ethereal.xml
@@ -122,7 +122,7 @@ pdk channel update
 pdk resolve ethereal.xml
 pdk download ethereal.xml
 
-pdk semdiff -m ethereal.xml | LANG=C sort >semdiff.txt
+pdk semdiff --show-unchanged -m ethereal.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 downgrade|deb|ethereal|0.9.4-1woody3|0.9.4-1woody2|i386|ethereal.xml
 meta-add|deb|ethereal|i386|predicate|test-stage-1
