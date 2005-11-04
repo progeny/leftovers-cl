@@ -235,6 +235,11 @@ class command_args(object):
             raise CommandLineError('required argument: %s', description)
         return self.args.pop(0)
 
+    def assert_no_args(self):
+        '''Assert that no arguments have been given.'''
+        if len(self.args) != 0:
+            raise CommandLineError('command takes no arguments')
+
 class command_args_spec(object):
     '''Factory for creating command_args objects.
 
@@ -463,43 +468,50 @@ def log(args):
     ws.log(args)
 
 def pull(args):
-    """
-    pull: Bring changes from a remote workspace into this workspace.
-    usage: pull [upstream-name]
+    """usage: pdk pull REMOTE_NAME
 
-    Bring working copy up-to-date with HEAD rev.
+    Bring version control info from a remote workspace into this
+    workspace. Bring working copy up-to-date with remote HEAD
+    revision.
 
+    The remote name should be configured as a channel of type
+    'source' in the workspace channels file.
     """
-    if len(args) != 1:
-        raise CommandLineError('requires a remote workspace path')
-    remote_path = args[0]
+    remote_path = args.pop_arg('remote workspace name')
     local = current_workspace()
     local.pull(remote_path)
 
+pull = make_invokable(pull)
+
 # Externally-exposed function -- pdk channel update
 def world_update(args):
-    '''Read channels and sources and update our map of the outside world.
-    '''
+    '''usage: pdk channel update
 
-    if len(args) > 0:
-        raise CommandLineError, 'update takes no arguments'
+    Reads channel configuration and downloads all metadata.
+    '''
+    args.assert_no_args()
     workspace = current_workspace()
     workspace.world_update()
 
+world_update = make_invokable(world_update)
+
 def push(args):
-    """Publish the HEAD of this workspace to another workspace.
+    """usage: pdk push REMOTE_NAME
+
+    Publish the HEAD of this workspace to another workspace.
 
     This command also pushes the cache. The remote HEAD must appear in
     the history of this HEAD or the remote workspace will reject the
     push.
 
-    This command takes a remote workspace path as an argument.
+    The remote name should be configured as a channel of type
+    'source' in the workspace channels file.
     """
-    if len(args) != 1:
-        raise CommandLineError('requires a remote workspace path')
-    remote_path = args[0]
+    remote_path = args.pop_arg('remote workspace name')
     local = current_workspace()
     local.push(remote_path)
+
+push = make_invokable(push)
 
 def semdiff(args):
     """usage: pdk semdiff [options] COMPONENT [COMPONENT]
