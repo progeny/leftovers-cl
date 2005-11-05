@@ -28,6 +28,7 @@ import sys
 import optparse
 from itertools import chain
 from pdk.package import Package
+from pdk.progress import ConsoleProgress
 from pdk.version_control import VersionControl, CommitNotFound
 from pdk.cache import Cache
 from pdk.channels import OutsideWorldFactory, WorldData
@@ -949,10 +950,23 @@ class Net(object):
         '''Intitiate pushing blobs.'''
         self.framer.write_stream(['push-blobs'])
         cache = self.ws.cache
+        # first figure out everything we need to do
+        needed_blobs = []
         for blob_id in cache.iter_sha1_ids():
             if blob_id in remote_blob_ids:
                 continue
+            needed_blobs.append((blob_id, cache.get_size(blob_id)))
+        total_size = 0
+        for dummy, size in needed_blobs:
+            total_size += size
+
+        progress = ConsoleProgress('Pushing blobs to remote...')
+        progress.start()
+        pushed_size = 0
+        for blob_id, size in needed_blobs:
             cache.send_via_framer(blob_id, self.framer)
+            pushed_size += size
+            progress.write_bar(total_size, pushed_size)
         self.framer.write_stream(['done'])
 
     def handle_push_blobs(self):

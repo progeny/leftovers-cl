@@ -394,7 +394,7 @@ ignore_message '^pdk.package:W0232:.*:_Rpm:'
 ignore_message '^pdk.package:E0201:.*:Package.*'
 ignore_message '^pdk.package:E0601:.*:.*self.*'
 
-ignore_message '^pdk.component:W0302:.*'
+ignore_message '^pdk.workspace:W0302:.*'
 
 ignore_message '^pdk.compare:W0613:.*realm'
 ignore_message '^pdk.compare:W0613:.*uri'
