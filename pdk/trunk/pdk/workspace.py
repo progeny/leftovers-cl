@@ -31,7 +31,7 @@ from pdk.package import Package
 from pdk.progress import ConsoleProgress
 from pdk.version_control import VersionControl, CommitNotFound
 from pdk.cache import Cache
-from pdk.channels import OutsideWorldFactory, WorldData
+from pdk.channels import OutsideWorldFactory, WorldData, ChannelBackedCache
 from pdk.exceptions import ConfigurationError, SemanticError, \
      CommandLineError, InputError
 from pdk.util import pjoin, make_self_framer, cached_property, \
@@ -535,7 +535,7 @@ def semdiff(args):
     found in the work area. This could affect metadata differences.
     """
     workspace = current_workspace()
-    cache = workspace.cache
+    cache = ChannelBackedCache(workspace.world, workspace.cache)
     files = args.get_reoriented_files(workspace)
 
     if args.opts.machine_readable:
