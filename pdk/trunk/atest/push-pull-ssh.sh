@@ -60,6 +60,10 @@ pushd integration
     <type>source</type>
     <path>file://localhost/$tmp_dir/production</path>
   </production>
+  <oops>
+    <type>source</type>
+    <path>$tmp_dir/ooooooops</path>
+  </oops>
 </channels>
 EOF
     pdk add progeny.com/apache.xml
@@ -72,6 +76,9 @@ EOF
 # -----------------------------------------------------------
 
     pdk push production
+
+    # make sure that we can't push to repositories that don't exist.
+    pdk push oops && fail 'push to non-workspace should fail'
 popd
 
 diff -u integration/etc/git/refs/heads/master \

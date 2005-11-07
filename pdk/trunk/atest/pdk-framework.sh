@@ -45,5 +45,7 @@ pdk >pdk-framework.out 2>pdk-framework.err<<EOF
 resolve
 !echo marker
 EOF
-grep -q marker pdk-framework.out && grep -qi "in a workspace" \
-    pdk-framework.err || fail 'did not receive expected error'
+grep -q marker pdk-framework.out \
+    || fail 'marker did not show up on stdout.'
+grep -qi "not currently a workspace" pdk-framework.err \
+    || fail 'did not receive expected error'

@@ -44,6 +44,10 @@ from pdk.repogen import compile_product
 # current schema level for this pdk build
 schema_target = 4
 
+class NotAWorkspaceError(ConfigurationError):
+    '''A workspace op was requested on or in a non workspace directory.'''
+    pass
+
 def find_workspace_base(directory=None):
     """Locate the directory above the current directory, containing
     the work, cache, and svn directories.
@@ -68,7 +72,7 @@ def find_workspace_base(directory=None):
 
     return None, None
 
-def current_workspace():
+def current_workspace(given_directory = None):
     """
     Locate the current workspace and return the workspace object.
 
@@ -77,10 +81,14 @@ def current_workspace():
     tree until it finds its' marker files/dirs, and then instances
     the Workspace object with that directory as its base.
     """
-    directory, schema_number = find_workspace_base()
+    if given_directory is None:
+        given_directory = os.getcwd()
+
+    directory, schema_number = find_workspace_base(given_directory)
     assert_schema_current(directory, schema_number)
     if not directory:
-        raise ConfigurationError("Not currently in a workspace")
+        raise NotAWorkspaceError("Not currently a workspace: '%s'"
+                                 % given_directory)
     return _Workspace(directory)
 
 def currently_in_a_workspace():
@@ -801,6 +809,7 @@ class _Workspace(object):
 
         local_commit_ids = self.vc.get_all_refs()
         net = Net(framer, self)
+        net.verify_protocol()
         new_head_id = net.send_pull_pack(local_commit_ids)
         self.vc.import_pack_via_framer(framer)
         self.vc.note_ref(upstream_name, new_head_id)
@@ -825,6 +834,7 @@ class _Workspace(object):
         remote_blob_ids = [ r.blob_id for r in raw_package_info
                             if r.section_name == upstream_name ]
         net = Net(framer, self)
+        net.verify_protocol()
         net.send_push_blobs(remote_blob_ids)
         try:
             net.send_push_pack(head_id, remote_commit_ids)
@@ -860,9 +870,29 @@ class Net(object):
     send_* methods correspond to handle_* methods on remote processes.
     (mostly)
     '''
+    protocol_version = '0'
+
     def __init__(self, framer, local_workspace):
         self.framer = framer
         self.ws = local_workspace
+
+    def verify_protocol(self):
+        '''Verify that the remote can speak our protocol version.'''
+        self.framer.write_stream(['verify-protocol'])
+        self.framer.write_stream(self.protocol_version)
+        frame = self.framer.read_frame()
+        if frame == 'protocol-ok':
+            pass
+        elif frame == 'error':
+            message = self.framer.read_frame()
+            raise SemanticError, message
+        self.framer.assert_end_of_stream()
+
+    def handle_verify_protocol(self):
+        '''Handle protocl verification'''
+        self.framer.assert_frame(self.protocol_version)
+        self.framer.assert_end_of_stream()
+        self.framer.write_stream(['protocol-ok'])
 
     def send_done(self):
         '''Indicate that we are done speaking with the remote process.'''
@@ -984,7 +1014,8 @@ class Net(object):
                         'push-blobs': self.handle_push_blobs,
                         'pull-pack': self.handle_pull_pack,
                         'pull-blob-list': self.handle_pull_blob_list,
-                        'pull-blobs': self.handle_pull_blobs, }
+                        'pull-blobs': self.handle_pull_blobs,
+                        'verify-protocol': self.handle_verify_protocol, }
 
         while 1:
             first = self.framer.read_frame()
@@ -1001,7 +1032,11 @@ def listen(args):
     if len(args) != 1:
         raise CommandLineError('requires a workspace path')
     framer = make_self_framer()
-    local_workspace = _Workspace(args[0])
+    try:
+        local_workspace = current_workspace(args[0])
+    except NotAWorkspaceError, e:
+        framer.write_stream(['error', str(e)])
+        return
     net = Net(framer, local_workspace)
     net.listen_loop()
 
