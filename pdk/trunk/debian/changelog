@@ -1,3 +1,10 @@
+pdk (0.0.19) unstable; urgency=low
+
+  * Enable pulling over anonymous http.
+  * Update pdk to work with git v0.99.9i.
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed, 16 Nov 2005 17:51:10 -0500
+
 pdk (0.0.18) unstable; urgency=low
 
   * Add --show-unchanged optoin to commands that give semdiff reports.
