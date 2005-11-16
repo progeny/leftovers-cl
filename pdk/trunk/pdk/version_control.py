@@ -235,9 +235,20 @@ unset GIT_INDEX_FILE''' \
         start_dir = os.getcwd()
         try:
             self.shell_to_string('git-read-tree HEAD')
-            self.shell_to_string('git-checkout-cache -a')
+            self.shell_to_string('git-checkout-index -a')
         finally:
             os.chdir(start_dir)
+
+    def filter_status(self, status_output):
+        """Remove all lines after 'Untracked files'
+
+        Untraced files show up last in git-status output, and we are
+        not interested in them.
+        """
+        for line in status_output.splitlines():
+            if re.match(r'#\s+Untracked files:', line):
+                return
+            yield line
 
     def status(self, exclude):
         '''
@@ -245,7 +256,8 @@ unset GIT_INDEX_FILE''' \
         '''
         exclude_glob = pjoin(relative_path(self.work_dir, exclude), '*')
         output = self.shell_to_string('git status || true')
-        output_list = list(Set(output.splitlines()))
+        status_lines = self.filter_status(output)
+        output_list = list(Set(status_lines))
         # Strip #[tab] from lines, keep only lines which had #[tab]
         output_list = [ i[2:] for i in output_list if i.startswith('#\t') ]
 
@@ -269,36 +281,12 @@ unset GIT_INDEX_FILE''' \
 
     def direct_pull(self, url, upstream_name):
         '''Use git more directly to do a pull.'''
-        refspec = '+:%s' % (upstream_name)
+        # for now we assume master, as HEAD is inaccessible. too bad.
+        refspec = '+master:%s' % (upstream_name)
         command = 'git fetch %s %s' % (mkarg(url), refspec)
         wait = self.popen2(command, False)
         wait()
-        if self.is_new():
-            command = 'git update-ref %s %s' % ('HEAD', upstream_name)
-            wait = self.popen2(command, False)
-            wait()
-            command = 'rm %s/FETCH_HEAD' % self.vc_dir
-            wait = self.popen2(command, False)
-            wait()
-            self.update()
-        else:
-            command = 'git pull . %s %s' % (upstream_name, 'HEAD')
-            wait = self.popen2(command, False)
-            wait()
-
-    def update_from_remote(self, upstream_name):
-        """
-        update the version control by pulling from remote sources.
-        """
-        if self.is_new():
-            command_string = 'git fetch %(name)s :%(name)s' \
-                % {'name' : upstream_name}
-            self.shell_to_string(command_string)
-            command_string = 'git checkout -b master -f %s' % upstream_name
-            self.shell_to_string(command_string)
-        else:
-            command_string = 'git pull %s' % upstream_name
-            self.shell_to_string(command_string)
+        self.merge(upstream_name)
 
     def cat(self, filename):
         '''Get the unchanged version of the given filename.'''
@@ -322,15 +310,6 @@ unset GIT_INDEX_FILE''' \
             return popen_wrap_handle(remote_out, waiter)
         else:
             raise StandardError('Got multiple matching lines, %r' % lines)
-
-    def push(self, remote):
-        '''Push local commits to a remote git.'''
-        command_string = 'git ls-remote "%s"' % remote
-        output = self.shell_to_string(command_string)
-        push_command_string = 'git push "%s"' % remote
-        if '\tHEAD\n' not in output:
-            push_command_string += ' master'
-        self.shell_to_string(push_command_string)
 
     def is_new(self):
         '''Is this a "new" (no commits) git repository?'''
@@ -422,18 +401,31 @@ unset GIT_INDEX_FILE''' \
         print >> handle, commit_id
         handle.close()
 
-    def merge(self, new_head_id):
-        '''Do a merge from HEAD to new_head_id.
+    def merge(self, branch_name, silent = False):
+        '''Do a merge from branch to HEAD.
 
         Do a plain checkout for new repositories.
         '''
-        if self.is_new():
-            command_string = 'git checkout -b master -f %s' \
-                             % new_head_id
+        if silent:
+            dev_null = '>/dev/null'
         else:
-            current_head_id = self.get_commit_id('HEAD')
-            command_string = "git resolve %s %s 'merge'" \
-                             % (current_head_id, new_head_id)
-        self.shell_to_string(command_string)
+            dev_null = ''
+        command = 'rm -f %s/FETCH_HEAD' % self.vc_dir
+        wait = self.popen2(command, False)
+        wait()
+        if self.is_new():
+            # clean up any pending fetch data.
+            command = 'git branch master %s %s' % (branch_name, dev_null)
+            wait = self.popen2(command, False)
+            wait()
+            command = 'git checkout master %s' % dev_null
+            wait = self.popen2(command, False)
+            wait()
+        else:
+            command = 'git merge -n "Merge" HEAD %s %s' \
+                      % (branch_name, dev_null)
+            wait = self.popen2(command, False)
+            wait()
+
 
 # vim:ai:et:sts=4:sw=4:tw=0:
