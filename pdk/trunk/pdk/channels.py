@@ -52,7 +52,7 @@ import apt_pkg
 from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError, SemanticError
 from pdk.util import cpath, gen_file_fragments, get_remote_file, \
-     shell_command, Framer, make_fs_framer, make_ssh_framer, cached_property
+     shell_command, Framer, cached_property
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import deb, udeb, dsc, get_package_type, \
      UnknownPackageTypeError
@@ -148,23 +148,6 @@ class FileLocator(object):
         '''Make a new locator which shares the base_uri or this locator.'''
         return FileLocator(self.base_uri, filename, expected_blob_id,
                            self.loader_factory)
-
-    def __cmp__(self, other):
-        return cmp((self.base_uri, self.filename, self.blob_id),
-                   (other.base_uri, other.filename, other.blob_id))
-
-    def get_full_url(self):
-        '''Get the full url for the located file.'''
-        parts = [ p for p in (self.base_uri, self.filename) if p ]
-        return '/'.join(parts)
-
-class CacheFileLocator(object):
-    '''Represents a remote cached resource for import into this cache.'''
-    def __init__(self, base_uri, filename, expected_blob_id, factory):
-        self.base_uri = base_uri
-        self.filename = filename
-        self.blob_id = expected_blob_id
-        self.loader_factory = factory
 
     def __cmp__(self, other):
         return cmp((self.base_uri, self.filename, self.blob_id),
@@ -361,11 +344,15 @@ class RemoteWorkspaceSection(object):
         self.channel_file = channel_file
 
         parts = urlsplit(self.full_path)
-        if parts[1]:
-            self.loader_factory = LoaderFactory(SshWorkspaceCacheLoader,
-                                                parts[1], parts[2])
+        if parts[0] == 'http':
+            self.loader_factory = LoaderFactory(URLCacheLoader)
         else:
-            self.loader_factory = LoaderFactory(LocalWorkspaceCacheLoader,
+            if parts[1]:
+                self.loader_factory = LoaderFactory(SshWorkspaceCacheLoader,
+                                                    parts[1], parts[2])
+            else:
+                cache_loader_class = LocalWorkspaceCacheLoader
+                self.loader_factory = LoaderFactory(cache_loader_class,
                                                 self.full_path)
 
     def update(self):
@@ -381,26 +368,16 @@ class RemoteWorkspaceSection(object):
         The package object is set to None as it is not know for this kind
         of section.
         '''
-        cache_url = '/'.join([self.full_path, 'cache'])
+        cache_url = '/'.join([self.full_path, 'etc', 'cache'])
         if not os.path.exists(self.channel_file):
             return
         gunzipped = GzipFile(self.channel_file)
 
         for line in gunzipped:
             blob_id, blob_path = line.strip().split()
-            locator = CacheFileLocator(cache_url, blob_path, blob_id,
-                                       self.loader_factory)
+            locator = FileLocator(cache_url, blob_path, blob_id,
+                                  self.loader_factory)
             yield None, blob_id, locator
-
-    def get_framer(self):
-        '''Get a framer suitable for communicating with this workspace.'''
-        path = self.full_path
-        parts = urlsplit(path)
-        if parts[0] == 'file' and parts[1]:
-            framer = make_ssh_framer(parts[1], parts[2])
-        else:
-            framer = make_fs_framer(path)
-        return framer
 
 make_comparable(RemoteWorkspaceSection, ('full_path',))
 

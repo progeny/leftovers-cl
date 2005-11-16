@@ -29,6 +29,7 @@ import sys
 import inspect
 import stat
 import pycurl
+from cStringIO import StringIO
 from cElementTree import ElementTree
 from elementtree.ElementTree import XMLTreeBuilder
 from xml.sax.writer import XmlWriter
@@ -224,6 +225,26 @@ def get_remote_file(remote_url, local_filename, trust_timestamp = False):
     curl.close()
     if mtime != -1:
         os.utime(local_filename, (mtime, mtime))
+
+def get_remote_file_as_string(remote_url):
+    '''Returns the contents of a remote file as a string.'''
+    result = StringIO()
+    curl = pycurl.Curl()
+    curl.setopt(curl.URL, remote_url)
+    curl.setopt(curl.USERAGENT, 'pdk')
+    curl.setopt(curl.WRITEFUNCTION, result.write)
+    curl.setopt(curl.NOPROGRESS, False)
+    curl.setopt(curl.FAILONERROR, True)
+    progress = ConsoleProgress(remote_url)
+    adapter = CurlAdapter(progress)
+    curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
+
+    try:
+        curl.perform()
+        curl.close()
+    except pycurl.error, e:
+        raise SemanticError, str(e)
+    return result.getvalue()
 
 def make_path_to(file_path):
     """Given a file path, create the directory up to the 

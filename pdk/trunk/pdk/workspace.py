@@ -26,6 +26,7 @@ __revision__ = '$Progeny$'
 import os
 import sys
 import optparse
+from urlparse import urlsplit
 from itertools import chain
 from pdk.package import Package
 from pdk.progress import ConsoleProgress
@@ -35,7 +36,8 @@ from pdk.channels import OutsideWorldFactory, WorldData, ChannelBackedCache
 from pdk.exceptions import ConfigurationError, SemanticError, \
      CommandLineError, InputError
 from pdk.util import pjoin, make_self_framer, cached_property, \
-     relative_path
+     relative_path, get_remote_file_as_string, make_ssh_framer, \
+     make_fs_framer, get_remote_file
 from pdk.semdiff import print_bar_separated, print_man, \
      iter_diffs, iter_diffs_meta, field_filter, filter_data
 from pdk.component import ComponentDescriptor, ComponentMeta
@@ -804,43 +806,15 @@ class _Workspace(object):
         """
         Get latest changes from version control
         """
-        section = self.world.get_workspace_section(upstream_name)
-        framer = section.get_framer()
-
-        local_commit_ids = self.vc.get_all_refs()
-        net = Net(framer, self)
-        net.verify_protocol()
-        new_head_id = net.send_pull_pack(local_commit_ids)
-        self.vc.import_pack_via_framer(framer)
-        self.vc.note_ref(upstream_name, new_head_id)
-        self.vc.merge(upstream_name)
-        net.send_pull_blob_list(section)
-        net.send_done()
-        framer.close()
+        conveyor = Conveyor(self, upstream_name)
+        conveyor.pull()
 
     def push(self, upstream_name):
         """
         Get push local history to a remote workspace.
         """
-        section = self.world.get_workspace_section(upstream_name)
-        framer = section.get_framer()
-        head_id = self.vc.get_commit_id('HEAD')
-        try:
-            remote_head = self.vc.get_commit_id(upstream_name)
-            remote_commit_ids = self.vc.get_rev_list([remote_head])
-        except CommitNotFound:
-            remote_commit_ids = []
-        raw_package_info = self.world.all_package_info.raw_package_info
-        remote_blob_ids = [ r.blob_id for r in raw_package_info
-                            if r.section_name == upstream_name ]
-        net = Net(framer, self)
-        net.verify_protocol()
-        net.send_push_blobs(remote_blob_ids)
-        try:
-            net.send_push_pack(head_id, remote_commit_ids)
-        finally:
-            net.send_done()
-        framer.close()
+        conveyor = Conveyor(self, upstream_name)
+        conveyor.push()
 
     def world_update(self):
         """Update remote index files for outside world."""
@@ -1039,5 +1013,113 @@ def listen(args):
         return
     net = Net(framer, local_workspace)
     net.listen_loop()
+
+class Conveyor(object):
+    '''Adapter for dealing with widely divergent pull/push strategies.
+
+    Pulling over anonymous https is very different from pulling over
+    a framer either on the local machine or via ssh.
+
+    Currently there is only one way to push.
+
+    channel       - the channel object
+    vc            - A version control object.
+    upstream_name - The name associated with the workspace in channels.xml.
+
+    Call self.pull() to actually initiate a pull.
+    Call self.push() to actually initiate a push.
+    '''
+    def __init__(self, workspace, upstream_name):
+        self.workspace = workspace
+        self.world = self.workspace.world
+        self.channel = self.world.get_workspace_section(upstream_name)
+        self.full_path = self.channel.full_path
+        self.vc = self.workspace.vc
+        self.upstream_name = upstream_name
+
+        parts = urlsplit(self.full_path)
+        if parts[0] == 'http':
+            self.pull = self._anon_http_pull_strategy
+            self.push = None
+        else:
+            self.pull = self._framer_pull_strategy
+            self.push = self._framer_push_strategy
+
+    def _get_framer(self):
+        '''Get a framer suitable for communicating with this workspace.'''
+        path = self.full_path
+        parts = urlsplit(path)
+        if parts[0] == 'file' and parts[1]:
+            framer = make_ssh_framer(parts[1], parts[2])
+        else:
+            framer = make_fs_framer(path)
+        return framer
+
+    def _anon_http_pull_strategy(self):
+        '''Run a pull.
+
+        This method is run when the path indicates that we need to do
+        an anonymous http pull.
+        '''
+        try:
+            schema_url = self.full_path + '/etc/schema'
+            schema_number = \
+                int(get_remote_file_as_string(schema_url).strip())
+        except ValueError:
+            message = "Remote workspace has invalid schema number."
+            raise SemanticError, message
+        if schema_number != schema_target:
+            raise SemanticError, 'Workspace schema mismatch with remote.'
+
+        blob_list_url = self.full_path + '/etc/cache/blob_list.gz'
+        get_remote_file(blob_list_url, self.channel.channel_file)
+
+        git_path = self.full_path + '/etc/git'
+        self.vc.direct_pull(git_path, self.upstream_name)
+
+    def _framer_pull_strategy(self):
+        '''Run a pull.
+
+        This method is run when the path indicates that we need to
+        communicate with a remote process over pipes.
+        '''
+        local_commit_ids = self.vc.get_all_refs()
+        framer = self._get_framer()
+
+        net = Net(framer, self.workspace)
+        net.verify_protocol()
+        new_head_id = net.send_pull_pack(local_commit_ids)
+        self.vc.import_pack_via_framer(framer)
+        self.vc.note_ref(self.upstream_name, new_head_id)
+        self.vc.merge(self.upstream_name)
+        net.send_pull_blob_list(self.channel)
+        net.send_done()
+        framer.close()
+
+    def _framer_push_strategy(self):
+        '''Run a push.
+
+        This method is run when the path indicates that we need to
+        communicate with a remote process over pipes.
+        '''
+        framer = self._get_framer()
+        head_id = self.vc.get_commit_id('HEAD')
+        try:
+            remote_head = self.vc.get_commit_id(self.upstream_name)
+            remote_commit_ids = self.vc.get_rev_list([remote_head])
+        except CommitNotFound:
+            remote_commit_ids = []
+        raw_package_info = self.world.all_package_info.raw_package_info
+        remote_blob_ids = [ r.blob_id for r in raw_package_info
+                            if r.section_name == self.upstream_name ]
+        net = Net(framer, self.workspace)
+        net.verify_protocol()
+        net.send_push_blobs(remote_blob_ids)
+        try:
+            net.send_push_pack(head_id, remote_commit_ids)
+        finally:
+            net.send_done()
+        framer.close()
+
 
 # vim:ai:et:sts=4:sw=4:tw=0:

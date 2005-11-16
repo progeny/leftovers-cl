@@ -267,6 +267,25 @@ unset GIT_INDEX_FILE''' \
         for rev in revs:
             print self.shell_to_string('git-cat-file commit %s' % rev)
 
+    def direct_pull(self, url, upstream_name):
+        '''Use git more directly to do a pull.'''
+        refspec = '+:%s' % (upstream_name)
+        command = 'git fetch %s %s' % (mkarg(url), refspec)
+        wait = self.popen2(command, False)
+        wait()
+        if self.is_new():
+            command = 'git update-ref %s %s' % ('HEAD', upstream_name)
+            wait = self.popen2(command, False)
+            wait()
+            command = 'rm %s/FETCH_HEAD' % self.vc_dir
+            wait = self.popen2(command, False)
+            wait()
+            self.update()
+        else:
+            command = 'git pull . %s %s' % (upstream_name, 'HEAD')
+            wait = self.popen2(command, False)
+            wait()
+
     def update_from_remote(self, upstream_name):
         """
         update the version control by pulling from remote sources.
