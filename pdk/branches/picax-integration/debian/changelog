@@ -1,0 +1,163 @@
+pdk (0.0.20) unstable; urgency=low
+
+  * Fix bug where cat and semdiff failed on files in subdirs.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu, 17 Nov 2005 15:12:15 -0500
+
+pdk (0.0.19) unstable; urgency=low
+
+  * Enable pulling over anonymous http.
+  * Update pdk to work with git v0.99.9i.
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed, 16 Nov 2005 17:51:10 -0500
+
+pdk (0.0.18) unstable; urgency=low
+
+  * Add --show-unchanged optoin to commands that give semdiff reports.
+  * Fail quickly and gracefully if pushing to a non-existent workspace.
+  * Make semdiff fabricate packages from channels.
+
+ -- Darrin Thompson <darrint@progeny.com>  Mon,  7 Nov 2005 16:10:59 -0500
+
+pdk (0.0.17) unstable; urgency=low
+
+  * Generate some atests from documentation.
+  * Add Suggests and Build-Depends for funnelweb.
+  * Ship generated docs with deb package.
+  * Increase performance of resolve and upgrade commands.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu,  3 Nov 2005 20:39:16 -0500
+
+pdk (0.0.16) unstable; urgency=low
+
+  * Make many pdk commands have more consitent interfaces.
+  * Make said pdk commands work in subdirectories.
+  * Update command help texts.
+  * Add domains to metadata.
+  * Add -o option to repogen so the user can control where it dumps its
+    output.
+
+ -- Darrin Thompson <darrint@progeny.com>  Fri, 28 Oct 2005 11:38:37 -0500
+
+pdk (0.0.15) unstable; urgency=low
+
+  * Add log and status commands.
+  * Rework commit command to use an editor by default.
+  * Allow commit to commit specific files only.
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed, 19 Oct 2005 16:23:19 -0500
+
+pdk (0.0.14) unstable; urgency=low
+
+  * Only take the newest thing when resolving.
+  * Add upgrade command for only upgrading concrete references.
+  * Limit resolve behavior to operate only on abstract references.
+  * Make upgrade and resolve report on their actions.
+  * Provide a -n option to both commands for "dry run".
+
+ -- Darrin Thompson <darrint@progeny.com>  Mon, 17 Oct 2005 17:04:44 -0500
+
+pdk (0.0.13) unstable; urgency=low
+
+  * Restructure channel handling to be more CPU efficient.
+
+ -- Darrin Thompson <darrint@progeny.com>  Fri, 14 Oct 2005 15:52:07 -0500
+
+pdk (0.0.12) unstable; urgency=low
+
+  * Fix problem where download seems to forget it already has files.
+  * Regain a little download performance.
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed, 12 Oct 2005 12:53:41 -0500
+
+pdk (0.0.11) unstable; urgency=low
+
+  * Add udeb support.
+  * Really fix package ordering.
+  * Test that debian-installer is populated only when needed.
+  * Test that blob timestamps are preserved when pulled from remote
+    workspaces.
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed,  5 Oct 2005 13:56:13 -0500
+
+pdk (0.0.10) unstable; urgency=low
+
+  * New code.
+  * Push/pull.
+  * Better package ordering in component descriptors when resolving.
+  * Tweak acceptance test tarball to include new files.
+  * Fix atest situation resulting in some atests not working in -I mode.
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue,  4 Oct 2005 14:38:15 -0500
+
+pdk (0.0.9) unstable; urgency=low
+
+  * New code.
+  * Includes workspace rearragement and migration tool.
+  * Reports missing comps.
+  * Make native debian package for now.
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue, 20 Sep 2005 17:37:29 -0500
+
+pdk (0.0.8-1) unstable; urgency=low
+
+  * First packaged version.
+  * debian/control: Change Architecture from "any" to "all" (there is no
+    architecture-dependent code in PDK).
+
+ -- Ian Murdock <imurdock@progeny.com>  Tue, 30 Aug 2005 12:10:48 -0500
+
+pdk (0.0.7-1) unstable; urgency=low
+
+  * New upstream code.
+  * Remove dependencies.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu,  4 Aug 2005 16:06:29 -0500
+
+pdk (0.0.6-1) unstable; urgency=low
+
+  * New upstream code.
+  * Remove dependency on svk.
+  * More interesting description.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu, 28 Jul 2005 10:39:20 -0500
+
+pdk (0.0.5-1) unstable; urgency=low
+
+  * New upstream code.
+  * RPM can be demoted from Depends to Suggests.
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue, 26 Jul 2005 12:41:54 -0500
+
+pdk (0.0.4-1) unstable; urgency=low
+
+  * New upstream code.
+  * Git now has native deb packaging. s/cogito/git-core/
+
+ -- Darrin Thompson <darrint@progeny.com>  Mon, 25 Jul 2005 16:01:41 -0500
+
+pdk (0.0.3-1) unstable; urgency=low
+
+  * New upstream code.
+  * Add dependency on python2.3-celementtree
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue, 19 Jul 2005 12:16:03 -0500
+
+pdk (0.0.2-3) unstable; urgency=low
+
+  * Add Suggests, pointing to deps needed to run acceptance tests.
+  * Add acceptance tests to docs.
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed, 22 Jun 2005 21:09:05 -0500
+
+pdk (0.0.2-2) unstable; urgency=low
+
+  * Add missing dep on python-librpm4.4
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed, 22 Jun 2005 15:46:01 -0500
+
+pdk (0.0.2-1) unstable; urgency=low
+
+  * Initial packaging.
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue, 21 Jun 2005 16:27:50 -0500
