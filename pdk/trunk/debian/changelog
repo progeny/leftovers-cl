@@ -1,3 +1,9 @@
+pdk (0.0.20) unstable; urgency=low
+
+  * Fix bug where cat and semdiff failed on files in subdirs.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu, 17 Nov 2005 15:12:15 -0500
+
 pdk (0.0.19) unstable; urgency=low
 
   * Enable pulling over anonymous http.

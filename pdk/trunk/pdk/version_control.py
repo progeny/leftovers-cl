@@ -294,7 +294,7 @@ unset GIT_INDEX_FILE''' \
             message = 'Empty version control. Need an initial commit.'
             raise SemanticError(message)
 
-        command = 'git-ls-tree HEAD'
+        command = 'git-ls-tree -r HEAD'
         lines = self.shell_to_string(command).splitlines()
         matching_lines = [ l for l in lines
                            if re.search(r'\t%s' % filename, l) ]

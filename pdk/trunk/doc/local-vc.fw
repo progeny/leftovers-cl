@@ -354,7 +354,7 @@ to stdout. It could be made more useful by allowing the user to cat
 particular revisions, but there are enough corner cases as it is for
 the moment.
 
-Also note the regression we test for.
+Also note the regressions we test for.
 
 @$@<Cat@>==@{
 pdk workspace create cat
@@ -406,6 +406,16 @@ EOF
     pdk cat file-b 2>errors.txt || status=$?
     [ "$status" = 4 ] || fail "cat unknown file should fail"
     grep -i 'no file' errors.txt
+
+    # watch for regression where cat doesn't work in subdirectories.
+    mkdir subdir
+    echo 1 >>subdir/file-b
+    pdk commit -m 'add file-b in subdir' subdir/file-b
+    echo 2 >>subdir/file-b
+    pdk cat subdir/file-b >file-b.cat
+    diff -u - file-b.cat <<EOF
+1
+EOF
 
 popd
 
