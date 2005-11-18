@@ -379,7 +379,15 @@ class ComponentDescriptor(object):
                 for extra_blob_id, dummy in package.extra_file:
                     extra_blob_ids.append(extra_blob_id)
         workspace.acquire(extra_blob_ids)
-        return
+
+        for ref in self.iter_component_refs():
+            ref.load(self.get_desc).download(workspace)
+
+    def iter_component_refs(self):
+        '''Iterate over all component refs.'''
+        for ref in self.contents:
+            if isinstance(ref, ComponentReference):
+                yield ref
 
     def iter_package_refs(self, abstract_constraint = None):
         '''Yield all base package references in order.
