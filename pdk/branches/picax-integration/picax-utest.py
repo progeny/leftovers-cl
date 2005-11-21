@@ -25,17 +25,13 @@ import unittest
 
 import picax.test
 
-# This file must be run in the root of the source directory.
-
-if not os.path.isdir("picax/test"):
-    raise RuntimeError, "could not find tests"
-
 # Import the tests.  This is not a function for namespace reasons.
 
 top_suite = unittest.TestSuite()
+test_path = picax.test.__path__[0]
 
-for module_fn in os.listdir("picax/test"):
-    if not os.path.isfile("picax/test/" + module_fn):
+for module_fn in os.listdir(test_path):
+    if not os.path.isfile("%s/%s" % (test_path, module_fn)):
         continue
     if module_fn[-3:] != ".py" or module_fn[:5] != "test_":
         continue
