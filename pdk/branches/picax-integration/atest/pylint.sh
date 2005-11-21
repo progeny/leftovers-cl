@@ -367,6 +367,7 @@ EOF
 
 mkdir pylint.d
 PYLINTRC=./pylintrc PYLINTHOME=pylint.d pylint $PYLINT_OPTS pdk >pylint.txt
+PYLINTRC=./pylintrc PYLINTHOME=pylint.d pylint $PYLINT_OPTS picax >>pylint.txt
 
 # stuff to check outside of the "pdk" directory
 for extra in $(ls bin); do
