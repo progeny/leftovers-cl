@@ -1,7 +1,7 @@
 from cStringIO import StringIO
 from pdk.test.utest_util import Test
 
-from pdk.progress import ConsoleProgress, CurlAdapter
+from pdk.progress import ConsoleProgress, CurlAdapter, SizeCallbackAdapter
 
 class MockProgress(object):
     def __init__(self):
@@ -28,18 +28,19 @@ class MockProgress(object):
         assert len(self.__data) == 0, \
             'some calls were not made, %r' % self.__data
 
-class TestCurlAdapter(Test):
-    def test_close_to_done(self):
+class TestSizeCallbackAdapter(Test):
+    def test_multicall(self):
         progress = MockProgress()
-        progress.write_bar(2.0, 1.99999999999999999999999999999999)
-        progress.write_bar(2.0, 2.0)
+        progress.write_bar(20, 10)
+        progress.write_bar(20, 20)
         progress.activate()
 
-        handler = CurlAdapter(progress)
-        handler.callback(2.0, 1.99999999999999999999999999999999, 0.0, 0.0)
-        handler.callback(2.0, 2.0, 0.0, 0.0)
+        handler = SizeCallbackAdapter(progress, 20)
+        handler(10)
+        handler(10)
         progress.verify()
 
+class TestCurlAdapter(Test):
     def test_multicall(self):
         progress = MockProgress()
         progress.write_bar(2.0, 1.0)

@@ -458,7 +458,7 @@ def get_pipe_ends():
     read_fd, write_fd = os.pipe()
     return os.fdopen(read_fd), os.fdopen(write_fd, 'w')
 
-def noop():
+def noop(*dummy):
     '''Do nothing.'''
     pass
 
@@ -566,10 +566,11 @@ class Framer(object):
             self.write_frame(str(item))
         self.end_stream()
 
-    def write_handle(self, handle):
+    def write_handle(self, handle, size_callback = noop):
         '''Read data from a handle in blocks and send it as a stream.'''
         for fragment in gen_fragments(handle):
             self.write_frame(fragment)
+            size_callback(len(fragment))
         self.end_stream()
 
     def end_stream(self):

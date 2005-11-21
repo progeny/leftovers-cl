@@ -122,13 +122,13 @@ class SimpleCache(object):
             result = os.path.exists(local_path)
         return result
 
-    def send_via_framer(self, blob_id, framer):
+    def send_via_framer(self, blob_id, framer, callback_adapter):
         '''Send a blob via the given framer.'''
         cache_file = self.file_path(blob_id)
         mtime = os.stat(cache_file)[stat.ST_MTIME]
         handle = open(cache_file)
         framer.write_frame(blob_id)
-        framer.write_handle(handle)
+        framer.write_handle(handle, callback_adapter)
         handle.close()
         framer.write_stream([str(mtime)])
 

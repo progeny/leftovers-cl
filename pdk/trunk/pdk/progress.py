@@ -24,6 +24,22 @@ Display a progress meter on the console.
 
 import sys
 
+class SizeCallbackAdapter(object):
+    '''Adapt a serise of "size" calls to the curl progress callback.
+
+    Give the expected total in the contructor.
+
+    Call the object with the length of each new frame.
+    '''
+    def __init__(self, progress, total):
+        self.progress = progress
+        self.total = total
+        self.current = 0
+
+    def __call__(self, frame_size):
+        self.current += frame_size
+        self.progress.write_bar(self.total, self.current)
+
 class CurlAdapter(object):
     '''Adapt the ConsoleProgress class to handle the curl progress
     callback

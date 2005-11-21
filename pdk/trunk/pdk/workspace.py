@@ -29,7 +29,6 @@ import optparse
 from urlparse import urlsplit
 from itertools import chain
 from pdk.package import Package
-from pdk.progress import ConsoleProgress
 from pdk.version_control import VersionControl, CommitNotFound
 from pdk.cache import Cache
 from pdk.channels import OutsideWorldFactory, WorldData, \
@@ -38,12 +37,13 @@ from pdk.exceptions import ConfigurationError, SemanticError, \
      CommandLineError, InputError
 from pdk.util import pjoin, make_self_framer, cached_property, \
      relative_path, get_remote_file_as_string, make_ssh_framer, \
-     make_fs_framer, get_remote_file
+     make_fs_framer, get_remote_file, noop
 from pdk.semdiff import print_bar_separated, print_man, \
      iter_diffs, iter_diffs_meta, field_filter, filter_data
 from pdk.component import ComponentDescriptor, ComponentMeta
 from pdk.repogen import compile_product
-from pdk.progress import NullMassProgress
+from pdk.progress import ConsoleMassProgress, NullMassProgress, \
+     SizeCallbackAdapter
 
 # current schema level for this pdk build
 schema_target = 4
@@ -956,7 +956,7 @@ class Net(object):
         '''Handle a pull blobs request.'''
         blob_ids = list(self.framer.iter_stream())
         for blob_id in blob_ids:
-            self.ws.cache.send_via_framer(blob_id, self.framer)
+            self.ws.cache.send_via_framer(blob_id, self.framer, noop)
         self.framer.write_stream(['done'])
 
     def send_push_blobs(self, remote_blob_ids):
@@ -964,24 +964,23 @@ class Net(object):
         self.framer.write_stream(['push-blobs'])
         cache = self.ws.cache
         # first figure out everything we need to do
-        needed_blobs = []
+        size_map = {}
         for blob_id in cache.iter_sha1_ids():
             if blob_id in remote_blob_ids:
                 continue
-            needed_blobs.append((blob_id, cache.get_size(blob_id)))
-        total_size = 0
-        for dummy, size in needed_blobs:
-            total_size += size
+            size_map[blob_id] = cache.get_size(blob_id)
 
-        progress = ConsoleProgress('Pushing blobs to remote...')
-        progress.start()
-        pushed_size = 0
-        for blob_id, size in needed_blobs:
-            cache.send_via_framer(blob_id, self.framer)
-            pushed_size += size
-            progress.write_bar(total_size, pushed_size)
+        mass_progress = ConsoleMassProgress('Push Blobs to Remote',
+                                            size_map)
+        for blob_id, size in size_map.iteritems():
+            progress = mass_progress.get_single_progress(blob_id)
+            size_callback = SizeCallbackAdapter(progress, size)
+            progress.start()
+            cache.send_via_framer(blob_id, self.framer, size_callback)
+            progress.done()
+            mass_progress.note_finished(blob_id)
+            mass_progress.write_progress()
         self.framer.write_stream(['done'])
-        progress.done()
 
     def handle_push_blobs(self):
         '''Handle a push blobs request.'''
