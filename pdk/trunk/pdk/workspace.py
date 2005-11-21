@@ -46,7 +46,7 @@ from pdk.progress import ConsoleMassProgress, NullMassProgress, \
      SizeCallbackAdapter
 
 # current schema level for this pdk build
-schema_target = 4
+schema_target = 5
 
 class NotAWorkspaceError(ConfigurationError):
     '''A workspace op was requested on or in a non workspace directory.'''
@@ -170,6 +170,13 @@ def migrate(dummy):
         if os.path.exists(sources_dir):
             os.remove(sources_dir)
         open(pjoin('etc', 'schema'), 'w').write('4\n')
+        migrate(None)
+        return
+
+    if schema_number == 4:
+        cache = Cache(pjoin('etc', 'cache'))
+        cache.write_index()
+        open(pjoin('etc', 'schema'), 'w').write('5\n')
         migrate(None)
         return
 

@@ -36,7 +36,7 @@ verify_new_workspace() {
 EOF
     [ "$(readlink $dir/.git)" = etc/git ]
     [ -e $dir/.git/description ]
-    [ 4 = "$(cat $dir/etc/schema)" ]
+    [ 5 = "$(cat $dir/etc/schema)" ]
 }
 
 pdk workspace create || status=$?

@@ -56,7 +56,7 @@ pushd schema1
     [ -d etc/git/objects ] || fail 'etc/git should contain git info'
     [ -L .git ] || fail '.git should be a symlink'
     [ 'etc/git' = "$(readlink .git)" ] || '.git should point to etc/git'
-    [ 4 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+    [ 5 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
 popd
 
 mkdir -p schema2/etc
@@ -67,7 +67,7 @@ pushd schema2
     [ -d etc/channels ] || fail 'channels dir not created.'
     [ -e etc/outside_world.cache ] \
         && fail 'outside_world.cache not removed.'
-    [ 4 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+    [ 5 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
 popd
 
 mkdir -p schema3/etc/git/remotes
@@ -76,5 +76,21 @@ pushd schema3
     ln -s $(pwd)/etc/git/remotes etc/sources
     pdk migrate
     [ -e etc/sources ] && fail 'sources should be removed from etc/'
-    [ 4 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+    [ 5 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
 popd
+
+mkdir -p schema4/etc/cache/md5/d4
+pushd schema4
+    touch etc/cache/md5/d4/md5:d41d8cd98f00b204e9800998ecf8427e
+    echo md5:d41d8cd98f00b204e9800998ecf8427 \
+        md5/d4/md5:d41d8cd98f00b204e9800998ecf8427e | gzip \
+        >etc/cache/blob_list.gz
+    echo 4 >etc/schema
+    pdk migrate
+    gunzip <etc/cache/blob_list.gz >blob_list
+    diff -u - blob_list <<EOF
+md5:d41d8cd98f00b204e9800998ecf8427e md5/d4/md5:d41d8cd98f00b204e9800998ecf8427e 0
+EOF
+    [ 5 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+popd
+
