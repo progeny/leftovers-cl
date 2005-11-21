@@ -165,9 +165,11 @@ Files:
         self.assertEquals('2', package.version.release)
         self.assertEquals('all', package.arch)
         expected_files = (('md5:300039c03ecb76239b2d74ade0868311',
-                            'zippy.diff.gz'),
-                           ('md5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-                            'zippy.orig.tar.gz') )
+                           '2676',
+                           'zippy.diff.gz'),
+                          ('md5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                           '111',
+                           'zippy.orig.tar.gz') )
         actual_files = package['extra-file']
         self.assert_equals_long(expected_files, actual_files)
         assert not 'filename' in package

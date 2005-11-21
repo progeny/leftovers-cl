@@ -22,6 +22,7 @@ from sets import Set
 from pdk.test.utest_util import TempDirTest
 from pdk.channels import FileLocator
 from pdk.util import make_path_to
+from pdk.progress import NullMassProgress
 import pdk.cache
 
 __revision__ = "$Progeny$"
@@ -38,7 +39,8 @@ class TestCache(TempDirTest):
 
         # Copy it into the cache
         cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
-        cache.import_file(FileLocator('', 'hi.txt', None, None))
+        cache.import_file(FileLocator('', 'hi.txt', None, None, None),
+                          NullMassProgress())
         expected_blob_id = 'sha-1:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d'
         cache_file = cache.file_path(expected_blob_id)
         assert os.path.exists(cache_file), cache_file+" expected"
@@ -56,7 +58,8 @@ class TestCache(TempDirTest):
 
         open ('test', 'w').write('hello')
         cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
-        cache.import_file(FileLocator('', 'test', None, None))
+        cache.import_file(FileLocator('', 'test', None, None, None),
+                          NullMassProgress())
         expected_ids = ('sha-1:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d',
                         'md5:5d41402abc4b2a76b9719d911017c592')
         for expected_id in expected_ids:
@@ -83,7 +86,8 @@ class TestCache(TempDirTest):
 
         open ('test', 'w').write('hello')
         cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
-        cache.import_file(FileLocator('', 'test', None, None))
+        cache.import_file(FileLocator('', 'test', None, None, None),
+                          NullMassProgress())
         expected_ids = ('sha-1:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d',
                         'md5:5d41402abc4b2a76b9719d911017c592')
         for expected_id in expected_ids:
@@ -109,7 +113,8 @@ class TestCache(TempDirTest):
     def test_get_inode(self):
         open ('test', 'w').write('hello')
         cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))
-        cache.import_file(FileLocator('', 'test', None, None))
+        cache.import_file(FileLocator('', 'test', None, None, None),
+                          NullMassProgress())
         expected_ids = ('sha-1:aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d',
                         'md5:5d41402abc4b2a76b9719d911017c592')
         inodes = Set([ cache.get_inode(i) for i in expected_ids ])

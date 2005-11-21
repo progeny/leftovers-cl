@@ -112,7 +112,7 @@ class Package(object):
         try:
             return getattr(self, key)
         except AttributeError, e:
-            raise KeyError, e
+            raise KeyError, str(e)
 
     def __setitem__(self, item, value):
         raise TypeError('object does not support item assignment')
@@ -237,8 +237,8 @@ class _Dsc(object):
                 raw_file_list = tags['Files']
                 extra_files = []
                 for line in raw_file_list.strip().splitlines():
-                    (md5sum, dummy, name) = line.strip().split()
-                    extra_files.append(('md5:' + md5sum, name))
+                    (md5sum, size, name) = line.strip().split()
+                    extra_files.append(('md5:' + md5sum, size, name))
                 extra_files = tuple(extra_files)
                 dom, key, value = '', 'extra-file', extra_files
             elif l_tag == 'version':
@@ -251,9 +251,10 @@ class _Dsc(object):
                 dom, key, value = 'deb', tag, tags[tag]
             fields.append((dom, key, value))
 
-        for raw_blob_id, filename in extra_files:
+        for raw_blob_id, size, filename in extra_files:
             if filename.endswith('.dsc'):
                 fields.append(('', 'raw_filename', filename))
+                fields.append(('', 'size', size))
                 found_blob_id = raw_blob_id
                 break
 
@@ -335,6 +336,8 @@ class _Deb(object):
                 found_blob_id = 'md5:' + tags[tag]
             elif l_tag == 'filename':
                 dom, key, value = '', 'raw_filename', tags[tag]
+            elif l_tag == 'size':
+                dom, key, value = '', 'size', tags[tag]
             else:
                 dom, key, value = 'deb', tag, tags[tag]
             fields.append((dom, key, value))

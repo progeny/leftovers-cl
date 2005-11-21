@@ -192,7 +192,8 @@ class LazyWriter(object):
         """Have we started writing to the file yet?"""
         return bool(self.__handle)
 
-def get_remote_file(remote_url, local_filename, trust_timestamp = False):
+def get_remote_file(remote_url, local_filename, trust_timestamp = False,
+                    progress = None):
     '''Obtain a remote file via url.
 
     Copies the file to local_filename and attempts to set the last
@@ -215,18 +216,21 @@ def get_remote_file(remote_url, local_filename, trust_timestamp = False):
     if mtime is not None and trust_timestamp:
         curl.setopt(curl.TIMEVALUE, mtime)
         curl.setopt(curl.TIMECONDITION, curl.TIMECONDITION_IFMODSINCE)
-    progress = ConsoleProgress(remote_url)
+    if not progress:
+        progress = ConsoleProgress(remote_url)
     adapter = CurlAdapter(progress)
     curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
 
+    progress.start()
     curl.perform()
+    progress.done()
     handle.close()
     mtime = curl.getinfo(curl.INFO_FILETIME)
     curl.close()
     if mtime != -1:
         os.utime(local_filename, (mtime, mtime))
 
-def get_remote_file_as_string(remote_url):
+def get_remote_file_as_string(remote_url, progress = None):
     '''Returns the contents of a remote file as a string.'''
     result = StringIO()
     curl = pycurl.Curl()
@@ -235,12 +239,15 @@ def get_remote_file_as_string(remote_url):
     curl.setopt(curl.WRITEFUNCTION, result.write)
     curl.setopt(curl.NOPROGRESS, False)
     curl.setopt(curl.FAILONERROR, True)
-    progress = ConsoleProgress(remote_url)
+    if not progress:
+        progress = ConsoleProgress(remote_url)
     adapter = CurlAdapter(progress)
     curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
 
     try:
+        progress.start()
         curl.perform()
+        progress.done()
         curl.close()
     except pycurl.error, e:
         raise SemanticError, str(e)

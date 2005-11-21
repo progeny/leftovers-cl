@@ -32,9 +32,6 @@ class CurlAdapter(object):
     def __init__(self, progress):
         self.progress = progress
 
-        self.started = False
-        self.done = False
-
     def callback(self, down_total, down_now, up_total, up_now):
         '''Call progress methods as appropriate.
 
@@ -44,26 +41,13 @@ class CurlAdapter(object):
         When unbounded, non-zero implies still working, zero implies
         done.
         '''
-        if self.done:
-            return
-
         total = down_total + up_total
         now = down_now + up_now
 
-        if not self.started:
-            self.progress.start()
-            self.started = True
-
         if total == 0:
             self.progress.write_spin()
-            self.progress.done()
-            self.done = True
         else:
             self.progress.write_bar(total, now)
-
-        if total == now:
-            self.progress.done()
-            self.done = True
 
 class ConsoleProgress(object):
     '''Display a progress meter on the console.
@@ -119,3 +103,94 @@ class ConsoleProgress(object):
 
         self.output_file.write(bar_string)
         self.output_file.flush()
+
+class ConsoleMassProgress(object):
+    '''Organize a series of progress reported operations.
+
+    size_map associates a "size" with each key in the map.
+
+    Use get_single_progress to get an object which records progress
+    of a single progress reported operation.
+
+    After the operation is finished, call note_finished for the
+    operation key and write_progress.
+    '''
+    def __init__(self, name, size_map, output_file = sys.stderr):
+        self.name = name
+        self.size_map = size_map
+        self.total = sum(size_map.itervalues())
+        self.current = 0
+        self.output_file = output_file
+
+    def get_size(self, key):
+        '''Get the operation size associated with this key'''
+        return self.size_map[key]
+
+    def note_finished(self, key):
+        '''Note that the operation for a given key has finished.'''
+        self.current += self.size_map[key]
+
+    def write_progress(self):
+        '''Write a human readable indication of progress on the operations.
+        '''
+        percent = int((100 * self.current) / self.total)
+        self.output_file.write('%s\nProgress: %d/%d %d%%\n'
+                               % (self.name, self.current, self.total,
+                                  percent))
+
+    def get_single_progress(self, key, name = None):
+        '''Get a progress object suitable for a single operation.
+
+        Use the name field to override the displayed name of the operation.
+        '''
+        if not name:
+            name = key
+        return ConsoleProgress(name, self.output_file)
+
+class NullProgress(object):
+    '''Stub class for console progress.
+
+    This class stands in for ConsoelProgress but is quiet.
+    '''
+    def __init__(self):
+        pass
+
+    def start(self):
+        '''This method is a noop.'''
+        pass
+
+    def done(self):
+        '''This method is a noop.'''
+        pass
+
+    def write_bar(self, *dummy):
+        '''This method is a noop.'''
+        pass
+
+    def write_spin(self):
+        '''This method is a noop.'''
+        pass
+
+class NullMassProgress(object):
+    '''Stub class for console mass progress.
+
+    This class stands in for ConsoelMassProgress but is quiet.
+    '''
+    def __init__(self):
+        pass
+
+    def get_size(self, dummy):
+        '''Returns 1, otherwise is a noop.'''
+        return 1
+
+    def note_finished(self, dummy):
+        '''This method is a noop.'''
+        pass
+
+    def write_progress(self):
+        '''This method is a noop.'''
+        pass
+
+    def get_single_progress(self, *dummy):
+        '''This method is a noop.'''
+        return NullProgress()

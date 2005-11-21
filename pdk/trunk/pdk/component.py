@@ -36,7 +36,8 @@ from pdk.exceptions import PdkException, InputError, SemanticError
 from pdk.meta import ComponentMeta
 from xml.parsers.expat import ExpatError
 from pdk.log import get_logger
-from pdk.semdiff import print_report 
+from pdk.semdiff import print_report
+from pdk.channels import PackageNotFoundError
 
 class ComponentDescriptor(object):
     """Represents a component descriptor object.
@@ -358,30 +359,25 @@ class ComponentDescriptor(object):
                         new_child_ref.predicates.append(predicate)
                     ref.children.append(new_child_ref)
 
-    def download(self, workspace):
-        """
-        Acquire the packages for this descriptor from known channels
-        """
-        cache = workspace.cache
-        blob_ids = [ r.blob_id for r in self.iter_full_package_refs()
-                     if r.blob_id and r.blob_id not in cache ]
-        workspace.acquire(blob_ids)
-
-        # now that we have all downloads done, pass through again looking
-        # for extra files
+    def note_download_info(self, acquirer, extended_cache):
+        '''Recursively traverse and note blob ids in the acquirer.'''
         meta = ComponentMeta()
-        extra_blob_ids = []
         for ref in self.iter_full_package_refs():
             if not ref.blob_id:
                 continue
-            package = ref.load(meta, cache)
+            blob_id = ref.blob_id
+            acquirer.add_blob(blob_id)
+            try:
+                package = ref.load(meta, extended_cache)
+            except PackageNotFoundError:
+                continue
             if hasattr(package, 'extra_file'):
-                for extra_blob_id, dummy in package.extra_file:
-                    extra_blob_ids.append(extra_blob_id)
-        workspace.acquire(extra_blob_ids)
+                for extra_blob_id, dummy, dummy in package.extra_file:
+                    acquirer.add_blob(extra_blob_id)
 
         for ref in self.iter_component_refs():
-            ref.load(self.get_desc).download(workspace)
+            child_desc = ref.load(self.get_desc)
+            child_desc.note_download_info(acquirer, extended_cache)
 
     def iter_component_refs(self):
         '''Iterate over all component refs.'''

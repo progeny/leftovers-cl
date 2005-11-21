@@ -195,7 +195,8 @@ class DebianPoolInjector(object):
             return {}
         pool_dir = self.get_pool_dir()
         return dict([ (pjoin(pool_dir, filename), blob_id)
-                      for blob_id, filename in self.package.extra_file ])
+                      for blob_id, dummy, filename
+                      in self.package.extra_file ])
 
 
     def get_links(self):
@@ -274,7 +275,7 @@ class DebianPoolInjector(object):
             blob_id = self.package.blob_id
             filename = self.package.filename
             extra_files.append(self.get_source_file_line(blob_id, filename))
-            for blob_id, filename in self.package.extra_file:
+            for blob_id, dummy, filename in self.package.extra_file:
                 extra_files.append(self.get_source_file_line(blob_id,
                                                              filename))
             extra_files_str = '\n'.join(extra_files)

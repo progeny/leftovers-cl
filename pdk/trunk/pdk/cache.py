@@ -132,7 +132,7 @@ class SimpleCache(object):
         handle.close()
         framer.write_stream([str(mtime)])
 
-    def import_from_framer(self, framer):
+    def import_from_framer(self, framer, mass_progress):
         '''Import a blob via the given framer.'''
         while True:
             local_filename = None
@@ -144,19 +144,29 @@ class SimpleCache(object):
                 blob_id = first
                 local_filename = self.make_download_filename()
                 handle = open(local_filename, 'w')
+
+                progress = mass_progress.get_single_progress(blob_id)
+                total = mass_progress.get_size(blob_id)
+                current = 0
+                progress.start()
                 for frame in framer.iter_stream():
+                    current += len(frame)
                     handle.write(frame)
+                    progress.write_bar(total, current)
+                progress.done()
                 handle.close()
                 mtime = int(framer.read_frame())
                 framer.assert_end_of_stream()
                 if mtime != -1:
                     os.utime(local_filename, (mtime, mtime))
                 self.incorporate_file(local_filename, blob_id)
+                mass_progress.note_finished(blob_id)
+                mass_progress.write_progress()
             finally:
                 if local_filename and os.path.exists(local_filename):
                     os.unlink(local_filename)
 
-    def import_file(self, locator):
+    def import_file(self, locator, mass_progress):
         '''Download and incorporate a potentially remote source.
 
         locator - A FileLocator
@@ -166,6 +176,8 @@ class SimpleCache(object):
         verified.
         '''
         local_filename = self.make_download_filename()
+        progress = mass_progress.get_single_progress(locator.blob_id,
+                                                     locator.get_full_url())
         try:
             full_url = locator.get_full_url()
             parts = urlparse(full_url)
@@ -173,7 +185,9 @@ class SimpleCache(object):
             if scheme in ('file', ''):
                 source_file = parts[2]
                 try:
+                    progress.start()
                     copy2(source_file, local_filename)
+                    progress.done()
                     self.umask_permissions(local_filename)
 
                 except IOError, e:
@@ -183,10 +197,13 @@ class SimpleCache(object):
                         raise
             else:
                 try:
-                    get_remote_file(full_url, local_filename)
+                    get_remote_file(full_url, local_filename,
+                                    progress = progress)
                 except pycurl.error, msg:
                     raise CacheImportError('%s, %s' % (msg, full_url))
             self.incorporate_file(local_filename, locator.blob_id)
+            mass_progress.note_finished(locator.blob_id)
+            mass_progress.write_progress()
         finally:
             if os.path.exists(local_filename):
                 os.unlink(local_filename)
@@ -288,7 +305,8 @@ class SimpleCache(object):
         for filename in self:
             if regex.match(filename):
                 path = self.make_relative_filename(filename)
-                handle.write('%s %s\n' % (filename, path))
+                size = self.get_size(filename)
+                handle.write('%s %s %d\n' % (filename, path, size))
         handle.flush()
         handle.close()
 

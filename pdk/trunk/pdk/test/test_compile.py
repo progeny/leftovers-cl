@@ -194,7 +194,7 @@ class TestDebianPoolInjector(DebianPoolFixture):
         src_package_dir = pjoin(src_package_path, '..')
         extras = {}
         extras.update(dict([ (pjoin(src_package_dir, filename), blob_id)
-                             for blob_id, filename
+                             for blob_id, dummy, filename
                              in self.src.extra_file ]))
         actual_extras = self.src_injector.get_extra_pool_locations()
         self.assert_equals_long(extras, actual_extras)
@@ -209,7 +209,7 @@ class TestDebianPoolInjector(DebianPoolFixture):
     def test_get_links(self):
         package_location = self.src_injector.get_pool_location()
         package_dir = pjoin(self.src_injector.get_pool_location(), '..')
-        files = [ blob_id for blob_id, dummy in self.src.extra_file ]
+        files = [ t[0] for t in self.src.extra_file ]
         files.sort()
         expected = { package_location: self.src.blob_id,
                      pjoin(package_dir, 'apache2_2.0.53-5.diff.gz'):

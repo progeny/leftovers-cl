@@ -31,9 +31,8 @@ class MockProgress(object):
 class TestCurlAdapter(Test):
     def test_close_to_done(self):
         progress = MockProgress()
-        progress.start()
         progress.write_bar(2.0, 1.99999999999999999999999999999999)
-        progress.done()
+        progress.write_bar(2.0, 2.0)
         progress.activate()
 
         handler = CurlAdapter(progress)
@@ -43,10 +42,8 @@ class TestCurlAdapter(Test):
 
     def test_multicall(self):
         progress = MockProgress()
-        progress.start()
         progress.write_bar(2.0, 1.0)
         progress.write_bar(2.0, 2.0)
-        progress.done()
         progress.activate()
 
         handler = CurlAdapter(progress)
@@ -56,9 +53,9 @@ class TestCurlAdapter(Test):
 
     def test_unbounded(self):
         progress = MockProgress()
-        progress.start()
         progress.write_spin()
-        progress.done()
+        progress.write_spin()
+        progress.write_spin()
         progress.activate()
 
         handler = CurlAdapter(progress)

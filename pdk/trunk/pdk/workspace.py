@@ -32,7 +32,8 @@ from pdk.package import Package
 from pdk.progress import ConsoleProgress
 from pdk.version_control import VersionControl, CommitNotFound
 from pdk.cache import Cache
-from pdk.channels import OutsideWorldFactory, WorldData, ChannelBackedCache
+from pdk.channels import OutsideWorldFactory, WorldData, \
+     ChannelBackedCache, MassAcquirer
 from pdk.exceptions import ConfigurationError, SemanticError, \
      CommandLineError, InputError
 from pdk.util import pjoin, make_self_framer, cached_property, \
@@ -42,6 +43,7 @@ from pdk.semdiff import print_bar_separated, print_man, \
      iter_diffs, iter_diffs_meta, field_filter, filter_data
 from pdk.component import ComponentDescriptor, ComponentMeta
 from pdk.repogen import compile_product
+from pdk.progress import NullMassProgress
 
 # current schema level for this pdk build
 schema_target = 4
@@ -701,11 +703,19 @@ def download(args):
     package indexes of configured channels.
     """
     workspace = current_workspace()
+    extended_cache = ChannelBackedCache(workspace.world, workspace.cache)
+    acquirer = workspace.get_acquirer()
     get_desc = workspace.get_component_descriptor
     component_names = args.get_reoriented_files(workspace)
-    for component_name in component_names:
-        descriptor = get_desc(component_name)
-        descriptor.download(workspace)
+    def run_download_pass(message):
+        '''Find and acquire all needed blob_ids.'''
+        for component_name in component_names:
+            descriptor = get_desc(component_name)
+            descriptor.note_download_info(acquirer, extended_cache)
+        acquirer.acquire(message, workspace.cache)
+    # Two passes are needed when pulling from remote workspaces.
+    run_download_pass('Download Packages Pass 1 of 2')
+    run_download_pass('Download Packages Pass 2 of 2')
 
 download = make_invokable(download)
 
@@ -820,10 +830,9 @@ class _Workspace(object):
         """Update remote index files for outside world."""
         self.world.fetch_world_data()
 
-    def acquire(self, blob_ids):
-        '''Get cache loaders and use them to download package files.'''
-        for loader in self.world.get_cache_loaders(blob_ids):
-            loader.load(self.cache)
+    def get_acquirer(self):
+        '''Get a MassAcquirer for this workspace.'''
+        return MassAcquirer(self.world)
 
     def get_component_descriptor(self, oriented_name, handle = None):
         '''Using oriented_name, create a new component descriptor object.'''
@@ -972,11 +981,12 @@ class Net(object):
             pushed_size += size
             progress.write_bar(total_size, pushed_size)
         self.framer.write_stream(['done'])
+        progress.done()
 
     def handle_push_blobs(self):
         '''Handle a push blobs request.'''
         cache = self.ws.cache
-        cache.import_from_framer(self.framer)
+        cache.import_from_framer(self.framer, NullMassProgress())
         cache.write_index()
 
     def listen_loop(self):
