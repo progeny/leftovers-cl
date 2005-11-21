@@ -23,20 +23,19 @@ import os
 import imp
 import unittest
 
+import picax.test
+
 # This file must be run in the root of the source directory.
 
-if not os.path.isdir("modules/test"):
+if not os.path.isdir("picax/test"):
     raise RuntimeError, "could not find tests"
 
 # Import the tests.  This is not a function for namespace reasons.
 
-(test_file, test_fn, test_desc) = imp.find_module("test", ["./modules"])
-test = imp.load_module("test", test_file, test_fn, test_desc)
-
 top_suite = unittest.TestSuite()
 
-for module_fn in os.listdir("modules/test"):
-    if not os.path.isfile("modules/test/" + module_fn):
+for module_fn in os.listdir("picax/test"):
+    if not os.path.isfile("picax/test/" + module_fn):
         continue
     if module_fn[-3:] != ".py" or module_fn[:5] != "test_":
         continue
@@ -44,7 +43,7 @@ for module_fn in os.listdir("modules/test"):
     module_name = module_fn[:-3]
 
     (mod_file, mod_fn, mod_desc) = imp.find_module(module_name,
-                                                   test.__path__)
+                                                   picax.test.__path__)
     try:
         mod = imp.load_module(module_name, mod_file, mod_fn, mod_desc)
     finally:

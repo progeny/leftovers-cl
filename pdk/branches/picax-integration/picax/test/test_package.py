@@ -22,7 +22,7 @@ import shutil
 import picax.package
 
 import unittest
-from test.harnesses import PackageBaseHarness
+from picax.test.harnesses import PackageBaseHarness
 
 class TestFactory(PackageBaseHarness):
     "Test that the factories are able to read the index files."

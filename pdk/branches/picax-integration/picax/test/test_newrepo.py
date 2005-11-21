@@ -22,7 +22,7 @@ import picax.newrepo
 import picax.package
 
 import unittest
-from test.harnesses import PackageBaseHarness
+from picax.test.harnesses import PackageBaseHarness
 
 import pdb
 
