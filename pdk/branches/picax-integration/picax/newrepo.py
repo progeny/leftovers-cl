@@ -30,6 +30,9 @@ def _gen_release_key(distro, component):
     return "%s:%s" % (distro, component)
 
 class NewRepository:
+    """This class creates new repositories from picax.package.Package
+    objects."""
+
     def __init__(self, packages, dest_path):
         self.packages = packages
         self.dest_path = dest_path
@@ -58,8 +61,8 @@ class NewRepository:
                 toprelease_file.close()
 
             release_fn = "%s/dists/%s/%s/binary-%s/Release" \
-                         % (base_path, pkg["distribution"], pkg["component"],
-                            self.config["arch"])
+                         % (base_path, pkg["distribution"],
+                            pkg["component"], self.config["arch"])
 
             if os.path.exists(release_fn):
                 release_file = hashfile.open(release_fn)
@@ -100,8 +103,8 @@ class NewRepository:
                         (release_md5, release_sha, release_data) = \
                             self.release_info[distro_key]
                         release_fn = "%s/Release" % (release_path,)
-                        release_file = open(self.dest_path + "/" + release_fn,
-                                            "w")
+                        release_file = open(
+                            self.dest_path + "/" + release_fn, "w")
                         release_file.write(release_data)
                         release_file.close()
 
@@ -109,14 +112,16 @@ class NewRepository:
                         hashes[release_fn] = (release_md5, release_sha)
 
                 pkgs_fn = dist_path + "/Packages"
-                pkgs_file = hashfile.open(self.dest_path + "/" + pkgs_fn, "w")
+                pkgs_file = hashfile.open(self.dest_path + "/" + pkgs_fn,
+                                          "w")
                 pkgs_md5 = md5.new()
                 pkgs_sha = sha.new()
                 pkgs_file.add_hash(pkgs_md5)
                 pkgs_file.add_hash(pkgs_sha)
 
                 srcs_fn = src_dist_path + "/Sources"
-                srcs_file = hashfile.open(self.dest_path + "/" + srcs_fn, "w")
+                srcs_file = hashfile.open(self.dest_path + "/" + srcs_fn,
+                                          "w")
                 srcs_md5 = md5.new()
                 srcs_sha = sha.new()
                 srcs_file.add_hash(srcs_md5)
@@ -164,7 +169,8 @@ class NewRepository:
                 fn_size = os.stat(self.dest_path + "/" + index_fn).st_size
                 if fn_size > 0:
                     gzip_fn = index_fn + ".gz"
-                    gzip_hash = hashfile.open(self.dest_path + "/" + gzip_fn, "w")
+                    gzip_hash = hashfile.open(
+                        self.dest_path + "/" + gzip_fn, "w")
                     gzip_md5 = md5.new()
                     gzip_sha = sha.new()
                     gzip_hash.add_hash(gzip_md5)
@@ -185,7 +191,8 @@ class NewRepository:
 
             if fn_size == 0:
                 if os.path.isdir(self.dest_path + "/" + fn_path):
-                    for emptyfn in os.listdir(self.dest_path + "/" + fn_path):
+                    for emptyfn in \
+                            os.listdir(self.dest_path + "/" + fn_path):
                         os.unlink("%s/%s/%s" % (self.dest_path, fn_path,
                                                 emptyfn))
                     os.rmdir(self.dest_path + "/" + fn_path)
@@ -236,13 +243,17 @@ class NewRepository:
                         full_path = self.dest_path + "/" + fn
                         if os.path.exists(full_path):
                             size = os.stat(full_path).st_size
-                            release_file.write(" %s %18d %s\n"
-                                               % (self.index_hashes[fn][hash_index],
-                                                  size, component_path))
+                            release_file.write(
+                                " %s %18d %s\n"
+                                % (self.index_hashes[fn][hash_index],
+                                   size, component_path))
 
             release_file.close()
 
     def write_repo(self):
+        """Write the repository, using the settings the object was constructed
+        with."""
+
         self._load_releases(self.config["base_path"])
         self._write_packages()
         self._compress_and_hash_indexes()

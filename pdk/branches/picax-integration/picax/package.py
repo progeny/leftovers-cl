@@ -16,9 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import sys
 import os
-import string
 import apt_pkg
 
 import picax.config
@@ -31,7 +29,8 @@ class Package:
     Packages file.  Don't create one of your own; instead, rely on the
     PackageFactory class below to create these for you."""
 
-    def __init__(self, base_path, fn, start_pos, section, distro, component):
+    def __init__(self, base_path, fn, start_pos, section, distro,
+                 component):
         self.base_path = base_path
         self.fn = fn
         self.start_pos = start_pos
@@ -51,11 +50,13 @@ class Package:
         return self["Package"]
 
     def get_lines(self):
+        "Retrieve the data about this package from the index."
+
         if len(self.lines) == 0:
             tagfile = open(self.fn)
             tagfile.seek(self.start_pos)
             line = tagfile.readline()
-            while len(string.strip(line)) > 0:
+            while len(line.strip()) > 0:
                 self.lines.append(line)
                 line = tagfile.readline()
             tagfile.close()
@@ -63,8 +64,12 @@ class Package:
         return self.lines[:]
 
     def get_source_info(self):
+        """Retrieve the information about this package's source package.
+        If the package is a source package, just return its own
+        information."""
+
         if self.fields.has_key("Source"):
-            source = string.split(string.strip(self["Source"]))
+            source = self["Source"].strip().split()
             if len(source) == 1:
                 return (source[0], self["Version"])
             else:
@@ -73,12 +78,20 @@ class Package:
             return (self["Package"], self["Version"])
 
     def link(self, dest_path):
+        """Link a package to its destination in the filesystem.
+        This method must be overriden in subclasses."""
+
         raise RuntimeError, "invoked link() on base class"
 
     def _get_package_size(self):
+        """Return the package's size.  This method must be overriden
+        in subclasses."""
+
         raise RuntimeError, "size calculation not available in base class"
 
     def has_key(self, key):
+        "Verify that the package has the particular key."
+
         if self.fields.has_key(key) or \
            self._calc_meta.has_key(key) or \
            self.meta.has_key(key):
@@ -104,18 +117,23 @@ class Package:
     _calc_meta = { "Package-Size": "_get_package_size" }
 
 class BinaryPackage(Package):
+    "This is a subclass of Package to support binary packages."
+
     def __repr__(self):
         return "<picax.package.BinaryPackage instance: %s>" \
                % (self["Package"],)
 
     def link(self, dest_root_path):
+        "Link the binary package to its proper destination."
+
         pkg_path = self["Filename"]
         src_path = self.base_path + "/" + pkg_path
         dest_path = dest_root_path + "/" + pkg_path
 
         if os.path.exists(dest_path):
-            self.log.warning("Binary package %s already copied once, skipping"
-                             % (pkg["Package"],))
+            self.log.warning(
+                "Binary package %s already copied once, skipping"
+                % (self["Package"],))
             return
 
         pkg_dir = os.path.dirname(dest_path)
@@ -125,6 +143,8 @@ class BinaryPackage(Package):
         os.link(src_path, dest_path)
 
     def _get_package_size(self, key):
+        "Return the size of the package file."
+
         self.meta[key] = os.stat(self.base_path + "/"
                                  + self["Filename"]).st_size
 
@@ -145,20 +165,23 @@ class SourcePackage(Package):
         if not hasattr(self, "file_list"):
             self.file_list = []
             file_dir = self["Directory"]
-            for file_line in string.split(self["Files"], "\n"):
-                if len(string.strip(file_line)) == 0:
+            for file_line in self["Files"].split("\n"):
+                if len(file_line.strip()) == 0:
                     continue
-                (md5sum, size, fn) = string.split(string.strip(file_line))
+                (md5sum, size, fn) = file_line.strip().split()
                 self.file_list.append(file_dir + "/" + fn)
 
         return self.file_list
 
     def link(self, dest_path):
+        "Link the source package's files to their proper destinations."
+
         for path in self._get_file_list():
             dest_file_path = dest_path + "/" + path
             if os.path.exists(dest_file_path):
-                self.log.warning("Source package %s already copied once, skipping"
-                                 % (self["Package"],))
+                self.log.warning(
+                    "Source package %s already copied once, skipping"
+                    % (self["Package"],))
                 return
 
             pkg_dir = os.path.dirname(dest_file_path)
@@ -168,6 +191,8 @@ class SourcePackage(Package):
             os.link(self.base_path + "/" + path, dest_file_path)
 
     def _get_package_size(self, key):
+        "Retrieve the total size of the package's files."
+
         total_size = 0
         for path in self._get_file_list():
             total_size = total_size + os.stat(self.base_path + "/"
@@ -186,6 +211,7 @@ class PackageFactory:
         self.package_file = package_file_stream
         self.package_parser = apt_pkg.ParseTagFile(package_file_stream)
         self.eof = False
+        self.last_pos = None
 
         self.current_pos = self.package_parser.Offset()
 
@@ -198,6 +224,9 @@ class PackageFactory:
         self.current_pos = self.package_parser.Offset()
 
     def get_next_package(self):
+        """Retrieve the next set of package information from the index,
+        and create the proper Package subclass object for it."""
+
         if self.eof:
             return None
 
@@ -211,7 +240,8 @@ class PackageFactory:
                                  self.distro, self.component)
         elif self.package_parser.Section["Filename"][-4:] == "udeb":
             return UBinaryPackage(self.base_path, self.package_file.name,
-                                  self.last_pos, self.package_parser.Section,
+                                  self.last_pos,
+                                  self.package_parser.Section,
                                   self.distro, self.component)
         else:
             return BinaryPackage(self.base_path, self.package_file.name,
@@ -219,6 +249,8 @@ class PackageFactory:
                                  self.distro, self.component)
 
     def get_packages(self):
+        "Retrieve all the packages from this index."
+
         pkg_list = []
         package = self.get_next_package()
         while package:
@@ -231,6 +263,8 @@ class PackageFactory:
         return self
 
     def next(self):
+        "Return the next package in the index."
+
         package = self.get_next_package()
         if not package:
             raise StopIteration
@@ -262,11 +296,12 @@ def get_base_media_packages():
     """Return a list of binary base media packages.  These packages can
     be assumed to be available, and should not be packed onto CDs."""
 
+    log = picax.log.get_logger()
     base_media_pkgs = []
 
     conf = picax.config.get_config()
     if len(conf["base_media"]) > 0:
-        picax.log.get_logger().info("Reading base media packages")
+        log.info("Reading base media packages")
 
         for base_media_path in conf["base_media"]:
             base_media_dists_path = base_media_path + "/dists"
@@ -289,6 +324,8 @@ def get_base_media_packages():
 
 def get_distro_packages(distro, section, source = False):
     """Get the packages (source or binary) from a particular distro."""
+
+    log = picax.log.get_logger()
 
     package_list = []
     read_packages = {}

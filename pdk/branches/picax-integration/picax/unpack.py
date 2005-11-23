@@ -1,9 +1,7 @@
 #!/usr/bin/python
 
-import sys
 import os
 import types
-import string
 import re
 import tempfile
 import xml.dom
@@ -15,6 +13,8 @@ import picax.apt
 import picax.log
 
 class PackageDocument:
+    "Parse Packages files, and provide group operations for their packages."
+
     def __init__(self, document):
         self.document = document
         self.package_nodes = []
@@ -46,10 +46,11 @@ class PackageDocument:
                     if subnode.nodeType == xml.dom.Node.TEXT_NODE:
                         text = text + subnode.data
                 if text:
-                    self.package_list.append(string.strip(text.encode()))
+                    self.package_list.append(text.encode().strip())
         else:
             for node in self.package_nodes:
-                self.package_list.append(node.node.getAttribute("name").encode())
+                self.package_list.append(
+                    node.node.getAttribute("name").encode())
 
     def _create_package_nodes(self):
         arch = picax.config.get_config()["arch"]
@@ -95,8 +96,8 @@ class PackageDocument:
         raise ValueError, "named node %s not found" % (name,)
 
     def _get_node_list(self):
-        resolved_list = picax.apt.resolve_package_list(self.package_list, None,
-                                                       False)
+        resolved_list = picax.apt.resolve_package_list(self.package_list,
+                                                       None, False)
         nodes = []
         for pkg_cluster in resolved_list:
             if isinstance(pkg_cluster, types.ListType):
@@ -117,6 +118,8 @@ class PackageDocument:
         return nodes
 
     def unpack_all(self, destination_path):
+        "Unpack all packages in this index to the given path."
+
         self._check_nodes()
 
         for node in self._get_node_list():
@@ -127,18 +130,26 @@ class PackageDocument:
                                  % (node.node.getAttribute("name"),))
 
     def run_script_all(self, destination_path):
+        """Run all post-installation scripts for packages unpacked
+        to the given path."""
+
         self._check_nodes()
 
         for node in self._get_node_list():
             node.run_script(destination_path)
 
     def load_all(self, destination_path):
+        "Unpack and script all packages to the given path."
+
         self._check_nodes()
 
         for node in self._get_node_list():
             node.load(destination_path)
 
 class Package:
+    """This class represents a package that needs to be unpacked to the
+    runtime image."""
+
     def __init__(self, document, node):
         self.document = document
         self.node = node
@@ -147,6 +158,8 @@ class Package:
         self.pkg_path_ref = 0
         self.temp_pkg_path = False
         self.log = picax.log.get_logger()
+        self.manidiff = None
+        self.script = None
 
         self._check_node()
 
@@ -222,7 +235,7 @@ class Package:
 
         paths = []
         for line in content_lines:
-            items = re.split(r'\s+', string.strip(line))
+            items = re.split(r'\s+', line.strip())
             path_items = items[5:]
             path = path_items[0]
             if path[0] == ".":
@@ -273,10 +286,10 @@ class Package:
         return remove_list
 
     def unpack(self, destination_path):
+        "Unpack the package to the given path."
+
         self._get_package_file()
 
-#        os.system("fakeroot dpkg --root=%s --unpack %s" % (destination_path,
-#                                                           self.pkg_path))
         os.system("ar -p %s data.tar.gz | zcat | (cd %s && tar -xf -)"
                   % (self.pkg_path, destination_path))
 
@@ -300,6 +313,8 @@ class Package:
         self._free_package_file()
 
     def run_script(self, destination_path):
+        "Run the package scripts for the given path."
+
         script_nodes = self.node.getElementsByTagName("script")
         if len(script_nodes) < 1:
             return
@@ -318,7 +333,7 @@ class Package:
         os.environ["PICAX_DEST"] = destination_path
 
         if interpreter == "python":
-            script = string.replace(script, "\r\n", "\n") + "\n"
+            script = script.replace("\r\n", "\n") + "\n"
             script_code = compile(script, "<XML package script>", "exec")
             namespace = { "dest": destination_path }
             exec script_code in namespace
@@ -332,10 +347,15 @@ class Package:
             os.unlink(tempfn)
 
     def load(self, destination_path):
+        "Unpack and script the package to the given path."
+
         self.unpack(destination_path)
         self.run_script(destination_path)
 
 def read_package_file(fn = None, f = None):
+    """Read a given package index, either by filename or file object,
+    and return a PackageDocument object for it."""
+
     if fn is None and f is None:
         raise ValueError, "must provide either a file name or file object"
 

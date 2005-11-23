@@ -1,30 +1,23 @@
-import sys
 import os
 import types
-import string
 import shutil
 import apt_pkg
 
 import picax.config
 import picax.log
 
-import pdb
-
 cache = None
 config = {}
 
 class FoundPackage(Exception):
+    "Exception to flag when a package is found."
     pass
 
 def init():
-    global cache
-    global config
-    global log
+    "Initialize apt and prepare it for dependency solving."
 
     if cache:
         raise RuntimeError, "apt is already initialized"
-
-    log = picax.log.get_logger()
 
     global_conf = picax.config.get_config()
     base_dir = global_conf["temp_dir"] + "/apt-info"
@@ -65,11 +58,6 @@ Dir "%s/"
 
     slist = open("%s/sources.list" % (base_dir,), "w")
     for (distro, components) in distro_list:
-        # Old way - all components on one line
-        #component_str = string.join(components, " ")
-        #slist.write("deb file://%s %s %s\n" % (path, distro, component_str))
-
-        # New way - each component on its own line
         for component in components:
             slist.write("deb file://%s %s %s\n" % (path, distro, component))
     if global_conf.has_key("correction_apt_repo"):
@@ -108,6 +96,8 @@ def _find_package_in_cache(pkg_name):
     return found_pkg
 
 def find_package_uri(pkg_name):
+    "Get a URI to the binary package with the given name."
+
     global_conf = picax.config.get_config()
     found_pkg = _find_package_in_cache(pkg_name)
     if len(found_pkg.VersionList) <= 0:
@@ -127,7 +117,7 @@ def find_package_uri(pkg_name):
         base_paths.extend(map(lambda x: "file://" + x,
                               global_conf["base_media"]))
         if global_conf.has_key("correction_apt_repo"):
-            base_paths.append(string.split(global_conf["correction_apt_repo"])[1])
+            base_paths.append(global_conf["correction_apt_repo"].split()[1])
 
         for base_path in base_paths:
             if full_uri:
@@ -142,6 +132,8 @@ def find_package_uri(pkg_name):
     return full_uri
 
 def get_package_data(pkg_name_or_ver):
+    "Retrieve the given package's index data."
+
     if isinstance(pkg_name_or_ver, types.StringType):
         version = cache[pkg_name_or_ver].VersionList[0]
     else:
@@ -160,12 +152,12 @@ def get_package_data(pkg_name_or_ver):
     if not tag_valid:
         raise RuntimeError, "could not find package in its cache file"
 
-    dict = {}
+    results = {}
     for key in tag.Section.keys():
-        dict[key] = tag.Section[key]
+        results[key] = tag.Section[key]
 
     fo.close()
-    return dict
+    return results
 
 def _get_latest_version(pkg):
     latest = None
@@ -181,27 +173,29 @@ def _match_version(ver1, ver2):
     return (ver1.ParentPkg.Name == ver2.ParentPkg.Name and \
             ver1.VerStr == ver2.VerStr)
 
-def _match_dep(target_ver, source_ver, type):
-    if not source_ver.DependsList.has_key(type):
+def _match_dep(target_ver, source_ver, dep_type):
+    if not source_ver.DependsList.has_key(dep_type):
         return False
 
-    for dep in source_ver.DependsList[type]:
+    for dep in source_ver.DependsList[dep_type]:
         for dep_alternative in dep:
             for dep_target in dep_alternative.AllTargets():
-                if dep_target.ParentPkg.Name == target_ver.ParentPkg.Name and \
-                   dep_target.VerStr == target_ver.VerStr:
+                if dep_target.ParentPkg.Name == target_ver.ParentPkg.Name \
+                       and dep_target.VerStr == target_ver.VerStr:
                     return True
 
     return False
 
 def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
-    global cache
+    """Resolve the dependencies in the given list of packages, returning
+    a new list in dependency order.  Ignore the dependencies for packages
+    in pkgs_to_ignore (and don't include them in the list, either)."""
 
+    log = picax.log.get_logger()
     queue = []
     results = []
     result_versions = {}
     reject = []
-    seen = []
     bad_deps = []
     in_list = pkgs[:]
 
@@ -260,8 +254,10 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
             # dependency.
 
             if result_versions.has_key(current.ParentPkg.Name):
-                if result_versions[current.ParentPkg.Name] != current.VerStr:
-                    raise RuntimeError, "package added twice with different versions"
+                rv = result_versions[current.ParentPkg.Name]
+                if rv != current.VerStr:
+                    raise RuntimeError, \
+                          "package added twice with different versions"
                 continue
 
             # Also short-circuit if the package appears in the ignore
@@ -303,9 +299,11 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
 
                         if loose_deps:
                             for bad_dep in bad_deps:
-                                if dep_alternative.TargetPkg.Name == bad_dep.TargetPkg.Name and \
-                                   dep_alternative.TargetVer == bad_dep.TargetVer and \
-                                   dep_alternative.CompType == bad_dep.CompType:
+                                d1 = dep_alternative
+                                d2 = bad_dep
+                                if d1.CompType == d2.CompType and \
+                                   d1.TargetVer == d2.TargetVer and \
+                                   d1.TargetPkg.Name == d2.TargetPkg.Name:
                                     continue
 
                         for dep_target in dep_alternative.AllTargets():
@@ -321,7 +319,8 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
                         # is as good as having the package available.
 
                         if ignore_dict.has_key(dep_target.ParentPkg.Name):
-                            if ignore_dict[dep_target.ParentPkg.Name] == dep_target.VerStr:
+                            ign = ignore_dict[dep_target.ParentPkg.Name]
+                            if ign == dep_target.VerStr:
                                 raise FoundPackage
 
                         # If the dependency is part of a cluster, flag
@@ -349,8 +348,10 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
                         # isn't already in the results.
 
                         if result_versions.has_key(dep_target.ParentPkg.Name):
-                            if result_versions[dep_target.ParentPkg.Name] != dep_target.VerStr:
-                                raise RuntimeError, "version mismatch with already added package"
+                            rv = result_versions[dep_target.ParentPkg.Name]
+                            if rv != dep_target.VerStr:
+                                raise RuntimeError, \
+"version mismatch with already added package"
                             raise FoundPackage
 
                         # If it's not already in the results, maybe
@@ -359,7 +360,8 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
                         if not loose_deps and not candidate and \
                            not disqualified:
                             for result_cluster in results:
-                                if isinstance(result_cluster, types.ListType):
+                                if isinstance(result_cluster,
+                                              types.ListType):
                                     rlist = result_cluster
                                 else:
                                     rlist = [result_cluster]
@@ -394,9 +396,9 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
 
                     if not candidate:
                         if loose_deps:
-                            log.warning("Could not resolve dep '%s' for package %s"
-                                        % (str(dep),
-                                           current.ParentPkg.Name))
+                            log.warning(
+                                "Could not resolve dep '%s' for package %s"
+                                % (str(dep), current.ParentPkg.Name))
                             for dep_alternative in dep:
                                 bad_deps.append(dep_alternative)
                             found_dep = False
@@ -465,7 +467,8 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
                             result_versions[item_name] = item.VerStr
                         else:
                             if result_versions[item_name] != item.VerStr:
-                                raise RuntimeError, "two packages with same names but different versions added (cluster)"
+                                raise RuntimeError, \
+"two packages with same names but different versions added (cluster)"
                     cluster_handled = []
 
                 continue
@@ -478,7 +481,8 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
                 result_versions[pkg_name] = current.VerStr
             else:
                 if result_versions[pkg_name] != current.VerStr:
-                    raise RuntimeError, "two packages with same names but different versions added"
+                    raise RuntimeError, \
+"two packages with same names but different versions added"
 
     # All done.  Now get the package names, and return them.
 

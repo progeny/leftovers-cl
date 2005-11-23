@@ -40,7 +40,8 @@ def _get_binary_and_source(binary_name, binary_list, source_list):
                    if pkg["Package"] in binary_names]
 
     if len(binary_pkgs) < 1:
-        raise IndexError, "package(s) %s requested for splitting not found" \
+        raise IndexError, \
+              "package(s) %s requested for splitting not found" \
               % (binary_name,)
 
     now_pkgs = binary_pkgs
@@ -73,7 +74,6 @@ def split(binary_order, binary_list, source_list, first_part_size = 0):
     objects stuffed into a list of lists in part order."""
 
     conf = picax.config.get_config()
-    log = picax.log.get_logger()
 
     part_size = conf["part_size"]
     if part_size == 0:
@@ -82,7 +82,7 @@ def split(binary_order, binary_list, source_list, first_part_size = 0):
         total_source_size = reduce(lambda x, y: x + y,
                                    [x["Package-Size"] for x in source_list])
         total_size = total_binary_size + total_source_size
-        part_size = total_size / global_conf["num_parts"]
+        part_size = total_size / conf["num_parts"]
 
     post_binary_list = []
     current_size = first_part_size
@@ -91,7 +91,8 @@ def split(binary_order, binary_list, source_list, first_part_size = 0):
     already_added = []
 
     for pkg_name in binary_order:
-        (now_pkgs, later_pkgs) = _get_binary_and_source(pkg_name, binary_list,
+        (now_pkgs, later_pkgs) = _get_binary_and_source(pkg_name,
+                                                        binary_list,
                                                         source_list)
         post_binary_list.extend([x for x in later_pkgs
                                  if x not in post_binary_list])

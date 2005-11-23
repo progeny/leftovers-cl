@@ -58,8 +58,9 @@ def _order_debootstrap(packages, current_order):
         bootstrap_dist = conf["repository_list"][0][0]
         pkg_names = []
         try:
-            debootstrap_pipe = os.popen("/usr/sbin/debootstrap --print-debs %s"
-                                        % (bootstrap_dist,))
+            debootstrap_pipe = os.popen(
+                "/usr/sbin/debootstrap --print-debs %s"
+                % (bootstrap_dist,))
             for line in debootstrap_pipe:
                 pkg_names.extend(line.strip().split())
             debootstrap_pipe.close()
@@ -109,7 +110,8 @@ def _order_apt(packages, current_order):
     base_media_pkgs = picax.package.get_base_media_packages()
     base_media_list = map(lambda x: (x["Package"], x["Version"]),
                           base_media_pkgs)
-    new_order = picax.apt.resolve_package_list(current_order, base_media_list)
+    new_order = picax.apt.resolve_package_list(current_order,
+                                               base_media_list)
     return new_order
 
 default_order_funcs = [ _order_udebs, _order_explicit, _order_debootstrap,

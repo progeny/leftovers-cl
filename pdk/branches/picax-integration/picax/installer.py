@@ -9,6 +9,7 @@ loaded_module_name = None
 inst = None
 
 class InstallerError(StandardError):
+    "Exception to indicate problems with the installer."
     pass
 
 def _check_inst():
@@ -16,23 +17,24 @@ def _check_inst():
         raise InstallerError, "no installer has been set"
 
 def set_installer(name, module_dir = None):
+    "Set the installer module."
+
     global loaded_module_name
     global inst
 
     if inst is not None:
         if name != loaded_module_name:
-            raise InstallerError, "cannot load two different installer modules"
+            raise InstallerError, \
+                  "cannot load two different installer modules"
     else:
         if module_dir:
             sys.path.append(module_dir)
 
         inst_toplevel = None
-        namespace = None
         for parent_module in ("picax_modules", "picax.modules"):
             try:
                 full_name = parent_module + "." + name
                 inst_toplevel = __import__(full_name)
-                namespace = parent_module
                 break
             except:
                 pass
@@ -53,16 +55,22 @@ def set_installer(name, module_dir = None):
         loaded_module_name = name
 
 def get_options():
+    "Retrieve the installer module's options."
+
     _check_inst()
 
     return inst.get_options()
 
 def get_package_requests():
+    "Retrieve the installer module's package requests."
+
     _check_inst()
 
     return inst.get_package_requests()
 
 def install():
+    "Write the installer to the first part."
+
     try:
         _check_inst()
     except InstallerError:
@@ -84,6 +92,9 @@ def install():
     return first_part_space
 
 def post_install():
+    """Perform any actions needed after the packages are written to the
+    parts."""
+
     try:
         _check_inst()
     except InstallerError:
@@ -94,6 +105,9 @@ def post_install():
     inst.post_install(cd_path)
 
 def get_media_builder():
+    """Retrieve the installer module's media builder object, or a generic
+    one if the installer module doesn't define one."""
+
     try:
         _check_inst()
         return inst.get_media_builder()
