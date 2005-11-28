@@ -4,6 +4,7 @@ import sys
 import os
 import picax.config
 import picax.installer
+import picax.modload
 
 loaded_module_name = None
 inst = None
@@ -67,18 +68,7 @@ def set_media(name, module_dir = None):
         if name != loaded_module_name:
             raise MediaError, "cannot load two different media modules"
     else:
-        if module_dir:
-            sys.path.append(module_dir)
-
-        inst_toplevel = None
-        for parent_module in ("picax_modules", "picax.modules"):
-            try:
-                full_name = parent_module + "." + name
-                inst_toplevel = __import__(full_name)
-                break
-            except:
-                pass
-
+        inst_toplevel = picax.modload.load_module(name, module_dir)
         if not inst_toplevel:
             raise MediaError, "could not find media module for %s" \
                   % (name,)

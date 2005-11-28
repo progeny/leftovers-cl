@@ -4,6 +4,7 @@ import sys
 import os
 import picax.config
 import picax.media
+import picax.modload
 
 loaded_module_name = None
 inst = None
@@ -27,18 +28,7 @@ def set_installer(name, module_dir = None):
             raise InstallerError, \
                   "cannot load two different installer modules"
     else:
-        if module_dir:
-            sys.path.append(module_dir)
-
-        inst_toplevel = None
-        for parent_module in ("picax_modules", "picax.modules"):
-            try:
-                full_name = parent_module + "." + name
-                inst_toplevel = __import__(full_name)
-                break
-            except:
-                pass
-
+        inst_toplevel = picax.modload.load_module(name, module_dir)
         if not inst_toplevel:
             raise InstallerError, "could not find install module for %s" \
                   % (name,)
