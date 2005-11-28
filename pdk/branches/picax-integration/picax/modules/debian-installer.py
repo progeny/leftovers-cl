@@ -17,7 +17,7 @@ options = { "inst-base-url": { "config-key": "base-url",
                                     "parameter": True,
                                     "parameter-desc": "path",
                                     "doc":
-                                    ("Directory tree for first CD files",) },
+                                    ("Directory tree for first CD files",)},
             "inst-udeb-include-list": { "config-key": "udeb_include_list",
                                         "parameter": True },
             "inst-udeb-exclude-list": { "config-key": "udeb_exclude_list",
