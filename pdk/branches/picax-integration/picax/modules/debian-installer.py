@@ -1,5 +1,4 @@
 import os
-import string
 import shutil
 import tarfile
 import urllib2
@@ -17,7 +16,8 @@ options = { "inst-base-url": { "config-key": "base-url",
             "inst-template-path": { "config-key": "template_path",
                                     "parameter": True,
                                     "parameter-desc": "path",
-                                    "doc": ("Directory tree for first CD files",) },
+                                    "doc":
+                                    ("Directory tree for first CD files",) },
             "inst-udeb-include-list": { "config-key": "udeb_include_list",
                                         "parameter": True },
             "inst-udeb-exclude-list": { "config-key": "udeb_exclude_list",
@@ -31,21 +31,17 @@ boot_image_map = { "i386": "isolinux/isolinux.bin",
 
 di_required_packages = [ "eject", "grub" ]
 
-def _configure():
-    global conf
-    global inst_conf
-    global log
-
-    conf = picax.config.get_config()
-    inst_conf = conf["installer_options"]
-    log = picax.log.get_logger()
+conf = picax.config.get_config()
+inst_conf = conf["installer_options"]
+log = picax.log.get_logger()
 
 def get_options():
+    "Return the module's options for the configuration."
+
     return options
 
 def _get_boot_image_path():
-    global conf
-    global boot_image_map
+    "Return the path to the boot image."
 
     if boot_image_map.has_key(conf["arch"]):
         return boot_image_map[conf["arch"]]
@@ -53,7 +49,12 @@ def _get_boot_image_path():
         return None
 
 class DIMediaBuilder(picax.media.MediaBuilder):
+    """Build the media in the debian-installer way: put a boot image on
+    the first image, and then do the rest the usual way."""
+
     def create_media(self):
+        "Build the media."
+
         picax.media.create_image(1, _get_boot_image_path())
         index = 2
         while picax.media.can_create_image(index):
@@ -61,11 +62,11 @@ class DIMediaBuilder(picax.media.MediaBuilder):
             index = index + 1
 
 def get_media_builder():
+    "Return a media builder object to control the building of media."
+
     return DIMediaBuilder()
 
 def _read_task_info():
-    global conf
-
     task_info = {}
 
     (distro, component) = conf["repository_list"][0]
@@ -86,7 +87,7 @@ def _read_task_info():
     return task_info
 
 def get_package_requests():
-    global conf
+    "Retrieve the packages needed by debian-installer on the early media."
 
     task_info = _read_task_info()
 
@@ -100,11 +101,9 @@ def get_package_requests():
     return pkgs
 
 def _dos_tr(unixstr):
-    return string.replace(unixstr, "\n", "\r\n")
+    return unixstr.replace("\n", "\r\n")
 
 def _copy_template(cd_path):
-    global inst_conf
-
     if inst_conf.has_key("template_path") and \
        os.path.isdir(inst_conf["template_path"]):
         for template_fn in os.listdir(inst_conf["template_path"]):
@@ -130,9 +129,6 @@ def _download_di_base(base_uri, dest_path, file_list):
         output_file.close()
 
 def _install_common(cd_path):
-    global conf
-    global inst_conf
-
     log.info("Installing debian-installer common files")
 
     (distro, component) = conf["repository_list"][0]
@@ -154,13 +150,8 @@ def _install_common(cd_path):
             shutil.copyfile(inst_conf[key], "%s/.disk/%s" % (cd_path, fn))
 
 def _install_i386(cd_path):
-    global conf
-    global inst_conf
-
     boot_image_list = ["initrd.gz", "vmlinuz",
                        "debian-cd_info.tar.gz"]
-    disk_image_list = ["cd-drivers.img", "boot.img",
-                       "root.img", "net-drivers.img"]
 
     base_url = inst_conf["base-url"]
     (distro, component) = conf["repository_list"][0]
@@ -230,9 +221,6 @@ F0 f10.txt
 _install_amd64 = _install_i386
 
 def _install_ia64(cd_path):
-    global conf
-    global inst_conf
-
     print "Installing debian-installer for %s..." % (conf["arch"],)
 
     for isodir in ("boot",):
@@ -244,9 +232,7 @@ def _install_ia64(cd_path):
                       cd_path + "/boot", ("boot.img",))
 
 def install(cd_path):
-    global conf
-
-    _configure()
+    "Write the installer to the path specified."
 
     arch_specific_install = globals()["_install_" + conf["arch"]]
 
@@ -255,8 +241,8 @@ def install(cd_path):
     arch_specific_install(cd_path)
 
 def post_install(cd_path):
-    global conf
-    global inst_conf
+    """Do anything needed by d-i after the packages are packed to the
+    media."""
 
     dist_path = cd_path + "/dists/"
     distro = conf["repository_list"][0][0]

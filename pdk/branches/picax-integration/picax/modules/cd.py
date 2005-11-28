@@ -1,8 +1,6 @@
 #!/usr/bin/python
 
-import sys
 import os
-import string
 import picax.config
 
 # Standard parameters for CDs.  We could allow some of these to be
@@ -23,13 +21,17 @@ options = { "media-image-size": {"config-key": "image_size",
                             "doc": ("CD label to assign",)} }
 
 def get_options():
+    "Return the module's options for the configuration system."
     return options
 
 def get_part_size():
+    "Return the media size."
     return picax.config.get_config()["media_options"]["image_size"] \
            * cd_size_multiplier
 
 def create_image(index, boot_image_path):
+    "Create the image with the given index number."
+
     conf = picax.config.get_config()
     data_path = "%s/bin%d" % (conf["dest_path"], index)
     if not os.path.isdir(data_path):
@@ -45,7 +47,8 @@ def create_image(index, boot_image_path):
         if boot_image_path[-12:] == "isolinux.bin" or \
            boot_image_path[-18:] == "isolinux-debug.bin":
             isolinux_path = os.path.dirname(boot_image_path)
-            boot_args = boot_args + " -no-emul-boot -boot-load-size 4 -boot-info-table"
+            boot_args = boot_args + \
+                        " -no-emul-boot -boot-load-size 4 -boot-info-table"
             boot_args = boot_args + " -c %s/boot.cat" % (isolinux_path,)
         elif boot_image_path[-8:] == "boot.img":
             boot_path = os.path.dirname(boot_image_path)
@@ -70,9 +73,10 @@ def create_image(index, boot_image_path):
 
     label_options = ""
     if conf["media_options"].has_key("label"):
-        label_options = "-V '%s %d'" % (conf["media_options"]["label"], index)
+        label_options = "-V '%s %d'" % (conf["media_options"]["label"],
+                                        index)
 
     if os.system("mkisofs -o %s/img-bin%d.iso %s %s %s %s" \
-                 % (conf["dest_path"], index, mkisofs_std_args, label_options,
-                    boot_args, data_path)):
+                 % (conf["dest_path"], index, mkisofs_std_args,
+                    label_options, boot_args, data_path)):
         raise RuntimeError, "CD image generation failed"
