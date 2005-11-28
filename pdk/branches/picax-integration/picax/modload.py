@@ -31,4 +31,15 @@ def load_module(name, module_dir = None):
         except:
             pass
 
-    return inst_toplevel
+    if not inst_toplevel:
+        raise ImportError, "could not find module for %s" % (name,)
+
+    if hasattr(inst_toplevel, name):
+        inst = getattr(inst_toplevel, name)
+    elif hasattr(inst_toplevel, "modules") and \
+         hasattr(inst_toplevel.modules, name):
+        inst = getattr(inst_toplevel.modules, name)
+    else:
+        raise ImportError, "cannot find modules for %s" % (name,)
+
+    return inst

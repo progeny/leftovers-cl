@@ -68,17 +68,9 @@ def set_media(name, module_dir = None):
         if name != loaded_module_name:
             raise MediaError, "cannot load two different media modules"
     else:
-        inst_toplevel = picax.modload.load_module(name, module_dir)
-        if not inst_toplevel:
-            raise MediaError, "could not find media module for %s" \
-                  % (name,)
-
-        if hasattr(inst_toplevel, name):
-            inst = getattr(inst_toplevel, name)
-        elif hasattr(inst_toplevel, "modules") and \
-             hasattr(inst_toplevel.modules, name):
-            inst = getattr(inst_toplevel.modules, name)
-        else:
+        try:
+            inst_toplevel = picax.modload.load_module(name, module_dir)
+        except ImportError:
             raise MediaError, "cannot find media modules for %s" \
                   % (name,)
 

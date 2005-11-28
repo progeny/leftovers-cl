@@ -28,17 +28,9 @@ def set_installer(name, module_dir = None):
             raise InstallerError, \
                   "cannot load two different installer modules"
     else:
-        inst_toplevel = picax.modload.load_module(name, module_dir)
-        if not inst_toplevel:
-            raise InstallerError, "could not find install module for %s" \
-                  % (name,)
-
-        if hasattr(inst_toplevel, name):
-            inst = getattr(inst_toplevel, name)
-        elif hasattr(inst_toplevel, "modules") and \
-             hasattr(inst_toplevel.modules, name):
-            inst = getattr(inst_toplevel.modules, name)
-        else:
+        try:
+            inst_toplevel = picax.modload.load_module(name, module_dir)
+        except ImportError:
             raise InstallerError, "cannot find install modules for %s" \
                   % (name,)
 
