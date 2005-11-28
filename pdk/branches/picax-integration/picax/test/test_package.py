@@ -17,11 +17,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import os
-import shutil
 
 import picax.package
 
-import unittest
 from picax.test.harnesses import PackageBaseHarness
 
 class TestFactory(PackageBaseHarness):
@@ -77,7 +75,7 @@ class TestPackage(PackageBaseHarness):
                   "Priority: standard\n",
                   "Section: debian-installer\n",
                   "Installed-Size: 12\n",
-                  "Maintainer: DCC Development Team <dcc-devel@lists.dccalliance.org>\n",
+"Maintainer: DCC Development Team <dcc-devel@lists.dccalliance.org>\n",
                   "Architecture: all\n",
                   "Version: 0.0.2\n",
                   "Depends: di-utils\n",
@@ -85,7 +83,7 @@ class TestPackage(PackageBaseHarness):
                   "Size: 780\n",
                   "MD5sum: c99956bfab3494516241ea3429f8e7f9\n",
                   "Description: Install the DCC base system\n",
-                  " This package installs the DCC base system into the target in the\n",
+" This package installs the DCC base system into the target in the\n",
                   " first stage.\n" ]
 
         index = open("temp/dists/foo/main/binary-i386/Packages")
@@ -96,9 +94,11 @@ class TestPackage(PackageBaseHarness):
         read_lines = pkg.get_lines()
         assert len(read_lines) == len(lines)
 
-        for (l1, l2) in [(read_lines[i], lines[i]) for i in range(0, len(lines))]:
+        for (l1, l2) in \
+                [(read_lines[i], lines[i]) for i in range(0, len(lines))]:
             self.failUnless(l1 == l2,
-                            "unequal lines: expected '%s', got '%s'" % (l2, l1))
+                            "unequal lines: expected '%s', got '%s'"
+                            % (l2, l1))
 
     def testCalculatedField(self):
         "Test that calculated fields work properly."
@@ -109,7 +109,8 @@ class TestPackage(PackageBaseHarness):
         index.close()
 
         size = pkg["Package-Size"]
-        self.failUnless(size == 3, "wrong binary package size: %d" % (size,))
+        self.failUnless(size == 3,
+                        "wrong binary package size: %d" % (size,))
 
         index = open("temp/dists/foo/main/source/Sources")
         factory = picax.package.PackageFactory(index, "temp", "foo", "main")
@@ -117,7 +118,8 @@ class TestPackage(PackageBaseHarness):
         index.close()
 
         size = pkg["Package-Size"]
-        self.failUnless(size == 6, "wrong source package size: %d" % (size,))
+        self.failUnless(size == 6,
+                        "wrong source package size: %d" % (size,))
 
     def testSourceInfo(self):
         "Test that proper source information is returned."

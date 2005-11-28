@@ -33,6 +33,8 @@ class ConfigFileBaseHarness(ConfigBaseHarness):
     """Shared base for tests requiring configuration files.  Set
     self.xml_text to the configuration file text to use for the tests."""
 
+    xml_text = ""
+
     def setUp(self):
         "Set the module up with a configuration file."
 
@@ -106,8 +108,9 @@ class TestCommandLine(ConfigBaseHarness):
     def testInstallerModule(self):
         "Test that installer module options can be set."
 
-        args = [ "--installer=debian-installer", "--inst-template-path=quux",
-                 "--part-size=650000000", "foo", "bar", "baz" ]
+        args = [ "--installer=debian-installer",
+                 "--inst-template-path=quux", "--part-size=650000000",
+                 "foo", "bar", "baz" ]
         picax.config.handle_args(args)
         conf = picax.config.get_config()
 
@@ -117,8 +120,8 @@ class TestCommandLine(ConfigBaseHarness):
     def testMediaModule(self):
         "Test that media module options can be set."
 
-        args = [ "--media=cd", "--media-image-size=700", "--media-label=quux",
-                 "foo", "bar", "baz" ]
+        args = [ "--media=cd", "--media-image-size=700",
+                 "--media-label=quux", "foo", "bar", "baz" ]
         picax.config.handle_args(args)
         conf = picax.config.get_config()
 
@@ -152,7 +155,8 @@ class TestCommandLine(ConfigBaseHarness):
     def testPartMediaSanityChecking(self):
         "Test another part of sanity checking."
 
-        args = [ "--media=cd", "--part-size=650000000", "foo", "bar", "baz" ]
+        args = [ "--media=cd", "--part-size=650000000",
+                 "foo", "bar", "baz" ]
 
         failed = False
         try:

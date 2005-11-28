@@ -247,8 +247,8 @@ Description: Test repository
             else:
                 path_component = "binary-%s" % (arch,)
 
-            release = open("temp/dists/foo/main/%s/Release" % (path_component),
-                           "w")
+            release = open(
+                "temp/dists/foo/main/%s/Release" % (path_component), "w")
             release.write("""Archive: foo
 Version: 1.0
 Component: main
@@ -261,7 +261,8 @@ Architecture: %s
         os.mkdir("temp/packages")
         for f in ("install-dcc_0.0.2.dsc", "install-dcc_0.0.2.tar.gz",
                   "install-dcc_0.0.2_all.udeb",
-                  "install-dcc_0.0.2_i386.changes", "lsb-base_2.0-7_all.deb",
+                  "install-dcc_0.0.2_i386.changes",
+                  "lsb-base_2.0-7_all.deb",
                   "lsb-core_2.0-7_i386.deb", "lsb-cxx_2.0-7_i386.deb",
                   "lsb-graphics_2.0-7_i386.deb", "lsb_2.0-7.dsc",
                   "lsb_2.0-7.tar.gz", "lsb_2.0-7_all.deb"):
@@ -269,8 +270,9 @@ Architecture: %s
             t.write("123")
             t.close()
 
-        picax.config.handle_args(["--part-size=%d" % (self.default_part_size,),
-                                  "temp", "foo", "main"])
+        picax.config.handle_args(
+            ["--part-size=%d" % (self.default_part_size,),
+             "temp", "foo", "main"])
 
     def tearDown(self):
         "Remove the little repository and any other temporary directories."

@@ -21,10 +21,7 @@ import os
 import picax.newrepo
 import picax.package
 
-import unittest
 from picax.test.harnesses import PackageBaseHarness
-
-import pdb
 
 class TestNewRepositoryProcess(PackageBaseHarness):
     "Test that the process of creating a repository has no errors."
