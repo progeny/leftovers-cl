@@ -57,6 +57,8 @@ def _order_debootstrap(dummy, current_order):
     not to."""
 
     conf = picax.config.get_config()
+    log = picax.log.get_logger()
+
     if not conf["no_debootstrap"]:
         new_order = current_order[:]
         bootstrap_dist = conf["repository_list"][0][0]
@@ -68,12 +70,11 @@ def _order_debootstrap(dummy, current_order):
             for line in debootstrap_pipe:
                 pkg_names.extend(line.strip().split())
             debootstrap_pipe.close()
-        except:
-            pass
+        except OSError:
+            log.warning("debootstrap could not be run")
 
         if len(pkg_names) == 0:
-            picax.log.get_logger().warning(
-                "Debootstrap could not report packages")
+            log.warning("Debootstrap could not report packages")
         else:
             new_order.extend(pkg_names)
 

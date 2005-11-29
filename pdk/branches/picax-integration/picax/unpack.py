@@ -112,7 +112,7 @@ class PackageDocument:
                 node = None
                 try:
                     node = self._get_node_by_name(pkg_name)
-                except:
+                except ValueError:
                     self.log.warning("Could not find %s" % (pkg_name,))
 
                 if node:
@@ -128,7 +128,7 @@ class PackageDocument:
         for node in self._get_node_list():
             try:
                 node.unpack(destination_path)
-            except:
+            except OSError:
                 self.log.warning("Could not unpack %s"
                                  % (node.node.getAttribute("name"),))
 
@@ -304,14 +304,12 @@ class Package:
                     check_dirs.append(total_ex_path)
                 else:
                     os.unlink(total_ex_path)
-            except:
+            except OSError:
                 self.log.warning("Couldn't remove %s" % (exclude_file,))
 
         for check_dir in check_dirs:
-            try:
+            if os.path.isdir(check_dir):
                 os.rmdir(check_dir)
-            except:
-                pass
 
         self._free_package_file()
 

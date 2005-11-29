@@ -95,5 +95,5 @@ def get_media_builder():
     try:
         _check_inst()
         return inst.get_media_builder()
-    except:
+    except InstallerError:
         return None

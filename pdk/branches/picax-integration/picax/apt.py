@@ -19,6 +19,8 @@ class FoundPackage(Exception):
 def init():
     "Initialize apt and prepare it for dependency solving."
 
+    global cache
+
     if cache:
         raise RuntimeError, "apt is already initialized"
 
@@ -219,11 +221,7 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
         # Make sure that a package by this name exists; if not, add it
         # to the rejects list.
 
-        current_ver = None
-        try:
-            current_ver = _get_latest_version(cache[current_in])
-        except:
-            pass
+        current_ver = _get_latest_version(cache[current_in])
 
         if not current_ver:
             reject.append(current_in)
