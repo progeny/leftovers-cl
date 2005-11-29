@@ -410,6 +410,9 @@ ignore_message '^pdk.rules:W0232:.*: Class has no __init__ method'
 
 ignore_message '^pdk.meta:E0201:.*:_ComponentMetaGroup'
 
+ignore_message '^picax.*:W0131:.*:_'
+ignore_message '^picax.*:W0131:.*:.*\._'
+
 # for unit tests only
 ignore_message '^pdk.test..*:E0201:.*assert_'
 ignore_message '^pdk.test..*:E0201:.*fail_'
