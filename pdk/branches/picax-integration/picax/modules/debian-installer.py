@@ -35,7 +35,6 @@ boot_image_map = { "i386": "isolinux/isolinux.bin",
 di_required_packages = [ "eject", "grub" ]
 
 conf = picax.config.get_config()
-inst_conf = conf["installer_options"]
 log = picax.log.get_logger()
 
 def get_options():
@@ -92,6 +91,7 @@ def _read_task_info():
 def get_package_requests():
     "Retrieve the packages needed by debian-installer on the early media."
 
+    inst_conf = conf["installer_options"]
     task_info = _read_task_info()
 
     pkgs = []
@@ -107,6 +107,7 @@ def _dos_tr(unixstr):
     return unixstr.replace("\n", "\r\n")
 
 def _copy_template(cd_path):
+    inst_conf = conf["installer_options"]
     if inst_conf.has_key("template_path") and \
        os.path.isdir(inst_conf["template_path"]):
         for template_fn in os.listdir(inst_conf["template_path"]):
@@ -134,6 +135,7 @@ def _download_di_base(base_uri, dest_path, file_list):
 def _install_common(cd_path):
     log.info("Installing debian-installer common files")
 
+    inst_conf = conf["installer_options"]
     (distro, component) = conf["repository_list"][0]
 
     for isodir in (".disk",):
@@ -156,6 +158,7 @@ def _install_i386(cd_path):
     boot_image_list = ["initrd.gz", "vmlinuz",
                        "debian-cd_info.tar.gz"]
 
+    inst_conf = conf["installer_options"]
     base_url = inst_conf["base-url"]
     (distro, component) = conf["repository_list"][0]
 
@@ -225,6 +228,8 @@ _install_amd64 = _install_i386
 
 def _install_ia64(cd_path):
     print "Installing debian-installer for %s..." % (conf["arch"],)
+
+    inst_conf = conf["installer_options"]
 
     for isodir in ("boot",):
         if not os.path.isdir(cd_path + "/" + isodir):
