@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+"""This module is an add-on to picax that provides support for CD-style
+media."""
+
 import os
 import picax.config
 

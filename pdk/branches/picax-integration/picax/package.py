@@ -16,6 +16,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""This module captures package information from the index files for
+later use.  The functions used to load this information generally
+create a PackageFactory, which creates and returns subclasses of Package
+objects."""
+
 import os
 import apt_pkg
 

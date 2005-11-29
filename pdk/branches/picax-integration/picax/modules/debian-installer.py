@@ -1,3 +1,6 @@
+"""This module is an add-on to picax that provides support for using the
+debian-installer installer on picax-generated media."""
+
 import os
 import shutil
 import tarfile

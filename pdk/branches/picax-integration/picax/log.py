@@ -16,6 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""All event logging is coordinated through this module.  Other modules
+which need to log events should call the get_logger() function."""
+
 import sys
 import logging
 

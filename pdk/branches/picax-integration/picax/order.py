@@ -16,6 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""This module reorders the package list according to certain criteria,
+such as installer need or dependency tracking.  Packages may be added
+to the order as well as moved around within the order."""
+
 import os
 
 import picax.package

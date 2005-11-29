@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+"""This module acts as a helper for building runtime systems for
+installers."""
+
 import os
 import types
 import re

@@ -16,6 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""This module defines the NewRepository class, which uses Package
+objects from picax.package to create new repositories."""
+
 import os
 import re
 import hashfile

@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+"""This module provides a public interface to the add-on media modules,
+as well as providing a mechanism for loading such modules."""
+
 import os
 import picax.config
 import picax.installer
