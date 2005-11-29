@@ -371,8 +371,9 @@ PYLINTRC=./pylintrc PYLINTHOME=pylint.d pylint $PYLINT_OPTS picax >>pylint.txt
 
 # stuff to check outside of the "pdk" directory
 for extra in $(ls bin); do
-    ln -s bin/$extra bin_${extra}.py
-    PYLINTRC=./pylintrc PYLINTHOME=pylint.d pylint $PYLINT_OPTS bin_$extra >>pylint.txt
+    extra_name=$(echo $extra | sed 's/\.py//')
+    ln -s bin/$extra bin_${extra_name}.py
+    PYLINTRC=./pylintrc PYLINTHOME=pylint.d pylint $PYLINT_OPTS bin_${extra_name} >>pylint.txt
 done
 
 munge_in_place pylint.txt awk -f make_records.awk
