@@ -136,7 +136,7 @@ def _install_common(cd_path):
     log.info("Installing debian-installer common files")
 
     inst_conf = conf["installer_options"]
-    (distro, component) = conf["repository_list"][0]
+    component = conf["repository_list"][0][1]
 
     for isodir in (".disk",):
         if not os.path.isdir(cd_path + "/" + isodir):
@@ -160,7 +160,6 @@ def _install_i386(cd_path):
 
     inst_conf = conf["installer_options"]
     base_url = inst_conf["base-url"]
-    (distro, component) = conf["repository_list"][0]
 
     log.info("Installing debian-installer for %s" % (conf["arch"],))
 

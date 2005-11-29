@@ -88,7 +88,7 @@ class Package:
 
         raise RuntimeError, "invoked link() on base class"
 
-    def _get_package_size(self):
+    def _get_package_size(self, key):
         """Return the package's size.  This method must be overriden
         in subclasses."""
 
@@ -154,11 +154,15 @@ class BinaryPackage(Package):
                                  + self["Filename"]).st_size
 
 class UBinaryPackage(BinaryPackage):
+    "This is a subclass of Package to support binary udebs."
+
     def __repr__(self):
         return "<picax.package.UBinaryPackage instance: %s>" \
                % (self["Package"],)
 
 class SourcePackage(Package):
+    "This is a subclass of Package to support source packages."
+
     def __init__(self, base_path, fn, start_pos, section, distro,
                  component):
         Package.__init__(self, base_path, fn, start_pos,

@@ -21,6 +21,8 @@ the installer and media subsystems."""
 
 import sys
 
+import picax.log
+
 def load_module(name, module_dir = None):
     """Load the named module, optionally adding a module directory to the
     path."""
@@ -29,13 +31,15 @@ def load_module(name, module_dir = None):
         sys.path.append(module_dir)
 
     inst_toplevel = None
-    for parent_module in ("picax_modules", "picax.modules"):
+    for parent_module in ("picax.modules", "picax_modules"):
         try:
             full_name = parent_module + "." + name
             inst_toplevel = __import__(full_name)
             break
         except ImportError:
-            pass
+            picax.log.get_logger().warning(
+                "could not load module %s from path %s"
+                % (name, parent_module))
 
     if not inst_toplevel:
         raise ImportError, "could not find module for %s" % (name,)

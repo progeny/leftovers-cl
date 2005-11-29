@@ -268,6 +268,8 @@ class TestBrokenConfigFile(ConfigFileBaseHarness):
                                                     self.fail_msg))
 
 class TestRepoMissingInFile(TestBrokenConfigFile):
+    "Test that configuration fails if no repository is specified."
+
     xml_text = """<?xml version='1.0'?>
 <picaxconfig>
   <arch>i386</arch>
