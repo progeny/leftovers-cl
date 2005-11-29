@@ -16,6 +16,8 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
+"Test runner for the PDK unit tests."
+
 import unittest
 
 from pdk.test.test_package import *

@@ -411,8 +411,8 @@ ignore_message '^pdk.rules:W0232:.*: Class has no __init__ method'
 
 ignore_message '^pdk.meta:E0201:.*:_ComponentMetaGroup'
 
-# XXX: We may want to fix this someday.
-ignore_message '^bin_utest'
+ignore_message '^bin_utest:W0401'
+ignore_message '^bin_utest:W0611'
 
 ignore_message '^picax.*:W0131:.*:_'
 ignore_message '^picax.*:W0131:.*:.*\\._'
