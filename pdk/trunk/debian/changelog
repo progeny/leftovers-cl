@@ -1,3 +1,12 @@
+pdk (0.0.21) unstable; urgency=low
+
+  * Reject directory arguments to vc commands.
+  * Make download work recursively.
+  * Show group progress on large downloads.
+  * Show group progress when pushing blobs.
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue, 29 Nov 2005 16:35:06 -0500
+
 pdk (0.0.20) unstable; urgency=low
 
   * Fix bug where cat and semdiff failed on files in subdirs.
