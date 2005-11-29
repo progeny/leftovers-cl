@@ -22,6 +22,7 @@ configuration should be completely hidden from the rest of the system."""
 
 import sys
 import os
+import re
 import xml.dom
 import xml.dom.minidom
 
@@ -132,6 +133,10 @@ module_prefixes = (("inst", "installer", "installer_options",
                     picax.installer.get_options),
                    ("media", "media", "media_options",
                     picax.media.get_options))
+
+arch_identifiers = ((re.compile(r'i[3456]86'), "i386"),
+                    (re.compile(r'x86_64'), "amd64"),
+                    (re.compile(r'ia64'), "ia64"))
 
 class ConfigError(StandardError):
     "Exception for flagging errors in configuration."
@@ -443,7 +448,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5188 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5193 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."
@@ -538,7 +543,13 @@ def handle_args(arglist):
         outfile.close()
 
     # Handle architecture after writing the default.
-    # XXX: don't hard-code; detect!
 
     if not config.has_key("arch"):
-        config["arch"] = "i386"
+        arch_f = os.popen("uname -a")
+        arch_data = arch_f.read()
+        arch_f.close()
+
+        for (arch_re, arch_id) in arch_identifiers:
+            if arch_re.search(arch_data):
+                config["arch"] = arch_id
+                break
