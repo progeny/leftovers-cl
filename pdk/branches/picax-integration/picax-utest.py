@@ -18,6 +18,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"Test runner for the picax unit tests."
+
 import sys
 import os
 import imp
@@ -52,8 +54,8 @@ for module_fn in os.listdir(test_path):
                 top_suite.addTest(
                     unittest.makeSuite(mod.__dict__[identifier],
                                        "test"))
-        except:
-            pass
+        except TypeError:
+            continue
 
 # Run the tests
 
