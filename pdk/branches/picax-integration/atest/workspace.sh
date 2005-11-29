@@ -26,13 +26,13 @@ pdk workspace
 
 verify_new_workspace() {
     dir="$1"
-    (cd $dir; find -not -type d) | sort | grep -v git/hooks >actual.txt
+    (cd $dir; find -not -type d) | LANG=C sort | grep -v git/hooks >actual.txt
     diff -u - actual.txt <<EOF
-./etc/git/description
+./.git
 ./etc/git/HEAD
+./etc/git/description
 ./etc/git/info/exclude
 ./etc/schema
-./.git
 EOF
     [ "$(readlink $dir/.git)" = etc/git ]
     [ -e $dir/.git/description ]
