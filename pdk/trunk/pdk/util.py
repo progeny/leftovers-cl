@@ -530,6 +530,33 @@ def shell_command(command, set_up = noop, pipes = True):
     execv_args = ('/bin/sh', ['/bin/sh', '-c', shell_cmd])
     return execv(execv_args, set_up, pipes)
 
+class NullTerminated(object):
+    '''Reads null terminated "lines" from a file handle'''
+    def __init__(self, handle, block_size = 8096):
+        self.handle = handle
+        self.block_size = block_size
+        self.block = None
+
+    def __iter__(self):
+        current = ''
+        while 1:
+            self.block = self.handle.read(self.block_size)
+            if not self.block:
+                if current:
+                    yield current
+                return
+            start = 0
+            while 1:
+                index = self.block.find('\0', start)
+                if index == -1:
+                    current += self.block[start:]
+                    break
+                else:
+                    current += self.block[start:index]
+                    start = index + 1
+                    yield current
+                    current = ''
+
 class Framer(object):
     '''Represents "frames" of data travelling over pipes.
 

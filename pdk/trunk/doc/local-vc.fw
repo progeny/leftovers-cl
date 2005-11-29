@@ -119,31 +119,31 @@ pushd add-and-commit
     pdk add file-a
     echo "Initial Commit" | pdk commit -f -
     assert_status "after add + raw" 1 1 1 1 <<EOF
-unknown: file-b
-unknown: file-c
-unknown: file-d
+?@^H(09)file-b
+?@^H(09)file-c
+?@^H(09)file-d
 EOF
 
     echo info >>file-a
     echo "Add comment." | pdk commit -f -
     assert_status "after change + raw" 2 1 1 1 <<EOF
-unknown: file-b
-unknown: file-c
-unknown: file-d
+?@^H(09)file-b
+?@^H(09)file-c
+?@^H(09)file-d
 EOF
 
     echo info >>file-b
     echo "Add file file-b" | pdk commit -f - file-b
     assert_status "after commit + file, not added" 2 2 1 1 <<EOF
-unknown: file-c
-unknown: file-d
+?@^H(09)file-c
+?@^H(09)file-d
 EOF
 
     echo info >>file-c
     pdk add file-c
     echo "Add file file-c" | pdk commit -f - file-c
     assert_status "after commit + file, already added" 2 2 2 1 <<EOF
-unknown: file-d
+?@^H(09)file-d
 EOF
 
     echo info >>file-a
@@ -152,7 +152,7 @@ EOF
     echo "Modify file-a" | pdk commit -f - file-a
     assert_status "after commit + file, another file added then changed" \
         3 2 2 2 <<EOF
-new file: file-d
+A@^H(09)file-d
 EOF
 
     echo info >>file-d
@@ -221,8 +221,8 @@ pushd add-and-commit-multi-arg
     pdk add  file-a file-b
     pdk commit -m "multi arg add"
     assert_status "after add + raw" 1 1 1 1 <<EOF
-unknown: file-c
-unknown: file-d
+?@^H(09)file-c
+?@^H(09)file-d
 EOF
 
     pdk commit -m "multi arg commit" file-b file-c file-d
@@ -278,18 +278,29 @@ pushd remove
 
     rm file-a
     pdk remove file-a
+    pdk status >../output.txt
+    diff -u - ../output.txt <<EOF
+D@^H(09)file-a
+EOF
     pdk commit -m 'remove file-a'
 
-    pdk status | egrep -q '^unknown: file-a' \
-        && fail 'file-a should not be in version control.'
+    pdk status >../output.txt
+    diff -u - ../output.txt <<EOF
+EOF
 
     echo info >>file-a
     pdk commit -m 'add it back' file-a
     rm file-a
     pdk remove file-a
+    pdk status >../output.txt
+    diff -u - ../output.txt <<EOF
+D@^H(09)file-a
+EOF
     pdk commit -m 'remove it with commit arg.' file-a
-    pdk status | egrep -q '^unknown: file-a' \
-        && fail 'file-a should not be in version control.'
+    pdk status >../output.txt
+    diff -u - ../output.txt <<EOF
+EOF
+
 
     echo info >>file-a
     echo info >>file-b
@@ -298,18 +309,18 @@ pushd remove
     rm file-a
     pdk commit -m 'rm file-a with args only' file-a \
         && fail 'should not be able to rm with args only'
-
-    pdk status | egrep -q '^deleted: file-a' \
-        && fail 'file-a should be in "deleted" state.'
+    pdk status >../output.txt
+    diff -u - ../output.txt <<EOF
+!@^H(09)file-a
+EOF
 
     rm file-b
     pdk remove file-a file-b
     pdk commit -m 'rm both files at once.'
 
-    pdk status | egrep -q '^unknown: file-a' \
-        && fail 'file-a should not be in version control.'
-    pdk status | egrep -q '^unknown: file-b' \
-        && fail 'file-b should not be in version control.'
+    pdk status >../output.txt
+    diff -u - ../output.txt <<EOF
+EOF
 
 popd
 
@@ -389,7 +400,7 @@ EOF
 
     # watch for regression where cat only looks at the git index.
     echo 3 >>file-a
-    git-update-index file-a
+    GIT_INDEX_FILE=etc/git/pdk/pdk-index git-update-index file-a
     pdk cat file-a >file-a.cat
     diff -u - file-a.cat <<EOF
 1
@@ -431,6 +442,8 @@ quirks.
 Here we show how status reacts to workspaces which are clean,
 modified, and clean but still containing extra files.
 
+The status command can detect renames.
+
 @$@<Status@>==@{
 pdk workspace create status
 pushd status
@@ -444,16 +457,57 @@ EOF
     echo info >>file-b
     pdk status >../output.txt
     diff -u - ../output.txt <<EOF
-modified: file-a
-unknown: file-b
+M@^H(09)file-a
+?@^H(09)file-b
 EOF
 
     pdk commit -m "A Local Change"
     pdk status >../output.txt
     diff -u - ../output.txt <<EOF
-unknown: file-b
+?@^H(09)file-b
 EOF
 
+    # try to catch a rename.
+    pdk add file-b
+    pdk commit -m 'Add file b.'
+
+    mv file-b file-c
+    pdk remove file-b
+    pdk add file-c
+    pdk status >../output.txt
+    diff -u - ../output.txt <<EOF
+R100@^H(09)file-b@^H(09)file-c
+EOF
+    pdk commit -m 'rename file-b to file-c'
+
+popd
+@}
+
+@B
+
+Right now we reject directories. Arguments to pdk vc commands should
+be files, not directories.
+
+@$@<Working With Directories (Not)@>==@{
+check_dir_failure() {
+    unset status
+    "$@@" 2>stderr.txt || local status=$?
+    cat stderr.txt
+    [ "$status" == 3 ] || fail "expected exit value 3, got $status"
+    grep director stderr.txt
+}
+
+pdk workspace create dirs
+pushd dirs
+    mkdir somedir
+    check_dir_failure pdk add somedir
+    check_dir_failure pdk commit -m 'msg' somedir/
+
+    touch somedir/a
+    pdk commit -m 'initial' somedir/a
+    check_dir_failure pdk remove somedir
+
+    check_dir_failure pdk cat somedir
 popd
 @}
 
@@ -471,6 +525,7 @@ Here's the whole test.
 @<Revert@>
 @<Update@>
 @<Status@>
+@<Working With Directories (Not)@>
 @}
 
 @B

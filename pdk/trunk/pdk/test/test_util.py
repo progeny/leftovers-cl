@@ -22,9 +22,41 @@ from cElementTree import ElementTree, Element, SubElement, Comment, \
      ProcessingInstruction
 
 from pdk.util import split_pipe, gen_fragments, default_block_size, \
-     write_pretty_xml, parse_xml
+     write_pretty_xml, parse_xml, NullTerminated
 
 __revision__ = "$Progeny$"
+
+class TestNullTerminated(Test):
+    def test_null_terminated(self):
+        underlying = 'abc\ndef\0fgh\0ijk\0'
+        handle = stringio(underlying)
+        self.assert_equal(['abc\ndef', 'fgh', 'ijk'],
+                          list(NullTerminated(handle)))
+
+    def test_null_terminated_missing_last(self):
+        underlying = 'abc\ndef\0fgh\0ijk'
+        handle = stringio(underlying)
+        self.assert_equal(['abc\ndef', 'fgh', 'ijk'],
+                          list(NullTerminated(handle)))
+
+    def test_over_block_size(self):
+        underlying = 'abc\ndef\0fgh\0ijk'
+        handle = stringio(underlying)
+        self.assert_equal(['abc\ndef', 'fgh', 'ijk'],
+                          list(NullTerminated(handle, 5)))
+
+    def test_terminator_at_block_end(self):
+        underlying = 'abc\ndef\0fgh\0ijk'
+        handle = stringio(underlying)
+        self.assert_equal(['abc\ndef', 'fgh', 'ijk'],
+                          list(NullTerminated(handle, 8)))
+
+    def test_zero_length(self):
+        underlying = 'abc\ndef\0\0fgh\0ijk'
+        handle = stringio(underlying)
+        self.assert_equal(['abc\ndef', '', 'fgh', 'ijk'],
+                          list(NullTerminated(handle)))
+
 
 class TestSplitPipe(Test):
     def test_split(self):

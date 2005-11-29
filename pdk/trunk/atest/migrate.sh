@@ -20,6 +20,11 @@
 #
 # test the workspace migration tool
 
+schema_target=6
+check_schema_target() {
+    [ $schema_target = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+}
+
 # manually set up a workspace in schema 1 layout
 mkdir -p schema1/work/.git
 mkdir -p schema1/cache/md5
@@ -56,7 +61,7 @@ pushd schema1
     [ -d etc/git/objects ] || fail 'etc/git should contain git info'
     [ -L .git ] || fail '.git should be a symlink'
     [ 'etc/git' = "$(readlink .git)" ] || '.git should point to etc/git'
-    [ 5 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+    check_schema_target
 popd
 
 mkdir -p schema2/etc
@@ -67,7 +72,7 @@ pushd schema2
     [ -d etc/channels ] || fail 'channels dir not created.'
     [ -e etc/outside_world.cache ] \
         && fail 'outside_world.cache not removed.'
-    [ 5 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+    check_schema_target
 popd
 
 mkdir -p schema3/etc/git/remotes
@@ -76,7 +81,7 @@ pushd schema3
     ln -s $(pwd)/etc/git/remotes etc/sources
     pdk migrate
     [ -e etc/sources ] && fail 'sources should be removed from etc/'
-    [ 5 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+    check_schema_target
 popd
 
 mkdir -p schema4/etc/cache/md5/d4
@@ -91,6 +96,20 @@ pushd schema4
     diff -u - blob_list <<EOF
 md5:d41d8cd98f00b204e9800998ecf8427e md5/d4/md5:d41d8cd98f00b204e9800998ecf8427e 0
 EOF
-    [ 5 = "$(cat etc/schema)" ] || fail 'schema number incorrect'
+    check_schema_target
 popd
 
+mkdir -p schema5/etc
+pushd schema5
+    echo zzz_hello >etc/MIGRATION_NOTES.txt
+    echo 5 >etc/schema
+    pdk migrate > migration_output
+    [ -d 'etc/git/pdk' ] || fail 'git/pdk directory not created'
+    grep -i add etc/MIGRATION_NOTES.txt \
+        || fail 'missing expected message in migration notes.'
+    diff -u etc/MIGRATION_NOTES.txt migration_output
+    grep -i zzz_hello etc/MIGRATION_NOTES.txt \
+        || fail 'missing existing migration notes.'
+    grep etc/ etc/git/info/exclude
+    check_schema_target
+popd

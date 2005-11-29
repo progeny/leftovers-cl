@@ -112,7 +112,7 @@ EOF
     pdk commit -m "git-production testing"
 
     # Send change from customer to integration.
-    git diff HEAD^ >patch.txt
+    git-diff-tree -p HEAD^ HEAD >patch.txt
 
     # really this file would be sent by email.
     cp patch.txt $tmp_dir/integration/patch.txt

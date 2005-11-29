@@ -46,7 +46,7 @@ from pdk.progress import ConsoleMassProgress, NullMassProgress, \
      SizeCallbackAdapter
 
 # current schema level for this pdk build
-schema_target = 5
+schema_target = 6
 
 class NotAWorkspaceError(ConfigurationError):
     '''A workspace op was requested on or in a non workspace directory.'''
@@ -125,6 +125,24 @@ def find_schema_number(directory):
 
     return None
 
+def write_migration_notes(filename, notes):
+    '''Write migration notes to the given filename.
+
+    Append some boilerplate helpful info the end of the notes.
+    '''
+    handle = open(filename, 'a')
+    print >> handle, notes
+    print >> handle
+    trailer = """
+This information has been saved to: %s
+You can safely delete the file after reviewing it.
+""" % filename
+    print >> handle, trailer,
+    handle.close()
+    handle = open(filename)
+    print handle.read(),
+    handle.close()
+
 def migrate(dummy):
     """Migrate the current workspace to a form supported by this software.
 
@@ -177,6 +195,29 @@ def migrate(dummy):
         cache = Cache(pjoin('etc', 'cache'))
         cache.write_index()
         open(pjoin('etc', 'schema'), 'w').write('5\n')
+        migrate(None)
+        return
+
+    if schema_number == 5:
+        os.makedirs(pjoin('etc', 'git', 'pdk'))
+        exclude_dir = pjoin('etc', 'git', 'info')
+        exclude_file = pjoin(exclude_dir, 'exclude')
+        exclude_needs_written = True
+        if os.path.exists(exclude_file):
+            contents = open(exclude_file).read()
+            if 'etc/' in contents:
+                exclude_needs_written = False
+        if exclude_needs_written:
+            if not os.path.exists(exclude_dir):
+                os.makedirs(exclude_dir)
+            open(exclude_file, 'a').write('etc/*\n')
+        notes = '''
+If you have added or removed any files since your last commit, or if
+you have added files but have never committed, you will need to run
+pdk add or remove on the affected files again.
+'''
+        write_migration_notes(pjoin('etc', 'MIGRATION_NOTES.txt'), notes)
+        open(pjoin('etc', 'schema'), 'w').write('6\n')
         migrate(None)
         return
 
@@ -811,7 +852,7 @@ class _Workspace(object):
         """
         Show version control status of files in work area.
         """
-        self.vc.status(self.config_dir)
+        self.vc.status()
 
     def log(self, limits):
         """

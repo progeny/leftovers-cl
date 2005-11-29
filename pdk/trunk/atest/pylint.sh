@@ -409,6 +409,8 @@ ignore_message '^pdk.rules:W0232:.*: Class has no __init__ method'
 
 ignore_message '^pdk.meta:E0201:.*:_ComponentMetaGroup'
 
+ignore_message '^pdk.version_control:W0704:.*:Git.iter_diff_files'
+
 # for unit tests only
 ignore_message '^pdk.test..*:E0201:.*assert_'
 ignore_message '^pdk.test..*:E0201:.*fail_'
