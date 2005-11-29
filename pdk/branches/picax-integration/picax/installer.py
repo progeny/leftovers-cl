@@ -6,7 +6,6 @@ loading that module."""
 
 import os
 import picax.config
-import picax.media
 import picax.modload
 
 loaded_module_name = None
@@ -97,4 +96,4 @@ def get_media_builder():
         _check_inst()
         return inst.get_media_builder()
     except:
-        return picax.media.MediaBuilder()
+        return None

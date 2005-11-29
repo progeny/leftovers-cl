@@ -27,7 +27,6 @@ import xml.dom.minidom
 
 import picax.installer
 import picax.media
-import picax.log
 
 config = {}
 
@@ -420,17 +419,12 @@ def _interpret_args(this_config, subprefix_arglist, arglist):
                       "%s options given without %s" % (mname, mname)
 
     if this_config.has_key("order_file"):
+        order_file = open(this_config["order_file"])
         try:
-            try:
-                order_file = open(this_config["order_file"])
-                order_lines = order_file.readlines()
-                this_config["order_pkgs"] = [x.strip() for x in order_lines]
-            finally:
-                order_file.close()
-        except:
-            picax.log.get_logger().warning(
-                "Could not read order file %s"
-                % (this_config["order_file"],))
+            order_lines = order_file.readlines()
+            this_config["order_pkgs"] = [x.strip() for x in order_lines]
+        finally:
+            order_file.close()
     if not this_config.has_key("order_pkgs"):
         this_config["order_pkgs"] = []
     if this_config.has_key("media_component"):
@@ -449,7 +443,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5185 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5188 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."

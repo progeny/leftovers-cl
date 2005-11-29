@@ -53,9 +53,10 @@ def create_media():
 
     conf = picax.config.get_config()
 
+    media_builder = None
     if "installer_component" in conf:
         media_builder = picax.installer.get_media_builder()
-    else:
+    if media_builder is None:
         media_builder = MediaBuilder()
 
     media_builder.create_media()
