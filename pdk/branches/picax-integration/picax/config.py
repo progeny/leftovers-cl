@@ -150,9 +150,9 @@ def _set_defaults(this_config, options):
             this_config[options[option]["config-key"]] = value
 
 def _get_module_options(prefix):
-    for (mprefix, mname, mkey, mfunc) in module_prefixes:
-        if mprefix == prefix:
-            return mfunc()
+    for mpinfo in module_prefixes:
+        if mpinfo[0] == prefix:
+            return mpinfo[3]()
 
     raise ValueError, "invalid prefix"
 
@@ -180,11 +180,11 @@ def _dom_to_config(this_config, topnode, options, prefixes = ()):
             continue
 
         module_options = None
-        for (prefix, prefix_name, prefix_key, prefix_func) in prefixes:
-            if child.tagName == prefix_key:
-                module_options = _get_module_options(prefix)
-                this_config[prefix_key] = _dom_to_config({}, child,
-                                                         module_options)
+        for prefixinfo in prefixes:
+            if child.tagName == prefixinfo[2]:
+                module_options = _get_module_options(prefixinfo[0])
+                this_config[prefixinfo[2]] = _dom_to_config({}, child,
+                                                            module_options)
                 break
         if module_options is not None:
             continue
@@ -224,7 +224,8 @@ def _dom_to_config(this_config, topnode, options, prefixes = ()):
 
     return this_config
 
-def _config_to_dom_tree(this_config, options, document, topnode, prefixes = ()):
+def _config_to_dom_tree(this_config, options, document, topnode,
+                        prefixes = ()):
     option_list = options.keys()
     option_list.sort()
     for option in option_list:
@@ -250,13 +251,15 @@ def _config_to_dom_tree(this_config, options, document, topnode, prefixes = ()):
                     node = document.createElement(option)
                     topnode.appendChild(node)
 
-    for (prefix, prefix_name, prefix_key, prefix_func) in prefixes:
+    for prefixinfo in prefixes:
+        prefix = prefixinfo[0]
+        prefix_key = prefixinfo[2]
         if this_config.has_key(prefix_key):
             node = document.createElement(prefix_key)
             topnode.appendChild(node)
             suboptions = _get_module_options(prefix)
-            _config_to_dom_tree(this_config[prefix_key], suboptions, document,
-                                node)
+            _config_to_dom_tree(this_config[prefix_key], suboptions,
+                                document, node)
 
     for (distro, comp) in this_config["repository_list"]:
         node = document.createElement("repository")
@@ -267,15 +270,15 @@ def _config_to_dom_tree(this_config, options, document, topnode, prefixes = ()):
 def _config_to_dom(this_config, options, prefixes):
     document = xml.dom.minidom.parseString("<picaxconfig/>")
 
-    _config_to_dom_tree(this_config, options, document, document.documentElement,
-                        prefixes)
+    _config_to_dom_tree(this_config, options, document,
+                        document.documentElement, prefixes)
 
     return document
 
 def _parse_args(this_config, arglist, options, sub_prefixes = ()):
     temp_arglist = arglist[:]
     subprefix_arglist = {}
-    for subprefix in map(lambda x: x[0], sub_prefixes):
+    for subprefix in [x[0] for x in sub_prefixes]:
         subprefix_arglist[subprefix] = []
 
     try:
@@ -310,7 +313,7 @@ def _parse_args(this_config, arglist, options, sub_prefixes = ()):
                     this_config[config_key] = value
                 else:
                     this_config[config_key] = True
-            elif module_arg in map(lambda x: x[0], sub_prefixes):
+            elif module_arg in [x[0] for x in sub_prefixes]:
                 subprefix_arglist[module_arg].append(arg)
                 if len(temp_arglist) > 0 and temp_arglist[0][0] != "-":
                     subprefix_arglist[module_arg].append(
@@ -359,7 +362,8 @@ def _interpret_args(this_config, subprefix_arglist, arglist):
        not this_config.has_key("media_component"):
         raise ConfigError, \
               "must specify media type, part size, or number of parts"
-    if this_config["source"] == "separate" and this_config["num_parts"] != 0:
+    if this_config["source"] == "separate" and \
+       this_config["num_parts"] != 0:
         raise ConfigError, \
               "cannot use separate source and num_parts together"
     if this_config.has_key("media_component") and \
@@ -403,7 +407,8 @@ def _interpret_args(this_config, subprefix_arglist, arglist):
                 order_file.close()
         except:
             picax.log.get_logger().warning(
-                "Could not read order file %s" % (this_config["order_file"],))
+                "Could not read order file %s"
+                % (this_config["order_file"],))
     if not this_config.has_key("order_pkgs"):
         this_config["order_pkgs"] = []
     if this_config.has_key("media_component"):
@@ -422,7 +427,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5176 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5184 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."
@@ -505,7 +510,7 @@ def handle_args(arglist):
         config.update(xml_config)
 
     for config_key in cmdline_config.keys():
-        if config_key not in map(lambda x: x[2], module_prefixes):
+        if config_key not in [x[2] for x in module_prefixes]:
             config[config_key] = cmdline_config[config_key]
 
     _interpret_args(config, subprefix_arglist, remaining)

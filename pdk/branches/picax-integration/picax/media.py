@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import sys
 import os
 import picax.config
 import picax.installer
@@ -69,7 +68,7 @@ def set_media(name, module_dir = None):
             raise MediaError, "cannot load two different media modules"
     else:
         try:
-            inst_toplevel = picax.modload.load_module(name, module_dir)
+            inst = picax.modload.load_module(name, module_dir)
         except ImportError:
             raise MediaError, "cannot find media modules for %s" \
                   % (name,)

@@ -37,7 +37,8 @@ class DebianFormatter(logging.Formatter):
     """Format log messages in a manner similar to other Debian utilities."""
 
     def format(self, record):
-        "Write the log record in a manner similar to other Debian utilities."
+        """Write the log record in a manner similar to other
+        Debian utilities."""
 
         level_letter = record.levelname[0]
         if level_letter == "C":

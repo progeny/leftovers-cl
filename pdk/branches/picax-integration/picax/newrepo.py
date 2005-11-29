@@ -17,7 +17,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import os
-import string
 import re
 import hashfile
 import md5
@@ -147,7 +146,7 @@ class NewRepository:
             index_file.write("\n")
 
         for distro_key in index_files.keys():
-            map(lambda x: x.close(), index_files[distro_key])
+            [x.close() for x in index_files[distro_key]]
             for index_fn in self.index_paths[distro_key]:
                 self.index_hashes[index_fn] = \
                     tuple([x.hexdigest() for x in hashes[index_fn]])
@@ -211,10 +210,10 @@ class NewRepository:
                                                          distro), "w")
 
             for line in self.toprelease_info[distro]:
-                if line[0] in string.whitespace:
+                if line[0].isspace():
                     continue
 
-                (name, value) = re.split(r':\s*', line, 1)
+                (name, dummy) = re.split(r':\s*', line, 1)
 
                 if name == "Components":
                     release_file.write("Components: %s\n"
@@ -251,8 +250,8 @@ class NewRepository:
             release_file.close()
 
     def write_repo(self):
-        """Write the repository, using the settings the object was constructed
-        with."""
+        """Write the repository, using the settings the object was
+        constructed with."""
 
         self._load_releases(self.config["base_path"])
         self._write_packages()

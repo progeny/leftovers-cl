@@ -28,7 +28,7 @@ def init():
         if not distro_hash.has_key(distro):
             distro_hash[distro] = []
         distro_hash[distro].append(comp)
-    distro_list = map(lambda x: (x, distro_hash[x]), distro_hash.keys())
+    distro_list = [(x, distro_hash[x]) for x in distro_hash.keys()]
 
     subdirs = ("state", "state/lists", "state/lists/partial", "cache",
                "cache/archives", "cache/archives/partial")
@@ -114,8 +114,8 @@ def find_package_uri(pkg_name):
         pkg_path = pkg_records.FileName
 
         base_paths = [ "file://" + global_conf["base_path"] ]
-        base_paths.extend(map(lambda x: "file://" + x,
-                              global_conf["base_media"]))
+        base_paths.extend(["file://" + x
+                           for x in global_conf["base_media"]])
         if global_conf.has_key("correction_apt_repo"):
             base_paths.append(global_conf["correction_apt_repo"].split()[1])
 
@@ -328,8 +328,8 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
                         # current package gets added to the cluster if
                         # needed.
 
-                        cluster_names = map(lambda x: x.ParentPkg.Name,
-                                            cluster + cluster_handled)
+                        cluster_names = [x.ParentPkg.Name
+                                         for x in cluster + cluster_handled]
                         if dep_target.ParentPkg.Name in cluster_names:
                             cluster_candidate = dep_target
                             raise FoundPackage
@@ -347,7 +347,8 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
                         # Otherwise, check to make sure the package
                         # isn't already in the results.
 
-                        if result_versions.has_key(dep_target.ParentPkg.Name):
+                        if result_versions.has_key(
+                            dep_target.ParentPkg.Name):
                             rv = result_versions[dep_target.ParentPkg.Name]
                             if rv != dep_target.VerStr:
                                 raise RuntimeError, \
@@ -427,8 +428,8 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
                     rev_queue.reverse()
                     cluster_changed = False
                     for candidate in [current] + rev_queue:
-                        cluster_names = map(lambda x: x.ParentPkg.Name,
-                                            cluster + cluster_handled)
+                        cluster_names = [x.ParentPkg.Name
+                                         for x in cluster + cluster_handled]
                         if not candidate.ParentPkg.Name in cluster_names:
                             cluster.append(candidate)
                             cluster_changed = True
@@ -489,7 +490,7 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
     final = []
     for item in results:
         if isinstance(item, types.ListType):
-            final.append(map(lambda x: x.ParentPkg.Name, item))
+            final.append([x.ParentPkg.Name for x in item])
         else:
             final.append(item.ParentPkg.Name)
 

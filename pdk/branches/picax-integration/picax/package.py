@@ -154,6 +154,12 @@ class UBinaryPackage(BinaryPackage):
                % (self["Package"],)
 
 class SourcePackage(Package):
+    def __init__(self, base_path, fn, start_pos, section, distro,
+                 component):
+        Package.__init__(self, base_path, fn, start_pos,
+                         section, distro, component)
+        self.file_list = []
+
     def __str__(self):
         return "%s (source)" % (self["Package"],)
 
@@ -162,13 +168,12 @@ class SourcePackage(Package):
                % (self["Package"],)
 
     def _get_file_list(self):
-        if not hasattr(self, "file_list"):
-            self.file_list = []
+        if not self.file_list:
             file_dir = self["Directory"]
             for file_line in self["Files"].split("\n"):
                 if len(file_line.strip()) == 0:
                     continue
-                (md5sum, size, fn) = file_line.strip().split()
+                fn = file_line.strip().split()[2]
                 self.file_list.append(file_dir + "/" + fn)
 
         return self.file_list

@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import sys
 import os
 import picax.config
 import picax.media
@@ -29,7 +28,7 @@ def set_installer(name, module_dir = None):
                   "cannot load two different installer modules"
     else:
         try:
-            inst_toplevel = picax.modload.load_module(name, module_dir)
+            inst = picax.modload.load_module(name, module_dir)
         except ImportError:
             raise InstallerError, "cannot find install modules for %s" \
                   % (name,)
@@ -66,7 +65,7 @@ def install():
 
     inst.install(first_part_loc)
 
-    for (root, dirs, files) in os.walk(first_part_loc):
+    for (root, dummy, files) in os.walk(first_part_loc):
         path_space = sum([os.path.getsize(os.path.join(root, name))
                           for name in files])
         first_part_space = first_part_space + path_space

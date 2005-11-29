@@ -36,7 +36,7 @@ def _order_udebs(packages, current_order):
 
     return new_order
 
-def _order_explicit(packages, current_order):
+def _order_explicit(dummy, current_order):
     """If an order list is given in the configuration, add those
     packages to the order."""
 
@@ -48,7 +48,7 @@ def _order_explicit(packages, current_order):
     else:
         return current_order
 
-def _order_debootstrap(packages, current_order):
+def _order_debootstrap(dummy, current_order):
     """Add the packages needed by debootstrap unless otherwise asked
     not to."""
 
@@ -78,7 +78,7 @@ def _order_debootstrap(packages, current_order):
     else:
         return current_order
 
-def _order_installer(packages, current_order):
+def _order_installer(dummy, current_order):
     """Add packages requested by the installer to the order."""
 
     conf = picax.config.get_config()
@@ -103,13 +103,13 @@ def _order_rest(packages, current_order):
     else:
         return current_order
 
-def _order_apt(packages, current_order):
+def _order_apt(dummy, current_order):
     """Call apt to resolve the package order, so that a package's
     dependencies show up earlier in the order than the package."""
 
     base_media_pkgs = picax.package.get_base_media_packages()
-    base_media_list = map(lambda x: (x["Package"], x["Version"]),
-                          base_media_pkgs)
+    base_media_list = [(x["Package"], x["Version"])
+                       for x in base_media_pkgs]
     new_order = picax.apt.resolve_package_list(current_order,
                                                base_media_list)
     return new_order

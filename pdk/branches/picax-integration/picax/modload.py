@@ -16,9 +16,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+"""This module does the heavy lifting of importing external modules for
+the installer and media subsystems."""
+
 import sys
 
 def load_module(name, module_dir = None):
+    """Load the named module, optionally adding a module directory to the
+    path."""
+
     if module_dir:
         sys.path.append(module_dir)
 
@@ -28,7 +34,7 @@ def load_module(name, module_dir = None):
             full_name = parent_module + "." + name
             inst_toplevel = __import__(full_name)
             break
-        except:
+        except ImportError:
             pass
 
     if not inst_toplevel:

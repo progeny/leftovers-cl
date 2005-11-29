@@ -77,10 +77,8 @@ def split(binary_order, binary_list, source_list, first_part_size = 0):
 
     part_size = conf["part_size"]
     if part_size == 0:
-        total_binary_size = reduce(lambda x, y: x + y,
-                                   [x["Package-Size"] for x in binary_list])
-        total_source_size = reduce(lambda x, y: x + y,
-                                   [x["Package-Size"] for x in source_list])
+        total_binary_size = sum([x["Package-Size"] for x in binary_list])
+        total_source_size = sum([x["Package-Size"] for x in source_list])
         total_size = total_binary_size + total_source_size
         part_size = total_size / conf["num_parts"]
 
@@ -101,8 +99,7 @@ def split(binary_order, binary_list, source_list, first_part_size = 0):
         if not pkgs_to_add:
             continue
 
-        pkg_size = reduce(lambda x, y: x + y,
-                          [x["Package-Size"] for x in pkgs_to_add])
+        pkg_size = sum([x["Package-Size"] for x in pkgs_to_add])
 
         if (current_size + pkg_size) > part_size:
             part_lists.append(current_list)
