@@ -1,0 +1,1 @@
+"base for picax.modules"

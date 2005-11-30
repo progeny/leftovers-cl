@@ -16,15 +16,12 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-from distutils.core import setup
+# picax-unittest.sh
+#
+# Get the picax unit tests running without ripping the PDK unit tests
+# to shreds.
 
-# Install pdk.test for now, so that pylint will automatically
-# check the unit tests also.
+. atest/test_lib.sh
 
-# In the future we may want to leave pdk.test out of this, as it
-# isn't actually needed at runtime.
-
-setup(name="pdk",
-      scripts=["bin/pdk", "utest.py", "picax-utest.py"],
-      packages=["pdk", "picax", "picax.modules", "pdk.test", "picax.test"])
-
+python bin/utest.py
+python bin/picax-utest.py

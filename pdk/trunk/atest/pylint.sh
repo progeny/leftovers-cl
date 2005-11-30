@@ -367,11 +367,13 @@ EOF
 
 mkdir pylint.d
 PYLINTRC=./pylintrc PYLINTHOME=pylint.d pylint $PYLINT_OPTS pdk >pylint.txt
+PYLINTRC=./pylintrc PYLINTHOME=pylint.d pylint $PYLINT_OPTS picax >>pylint.txt
 
 # stuff to check outside of the "pdk" directory
 for extra in $(ls bin); do
-    ln -s bin/$extra bin_${extra}.py
-    PYLINTRC=./pylintrc PYLINTHOME=pylint.d pylint $PYLINT_OPTS bin_$extra >>pylint.txt
+    extra_name=$(echo $extra | sed 's/\.py//')
+    ln -s bin/$extra bin_${extra_name}.py
+    PYLINTRC=./pylintrc PYLINTHOME=pylint.d pylint $PYLINT_OPTS bin_${extra_name} >>pylint.txt
 done
 
 munge_in_place pylint.txt awk -f make_records.awk
@@ -410,6 +412,22 @@ ignore_message '^pdk.rules:W0232:.*: Class has no __init__ method'
 ignore_message '^pdk.meta:E0201:.*:_ComponentMetaGroup'
 
 ignore_message '^pdk.version_control:W0704:.*:Git.iter_diff_files'
+
+ignore_message '^bin_utest:W0401'
+ignore_message '^bin_utest:W0611'
+
+ignore_message '^picax.*:W0131:.*:_'
+ignore_message '^picax.*:W0131:.*:.*\\._'
+
+ignore_message '^picax.installer:W0121'
+ignore_message '^picax.media:W0121'
+ignore_message '^picax.apt:W0121'
+ignore_message '^picax.config:W0121'
+
+ignore_message '^picax.unpack:W0122:.*:Package.run_script'
+ignore_message '^picax.log:W0121:.*:get_logger'
+ignore_message '^picax.newrepo:E0601:.*:NewRepository._compress_and_hash_indexes'
+ignore_message '^picax.modules.__init__:R0401'
 
 # for unit tests only
 ignore_message '^pdk.test..*:E0201:.*assert_'
