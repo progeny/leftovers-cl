@@ -26,5 +26,6 @@ from distutils.core import setup
 
 setup(name="pdk",
       scripts=["bin/pdk", "utest.py", "picax-utest.py"],
-      packages=["pdk", "picax", "picax.modules", "pdk.test", "picax.test"])
+      packages=["pdk", "picax", "picax.modules", "pdk.test", "picax.test"],
+      py_modules=["hashfile"])
 
