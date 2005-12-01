@@ -429,6 +429,8 @@ ignore_message '^picax.log:W0121:.*:get_logger'
 ignore_message '^picax.newrepo:E0601:.*:NewRepository._compress_and_hash_indexes'
 ignore_message '^picax.modules.*:R0401'
 
+ignore_message '^pdk.version_control:W0704:.*:Git.iter_diff_files'
+
 # for unit tests only
 ignore_message '^pdk.test..*:E0201:.*assert_'
 ignore_message '^pdk.test..*:E0201:.*fail_'

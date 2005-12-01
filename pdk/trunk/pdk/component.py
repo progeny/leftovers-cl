@@ -29,11 +29,11 @@ from itertools import chain
 from sets import Set
 from pdk.util import write_pretty_xml, parse_xml
 from cElementTree import ElementTree, Element, SubElement
-from pdk.rules import Rule, CompositeRule, AndCondition, OrCondition, \
-     FieldMatchCondition
+from pdk.rules import Rule, RuleSystem, AndCondition, OrCondition, \
+     FieldMatchCondition, CompositeAction
 from pdk.package import get_package_type
 from pdk.exceptions import PdkException, InputError, SemanticError
-from pdk.meta import ComponentMeta
+from pdk.meta import ComponentMeta, Entity, Entities
 from xml.parsers.expat import ExpatError
 from pdk.log import get_logger
 from pdk.semdiff import print_report
@@ -83,6 +83,8 @@ class ComponentDescriptor(object):
         self.provides = []
 
         self.meta = []
+        self.links = []
+        self.entities = Entities()
         self.contents = []
 
         self.build_component_descriptor(tree.getroot())
@@ -119,6 +121,7 @@ class ComponentDescriptor(object):
                     component.components.extend(child_component.components)
                     component.packages.extend(child_component.packages)
                     component.rules.extend(child_component.rules)
+                    component.entities.update(child_component.entities)
 
             except PdkException, local_message:
                 if group_message:
@@ -131,6 +134,7 @@ class ComponentDescriptor(object):
             raise SemanticError(group_message)
 
         component.rules.extend(local_rules)
+        component.entities.update(self.entities)
         return component
 
     def parse_domain(raw_string):
@@ -146,24 +150,18 @@ class ComponentDescriptor(object):
     def load(self, meta, cache):
         """Instantiate a component object tree for this descriptor."""
         component = self.load_raw(meta, cache)
-        uber_rule = CompositeRule(component.rules)
+        system = RuleSystem(component.rules)
 
         # fire rule on all packages
         for package in component.packages:
-            for package, raw_predicate, target in uber_rule.fire(package):
-                domain, predicate = self.parse_domain(raw_predicate)
-                meta.set(package, domain, predicate, target)
+            system.fire(package, component.entities, meta)
 
         # fire rule on all components
         for decendent_component in component.components:
-            for found_component, raw_predicate, target in \
-                    uber_rule.fire(decendent_component):
-                domain, predicate = self.parse_domain(raw_predicate)
-                meta.set(found_component, domain, predicate, target)
+            system.fire(decendent_component, component.entities, meta)
 
         # add local metadata last
-        for raw_predicate, target in self.meta:
-            domain, predicate = self.parse_domain(raw_predicate)
+        for domain, predicate, target in self.meta:
             meta.set(component, domain, predicate, target)
 
         return component
@@ -194,9 +192,13 @@ class ComponentDescriptor(object):
         # create and populate meta element if we have metadata.
         if len(self.meta) > 0:
             meta_element = SubElement(root, 'meta')
-            for predicate in self.meta:
-                meta_child = SubElement(meta_element, predicate[0])
-                meta_child.text = predicate[1]
+            for domain, predicate, target in self.meta:
+                if domain:
+                    tag = '%s.%s' % (domain, predicate)
+                else:
+                    tag = predicate
+                meta_child = SubElement(meta_element, tag)
+                meta_child.text = target
 
         if self.contents:
             contents_element = SubElement(root, 'contents')
@@ -229,9 +231,12 @@ class ComponentDescriptor(object):
         predicates = reference.predicates
         if predicates:
             meta_element = SubElement(ref_element, 'meta')
-            for predicate, target in predicates:
-                predicate_element = SubElement(meta_element,
-                                               predicate)
+            for domain, predicate, target in predicates:
+                if domain:
+                    tag = '%s.%s' % (domain, predicate)
+                else:
+                    tag = predicate
+                predicate_element = SubElement(meta_element, tag)
                 predicate_element.text = target
 
         for inner_ref in reference.children:
@@ -355,7 +360,7 @@ class ComponentDescriptor(object):
                     expected_filename = ghost_package.filename
                     found_filename = ghost_package.found_filename
                     if expected_filename != found_filename:
-                        predicate = ('filename', found_filename)
+                        predicate = ('', 'filename', found_filename)
                         new_child_ref.predicates.append(predicate)
                     ref.children.append(new_child_ref)
 
@@ -422,9 +427,21 @@ class ComponentDescriptor(object):
     #
     # The entry point is build_component_descriptor
 
+    def build_links(self, link_element):
+        '''Build up a list of tuples (link_type, link_id) for links.'''
+        return [ (e.tag, e.text) for e in link_element ]
+
     def build_meta(self, meta_element):
         '''Return a list of tuples (predicate, object) for a "meta" tag.'''
-        return [ (e.tag, e.text) for e in meta_element ]
+        metas = []
+        links = []
+        for element in meta_element:
+            domain, name = self.parse_domain(element.tag)
+            if (domain, name) == ('pdk', 'link'):
+                links.extend(self.build_links(element))
+            else:
+                metas.append((domain, name, element.text))
+        return metas, links
 
     def is_package_ref(self, rule_element):
         '''Does this element represent a single package?
@@ -448,6 +465,7 @@ class ComponentDescriptor(object):
 
         package_type = get_package_type(format = ref_element.tag)
 
+        ref_links = []
         predicates = []
         inner_refs = []
         if ref_element.text and ref_element.text.strip():
@@ -456,7 +474,9 @@ class ComponentDescriptor(object):
         else:
             for element in ref_element:
                 if element.tag == 'meta':
-                    predicates.extend(self.build_meta(element))
+                    meta, links = self.build_meta(element)
+                    predicates.extend(meta)
+                    ref_links.extend(links)
                 elif self.is_package_ref(element):
                     inner_ref = self.build_package_ref(element)
                     inner_refs.append(inner_ref)
@@ -465,6 +485,7 @@ class ComponentDescriptor(object):
                     fields.append((element.tag, target))
         ref = PackageReference(package_type, blob_id, fields, predicates)
         ref.children = inner_refs
+        ref.links = ref_links
         return ref
 
     def normalize_text(self, element, strip):
@@ -507,6 +528,17 @@ class ComponentDescriptor(object):
             value.append(self.normalize_text(element, strip))
         return value
 
+    def build_entity(self, root):
+        '''Build up a single raw entity from an entity declaration element.
+        '''
+        if not 'id' in root.attrib:
+            raise InputError, "id field required for entities"
+        entity = Entity(root.tag, root.attrib['id'])
+        for element in root:
+            key_tuple = self.parse_domain(element.tag)
+            entity[key_tuple] = element.text
+        return entity
+
     def build_component_descriptor(self, component_element):
         '''Build up the state of this descriptor from the given element.'''
         contents_element = component_element.find('contents')
@@ -519,9 +551,17 @@ class ComponentDescriptor(object):
                     ref = ComponentReference(element.text.strip())
                     self.contents.append(ref)
 
+        entities_element = component_element.find('entities')
+        if entities_element:
+            for element in entities_element:
+                entity = self.build_entity(element)
+                self.entities[(entity.ent_type, entity.ent_id)] = entity
+
         meta_element = component_element.find('meta')
         if meta_element:
-            self.meta.extend(self.build_meta(meta_element))
+            meta, links = self.build_meta(meta_element)
+            self.meta.extend(meta)
+            self.links.extend(links)
 
         self.id = self.read_field(component_element, 'id')
         self.name = self.read_field(component_element, 'name')
@@ -550,7 +590,8 @@ class Component(object):
     __slots__ = ('ref', 'type',
                  'id', 'name', 'description', 'requires', 'provides',
                  'packages', 'direct_packages',
-                 'components', 'direct_components', 'rules')
+                 'components', 'direct_components', 'rules',
+                 'entities')
     identity_fields = ('ref', 'type',
                        'id', 'name', 'description', 'requires', 'provides',
                        'direct_packages',
@@ -571,6 +612,7 @@ class Component(object):
         self.direct_packages = []
         self.direct_components = []
         self.rules = []
+        self.entities = Entities()
 
     def _get_values(self):
         '''Return an immutable value representing the full identity.'''
@@ -673,6 +715,7 @@ class PackageReference(object):
         self.fields = fields
         self.predicates = predicates
         self.children = []
+        self.links = []
 
     def from_package(package):
         '''Instantiate a reference for the given package.'''
@@ -735,7 +778,10 @@ class PackageReference(object):
 
         all_fields.extend(self.fields)
         all_fields.append(('type', self.package_type.type_string))
-        return Rule(build_condition(all_fields), self.predicates)
+        actions = [ ActionMetaSet(*p) for p in self.predicates ]
+        actions += [ ActionLinkEntities(*p) for p in self.links ]
+        action = CompositeAction(actions)
+        return Rule(build_condition(all_fields), action)
     rule = property(get_rule)
 
     def __identity_tuple(self):
@@ -764,5 +810,55 @@ class ComponentReference(object):
     def load(self, get_desc):
         '''Instantiate the ComponentDescriptor object for this reference.'''
         return get_desc(self.filename)
+
+# Rule Actions
+#
+# The meta parameter and action_meta_set class are temporary
+# placeholders to allow coding progress. They will be phased out.
+
+class ActionMetaSet(object):
+    '''Action which sets domain, predicate, target on the entity.'''
+    def __init__(self, domain, predicate, target):
+        self.domain = domain
+        self.predicate = predicate
+        self.target = target
+
+    def execute(self, entity, dummy, meta):
+        '''Execute this action.'''
+        meta.set(entity, self.domain, self.predicate, self.target)
+
+    def __str__(self):
+        return 'set meta %r' % ((self.domain, self.predicate, self.target),)
+
+    __repr__ = __str__
+
+class ActionLinkEntities(object):
+    '''Action which links the entity to another entity.
+
+    ent_type, type of the entity to link to.
+    ent_id, ent_id of the entity to link to.
+    '''
+    def __init__(self, ent_type, ent_id):
+        self.ent_type = ent_type
+        self.ent_id = ent_id
+
+    def execute(self, entity, entities, dummy):
+        '''Execute this action.'''
+        if hasattr(entity, 'ent_type'):
+            ent_type = entity.ent_type
+            ent_id = entity.ent_id
+        else:
+            # must be a package
+            # this code can be removed when Package is unified with Entity
+            ent_type = entity.type
+            ent_id = entity.blob_id
+
+        ent_list = entities.links.setdefault((ent_type, ent_id), [])
+        ent_list.append((self.ent_type, self.ent_id))
+
+    def __str__(self):
+        return 'link %r' % ((self.ent_type, self.ent_id),)
+
+    __repr__ = __str__
 
 # vim:ai:et:sts=4:sw=4:tw=0:

@@ -74,7 +74,7 @@ class Test(TestCase, object):
             differ = difflib.ndiff(expected, actual)
             message = "Diff:\n" + '\n'.join(differ)
             if user_message:
-                message += '\n', user_message
+                message += '\n' + user_message
             self.fail(message)
 
     def split_file(self, path):

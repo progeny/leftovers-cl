@@ -65,6 +65,7 @@ class Pdk(command_base.CmdBase):
     do_resolve = LazyModuleRef('pdk.workspace', 'resolve')
     do_upgrade = LazyModuleRef('pdk.workspace', 'upgrade')
     do_download = LazyModuleRef('pdk.workspace', 'download')
+    do_dumplinks = LazyModuleRef('pdk.workspace', 'dumplinks')
     #temporary utility
     do_migrate = LazyModuleRef('pdk.workspace', 'migrate')
 

@@ -27,6 +27,9 @@ source of the information.
 Basically this allows components to override information in packages, etc.
 '''
 
+# The idea here is to phase out ComponentMeta and _ComponentMetaGroup
+# and replace them with Entities and Entity
+
 class ComponentMeta(object):
     """Represents overridable component metadata.
 
@@ -119,3 +122,31 @@ class _ComponentMetaGroup(dict):
         Domains are ignored.
         """
         return dict(self)
+
+class Entities(dict):
+    '''A container class designed to hold entities and links between them.
+
+    The links attribute is an EntityLinks object.
+
+    No real checking is done to verify that all linked objects exist
+    or anything like that.
+    '''
+    def __init__(self):
+        super(Entities, self).__init__()
+        self.links = EntityLinks()
+
+class Entity(dict):
+    '''Represents a single entity.
+
+    Keys are tuples of (domain, predicate).
+    '''
+    __slots__ = ('ent_type', 'ent_id')
+
+    def __init__(self, ent_type, ent_id):
+        super(Entity, self).__init__()
+        self.ent_type = ent_type
+        self.ent_id = ent_id
+
+class EntityLinks(dict):
+    '''Holds links between entities.'''
+    pass

@@ -1,0 +1,82 @@
+@!   Copyright 2005 Progeny Linux Systems, Inc.
+@!
+@!   This file is part of PDK.
+@!
+@!   PDK is free software; you can redistribute it and/or modify it
+@!   under the terms of the GNU General Public License as published by
+@!   the Free Software Foundation; either version 2 of the License, or
+@!   (at your option) any later version.
+@!
+@!   PDK is distributed in the hope that it will be useful, but WITHOUT
+@!   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+@!   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+@!   License for more details.
+@!
+@!   You should have received a copy of the GNU General Public License
+@!   along with PDK; if not, write to the Free Software Foundation,
+@!   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+
+@p indentation = none
+
+@A@<Link Report@>
+
+In this test we run a very simple link report.
+
+We are going to link apache-common to a simple security vulnerability.
+
+At this point the tool is very raw and only puts out a machine
+readable report of links that exist.
+
+@t table_of_contents
+
+
+@B@<Test Outline@>
+
+This is the macro wrapper for the test.
+
+@O@<atest/link-report.fw.sh@>==@{
+. atest/utils/repogen-fixture.sh
+
+set_up_repogen_fixture link-report
+pushd link-report
+
+cat >links.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <deb>
+      <name>apache2-common</name>
+      <meta>
+        <pdk.link>
+          <vuln>CAN-30</vuln>
+        </pdk.link>
+      </meta>
+    </deb>
+  </contents>
+  <entities>
+    <vuln id="CAN-30">
+      <description>bad bad bad</description>
+    </vuln>
+  </entities>
+</component>
+EOF
+
+cat >product.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <component>links.xml</component>
+    <component>progeny.com/apache.xml</component>
+  </contents>
+</component>
+EOF
+
+pdk dumplinks product.xml >report.txt
+
+diff -u - report.txt <<EOF
+deb|md5:5acd04d4cc6e9d1530aad04accdc8eb5|vuln|CAN-30
+EOF
+
+popd semdiff
+@}
+

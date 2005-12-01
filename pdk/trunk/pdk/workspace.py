@@ -670,6 +670,25 @@ def dumpmeta(args):
 
 dumpmeta = make_invokable(dumpmeta)
 
+def dumplinks(args):
+    """usage: pdk link-report COMPONENT
+
+    Prints a list of entity links to standard out.
+    """
+
+    workspace = current_workspace()
+    get_desc = workspace.get_component_descriptor
+    cache = workspace.cache
+    component_ref = args.get_one_reoriented_file(workspace)
+
+    meta = ComponentMeta()
+    component = get_desc(component_ref).load(meta, cache)
+    for key, ent_list in component.entities.links.iteritems():
+        for value in ent_list:
+            print '|'.join((key[0], key[1], value[0], value[1]))
+
+dumplinks = make_invokable(dumplinks)
+
 def run_resolve(args, assert_resolved, abstract_constraint):
     '''Take care of details of running descriptor.resolve.
 

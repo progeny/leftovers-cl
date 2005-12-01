@@ -30,7 +30,8 @@ from pdk.component import \
      get_deb_child_condition_data, \
      get_dsc_child_condition_data, \
      get_rpm_child_condition_data, \
-     get_srpm_child_condition_data
+     get_srpm_child_condition_data, \
+     ActionLinkEntities
 
 __revision__ = "$Progeny$"
 
@@ -47,6 +48,11 @@ class MockCache(object):
         if ref not in self.packages:
             self.packages.append(ref)
         return ref
+
+class TestActions(Test):
+    def test_link_ent_str(self):
+        action = ActionLinkEntities('a', 'b')
+        self.assert_equals("link ('a', 'b')", str(action))
 
 class TestParseDomain(Test):
     def test_parse_domain(self):
@@ -429,6 +435,58 @@ EOF
 
         self.assert_equal([a, c], list(desc.iter_package_refs()))
         self.assert_equal([a, b, c], list(desc.iter_full_package_refs()))
+
+    def test_parse_entity(self):
+        '''Check that we can parse entities at all.'''
+        open('test.xml', 'w').write('''<?xml version="1.0"?>
+<component>
+  <entities>
+    <some-ent id="can-do">
+      <a.name>hello</a.name>
+      <b.description>whodo whodo whodo</b.description>
+    </some-ent>
+  </entities>
+</component>
+''')
+
+        desc = ComponentDescriptor('test.xml')
+        entity1 = desc.entities[('some-ent', 'can-do')]
+        self.assert_equal('hello', entity1[('a', 'name')])
+        self.assert_equal('whodo whodo whodo',
+                          entity1[('b', 'description')])
+        meta = ComponentMeta()
+        cache = ShamCache()
+        comp = desc.load(meta, cache)
+        entity2 = comp.entities[('some-ent', 'can-do')]
+        self.assert_equal('hello', entity2[('a', 'name')])
+        self.assert_equal('whodo whodo whodo',
+                          entity2[('b', 'description')])
+
+    def test_parse_link(self):
+        '''Check that we can parse entities at all.'''
+        open('test.xml', 'w').write('''<?xml version="1.0"?>
+<component>
+  <contents>
+    <deb ref="sha-1:aaa">
+      <meta>
+        <pdk.link>
+          <some-meta>can-do</some-meta>
+        </pdk.link>
+      </meta>
+    </deb>
+  </contents>
+</component>
+''')
+
+        desc = ComponentDescriptor('test.xml')
+        self.assert_equal([('some-meta', 'can-do')], desc.contents[0].links)
+        meta = ComponentMeta()
+        cache = ShamCache()
+        package = MockPackage('a', '1', deb, 'sha-1:aaa')
+        cache.add(package)
+        comp = desc.load(meta, cache)
+        self.assert_equals([('some-meta', 'can-do')],
+                           comp.entities.links['deb', 'sha-1:aaa'])
 
 class TestPackageRef(Test):
     def test_is_abstract(self):

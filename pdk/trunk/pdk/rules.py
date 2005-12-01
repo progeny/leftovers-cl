@@ -108,14 +108,14 @@ class TrueCondition(object):
         return 'cond true!'
 
 class Rule(object):
-    '''A rule which can be applied to packages or other objects.
+    '''A rule which can be applied to entities or other objects.
 
     See module docstring.
     '''
-    def __init__(self, condition, predicates,
+    def __init__(self, condition, action,
                  metacondition = OneMatchMetacondition()):
         self.condition = condition
-        self.predicates = predicates
+        self.action = action
         self.metacondition = metacondition
         self.success_count = 0
 
@@ -123,25 +123,23 @@ class Rule(object):
         '''Evalute the metacondition with self.'''
         return self.metacondition.evaluate(self)
 
-    def fire(self, package):
+    def fire(self, entity, entities, meta):
         '''If the condition matches, yield a sequence of 3-tuples.
         The first element of the tuple will be the provided
         object. The second and third correspond to the fields of the
         2-tuple.
         '''
-        if self.condition.evaluate(package):
+        if self.condition.evaluate(entity):
             self.success_count += 1
-            for predicate in self.predicates:
-                yield (package,) + predicate
+            self.action.execute(entity, entities, meta)
 
     def __str__(self):
-        text = "where " + str(self.condition) 
-        if (self.predicates):
-            text += " returning " + repr(self.predicates)
+        text = "where " + str(self.condition)
+        text += " action: " + str(self.action)
         return text
 
 
-class CompositeRule(object):
+class RuleSystem(object):
     '''Composite a number of rule objects.'''
     def __init__(self, rules):
         self.rules = rules
@@ -153,14 +151,25 @@ class CompositeRule(object):
                 return False
         return True
 
-    def fire(self, package):
+    def fire(self, entity, entities, meta):
         '''Fire all rules, passing the given object to each.
         Chains all the yielded statements into a single iterator.
         '''
         for rule in self.rules:
-            for statement in rule.fire(package):
-                yield statement
+            rule.fire(entity, entities, meta)
 
     def __str__(self):
         return " AND ".join( [ str(r) for r in self.rules ])
 
+class CompositeAction(object):
+    '''Composite a series of actions.'''
+    def __init__(self, actions):
+        self.actions = actions
+
+    def execute(self, entity, entities, meta):
+        '''Execute all the actions in sequence.'''
+        for action in self.actions:
+            action.execute(entity, entities, meta)
+
+    def __str__(self):
+        return str(self.actions)

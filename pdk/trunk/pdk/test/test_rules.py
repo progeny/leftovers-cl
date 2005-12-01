@@ -20,7 +20,14 @@ from pdk.test.utest_util import Test, MockPackage
 from pdk.package import deb
 
 from pdk.rules import FieldMatchCondition, AndCondition, OrCondition, \
-     OneMatchMetacondition, TrueCondition, Rule, CompositeRule
+     OneMatchMetacondition, TrueCondition, Rule, RuleSystem, CompositeAction
+
+class ShamAction(object):
+    def __init__(self):
+        self.calls = []
+
+    def execute(self, entity, entities, meta):
+        self.calls.append((entity, entities, meta))
 
 class ConditionsAndRulesFixture(Test):
     def set_up(self):
@@ -72,34 +79,51 @@ class ConditionsAndRulesFixture(Test):
         rule.success_count = 1
         assert OneMatchMetacondition().evaluate(rule)
 
+    def test_composite_action(self):
+        sham1 = ShamAction()
+        sham2 = ShamAction()
+        actions = CompositeAction([sham1, sham2])
+        actions.execute('a', 'b', 'c')
+        actions.execute('d', 'e', 'f')
+        expected_calls = [ ('a', 'b', 'c'), ('d', 'e', 'f') ]
+        self.assert_equals(expected_calls, sham1.calls)
+        self.assert_equals(expected_calls, sham2.calls)
+
     def test_rule(self):
-        predicates = [ ('is', 'blue'), ('has', 'joy') ]
-        rule = Rule(self.and_condition, predicates)
+        rule = Rule(self.and_condition, None)
         assert not rule.evaluate_metacondition()
-        actual = list(rule.fire(self.b2))
+        rule.action = ShamAction()
+        rule.fire(self.b2, 'b', 'c')
         expected = []
-        self.assert_equal(expected, actual)
+        self.assert_equal(expected, rule.action.calls)
         assert not rule.evaluate_metacondition()
-        actual = list(rule.fire(self.a1))
-        expected = [ (self.a1, 'is', 'blue'), (self.a1, 'has', 'joy') ]
-        self.assert_equal(expected, actual)
+        rule.action = ShamAction()
+        rule.fire(self.a1, 'b', 'c')
+        expected = [ (self.a1, 'b', 'c') ]
+        self.assert_equal(expected, rule.action.calls)
         assert rule.evaluate_metacondition()
 
-    def test_composite_statement_iterator(self):
-        predicates_a = [ ('is', 'blue'), ('has', 'joy') ]
-        rule_a = Rule(self.and_condition, predicates_a)
-        predicates_b = [ ('is', 'red'), ('has', 'five') ]
-        rule_b = Rule(FieldMatchCondition('name', 'b'), predicates_b)
+    def test_rule_system(self):
+        rule_a = Rule(self.and_condition, None)
+        rule_b = Rule(FieldMatchCondition('name', 'b'), None)
 
-        composite = CompositeRule([rule_a, rule_b])
+        composite = RuleSystem([rule_a, rule_b])
         assert not composite.evaluate_metacondition()
 
-        actual = list(composite.fire(self.a1))
-        expected = [ (self.a1, 'is', 'blue'), (self.a1, 'has', 'joy') ]
-        self.assert_equal(expected, actual)
+        expected_empty = []
+
+        rule_a.action = ShamAction()
+        rule_b.action = ShamAction()
+        composite.fire(self.a1, 'b', 'c')
+        expected_data = [ (self.a1, 'b', 'c') ]
+        self.assert_equal(expected_data, rule_a.action.calls)
+        self.assert_equal(expected_empty, rule_b.action.calls)
         assert not composite.evaluate_metacondition()
 
-        actual = list(composite.fire(self.b2))
-        expected = [ (self.b2, 'is', 'red'), (self.b2, 'has', 'five') ]
-        self.assert_equal(expected, actual)
+        rule_a.action = ShamAction()
+        rule_b.action = ShamAction()
+        composite.fire(self.b2, 'b', 'c')
+        expected_data = [ (self.b2, 'b', 'c') ]
+        self.assert_equal(expected_empty, rule_a.action.calls)
+        self.assert_equal(expected_data, rule_b.action.calls)
         assert composite.evaluate_metacondition()
