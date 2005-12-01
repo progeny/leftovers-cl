@@ -427,7 +427,7 @@ ignore_message '^picax.config:W0121'
 ignore_message '^picax.unpack:W0122:.*:Package.run_script'
 ignore_message '^picax.log:W0121:.*:get_logger'
 ignore_message '^picax.newrepo:E0601:.*:NewRepository._compress_and_hash_indexes'
-ignore_message '^picax.modules.__init__:R0401'
+ignore_message '^picax.modules.*:R0401'
 
 # for unit tests only
 ignore_message '^pdk.test..*:E0201:.*assert_'
