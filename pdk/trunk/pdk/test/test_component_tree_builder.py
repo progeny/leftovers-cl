@@ -32,7 +32,9 @@ class TestComponentTreeBuilder(Test):
         actual_fields = []
         for condition in rule.condition.conditions:
             assert condition.__class__ == FieldMatchCondition
-            actual_fields.append((condition.field_name, condition.target))
+            actual_fields.append((condition.domain,
+                                  condition.field_name,
+                                  condition.target))
         self.assert_equals_long(expected_fields, actual_fields)
 
         actual_predicates = []
@@ -64,8 +66,9 @@ class TestComponentTreeBuilder(Test):
         ref = builder.build_package_ref(element)
         assert not ref.blob_id
         self.assert_equal('deb', ref.package_type.type_string)
-        self.assert_rule_matches([('name', 'hello'), ('type', 'deb')],
-                                 [('', 'ice', 'cube')], [], ref.rule)
+        self.assert_rule_matches([('pdk', 'name', 'hello'),
+                                  ('pdk', 'type', 'deb')],
+                                 [('pdk', 'ice', 'cube')], [], ref.rule)
 
     def test_build_concrete_ref(self):
         builder = ComponentDescriptor(None)
@@ -80,10 +83,10 @@ class TestComponentTreeBuilder(Test):
         ref = builder.build_package_ref(element)
         self.assert_equal('deb', ref.package_type.type_string)
         self.assert_equal('md5:aaa', ref.blob_id)
-        self.assert_rule_matches([('blob-id', 'md5:aaa'),
-                                  ('name', 'hello'),
-                                  ('type', 'deb')],
-                                 [('', 'ice', 'cube')], [], ref.rule)
+        self.assert_rule_matches([('pdk', 'blob-id', 'md5:aaa'),
+                                  ('pdk', 'name', 'hello'),
+                                  ('pdk', 'type', 'deb')],
+                                 [('pdk', 'ice', 'cube')], [], ref.rule)
 
     def test_build_bare_name_rule(self):
         '''rules like <deb>name</deb> should have name conditions.
@@ -94,7 +97,8 @@ class TestComponentTreeBuilder(Test):
         ref = builder.build_package_ref(name_element)
         assert not ref.blob_id
         self.assert_equal('deb', ref.package_type.type_string)
-        self.assert_rule_matches([('name', 'some-name'), ('type', 'deb')],
+        self.assert_rule_matches([('pdk', 'name', 'some-name'),
+                                  ('pdk', 'type', 'deb')],
                                  [], [], ref.rule)
 
     def test_build_with_links(self):
@@ -111,8 +115,9 @@ class TestComponentTreeBuilder(Test):
         ref = builder.build_package_ref(element)
         assert not ref.blob_id
         self.assert_equal('deb', ref.package_type.type_string)
-        self.assert_rule_matches([('name', 'hello'), ('type', 'deb')],
-                                 [('', 'ice', 'cube')],
+        self.assert_rule_matches([('pdk', 'name', 'hello'),
+                                  ('pdk', 'type', 'deb')],
+                                 [('pdk', 'ice', 'cube')],
                                  [('vuln', 'can-do')], ref.rule)
 
     def test_is_package_ref(self):

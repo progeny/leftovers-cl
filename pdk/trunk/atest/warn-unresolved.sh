@@ -66,7 +66,7 @@ diff -u - errors <<EOF
 WARNING Unresolved references remain in apache.xml
 WARNING No dsc where [name] is 'ida' AND [type] is 'dsc' action: []
 WARNING No deb where [name] is 'snorklewink2' AND [type] is 'deb' action: []
-WARNING No deb where [name] is 'snorklewink3' AND [type] is 'deb' action: [set meta ('', 'test', 'data')]
+WARNING No deb where [name] is 'snorklewink3' AND [type] is 'deb' action: [set meta ('pdk', 'test', 'data')]
 EOF
 
 # try again with all references resolvable.

@@ -22,9 +22,23 @@ from cElementTree import ElementTree, Element, SubElement, Comment, \
      ProcessingInstruction
 
 from pdk.util import split_pipe, gen_fragments, default_block_size, \
-     write_pretty_xml, parse_xml, NullTerminated
+     write_pretty_xml, parse_xml, NullTerminated, parse_domain, \
+     string_domain
 
 __revision__ = "$Progeny$"
+
+class TestParseDomain(Test):
+    def test_parse_domain(self):
+        pd = parse_domain
+        self.assert_equal(('pdk', 'zz'), pd('zz'))
+        self.assert_equal(('deb', 'name'), pd('deb.name'))
+        self.assert_equal(('deb', 'deb.name'), pd('deb.deb.name'))
+
+    def test_string_domain(self):
+        sd = string_domain
+        self.assert_equal('zz', sd('', 'zz'))
+        self.assert_equal('zz', sd('pdk', 'zz'))
+        self.assert_equal('a.b', sd('a', 'b'))
 
 class TestNullTerminated(Test):
     def test_null_terminated(self):

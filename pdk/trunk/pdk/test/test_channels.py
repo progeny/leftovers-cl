@@ -39,7 +39,7 @@ class TestChannelFilenames(Test):
                         'archs': 'source i386' }
             }
         world_data = WorldData(world_dict)
-        world = OutsideWorldFactory(world_data, 'zzz/zzz').create()
+        world = OutsideWorldFactory(world_data, 'z/z', 'a').create()
         base_path = 'http://localhost/'
         hpath = base_path + 'dists/stable/%s/%s/%s'
         expected = [

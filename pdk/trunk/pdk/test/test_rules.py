@@ -26,14 +26,14 @@ class ShamAction(object):
     def __init__(self):
         self.calls = []
 
-    def execute(self, entity, entities, meta):
-        self.calls.append((entity, entities, meta))
+    def execute(self, entity, entities):
+        self.calls.append((entity, entities))
 
 class ConditionsAndRulesFixture(Test):
     def set_up(self):
         super(ConditionsAndRulesFixture, self).set_up()
-        self.name_condition = FieldMatchCondition('name', 'a')
-        self.version_condition = FieldMatchCondition('version', '1')
+        self.name_condition = FieldMatchCondition('pdk', 'name', 'a')
+        self.version_condition = FieldMatchCondition('pdk', 'version', '1')
         self.and_condition = AndCondition([self.name_condition,
                                            self.version_condition])
         self.or_condition = OrCondition([self.name_condition,
@@ -83,9 +83,9 @@ class ConditionsAndRulesFixture(Test):
         sham1 = ShamAction()
         sham2 = ShamAction()
         actions = CompositeAction([sham1, sham2])
-        actions.execute('a', 'b', 'c')
-        actions.execute('d', 'e', 'f')
-        expected_calls = [ ('a', 'b', 'c'), ('d', 'e', 'f') ]
+        actions.execute('a', 'b')
+        actions.execute('d', 'e')
+        expected_calls = [ ('a', 'b'), ('d', 'e') ]
         self.assert_equals(expected_calls, sham1.calls)
         self.assert_equals(expected_calls, sham2.calls)
 
@@ -93,19 +93,19 @@ class ConditionsAndRulesFixture(Test):
         rule = Rule(self.and_condition, None)
         assert not rule.evaluate_metacondition()
         rule.action = ShamAction()
-        rule.fire(self.b2, 'b', 'c')
+        rule.fire(self.b2, 'b')
         expected = []
         self.assert_equal(expected, rule.action.calls)
         assert not rule.evaluate_metacondition()
         rule.action = ShamAction()
-        rule.fire(self.a1, 'b', 'c')
-        expected = [ (self.a1, 'b', 'c') ]
+        rule.fire(self.a1, 'b')
+        expected = [ (self.a1, 'b') ]
         self.assert_equal(expected, rule.action.calls)
         assert rule.evaluate_metacondition()
 
     def test_rule_system(self):
         rule_a = Rule(self.and_condition, None)
-        rule_b = Rule(FieldMatchCondition('name', 'b'), None)
+        rule_b = Rule(FieldMatchCondition('pdk', 'name', 'b'), None)
 
         composite = RuleSystem([rule_a, rule_b])
         assert not composite.evaluate_metacondition()
@@ -114,16 +114,16 @@ class ConditionsAndRulesFixture(Test):
 
         rule_a.action = ShamAction()
         rule_b.action = ShamAction()
-        composite.fire(self.a1, 'b', 'c')
-        expected_data = [ (self.a1, 'b', 'c') ]
+        composite.fire(self.a1, 'b')
+        expected_data = [ (self.a1, 'b') ]
         self.assert_equal(expected_data, rule_a.action.calls)
         self.assert_equal(expected_empty, rule_b.action.calls)
         assert not composite.evaluate_metacondition()
 
         rule_a.action = ShamAction()
         rule_b.action = ShamAction()
-        composite.fire(self.b2, 'b', 'c')
-        expected_data = [ (self.b2, 'b', 'c') ]
+        composite.fire(self.b2, 'b')
+        expected_data = [ (self.b2, 'b') ]
         self.assert_equal(expected_empty, rule_a.action.calls)
         self.assert_equal(expected_data, rule_b.action.calls)
         assert composite.evaluate_metacondition()

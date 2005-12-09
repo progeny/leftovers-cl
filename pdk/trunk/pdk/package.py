@@ -27,6 +27,7 @@ packages.
 import re
 from pdk.exceptions import InputError
 from pdk.rules import AndCondition, FieldMatchCondition
+from pdk.meta import Entity
 
 # Obviously at least one of these two needs to work for PDK to be useful.
 try:
@@ -50,77 +51,73 @@ __revision__ = "$Progeny$"
 and_c = AndCondition
 f_c = FieldMatchCondition
 
-class Package(object):
+class DomainAttributeAdapter(object):
+    '''Expose a particular domain of an entity as attributes of this object.
+
+    domain - The domain to expose.
+    entity - Resolve attributes against this particular entity.
+    '''
+    def __init__(self, domain, entity):
+        self.domain = domain
+        self.entity = entity
+
+    def find_key(self, key):
+        """Be forgiving about key lookups. s/_/-/g"""
+        candidate = (self.domain, key)
+        if candidate in self.entity:
+            return candidate
+        dashed_key = str(key).replace('_', '-')
+        dashed_candidate = (self.domain, dashed_key)
+        if dashed_candidate in self.entity:
+            return dashed_candidate
+        message = key + ' (%r, Domain: %s)' % (dict(self.entity),
+                                               self.domain)
+        raise AttributeError, message
+
+    def __getattr__(self, attr):
+        key = self.find_key(attr)
+        return self.entity[key]
+
+class Package(Entity):
     """Represents a logical package.
 
     Fields may be accessed as attributes or items, and dashes are
     converted to underscores as needed.
     """
-    __slots__ = ('meta', 'package_type', '_blob_id', '_hash', 'contents')
-    def __init__(self, meta, package_type, blob_id):
-        self.meta = meta
+    def __init__(self, package_type, blob_id):
+        super(Package, self).__init__(package_type.type_string, blob_id)
         self.package_type = package_type
-        # Initializing to make pylint happy.
-        self._blob_id = None
-        self._hash = None
-
-        self.blob_id = blob_id
-        self.contents = self.meta.get_group(self)
+        self.pdk = DomainAttributeAdapter('pdk', self)
 
     def set_blob_id(self, blob_id):
         """Set the blob_id and update the internal hash."""
-        self._blob_id = blob_id
-        self._hash = hash(self._get_identity())
+        self.ent_id = blob_id
 
     def get_blob_id(self):
         """Get the blob_id"""
-        return self._blob_id
-
+        return self.ent_id
     blob_id = property(get_blob_id, set_blob_id)
 
-    def find_key(self, key):
-        """Be forgiving about key lookups. s/_/-/g"""
-        if key in self.contents:
-            return key
-        dashed_key = str(key).replace('_', '-')
-        if dashed_key in self.contents:
-            return dashed_key
-        return None
-
-    def __contains__(self, key):
-        return self.find_key(key) != None
-
-    def __getattr__(self, key):
-        result = None
-        contents_key = self.find_key(key)
-        if contents_key == None:
-            if hasattr(self.contents, key):
-                result = getattr(self.contents, key)
-            else:
-                raise AttributeError(key)
-        else:
-            result = self.contents[contents_key]
-        return result
-
     def __getitem__(self, key):
-        special_version_names = {'version.epoch': 'epoch',
-                                 'version.version': 'version',
-                                 'version.release': 'release'}
-        if key in special_version_names:
-            return getattr(self.version, special_version_names[key])
+        if key in self:
+            return self.get(key)
+        elif key[0] == 'pdk' and hasattr(self, key[1]):
+            return getattr(self, key[1])
+        else:
+            raise KeyError, key
 
+    def get_arch(self):
+        '''Find the relevant arch '''
         try:
-            return getattr(self, key)
-        except AttributeError, e:
-            raise KeyError, str(e)
-
-    def __setitem__(self, item, value):
-        raise TypeError('object does not support item assignment')
+            return self[(self.format, 'arch')]
+        except KeyError:
+            raise AttributeError, 'arch'
+    arch = property(get_arch)
 
     def get_filename(self):
         """Defer filename calculation to the package type object."""
-        if 'filename' in self.contents:
-            return self.contents['filename']
+        if ('pdk', 'filename') in self:
+            return self[('pdk', 'filename')]
         else:
             return self.package_type.get_filename(self)
     filename = property(get_filename)
@@ -132,8 +129,8 @@ class Package(object):
 
     def get_format(self):
         """Defer the format string to the package type object."""
-        if 'format' in self.contents:
-            return self.contents['format']
+        if ('pdk', 'format') in self:
+            return self[('pdk', 'format')]
         else:
             return self.package_type.format_string
     format = property(get_format)
@@ -143,8 +140,30 @@ class Package(object):
         return self.package_type.role_string
     role = property(get_role)
 
-    def __len__(self):
-        return len(self.contents)
+    def get_name(self):
+        '''Convenience method for accessing the package name.'''
+        return self.pdk.name
+    name = property(get_name)
+
+    def get_version(self):
+        '''Convenience method for accessing the package version object.'''
+        return self.pdk.version
+    version = property(get_version)
+
+    def get_extra_files(self):
+        '''Return extra file tuples or just an empty list.'''
+        return self.get(('pdk', 'extra-file'), [])
+    extra_files = property(get_extra_files)
+
+    def get_size(self):
+        '''Get the expected size of the package.
+
+        WARNING: not always present. No attempt has been made to
+        shield the caller from key errors, which may masquerade as
+        puzzling AtttributeErrors.
+        '''
+        return int(self[('pdk', 'size')])
+    size = property(get_size)
 
     def _get_values(self):
         '''Return an immutable value representing the full identity.'''
@@ -154,17 +173,11 @@ class Package(object):
                      if hasattr(self, f) ]
         return tuple(['package'] + contents)
 
-    def _get_identity(self):
-        '''Return the minimal identity for this object.'''
-        return (self.package_type, self._blob_id)
-
-    def __hash__(self):
-        return self._hash
-
     def __str__(self):
         try:
-            return '<Package %r>' % ((self.name, self.version, self.arch,
-                                      self.type,),)
+            return '<Package %r>' % ((self[('pdk', 'name')],
+                                      self[('pdk', 'version')],
+                                      self.arch, self.type,),)
         except AttributeError, message:
             return '<Package incomplete "%s">' % message
     __repr__ = __str__
@@ -174,7 +187,7 @@ class Package(object):
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ \
-               and self._get_identity() == other._get_identity()
+               and self.ent_id == other.ent_id
 
 # evil hack so that getattr and hasattr will work for blob DASH id
 setattr(Package, 'blob-id', property(lambda self: self.blob_id))
@@ -217,12 +230,12 @@ class _Dsc(object):
     format_string = 'deb'
     role_string = 'source'
 
-    def parse(self, meta, control, blob_id):
+    def parse(self, control, blob_id):
         """Parse control file contents. Returns a package object."""
         tags = apt_pkg.ParseSection(control)
-        return self.parse_tags(meta, tags, blob_id)
+        return self.parse_tags(tags, blob_id)
 
-    def parse_tags(self, meta, apt_tags, blob_id):
+    def parse_tags(self, apt_tags, blob_id):
         '''Parse an apt tags section object directly.
 
         Returns a package object.
@@ -232,7 +245,7 @@ class _Dsc(object):
         for tag, l_tag in [ (t, t.lower()) for t in apt_tags.keys() ]:
             if l_tag in ('source', 'package'):
                 # be tolerant of both dsc's and apt source stanzas.
-                dom, key, value = 'deb', 'name', tags[tag]
+                dom, key, value = 'pdk', 'name', tags[tag]
             elif l_tag == 'files':
                 raw_file_list = tags['Files']
                 extra_files = []
@@ -240,9 +253,9 @@ class _Dsc(object):
                     (md5sum, size, name) = line.strip().split()
                     extra_files.append(('md5:' + md5sum, size, name))
                 extra_files = tuple(extra_files)
-                dom, key, value = '', 'extra-file', extra_files
+                dom, key, value = 'pdk', 'extra-file', extra_files
             elif l_tag == 'version':
-                dom, key, value = 'deb', 'version', DebianVersion(tags[tag])
+                dom, key, value = 'pdk', 'version', DebianVersion(tags[tag])
             elif l_tag == 'architecture':
                 dom, key, value = 'deb', 'arch', tags[tag]
             elif l_tag == 'directory':
@@ -253,16 +266,17 @@ class _Dsc(object):
 
         for raw_blob_id, size, filename in extra_files:
             if filename.endswith('.dsc'):
-                fields.append(('', 'raw_filename', filename))
-                fields.append(('', 'size', size))
+                fields.append(('pdk', 'raw-filename', filename))
+                fields.append(('pdk', 'size', size))
                 found_blob_id = raw_blob_id
                 break
 
         if not blob_id and found_blob_id:
             blob_id = found_blob_id
 
-        package = Package(meta, self, blob_id)
-        meta.set_group(package, fields)
+        package = Package(self, blob_id)
+        for dom, key, value in fields:
+            package[(dom, key)] = value
         return package
 
     def extract_header(self, filename):
@@ -289,10 +303,8 @@ class _Dsc(object):
 
     def get_filename(self, package):
         """Return a dsc filename for use in an apt repo."""
-        version_string = synthesize_version_string(None,
-                                                   package.version.version,
-                                                   package.version.release)
-        return '%s_%s.dsc' % (package.name, version_string)
+        version_string = package.pdk.version.string_without_epoch
+        return '%s_%s.dsc' % (package.pdk.name, version_string)
 
 dsc = _Dsc()
 
@@ -302,12 +314,12 @@ class _Deb(object):
     format_string = 'deb'
     role_string = 'binary'
 
-    def parse(self, meta, control, blob_id):
+    def parse(self, control, blob_id):
         """Parse control file contents. Returns a package object."""
         tags = apt_pkg.ParseSection(control)
-        return self.parse_tags(meta, tags, blob_id)
+        return self.parse_tags(tags, blob_id)
 
-    def parse_tags(self, meta, apt_tags, blob_id):
+    def parse_tags(self, apt_tags, blob_id):
         '''Parse an apt tags section object directly.
 
         Returns a package object.
@@ -320,7 +332,7 @@ class _Deb(object):
         for tag, l_tag in [ (t, t.lower()) for t in tags.keys() ]:
             if l_tag == 'package':
                 name = tags[tag]
-                dom, key, value = 'deb', 'name', name
+                dom, key, value = 'pdk', 'name', name
             elif l_tag == 'source':
                 sp_name = tags[tag]
                 if re.search(r'\(', sp_name):
@@ -329,15 +341,15 @@ class _Deb(object):
                     sp_version = DebianVersion(sp_raw_version)
             elif l_tag == 'version':
                 version = DebianVersion(tags[tag])
-                dom, key, value = 'deb', 'version', version
+                dom, key, value = 'pdk', 'version', version
             elif l_tag == 'architecture':
                 dom, key, value = 'deb', 'arch', tags[tag]
             elif l_tag == 'md5sum':
                 found_blob_id = 'md5:' + tags[tag]
             elif l_tag == 'filename':
-                dom, key, value = '', 'raw_filename', tags[tag]
+                dom, key, value = 'pdk', 'raw-filename', tags[tag]
             elif l_tag == 'size':
-                dom, key, value = '', 'size', tags[tag]
+                dom, key, value = 'pdk', 'size', tags[tag]
             else:
                 dom, key, value = 'deb', tag, tags[tag]
             fields.append((dom, key, value))
@@ -348,14 +360,15 @@ class _Deb(object):
         if not sp_version:
             sp_version = version
 
-        fields.append(('', 'sp-name', sp_name))
-        fields.append(('', 'sp-version', sp_version))
+        fields.append(('pdk', 'sp-name', sp_name))
+        fields.append(('pdk', 'sp-version', sp_version))
 
         if not blob_id and found_blob_id:
             blob_id = found_blob_id
 
-        package = Package(meta, self, blob_id)
-        meta.set_group(package, fields)
+        package = Package(self, blob_id)
+        for dom, key, value in fields:
+            package[(dom, key)] = value
         return package
 
     def extract_header(self, filename):
@@ -367,8 +380,8 @@ class _Deb(object):
 
     def get_filename(self, package):
         """Return a deb filename for use in an apt repo."""
-        version_string = package.version.string_without_epoch
-        return '%s_%s_%s.deb' % (package.name, version_string,
+        version_string = package.pdk.version.string_without_epoch
+        return '%s_%s_%s.deb' % (package.pdk.name, version_string,
                                     package.arch)
 
 deb = _Deb()
@@ -381,9 +394,9 @@ class _UDeb(_Deb):
 
     def get_filename(self, package):
         """Return a udeb filename for use in an apt repo."""
-        version_string = package.version.string_without_epoch
-        return '%s_%s_%s.udeb' % (package.name, version_string,
-                                    package.arch)
+        version_string = package.pdk.version.string_without_epoch
+        return '%s_%s_%s.udeb' % (package.pdk.name, version_string,
+                                  package.arch)
 
 udeb = _UDeb()
 
@@ -429,7 +442,7 @@ class _Rpm(object):
     format_string = 'rpm'
     role_string = 'binary'
 
-    def parse(self, meta, raw_header, blob_id):
+    def parse(self, raw_header, blob_id):
         """Parse an rpm header. Returns a package object."""
         header = rpm_api.headerLoad(raw_header)
         source_rpm = header[rpm_api.RPMTAG_SOURCERPM]
@@ -438,12 +451,12 @@ class _Rpm(object):
         if source_rpm == []:
             source_rpm = None
 
-        package = Package(meta, self, blob_id)
-        meta.set(package, 'rpm', 'name', header[rpm_api.RPMTAG_NAME])
-        meta.set(package, 'rpm', 'version', RPMVersion(header))
-        meta.set(package, 'rpm', 'arch', header[rpm_api.RPMTAG_ARCH])
-        meta.set(package, 'rpm', 'source-rpm', source_rpm)
+        package = Package(self, blob_id)
 
+        package[('pdk', 'name')] = header[rpm_api.RPMTAG_NAME]
+        package[('pdk', 'version')] = RPMVersion(header)
+        package[('rpm', 'arch')] = header[rpm_api.RPMTAG_ARCH]
+        package[('pdk', 'source-rpm')] = source_rpm
         return package
 
     def extract_header(self, filename):
@@ -454,8 +467,8 @@ class _Rpm(object):
 
     def get_filename(self, package):
         """Return a reasonable rpm package filename."""
-        version_string = package.version.string_without_epoch
-        return '%s-%s.%s.rpm' % (package.name, version_string,
+        version_string = package.pdk.version.string_without_epoch
+        return '%s-%s.%s.rpm' % (package.pdk.name, version_string,
                                  package.arch)
 
 rpm = _Rpm()
@@ -467,8 +480,8 @@ class _SRpm(_Rpm):
 
     def get_filename(self, package):
         """Return a reasonable srpm package filename."""
-        version_string = package.version.string_without_epoch
-        return '%s-%s.src.rpm' % (package.name, version_string)
+        version_string = package.pdk.version.string_without_epoch
+        return '%s-%s.src.rpm' % (package.pdk.name, version_string)
 
 srpm = _SRpm()
 

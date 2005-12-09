@@ -80,7 +80,7 @@ EOF
 pdk channel update || status=$?
 tear_down
 
-set_up "Missing outside_world.cache" 4
+set_up "Need to update channel data." 4
 cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
@@ -95,7 +95,11 @@ cat >etc/channels.xml <<EOF
 EOF
 cat >empty.xml <<EOF
 <?xml version="1.0"?>
-<component/>
+<component>
+  <contents>
+    <dsc>apache2</dsc>
+  </contents>
+</component>
 EOF
 pdk resolve empty.xml || status=$?
 tear_down

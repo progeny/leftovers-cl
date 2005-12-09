@@ -75,7 +75,7 @@ EOF
 pdk resolve weird-apache.xml
 
 # include apache2-common to get an architecture for repogen
-diff -u weird-apache.xml - <<EOF
+diff -u - weird-apache.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
   <contents>

@@ -25,7 +25,7 @@ Houses functionality used in calculating and outputting semantic diffs.
 import os
 from sets import Set
 from itertools import chain
-from pdk.package import Package
+from pdk.util import string_domain
 
 field_filter = Set([
     'Architecture', 'Binary', 'Build-Conflicts', 'Build-Conflicts-Indep',
@@ -35,13 +35,13 @@ field_filter = Set([
     'Pre-Depends', 'Priority', 'Provides', 'Recommends', 'Replaces',
     'SHA1Sum', 'Section', 'Size', 'Source', 'Standards-Version', 'Status',
     'Suggests', 'Version', 'Uploaders', 'arch', 'name', 'extra-file',
-    'source-rpm', 'sp-name', 'sp-version', 'version'])
+    'found-filename', 'source-rpm', 'sp-name', 'sp-version', 'version'])
 
 def index_by_fields(packages, fields):
     """Scan packages, return a dict indexed by the given fields."""
     index = {}
     for package in packages:
-        key = tuple([ getattr(package, f) for f in fields ])
+        key = tuple([ package[f] for f in fields ])
         if not key in index:
             index[key] = []
         index[key].append(package)
@@ -72,7 +72,7 @@ def iter_diffs(old_package_list, new_package_list):
     package, and secondary is the current package.
     """
     permutations = permute(old_package_list, new_package_list,
-                           ('name', 'arch', 'type'))
+                           [ ('pdk', f) for f in ('name', 'arch', 'type') ])
     for old_package, new_package in permutations:
         if not old_package:
             yield 'add', new_package, None
@@ -128,24 +128,23 @@ def get_meta_key(package):
     """
     return (package.name, package.type, package.arch)
 
-def get_joinable_meta_list(meta):
+def get_joinable_meta_list(component):
     """Take meta and get an iterable suitable for feeding to list_merge."""
-    for package in meta:
-        if not isinstance(package, Package):
-            continue
-        predicates = meta[package]
+    for package in component.direct_packages:
         new_key = get_meta_key(package)
-        for predicate, target in predicates.iteritems():
+        for key, target in package.iteritems():
+            domain, predicate = key
+            tag = string_domain(domain, predicate)
             if predicate not in field_filter:
-                yield new_key, predicate, target
+                yield new_key, tag, target
 
-def iter_diffs_meta(old_meta, new_meta):
+def iter_diffs_meta(old_component, new_component):
     """Detect additions and drops of metadata items.
 
     Package versions are _not_ considered when comparing metadata.
     """
-    old_joinable = get_joinable_meta_list(old_meta)
-    new_joinable = get_joinable_meta_list(new_meta)
+    old_joinable = get_joinable_meta_list(old_component)
+    new_joinable = get_joinable_meta_list(new_component)
 
     old_joinable = list(old_joinable)
     new_joinable = list(new_joinable)
@@ -160,13 +159,12 @@ def filter_data(data, show_unchanged):
         if show_unchanged or item[0] != 'unchanged':
             yield item
 
-def print_report(old_meta, old_component, new_meta, new_component,
-                 show_unchanged, printer):
+def print_report(old_component, new_component, show_unchanged, printer):
     '''Print a human readable report diffing two components.'''
     old_package_list = old_component.direct_packages
     new_package_list = new_component.direct_packages
     diffs = iter_diffs(old_package_list, new_package_list)
-    diffs_meta = iter_diffs_meta(old_meta, new_meta)
+    diffs_meta = iter_diffs_meta(old_component, new_component)
     data = filter_data(chain(diffs, diffs_meta), show_unchanged)
     printer(new_component.ref, data)
 

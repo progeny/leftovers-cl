@@ -17,111 +17,7 @@
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 '''Contains utility classes for managing metadata.
-
-The metadata class is ComponentMeta.
-
-Metadata in pdk is essentially "layered" allowing for more information
-about a given item to override previous information, regarless of the
-source of the information.
-
-Basically this allows components to override information in packages, etc.
 '''
-
-# The idea here is to phase out ComponentMeta and _ComponentMetaGroup
-# and replace them with Entities and Entity
-
-class ComponentMeta(object):
-    """Represents overridable component metadata.
-
-    Use the add method to add/override existing data.
-
-    Domains are associated with predicates, but do not serve as
-    namespace delimiters.
-
-    meta[item] always returns a _ComponentMetaGroup.
-    """
-    def __init__(self):
-        self.data = {}
-
-    def set(self, item, domain, predicate, target):
-        """Set a new or override an existing metadata item."""
-        self.set_group(item, ((domain, predicate, target),))
-
-    def set_group(self, item, predicates):
-        """Set a new or override a number of existing metadata items."""
-        group = self.get_group(item)
-        group.set_group(predicates)
-
-    def get_group(self, item):
-        """Get the group the group associated with the item.
-
-        Create the group if necessary."""
-        return self.data.setdefault(item, _ComponentMetaGroup({}))
-
-    def get(self, item, predicate):
-        """Get thet data associated with a single item, predicate pair."""
-        return self.data[item][predicate]
-
-    def get_domain_predicates(self, item, domain):
-        """Get all the predicates associated with the item and domain."""
-        return self[item].get_domain_predicates(domain)
-
-    def __getitem__(self, item):
-        """Retrieve the whole metadata group for item."""
-        return self.data[item]
-
-    def __iter__(self):
-        """Return an iterator. Imitates iter(dict)."""
-        return iter(self.data)
-
-    def __nonzero__(self):
-        """Does this object contain any data? Imitates bool(dict)."""
-        return bool(self.data)
-
-    def __repr__(self):
-        return repr(self.data)
-
-    def has_predicate(self, item, predicate):
-        """Is the item/predicate in this metadata?"""
-        return item in self.data and predicate in self.data[item]
-
-class _ComponentMetaGroup(dict):
-    """Holds metadata specific to a particular object.
-
-    Use the set and update methods to set/override fields.
-    """
-#    domains = None
-    __slots__ = ('domains',)
-
-    def __new__(cls, item_dict):
-        self = dict.__new__(cls, item_dict)
-        self.domains = {}
-        return self
-
-    def set(self, domain, predicate, target):
-        """Set a new or override an existing metadata item."""
-        self.set_group(((domain, predicate, target),))
-
-    def set_group(self, predicates):
-        """Set a new or override a number of existing metadata items."""
-        for domain, predicate, target in predicates:
-            self[predicate] = target
-            self.domains[predicate] = domain
-
-    def get_domain_predicates(self, domain):
-        """Get all the predicates which declare the given domain."""
-        for predicate, predicate_domain in self.domains.iteritems():
-            if predicate_domain == domain:
-                yield predicate
-
-    def as_dict(self):
-        """Return a dict representing this whole group.
-
-        Predicates are the keys, and meta item values are the values.
-
-        Domains are ignored.
-        """
-        return dict(self)
 
 class Entities(dict):
     '''A container class designed to hold entities and links between them.
@@ -140,12 +36,45 @@ class Entity(dict):
 
     Keys are tuples of (domain, predicate).
     '''
-    __slots__ = ('ent_type', 'ent_id')
+
+    # To keep performance in some situations snappy, we keep
+    # self.__hash precalculated, as too much activity during __hash__
+    # calls can burn a lot of cpu cycles.
+    #
+    # This may be less of an issue as the code is refactored in the
+    # future. If a profiler indicates that the complexity is needless,
+    # anyone may remove the optimization.
+
+    __slots__ = ('ent_type', '__ent_id', '__hash')
 
     def __init__(self, ent_type, ent_id):
         super(Entity, self).__init__()
         self.ent_type = ent_type
+
+        # Initializing to make pylint happy.
+        self.__ent_id = None
+        self.__hash = None
         self.ent_id = ent_id
+
+    def set_ent_id(self, ent_id):
+        '''Change the entity id'''
+        self.__ent_id = ent_id
+        self.__hash = hash(self.__ent_id)
+
+    def get_ent_id(self):
+        '''Retrieve the entity id.'''
+        return self.__ent_id
+    ent_id = property(get_ent_id, set_ent_id)
+
+    def __hash__(self):
+        return self.__hash
+
+    def iter_by_domains(self, domains):
+        '''Iterate over predicates and targets in the given domains.'''
+        for key, value in self.iteritems():
+            domain = key[0]
+            if domain in domains:
+                yield key[1], value
 
 class EntityLinks(dict):
     '''Holds links between entities.'''

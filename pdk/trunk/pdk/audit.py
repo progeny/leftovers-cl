@@ -28,7 +28,7 @@ from sets import Set
 import sha
 import md5
 import pdk.workspace as workspace
-from pdk.component import ComponentDescriptor, ComponentMeta
+from pdk.component import ComponentDescriptor
 import optparse
 import pdk.log as log
 from pdk.exceptions import IntegrityFault
@@ -65,7 +65,6 @@ def audit(argv):
     arbiter = Arbiter(note_problem)
 
     for component_name in args:
-        meta = ComponentMeta()
         def _note_blob_id(blob_id):
             """Make common predictions and warrants for blob_id.
 
@@ -76,7 +75,7 @@ def audit(argv):
 
         # Get the set of packages in the component
         descriptor = ComponentDescriptor(component_name)
-        component = descriptor.load(meta, my_cache)
+        component = descriptor.load(my_cache)
         set_of_packages = component.packages
 
         # predict expected blob_ids and headers
@@ -84,16 +83,15 @@ def audit(argv):
             _note_blob_id(package.blob_id)
             arbiter.predict(InCache(package.blob_id + '.header'),
                             True, component_name)
-            if "extra_file" in package:
-                for package_tuple in package.extra_file:
-                    blob_id = package_tuple[0]
-                    _note_blob_id(blob_id)
+            for package_tuple in package.extra_files:
+                blob_id = package_tuple[0]
+                _note_blob_id(blob_id)
 
         # predict upcoming source packages
         for package in set_of_packages:
             if package.role == 'binary':
-                fact = HasSource(package.format, package.sp_name,
-                                 package.sp_version.full_version)
+                fact = HasSource(package.format, package.pdk.sp_name,
+                                 package.pdk.sp_version.full_version)
                 arbiter.predict(fact, True, component_name)
 
         # warrant source packages found

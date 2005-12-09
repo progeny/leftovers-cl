@@ -39,22 +39,48 @@ Rule:
         see Rule class
 '''
 
+from pdk.util import string_domain
+
 class FieldMatchCondition(object):
     '''Check that the provided object has a particular attribute and value.
     '''
-    def __init__(self, field_name, target):
+    def __init__(self, domain, field_name, target):
+        self.domain = domain
         self.field_name = field_name
         self.target = target
 
     def evaluate(self, candidate):
-        return hasattr(candidate, self.field_name) and \
-            getattr(candidate, self.field_name) == self.target
+        key = (self.domain, self.field_name)
+
+        # Unfortunately components are special cases.
+        #
+        # At some point in the future they may inherit from the Entity
+        # class. Then we can rid ourselves of this oddball and
+        # unfortunate exception handler.
+        try:
+            if key in candidate:
+                return candidate[key] == self.target
+        except TypeError, e:
+            if 'iterable' in str(e):
+                pass
+            else:
+                raise
+
+        # The pdk domain is special, we can evalute it against raw
+        # entity attributes.
+        #
+        # Maybe someday we can rid ourselves of this special case.
+        if self.domain == 'pdk':
+            return hasattr(candidate, self.field_name) and \
+                   getattr(candidate, self.field_name) == self.target
 
     def __repr__(self):
-        return 'cond fm (%s, %s)' % (self.field_name, self.target)
+        return 'cond fm (%s, %s, %s)' % (self.domain, self.field_name,
+                                         self.target)
 
     def __str__(self):
-        return "[%s] is '%s'" % (self.field_name, self.target)
+        tag = string_domain(self.domain, self.field_name)
+        return "[%s] is '%s'" % (tag, self.target)
 
 class AndCondition(object):
     '''Check that the provided object meets all the provided conditions.'''
@@ -123,7 +149,7 @@ class Rule(object):
         '''Evalute the metacondition with self.'''
         return self.metacondition.evaluate(self)
 
-    def fire(self, entity, entities, meta):
+    def fire(self, entity, entities):
         '''If the condition matches, yield a sequence of 3-tuples.
         The first element of the tuple will be the provided
         object. The second and third correspond to the fields of the
@@ -131,7 +157,7 @@ class Rule(object):
         '''
         if self.condition.evaluate(entity):
             self.success_count += 1
-            self.action.execute(entity, entities, meta)
+            self.action.execute(entity, entities)
 
     def __str__(self):
         text = "where " + str(self.condition)
@@ -151,12 +177,12 @@ class RuleSystem(object):
                 return False
         return True
 
-    def fire(self, entity, entities, meta):
+    def fire(self, entity, entities):
         '''Fire all rules, passing the given object to each.
         Chains all the yielded statements into a single iterator.
         '''
         for rule in self.rules:
-            rule.fire(entity, entities, meta)
+            rule.fire(entity, entities)
 
     def __str__(self):
         return " AND ".join( [ str(r) for r in self.rules ])
@@ -166,10 +192,10 @@ class CompositeAction(object):
     def __init__(self, actions):
         self.actions = actions
 
-    def execute(self, entity, entities, meta):
+    def execute(self, entity, entities):
         '''Execute all the actions in sequence.'''
         for action in self.actions:
-            action.execute(entity, entities, meta)
+            action.execute(entity, entities)
 
     def __str__(self):
         return str(self.actions)

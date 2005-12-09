@@ -18,82 +18,18 @@
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 from pdk.test.utest_util import Test
-from pdk.meta import ComponentMeta
+from pdk.meta import Entity
 from sets import Set
 
-class TestMeta(Test):
-    def test_set(self):
-        meta = ComponentMeta()
-        meta.set(1, 'a', 'b', 'c')
-        self.assert_equal('c', meta.get(1, 'b'))
-        try:
-            meta.get(1, 2)
-            self.fail()
-        except KeyError, key:
-            self.assert_equal('2', str(key))
+class TestEntity(Test):
+    def test_filter_by_domain(self):
+        entity = Entity(None, None)
+        entity['deb', 'a'] = 1
+        entity['pdk', 'b'] = 2
+        entity['deb', 'c'] = 3
+        entity['ldap', 'd'] = 4
 
-        try:
-            meta.get(2, None)
-        except KeyError, key:
-            self.assert_equal('2', str(key))
-
-        assert meta.has_predicate(1, 'b')
-        assert not meta.has_predicate(2, 'b')
-        assert not meta.has_predicate(1, 'a')
-
-    def test_domains(self):
-        meta = ComponentMeta()
-        meta.set(1, 'd', 'a', 'b')
-        meta.set(1, 'd', 'c', 'd')
-        meta.set(1, '', 'e', 'f')
-        meta.set(2, 'd', 'g', 'h')
-        meta.set(2, 'd', 'i', 'k')
-        meta.set(2, '', 'k', 'l')
-
-        self.assert_equal(Set(['a', 'c']),
-                          Set(meta.get_domain_predicates(1, 'd')))
-        self.assert_equal(Set(['g', 'i']),
-                          Set(meta.get_domain_predicates(2, 'd')))
-
-    def test_placeholder(self):
-        meta = ComponentMeta()
-        meta.set(1, 'd', 'a', 'b')
-        meta.set(1, '', 'e', 'f')
-        meta.set(2, 'd', 'g', 'h')
-        meta.set(2, '', 'k', 'l')
-
-        placeholder = meta[1]
-        placeholder.set('d', 'c', 'd')
-        self.assert_equal('b', placeholder['a'])
-        self.assert_equal('d', placeholder['c'])
-        self.assert_equal('f', placeholder['e'])
-
-        self.assert_equal(Set(['a', 'c']),
-                          Set(placeholder.get_domain_predicates('d')))
-
-        try:
-            placeholder['g']
-            self.fail()
-        except KeyError, key:
-            self.assert_equal("'g'", str(key))
-
-        placeholder = meta[2]
-        placeholder.set('d', 'i', 'k')
-        self.assert_equal('h', placeholder['g'])
-        self.assert_equal('k', placeholder['i'])
-        self.assert_equal('l', placeholder['k'])
-
-        self.assert_equal(Set(['g', 'i']),
-                          Set(placeholder.get_domain_predicates('d')))
-
-        try:
-            placeholder['a']
-            self.fail()
-        except KeyError, key:
-            self.assert_equal("'a'", str(key))
-
-        try:
-            meta[3]
-            self.fail()
-        except KeyError, key:
-            self.assert_equal('3', str(key))
+        actual = Set(entity.iter_by_domains(('deb', 'ldap', 'notfound')))
+        expected = Set([ ('a', 1), ('c', 3), ('d', 4) ])
+        self.assert_equals(expected, actual)
+ 

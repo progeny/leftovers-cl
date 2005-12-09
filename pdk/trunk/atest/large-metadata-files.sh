@@ -38,7 +38,7 @@ pushd large-meta
 </channels>
 EOF
 
-    pdk channel update
+    time pdk channel update
     mkdir progeny.com
     cat >progeny.com/hello.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
@@ -183,8 +183,8 @@ cat >many.xml <<EOF
 </component>
 EOF
 
-    pdk download progeny.com/hello.xml
-    pdk resolve many.xml
-    pdk upgrade many.xml
+    time pdk download progeny.com/hello.xml
+    time PDK_PROF_DUMP=$dev_dir/pdk.prof pdk resolve many.xml
+    time pdk upgrade many.xml
 
 popd

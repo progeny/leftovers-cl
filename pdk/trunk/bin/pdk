@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python -O
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -215,6 +215,13 @@ def main():
         pdk.run_one_command(fn_name, main_args)
 
 if __name__ == '__main__':
-    main()
+    if 'PDK_PROF_DUMP' in os.environ:
+        prof_filename = os.environ['PDK_PROF_DUMP']
+        import hotshot
+        prof = hotshot.Profile(prof_filename)
+        prof.runcall(main)
+        prof.close()
+    else:
+        main()
 
 # vim:ai:et:sts=4:sw=4:tw=0:

@@ -24,16 +24,16 @@ machine modifying components.
 
 """
 import os
-import re
 from itertools import chain
 from sets import Set
-from pdk.util import write_pretty_xml, parse_xml
+from pdk.util import write_pretty_xml, parse_xml, parse_domain, \
+     string_domain
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, RuleSystem, AndCondition, OrCondition, \
      FieldMatchCondition, CompositeAction
 from pdk.package import get_package_type
 from pdk.exceptions import PdkException, InputError, SemanticError
-from pdk.meta import ComponentMeta, Entity, Entities
+from pdk.meta import Entity, Entities
 from xml.parsers.expat import ExpatError
 from pdk.log import get_logger
 from pdk.semdiff import print_report
@@ -89,7 +89,7 @@ class ComponentDescriptor(object):
 
         self.build_component_descriptor(tree.getroot())
 
-    def load_raw(self, meta, cache):
+    def load_raw(self, cache):
         """Build up the raw component/package tree but don't fire any rules.
         """
         component = Component(self.filename)
@@ -109,13 +109,13 @@ class ComponentDescriptor(object):
                         local_rules.append(ref.rule)
                         refs = ref.children
                     for concrete_ref in refs:
-                        package = concrete_ref.load(meta, cache)
+                        package = concrete_ref.load(cache)
                         component.packages.append(package)
                         component.direct_packages.append(package)
                         local_rules.append(concrete_ref.rule)
                 elif isinstance(ref, ComponentReference):
                     child_descriptor = ref.load(self.get_desc)
-                    child_component = child_descriptor.load_raw(meta, cache)
+                    child_component = child_descriptor.load_raw(cache)
                     component.direct_components.append(child_component)
                     component.components.append(child_component)
                     component.components.extend(child_component.components)
@@ -137,32 +137,22 @@ class ComponentDescriptor(object):
         component.entities.update(self.entities)
         return component
 
-    def parse_domain(raw_string):
-        """Parse the domain and value out of a raw meta value."""
-        match = re.match(r'(.*?)\.(.*)', raw_string)
-        if match:
-            return (match.group(1), match.group(2))
-        else:
-            return ('', raw_string)
-
-    parse_domain = staticmethod(parse_domain)
-
-    def load(self, meta, cache):
+    def load(self, cache):
         """Instantiate a component object tree for this descriptor."""
-        component = self.load_raw(meta, cache)
+        component = self.load_raw(cache)
         system = RuleSystem(component.rules)
 
         # fire rule on all packages
         for package in component.packages:
-            system.fire(package, component.entities, meta)
+            system.fire(package, component.entities)
 
         # fire rule on all components
         for decendent_component in component.components:
-            system.fire(decendent_component, component.entities, meta)
+            system.fire(decendent_component, component.entities)
 
         # add local metadata last
         for domain, predicate, target in self.meta:
-            meta.set(component, domain, predicate, target)
+            component.meta[(domain, predicate)] = target
 
         return component
 
@@ -193,10 +183,7 @@ class ComponentDescriptor(object):
         if len(self.meta) > 0:
             meta_element = SubElement(root, 'meta')
             for domain, predicate, target in self.meta:
-                if domain:
-                    tag = '%s.%s' % (domain, predicate)
-                else:
-                    tag = predicate
+                tag = string_domain(domain, predicate)
                 meta_child = SubElement(meta_element, tag)
                 meta_child.text = target
 
@@ -224,18 +211,16 @@ class ComponentDescriptor(object):
         name = reference.package_type.type_string
         ref_element = SubElement(parent, name, attributes)
 
-        for name, value in reference.fields:
-            condition_element = SubElement(ref_element, name)
+        for domain, name, value in reference.fields:
+            tag_name = string_domain(domain, name)
+            condition_element = SubElement(ref_element, tag_name)
             condition_element.text = value
 
         predicates = reference.predicates
         if predicates:
             meta_element = SubElement(ref_element, 'meta')
             for domain, predicate, target in predicates:
-                if domain:
-                    tag = '%s.%s' % (domain, predicate)
-                else:
-                    tag = predicate
+                tag = string_domain(domain, predicate)
                 predicate_element = SubElement(meta_element, tag)
                 predicate_element.text = target
 
@@ -288,9 +273,10 @@ class ComponentDescriptor(object):
         # first run the packages through base level package references.
         for ref in self.iter_package_refs(abstract_constraint):
             if ref.name:
-                item_list = world_index.get_candidates('name', ref.name)
+                item_list = world_index.iter_candidates(('pdk', 'name'),
+                                                        ref.name)
             else:
-                item_list = world_index.get_all_candidates()
+                item_list = world_index.iter_all_candidates()
                 message = 'Using unoptimized package list. ' + \
                           'This operation may take a long time.\n' + \
                           ' condition = %r' % ref.rule.condition
@@ -323,10 +309,12 @@ class ComponentDescriptor(object):
             child_condition, candidate_key_info = \
                 get_child_condition(ghost_package, ref)
 
-            parent_candidates = world_index.get_candidates('name', ref.name)
-            key_field, key_value = candidate_key_info
-            child_candidates = world_index.get_candidates(key_field,
-                                                          key_value)
+            parent_candidates = world_index.iter_candidates(('pdk', 'name'),
+                                                            ref.name)
+            key_domain, key_field, key_value = candidate_key_info
+            candidate_key = (key_domain, key_field)
+            child_candidates = world_index.iter_candidates(candidate_key,
+                                                           key_value)
             candidates = chain(parent_candidates, child_candidates)
             child_conditions.append((child_condition, this_match[1],
                                      candidates))
@@ -358,27 +346,25 @@ class ComponentDescriptor(object):
                     new_child_ref = \
                         PackageReference.from_package(ghost_package)
                     expected_filename = ghost_package.filename
-                    found_filename = ghost_package.found_filename
+                    found_filename = ghost_package.pdk.found_filename
                     if expected_filename != found_filename:
-                        predicate = ('', 'filename', found_filename)
+                        predicate = ('pdk', 'filename', found_filename)
                         new_child_ref.predicates.append(predicate)
                     ref.children.append(new_child_ref)
 
     def note_download_info(self, acquirer, extended_cache):
         '''Recursively traverse and note blob ids in the acquirer.'''
-        meta = ComponentMeta()
         for ref in self.iter_full_package_refs():
             if not ref.blob_id:
                 continue
             blob_id = ref.blob_id
             acquirer.add_blob(blob_id)
             try:
-                package = ref.load(meta, extended_cache)
+                package = ref.load(extended_cache)
             except PackageNotFoundError:
                 continue
-            if hasattr(package, 'extra_file'):
-                for extra_blob_id, dummy, dummy in package.extra_file:
-                    acquirer.add_blob(extra_blob_id)
+            for extra_blob_id, dummy, dummy in package.extra_files:
+                acquirer.add_blob(extra_blob_id)
 
         for ref in self.iter_component_refs():
             child_desc = ref.load(self.get_desc)
@@ -436,7 +422,7 @@ class ComponentDescriptor(object):
         metas = []
         links = []
         for element in meta_element:
-            domain, name = self.parse_domain(element.tag)
+            domain, name = parse_domain(element.tag)
             if (domain, name) == ('pdk', 'link'):
                 links.extend(self.build_links(element))
             else:
@@ -470,7 +456,7 @@ class ComponentDescriptor(object):
         inner_refs = []
         if ref_element.text and ref_element.text.strip():
             target = ref_element.text.strip()
-            fields.append(('name', target))
+            fields.append(('pdk', 'name', target))
         else:
             for element in ref_element:
                 if element.tag == 'meta':
@@ -482,7 +468,8 @@ class ComponentDescriptor(object):
                     inner_refs.append(inner_ref)
                 else:
                     target = element.text.strip()
-                    fields.append((element.tag, target))
+                    domain, name = parse_domain(element.tag)
+                    fields.append((domain, name, target))
         ref = PackageReference(package_type, blob_id, fields, predicates)
         ref.children = inner_refs
         ref.links = ref_links
@@ -535,7 +522,7 @@ class ComponentDescriptor(object):
             raise InputError, "id field required for entities"
         entity = Entity(root.tag, root.attrib['id'])
         for element in root:
-            key_tuple = self.parse_domain(element.tag)
+            key_tuple = parse_domain(element.tag)
             entity[key_tuple] = element.text
         return entity
 
@@ -574,11 +561,8 @@ class ComponentDescriptor(object):
         '''Run semdiff between self and its previously written state.'''
         orig_descriptor = ComponentDescriptor(self.filename)
         c_cache = workspace.world.get_backed_cache(workspace.cache)
-        meta1 = ComponentMeta()
-        meta2 = ComponentMeta()
-        print_report(meta1, orig_descriptor.load(meta1, c_cache),
-                     meta2, self.load(meta2, c_cache), show_unchanged,
-                     printer)
+        print_report(orig_descriptor.load(c_cache), self.load(c_cache),
+                     show_unchanged, printer)
 
 
 class Component(object):
@@ -591,7 +575,7 @@ class Component(object):
                  'id', 'name', 'description', 'requires', 'provides',
                  'packages', 'direct_packages',
                  'components', 'direct_components', 'rules',
-                 'entities')
+                 'entities', 'meta')
     identity_fields = ('ref', 'type',
                        'id', 'name', 'description', 'requires', 'provides',
                        'direct_packages',
@@ -613,6 +597,7 @@ class Component(object):
         self.direct_components = []
         self.rules = []
         self.entities = Entities()
+        self.meta = {}
 
     def _get_values(self):
         '''Return an immutable value representing the full identity.'''
@@ -632,34 +617,34 @@ class Component(object):
 
 def get_deb_child_condition_data(package):
     """Get child condition data for a deb."""
-    return [ ('name', package.sp_name),
-             ('version', package.sp_version),
-             ('type', 'dsc') ]
+    return [ ('pdk', 'name', package.pdk.sp_name),
+             ('pdk', 'version', package.pdk.sp_version),
+             ('pdk', 'type', 'dsc') ]
 
 def get_dsc_child_condition_data(package):
     """Get child condition data for a dsc."""
-    return [ ('sp-name', package.name),
-             ('sp-version', package.version.full_version),
+    return [ ('pdk', 'sp-name', package.name),
+             ('pdk', 'sp-version', package.version.full_version),
              [ 'or',
-               ('type', 'deb'),
-               ('type', 'udeb') ] ]
+               ('pdk', 'type', 'deb'),
+               ('pdk', 'type', 'udeb') ] ]
 
 def get_rpm_child_condition_data(package):
     """Get child condition data for an rpm."""
-    return [ ('filename', package.source_rpm),
-             ('type', 'srpm') ]
+    return [ ('pdk', 'filename', package.pdk.source_rpm),
+             ('pdk', 'type', 'srpm') ]
 
 def get_srpm_child_condition_data(package):
     """Get child condition data for an srpm."""
-    return [ ('source-rpm', package.filename),
-             ('type', 'rpm') ]
+    return [ ('pdk', 'source-rpm', package.filename),
+             ('pdk', 'type', 'rpm') ]
 
 def get_general_fields(package):
     """Get condition data for any package."""
-    fields = [ ('name', package.name),
-               ('version', package.version.full_version) ]
+    fields = [ ('pdk', 'name', package.name),
+               ('pdk', 'version', package.version.full_version) ]
     if package.role == 'binary':
-        fields.append(('arch', package.arch))
+        fields.append(('pdk', 'arch', package.arch))
     return fields
 
 def get_child_condition(package, ref):
@@ -671,7 +656,7 @@ def get_child_condition(package, ref):
     # I'm just not sure. -dt
     parent_version = package.version.full_version
     parent_condition = build_condition(ref.fields +
-                                       [('version', parent_version)])
+                                       [('pdk', 'version', parent_version)])
     key_info = condition_fn(package)[0]
     return OrCondition([child_condition, parent_condition]), key_info
 
@@ -700,8 +685,9 @@ def build_condition(raw_condition_data):
     condition = condition_type_map[condition_type]([])
     for item in condition_data:
         if isinstance(item, tuple):
-            name, value = item
-            condition.conditions.append(FieldMatchCondition(name, value))
+            domain, name, value = item
+            condition.conditions.append(FieldMatchCondition(domain, name,
+                                                            value))
         else:
             condition.conditions.append(build_condition(item))
     return condition
@@ -724,10 +710,10 @@ class PackageReference(object):
                                 fields, [])
     from_package = staticmethod(from_package)
 
-    def load(self, meta, cache):
+    def load(self, cache):
         '''Load the package associated with this ref.'''
-        package = cache.load_package(meta, self.blob_id,
-                                     self.package_type.type_string)
+        type_string = self.package_type.type_string
+        package = cache.load_package(self.blob_id, type_string)
         if not(self.rule.condition.evaluate(package)):
             message = 'Concrete package does not ' + \
                       'meet expected constraints: %s' \
@@ -740,10 +726,10 @@ class PackageReference(object):
         return not (bool(self.blob_id) or bool(self.children))
 
     def __contains__(self, field):
-        return field in [ t[0] for t in self.fields ]
+        return field in [ t[0:2] for t in self.fields ]
 
     def __getitem__(self, field):
-        fields_dict = dict(self.fields)
+        fields_dict = dict([ (t[0:2], t[2]) for t in self.fields ])
         return fields_dict[field]
 
     def get_name(self):
@@ -751,7 +737,8 @@ class PackageReference(object):
 
         Returns a blank string if no name was given.
         '''
-        return ('name' in self and self['name']) or ''
+        key = ('pdk', 'name')
+        return (key in self and self[key]) or ''
     name = property(get_name)
 
     def get_version(self):
@@ -759,7 +746,8 @@ class PackageReference(object):
 
         Returns a blank string if no version was given.
         '''
-        return ('version' in self and self['version']) or ''
+        key = ('pdk', 'version')
+        return (key in self and self[key]) or ''
     version = property(get_version)
 
     def get_arch(self):
@@ -767,17 +755,18 @@ class PackageReference(object):
 
         Returns a blank string if no arch was given.
         '''
-        return ('arch' in self and self['arch']) or ''
+        key = ('pdk', 'arch')
+        return (key in self and self[key]) or ''
     arch = property(get_arch)
 
     def get_rule(self):
         '''Construct a rule object for this reference.'''
         all_fields = ['and']
         if self.blob_id:
-            all_fields.append(('blob-id', self.blob_id))
+            all_fields.append(('pdk', 'blob-id', self.blob_id))
 
         all_fields.extend(self.fields)
-        all_fields.append(('type', self.package_type.type_string))
+        all_fields.append(('pdk', 'type', self.package_type.type_string))
         actions = [ ActionMetaSet(*p) for p in self.predicates ]
         actions += [ ActionLinkEntities(*p) for p in self.links ]
         action = CompositeAction(actions)
@@ -811,21 +800,16 @@ class ComponentReference(object):
         '''Instantiate the ComponentDescriptor object for this reference.'''
         return get_desc(self.filename)
 
-# Rule Actions
-#
-# The meta parameter and action_meta_set class are temporary
-# placeholders to allow coding progress. They will be phased out.
-
 class ActionMetaSet(object):
-    '''Action which sets domain, predicate, target on the entity.'''
+    '''A rule action which sets domain, predicate, target on the entity.'''
     def __init__(self, domain, predicate, target):
         self.domain = domain
         self.predicate = predicate
         self.target = target
 
-    def execute(self, entity, dummy, meta):
+    def execute(self, entity, dummy):
         '''Execute this action.'''
-        meta.set(entity, self.domain, self.predicate, self.target)
+        entity[(self.domain, self.predicate)] = self.target
 
     def __str__(self):
         return 'set meta %r' % ((self.domain, self.predicate, self.target),)
@@ -833,7 +817,7 @@ class ActionMetaSet(object):
     __repr__ = __str__
 
 class ActionLinkEntities(object):
-    '''Action which links the entity to another entity.
+    '''A rule action which links the entity to another entity.
 
     ent_type, type of the entity to link to.
     ent_id, ent_id of the entity to link to.
@@ -842,18 +826,10 @@ class ActionLinkEntities(object):
         self.ent_type = ent_type
         self.ent_id = ent_id
 
-    def execute(self, entity, entities, dummy):
+    def execute(self, entity, entities):
         '''Execute this action.'''
-        if hasattr(entity, 'ent_type'):
-            ent_type = entity.ent_type
-            ent_id = entity.ent_id
-        else:
-            # must be a package
-            # this code can be removed when Package is unified with Entity
-            ent_type = entity.type
-            ent_id = entity.blob_id
-
-        ent_list = entities.links.setdefault((ent_type, ent_id), [])
+        ent_list = entities.links.setdefault((entity.ent_type,
+                                              entity.ent_id), [])
         ent_list.append((self.ent_type, self.ent_id))
 
     def __str__(self):

@@ -28,19 +28,18 @@ import sys
 import optparse
 from urlparse import urlsplit
 from itertools import chain
-from pdk.package import Package
 from pdk.version_control import VersionControl, CommitNotFound
 from pdk.cache import Cache
 from pdk.channels import OutsideWorldFactory, WorldData, \
-     ChannelBackedCache, MassAcquirer
+     MassAcquirer
 from pdk.exceptions import ConfigurationError, SemanticError, \
      CommandLineError, InputError
 from pdk.util import pjoin, make_self_framer, cached_property, \
      relative_path, get_remote_file_as_string, make_ssh_framer, \
-     make_fs_framer, get_remote_file, noop
+     make_fs_framer, get_remote_file, noop, string_domain
 from pdk.semdiff import print_bar_separated, print_man, \
      iter_diffs, iter_diffs_meta, field_filter, filter_data
-from pdk.component import ComponentDescriptor, ComponentMeta
+from pdk.component import ComponentDescriptor
 from pdk.repogen import compile_product
 from pdk.progress import ConsoleMassProgress, NullMassProgress, \
      SizeCallbackAdapter
@@ -587,7 +586,7 @@ def semdiff(args):
     found in the work area. This could affect metadata differences.
     """
     workspace = current_workspace()
-    cache = ChannelBackedCache(workspace.world, workspace.cache)
+    cache = workspace.world.get_backed_cache(workspace.cache)
     files = args.get_reoriented_files(workspace)
 
     if args.opts.machine_readable:
@@ -597,44 +596,46 @@ def semdiff(args):
 
     get_desc = workspace.get_component_descriptor
     if args.opts.channels:
+        class faux_component(object):
+            '''This is a one-off class we use to adapt a channel
+            to semdiff, which expects a component.
+            '''
+            def __init__(self, direct_packages):
+                self.direct_packages = direct_packages
+
         ref = files[0]
-        old_meta = ComponentMeta()
         desc = get_desc(ref)
-        component = desc.load(old_meta, cache)
-        old_package_list = component.direct_packages
+        old_component = desc.load(cache)
+        old_package_list = old_component.direct_packages
         world_index = workspace.world.get_limited_index(args.opts.channels)
         new_package_list = [ i.package
-                             for i in world_index.get_all_candidates() ]
-        new_meta = {}
+                             for i in world_index.iter_all_candidates() ]
+        new_component = faux_component(new_package_list)
     elif len(files) == 1:
         ref = files[0]
         # Get old
-        old_meta = ComponentMeta()
         old_desc = get_desc(ref, workspace.vc.cat(ref))
-        old_component = old_desc.load(old_meta, cache)
+        old_component = old_desc.load(cache)
         old_package_list = old_component.direct_packages
         # Get new
-        new_meta = ComponentMeta()
         new_desc = get_desc(ref)
-        new_component = new_desc.load(new_meta, cache)
+        new_component = new_desc.load(cache)
         new_package_list = new_component.direct_packages
     elif len(files) == 2:
         ref = files[1]
         # get old
-        old_meta = ComponentMeta()
-        old_desc = get_desc(old_meta, files[0])
-        old_component = old_desc.load(old_meta, cache)
+        old_desc = get_desc(files[0])
+        old_component = old_desc.load(cache)
         old_package_list = old_component.direct_packages
         # Get new
-        new_meta = ComponentMeta()
         new_desc = get_desc(files[1])
-        new_component = new_desc.load(new_meta, cache)
+        new_component = new_desc.load(cache)
         new_package_list = new_component.direct_packages
     else:
         raise CommandLineError("Argument list is invalid")
 
     diffs = iter_diffs(old_package_list, new_package_list)
-    diffs_meta = iter_diffs_meta(old_meta, new_meta)
+    diffs_meta = iter_diffs_meta(old_component, new_component)
     data = filter_data(chain(diffs, diffs_meta), args.opts.show_unchanged)
     printer(ref, data)
 
@@ -651,22 +652,27 @@ def dumpmeta(args):
     cache = workspace.cache
     component_refs = args.get_reoriented_files(workspace)
     for component_ref in component_refs:
-        meta = ComponentMeta()
-        get_desc(component_ref).load(meta, cache)
-        for item in meta:
-            predicates = meta[item]
-            for key, value in predicates.iteritems():
-                if key in field_filter:
+        comp = get_desc(component_ref).load(cache)
+        for item in chain(comp.packages, comp.components, [comp]):
+            if hasattr(item, 'meta'):
+                # must be a component
+                meta = item.meta
+                ent_type = 'component'
+                ent_id = item.ref
+                name = ''
+            else:
+                meta = item
+                ent_type = item.type
+                ent_id = item.ent_id
+                name = item.name
+
+            for key, value in meta.iteritems():
+                domain, predicate = key
+                if predicate in field_filter:
                     continue
-                if isinstance(item, Package):
-                    ref = item.blob_id
-                    name = item.name
-                    type_string = item.type
-                else:
-                    ref = item.ref
-                    name = ''
-                    type_string = 'component'
-                print '|'.join([ref, type_string, name, key, str(value)])
+
+                tag = string_domain(domain, predicate)
+                print '|'.join([ent_id, ent_type, name, tag, str(value)])
 
 dumpmeta = make_invokable(dumpmeta)
 
@@ -681,8 +687,7 @@ def dumplinks(args):
     cache = workspace.cache
     component_ref = args.get_one_reoriented_file(workspace)
 
-    meta = ComponentMeta()
-    component = get_desc(component_ref).load(meta, cache)
+    component = get_desc(component_ref).load(cache)
     for key, ent_list in component.entities.links.iteritems():
         for value in ent_list:
             print '|'.join((key[0], key[1], value[0], value[1]))
@@ -770,7 +775,7 @@ def download(args):
     package indexes of configured channels.
     """
     workspace = current_workspace()
-    extended_cache = ChannelBackedCache(workspace.world, workspace.cache)
+    extended_cache = workspace.world.get_backed_cache(workspace.cache)
     acquirer = workspace.get_acquirer()
     get_desc = workspace.get_component_descriptor
     component_names = args.get_reoriented_files(workspace)
@@ -805,7 +810,7 @@ class _Workspace(object):
         self.channel_data_source = pjoin(self.config_dir, 'channels.xml')
         self.channel_dir = pjoin(self.config_dir, 'channels')
         self.outside_world_store = pjoin(self.config_dir,
-                                         'outside_world.cache')
+                                         'outside-world.cache')
 
     def __create_cache(self):
         """The cache for this workspace."""
@@ -820,7 +825,8 @@ class _Workspace(object):
     def __create_world(self):
         """Get the outside world object for this workspace."""
         world_data = WorldData.load_from_stored(self.channel_data_source)
-        factory = OutsideWorldFactory(world_data, self.channel_dir)
+        factory = OutsideWorldFactory(world_data, self.channel_dir,
+                                      self.outside_world_store)
         world = factory.create()
         return world
     world = cached_property('world', __create_world)
@@ -885,6 +891,7 @@ class _Workspace(object):
         """
         conveyor = Conveyor(self, upstream_name)
         conveyor.pull()
+        self.world.index_world_data()
 
     def push(self, upstream_name):
         """
@@ -899,7 +906,7 @@ class _Workspace(object):
 
     def get_acquirer(self):
         '''Get a MassAcquirer for this workspace.'''
-        return MassAcquirer(self.world)
+        return MassAcquirer(self.world.index)
 
     def get_component_descriptor(self, oriented_name, handle = None):
         '''Using oriented_name, create a new component descriptor object.'''
@@ -1185,9 +1192,8 @@ class Conveyor(object):
             remote_commit_ids = self.vc.get_rev_list([remote_head])
         except CommitNotFound:
             remote_commit_ids = []
-        raw_package_info = self.world.all_package_info.raw_package_info
-        remote_blob_ids = [ r.blob_id for r in raw_package_info
-                            if r.section_name == self.upstream_name ]
+        index = self.world.index
+        remote_blob_ids = index.get_blob_ids(self.upstream_name)
         net = Net(framer, self.workspace)
         net.verify_protocol()
         net.send_push_blobs(remote_blob_ids)

@@ -42,6 +42,7 @@ files needed by dsc packages.
 
 """
 
+import sys
 import os
 import stat
 pjoin = os.path.join
@@ -57,8 +58,8 @@ from pdk.util import cpath, gen_file_fragments, get_remote_file, \
 from pdk.yaxml import parse_yaxml_file
 from pdk.package import deb, udeb, dsc, get_package_type, \
      UnknownPackageTypeError
-from pdk.meta import ComponentMeta
 from pdk.progress import ConsoleMassProgress
+from pdk.index_file import IndexWriter, IndexFile, IndexFileMissingError
 
 def quote(raw):
     '''Create a valid filename which roughly resembles the raw string.'''
@@ -79,8 +80,10 @@ class LoaderFactory(tuple):
 
     The objects should be memory efficient, comparable, and hashable.
     '''
-    def __new__(cls, loader_class, *params):
-        return tuple.__new__(cls, (loader_class, tuple(params)))
+    def create(loader_class, *params):
+        '''Create a new loader factory object with the given params.'''
+        return LoaderFactory((loader_class, tuple(params)))
+    create = staticmethod(create)
 
     def create_loader(self, locators):
         '''Create a locator with the captured pa'''
@@ -221,19 +224,18 @@ class AptDebSection(object):
         if not os.path.exists(self.channel_file):
             raise MissingChannelDataError, self.channel_file
         tags_iterator = self.iter_apt_tags()
-        for package in \
+        for control, package in \
                 self.iter_as_packages(tags_iterator):
             locator = self.strategy.get_locator(package)
             package.blob_id = locator.blob_id
-            yield package, locator.blob_id, locator
-            if hasattr(package, 'extra_file'):
-                for extra_blob_id, extra_size, extra_filename \
-                        in package.extra_file:
-                    make_extra = locator.make_extra_file_locator
-                    extra_locator = make_extra(extra_filename,
-                                               extra_blob_id,
-                                               extra_size)
-                    yield None, extra_blob_id, extra_locator
+            yield package, control, locator.blob_id, locator
+            for extra_blob_id, extra_size, extra_filename \
+                    in package.extra_files:
+                make_extra = locator.make_extra_file_locator
+                extra_locator = make_extra(extra_filename,
+                                           extra_blob_id,
+                                           extra_size)
+                yield None, None, extra_blob_id, extra_locator
 
     def iter_apt_tags(self):
         '''Iterate over apt tag section objects in self.channel_file.'''
@@ -244,10 +246,11 @@ class AptDebSection(object):
         handle.close()
 
     def iter_as_packages(self, tags_iterator):
-        """For each control or header, yield a stream of package objects."""
+        """For each control stanza, yield the stanza and a package object.
+        """
         for tags in tags_iterator:
-            meta = ComponentMeta()
-            yield self.strategy.package_type.parse_tags(meta, tags, None)
+            control = str(tags)
+            yield control, self.strategy.package_type.parse_tags(tags, None)
 
 make_comparable(AptDebSection, ('full_path', 'base_path'))
 
@@ -257,15 +260,15 @@ class AptDebBinaryStrategy(object):
     Used for Packages files.
     '''
     package_type = deb
-    loader_factory = LoaderFactory(URLCacheLoader)
+    loader_factory = LoaderFactory.create(URLCacheLoader)
 
     def __init__(self, base_path):
         self.base_path = base_path
 
     def get_locator(self, package):
         """Return base, filename, blob_id for a package"""
-        return FileLocator(self.base_path, package.raw_filename,
-                           package.blob_id, int(package.size),
+        return FileLocator(self.base_path, package.pdk.raw_filename,
+                           package.blob_id, package.size,
                            self.loader_factory)
 
 class AptUDebBinaryStrategy(AptDebBinaryStrategy):
@@ -281,16 +284,16 @@ class AptDebSourceStrategy(object):
     Used for Sources files.
     '''
     package_type = dsc
-    loader_factory = LoaderFactory(URLCacheLoader)
+    loader_factory = LoaderFactory.create(URLCacheLoader)
 
     def __init__(self, base_path):
         self.base_path = base_path
 
     def get_locator(self, package):
         """Return base, filename, blob_id for a package"""
-        base = self.base_path + package.directory
-        return FileLocator(base, package.raw_filename, package.blob_id,
-                           int(package.size), self.loader_factory)
+        base = self.base_path + package[('deb', 'directory')]
+        return FileLocator(base, package.pdk.raw_filename, package.blob_id,
+                           package.size, self.loader_factory)
 
 def get_size(filename):
     '''Get the size of the given filename.'''
@@ -299,7 +302,7 @@ def get_size(filename):
 class DirectorySection(object):
     '''Section object for dealing with local directories as channels.'''
 
-    loader_factory = LoaderFactory(URLCacheLoader)
+    loader_factory = LoaderFactory.create(URLCacheLoader)
 
     def __init__(self, full_path):
         self.full_path = full_path
@@ -335,17 +338,15 @@ class DirectorySection(object):
                 url = 'file://' + cpath(root)
                 locator = FileLocator(url, candidate, blob_id, size,
                                       self.loader_factory)
-                meta = ComponentMeta()
-                package = package_type.parse(meta, control, blob_id)
-                yield package, blob_id, locator
-                if hasattr(package, 'extra_file'):
-                    for extra_blob_id, extra_size, extra_filename \
-                            in package.extra_file:
-                        make_extra = locator.make_extra_file_locator
-                        extra_locator = make_extra(extra_filename,
-                                                   extra_blob_id,
-                                                   extra_size)
-                        yield None, extra_blob_id, extra_locator
+                package = package_type.parse(control, blob_id)
+                yield package, control, blob_id, locator
+                for extra_blob_id, extra_size, extra_filename \
+                        in package.extra_files:
+                    make_extra = locator.make_extra_file_locator
+                    extra_locator = make_extra(extra_filename,
+                                               extra_blob_id,
+                                               extra_size)
+                    yield None, None, extra_blob_id, extra_locator
 
 
 make_comparable(DirectorySection, ('full_path',))
@@ -357,15 +358,16 @@ class RemoteWorkspaceSection(object):
         self.channel_file = channel_file
 
         parts = urlsplit(self.full_path)
+        make_factory = LoaderFactory.create
         if parts[0] == 'http':
-            self.loader_factory = LoaderFactory(URLCacheLoader)
+            self.loader_factory = make_factory(URLCacheLoader)
         else:
             if parts[1]:
-                self.loader_factory = LoaderFactory(SshWorkspaceCacheLoader,
+                self.loader_factory = make_factory(SshWorkspaceCacheLoader,
                                                     parts[1], parts[2])
             else:
                 cache_loader_class = LocalWorkspaceCacheLoader
-                self.loader_factory = LoaderFactory(cache_loader_class,
+                self.loader_factory = make_factory(cache_loader_class,
                                                 self.full_path)
 
     def update(self):
@@ -391,7 +393,7 @@ class RemoteWorkspaceSection(object):
             size = int(size_str)
             locator = FileLocator(cache_url, blob_path, blob_id, size,
                                   self.loader_factory)
-            yield None, blob_id, locator
+            yield None, None, blob_id, locator
 
 make_comparable(RemoteWorkspaceSection, ('full_path',))
 
@@ -441,9 +443,10 @@ class WorldData(object):
 
 class OutsideWorldFactory(object):
     """Creates an OutsideWorld object from WorldData and a channel_dir."""
-    def __init__(self, world_data, channel_dir):
+    def __init__(self, world_data, channel_dir, store_file):
         self.world_data = world_data
         self.channel_dir = channel_dir
+        self.store_file = store_file
 
     def create(self):
         """Create and return the OutsideWorld object."""
@@ -454,7 +457,7 @@ class OutsideWorldFactory(object):
             for section in self.iter_sections(name, data_dict):
                 sections[name].append(section)
 
-        return OutsideWorld(sections)
+        return OutsideWorld(sections, self.store_file)
 
     def get_channel_file(self, path):
         """Get the full path to the file representing the given path."""
@@ -532,8 +535,9 @@ class WorldItem(object):
 
 class OutsideWorld(object):
     '''This object represents the world outside the workspace.'''
-    def __init__(self, sections):
+    def __init__(self, sections, store_file):
         self.sections = sections
+        self.store_file = store_file
 
     def get_workspace_section(self, name):
         '''Get the named workspace section.'''
@@ -547,29 +551,31 @@ class OutsideWorld(object):
     def get_backed_cache(self, cache):
         '''Return a ChannelBackedCache for this object and the given cache.
         '''
-        return ChannelBackedCache(self, cache)
+        return ChannelBackedCache(self.index, cache)
 
     def fetch_world_data(self):
         '''Update all remote source and channel data.'''
         for dummy, section in self.iter_sections():
             section.update()
+        self.index_world_data()
 
-    def __create_all_package_info(self):
-        '''Capture the full state of all sections. Index it.
+    def index_world_data(self):
+        '''Build the world_data index from channel data.'''
+        print >> sys.stderr, 'Building channel index...',
+        IndexedWorldData.build(self.iter_sections(), self.store_file)
+        print >> sys.stderr, 'done.'
 
-        Returns a tuple containing the raw data + all indexes.
-        '''
-        data = IndexedWorldData.build(self.iter_sections())
-        return data
-    all_package_info = cached_property('all_package_info',
-                                       __create_all_package_info)
+    def __create_index(self):
+        '''Get the IndexedWorldData object associated with this world.'''
+        return IndexedWorldData(self.store_file)
+    index = cached_property('index', __create_index)
 
     def get_limited_index(self, given_section_names):
         '''Return IndexedWorldData like object but limited by channel names.
         '''
         section_names = [ t[0]
                           for t in self.iter_sections(given_section_names) ]
-        return LimitedWorldDataIndex(self.all_package_info, section_names)
+        return LimitedWorldDataIndex(self.index, section_names)
 
     def iter_sections(self, section_names = None):
         '''Iterate over stored sections for the given section_names.'''
@@ -590,24 +596,22 @@ class PackageNotFoundError(SemanticError):
 class ChannelBackedCache(object):
     '''Impersonate a cache but use both channels and cache to load packages.
     '''
-    def __init__(self, world, cache):
-        self.world = world
+    def __init__(self, index, cache):
+        self.index = index
         self.cache = cache
 
-    def load_package(self, meta, blob_id, type_string):
+    def load_package(self, blob_id, type_string):
         '''Behave like Cache.load_packages.
 
         Tries to load from local cache before looking for a package object
         in the channels.
         '''
         if blob_id in self.cache:
-            return self.cache.load_package(meta, blob_id, type_string)
+            return self.cache.load_package(blob_id, type_string)
 
-        by_blob_id = self.world.all_package_info.by_blob_id
-        if blob_id in by_blob_id:
-            item = by_blob_id[blob_id]
-            if item.package:
-                return item.package
+        package = self.index.get_package(blob_id, type_string)
+        if package:
+            return package
 
         message = "Can't find package (%s, %s).\n" % (type_string, blob_id)
         message += 'Consider reverting and reattempting this command.'
@@ -619,59 +623,115 @@ class IndexedWorldData(object):
     Provides a number of field indexes on an otherwise too large list
     of WorldDataItems.
     '''
-    def __init__(self, raw_package_info, field_indexes, by_blob_id):
-        self.raw_package_info = raw_package_info
-        self.field_indexes = field_indexes
-        self.by_blob_id = by_blob_id
+    def __init__(self, filename):
+        self.filename = filename
 
-    def get_candidates(self, key_field, key, section_names):
-        '''Get a list of WorldDataItems.
+    def __create_index_file(self):
+        '''Get the index file object which underlies this object.'''
+        try:
+            return IndexFile(self.filename)
+        except IndexFileMissingError:
+            message = "Channel cache missing. " + \
+                      "Run pdk channel update and try again."
+            raise IndexFileMissingError, message
+    index_file = cached_property('index_file', __create_index_file)
+
+    def has_blob_id(self, blob_id):
+        '''Does the given blob id appear in the world?'''
+        return self.index_file.count(('ent-id', blob_id)) > 0
+
+    def get_package(self, blob_id, type_string):
+        '''Get a (ghost) package object for the blob_id.'''
+        headers = self.index_file.get(('ent-id', blob_id), 1)
+        for header in headers:
+            if header is None:
+                continue
+            package_type = get_package_type(format = type_string)
+            return package_type.parse(header, blob_id)
+
+    def get_blob_ids(self, channel):
+        '''Get a list of all blob_ids in the channel.'''
+        try:
+            return list(self.index_file.get(channel, 2))
+        except IndexFileMissingError:
+            # It's expected that this method will sometimes be called
+            # before channel data has been indexed.
+            return []
+
+    def get_locator(self, blob_id):
+        '''Get a locator object for the blob_id.'''
+        locators = list(self.index_file.get(('ent-id', blob_id), 3))
+        return locators[0]
+
+    def iter_candidates(self, field, value, section_names):
+        '''Iterate over WorldDataItems.
 
         Use the index named by key_field, with the given key. Return
-        only the list of items found by that key.
+        only the items found by that key.
         '''
-        index = self.field_indexes[key_field]
-
-        candidate_list = index.get(key, [])
-        for item in candidate_list:
-            if item.section_name in section_names:
+        for section_name in section_names:
+            key = (section_name, field, value)
+            records = self.index_file.get_all(key)
+            for item in self.iter_world_items(records, section_name):
                 yield item
 
-    def build(sections_iterator):
+    def iter_channel_candidates(self, section_names):
+        '''Get WorldItems for all the objects in the given channels.'''
+        for channel in section_names:
+            records = self.index_file.get_all(channel)
+            for item in self.iter_world_items(records, channel):
+                yield item
+
+    def iter_world_items(records, section_name):
+        '''Get WorldItems for all the objects in the given (one) channel.'''
+        for type_string, header, blob_id, locator in records:
+            if type_string and header:
+                package_type = get_package_type(format = type_string)
+                package = package_type.parse(header, blob_id)
+                found_filename = os.path.basename(locator.filename)
+                package['pdk', 'found-filename'] = found_filename
+            else:
+                package = None
+            item = WorldItem(section_name, package, blob_id, locator)
+            yield item
+    iter_world_items = staticmethod(iter_world_items)
+
+    def build(sections_iterator, index_file):
         '''Build up IndexedWorldData from the data in the given sections.
         '''
-        raw_package_info = []
-        field_indexes = {}
-        indexed_fields = ('name', 'sp-name', 'source-rpm', 'filename')
-        for field in indexed_fields:
-            field_indexes[field] = {}
-        by_blob_id = {}
+        indexed_field_names = ('name', 'sp-name', 'source-rpm', 'filename')
+        indexed_fields = [ ('pdk', f) for f in indexed_field_names ]
+        index_writer = IndexWriter(index_file)
+        index_writer.init()
         try:
             for section_name, section in sections_iterator:
                 section_iterator = section.iter_package_info()
-                for ghost, blob_id, locator in section_iterator:
-                    item = WorldItem(section_name, ghost, blob_id, locator)
-                    raw_package_info.append(item)
-
+                for ghost, header, blob_id, locator in section_iterator:
                     if ghost:
-                        found_filename = os.path.basename(locator.filename)
-                        ghost.contents.set('', 'found_filename',
-                                           found_filename)
+                        type_string = ghost.type
+                    else:
+                        type_string = None
+
+                    addresses = index_writer.add(type_string, header,
+                                                 blob_id, locator)
+                    if ghost:
+                        index_keys = []
                         for field in indexed_fields:
                             try:
-                                key = ghost[field]
+                                value = ghost[field]
                             except KeyError:
                                 continue
-                            index = field_indexes[field]
-                            package_list = index.setdefault(key, [])
-                            package_list.append(item)
+                            key = (section_name, field, value)
+                            index_keys.append(key)
+                        index_writer.index(index_keys, addresses)
 
-                    if blob_id not in by_blob_id or \
-                       not by_blob_id[blob_id].package:
-                        by_blob_id[blob_id] = item
+                    ent_id_key = ('ent-id', blob_id)
+                    channel_key = section_name
+                    index_writer.index([ ent_id_key, channel_key ],
+                                       addresses)
+            index_writer.terminate()
+            del index_writer
 
-            return IndexedWorldData(raw_package_info, field_indexes,
-                                    by_blob_id)
         except MissingChannelDataError:
             message = 'Missing cached data. ' + \
                       'Consider running pdk channel update. ' + \
@@ -690,19 +750,19 @@ class LimitedWorldDataIndex(object):
         self.data_index = data_index
         self.channel_names = channel_names
 
-    def get_candidates(self, key_field, key):
-        '''See IndexedWorldData.get_candidates.
+    def iter_candidates(self, key_field, key):
+        '''See IndexedWorldData.iter_candidates.
 
         Filters output by self.channel_names.
         '''
-        return self.data_index.get_candidates(key_field, key,
-                                              self.channel_names)
+        return self.data_index.iter_candidates(key_field, key,
+                                               self.channel_names)
 
-    def get_all_candidates(self):
-        '''Get a list of all package candidates filtered by channel name.'''
-        for item in self.data_index.raw_package_info:
-            if item.section_name in self.channel_names:
-                yield item
+    def iter_all_candidates(self):
+        '''Iterate over all package candidates filtered by channel name.'''
+        icc = self.data_index.iter_channel_candidates
+        for item in icc(self.channel_names):
+            yield item
 
 class MassAcquirer(object):
     '''Acquire blob_ids from multiple sources with one method call.
@@ -710,8 +770,8 @@ class MassAcquirer(object):
     This class allows for downloading a potentially large number of
     blob_ids from multiple sources all at once.
     '''
-    def __init__(self, world):
-        self.world = world
+    def __init__(self, index):
+        self.index = index
         self.data = []
 
     def add_blob(self, blob_id):
@@ -724,14 +784,14 @@ class MassAcquirer(object):
         Blob_ids already in the given cache are skipped.
         '''
         locators = []
-        by_blob_id = self.world.all_package_info.by_blob_id
         for blob_id in self.data:
-            if blob_id in by_blob_id:
-                if blob_id not in cache:
-                    locators.append(by_blob_id[blob_id].locator)
-            else:
-                raise SemanticError, \
-                      "could not find %s in any channel" % blob_id
+            if blob_id not in cache:
+                if self.index.has_blob_id(blob_id):
+                    locator = self.index.get_locator(blob_id)
+                    locators.append(locator)
+                else:
+                    raise SemanticError, \
+                          "could not find %s in any channel" % blob_id
         return locators
 
     def get_cache_loaders(self, locators):

@@ -25,13 +25,14 @@ from pdk.package import udeb, deb, dsc, rpm, srpm, RPMVersion, \
 from pdk.cache import Cache
 
 from pdk.component import \
-     ComponentDescriptor, Component, ComponentMeta, PackageReference, \
+     ComponentDescriptor, Component, PackageReference, \
      get_child_condition_fn, \
      get_deb_child_condition_data, \
      get_dsc_child_condition_data, \
      get_rpm_child_condition_data, \
      get_srpm_child_condition_data, \
-     ActionLinkEntities
+     ActionLinkEntities, \
+     ActionMetaSet
 
 __revision__ = "$Progeny$"
 
@@ -54,12 +55,11 @@ class TestActions(Test):
         action = ActionLinkEntities('a', 'b')
         self.assert_equals("link ('a', 'b')", str(action))
 
-class TestParseDomain(Test):
-    def test_parse_domain(self):
-        pd = ComponentDescriptor.parse_domain
-        self.assert_equal(('', 'zz'), pd('zz'))
-        self.assert_equal(('deb', 'name'), pd('deb.name'))
-        self.assert_equal(('deb', 'deb.name'), pd('deb.deb.name'))
+    def test_action_meta_set(self):
+        action = ActionMetaSet('a', 'b', 'c')
+        actual = {}
+        action.execute(actual, None)
+        self.assert_equals({('a', 'b'): 'c'}, actual)
 
 class TestCompDesc(TempDirTest):
     def test_load_empty(self):
@@ -71,8 +71,7 @@ cat >a.xml <<EOF
 EOF
 ''')
         desc = ComponentDescriptor('a.xml')
-        meta = ComponentMeta()
-        descriptor = desc.load(meta, None)
+        descriptor = desc.load(None)
         assert isinstance(descriptor, Component)
 
     def test_load(self):
@@ -90,8 +89,7 @@ EOF
         desc = ComponentDescriptor('a.xml')
         cache = ShamCache()
         cache.add(MockPackage('a', '1', deb, 'sha-1:aaa'))
-        meta = ComponentMeta()
-        component = desc.load(meta, cache)
+        component = desc.load(cache)
         assert isinstance(component, Component)
         self.assert_equal(1, len(component.packages))
         self.assert_equal(1, len(component.direct_packages))
@@ -112,8 +110,7 @@ EOF
         desc = ComponentDescriptor('a.xml', handle)
         cache = ShamCache()
         cache.add(MockPackage('a', '1', deb, 'sha-1:aaa'))
-        meta = ComponentMeta()
-        component = desc.load(meta, cache)
+        component = desc.load(cache)
         assert isinstance(component, Component)
         self.assert_equal('a.xml', desc.filename)
         self.assert_equal(1, len(component.packages))
@@ -136,9 +133,8 @@ cat >a.xml <<EOF
 EOF
 ''')
         desc = ComponentDescriptor('a.xml')
-        meta = ComponentMeta()
-        component = desc.load(meta, None)
-        self.assert_equals(meta[component]['necessity'], 'optional')
+        component = desc.load(None)
+        self.assert_equals(component.meta['pdk', 'necessity'], 'optional')
 
     def test_load_fields(self):
         """compdesc.load populates id, name, etc. fields"""
@@ -159,8 +155,7 @@ cat >a.xml <<EOF
 EOF
 ''')
         desc = ComponentDescriptor('a.xml')
-        meta = ComponentMeta()
-        component = desc.load(meta, None)
+        component = desc.load(None)
         self.assert_equals('resolveme', component.id)
         self.assert_equals('Resolve Me', component.name)
         self.assert_equals('\n    I need to be resolved\n  ',
@@ -237,9 +232,8 @@ EOF
         cache.add(apache)
         cache.add(libc)
 
-        meta = ComponentMeta()
         desc_b = ComponentDescriptor('b.xml')
-        component_b = desc_b.load(meta, cache)
+        component_b = desc_b.load(cache)
         assert isinstance(component_b, Component)
         self.assert_equal('b.xml', desc_b.filename)
         self.assert_equal('b.xml', component_b.ref)
@@ -250,13 +244,18 @@ EOF
         self.assert_equal(1, len(component_b.direct_components))
         self.assert_equal(1, len(component_b.components))
         self.assert_equal('optional',
-                          meta[libc]['necessity'])
+                          libc['pdk', 'necessity'])
         self.assert_equal('optional',
-                          meta[apache]['necessity'])
+                          apache['pdk', 'necessity'])
 
-        meta = ComponentMeta()
+        apache = MockPackage('apache', '1', deb,'sha-1:aaa')
+        libc = MockPackage('libc6', '1', deb, 'sha-1:bbb')
+        cache = ShamCache()
+        cache.add(apache)
+        cache.add(libc)
+
         desc_a = ComponentDescriptor('a.xml')
-        component_a = desc_a.load(meta, cache)
+        component_a = desc_a.load(cache)
         assert isinstance(component_a, Component)
         self.assert_equal(2, len(component_a.packages))
         self.assert_equal(['sha-1:aaa', 'sha-1:bbb'],
@@ -264,9 +263,9 @@ EOF
         self.assert_equal(0, len(component_a.direct_packages))
         self.assert_equal(1, len(component_a.direct_components))
         self.assert_equal(2, len(component_a.components))
-        self.assert_equal('mandatory', meta[libc]['necessity'])
-        self.assert_equal('default', meta[apache]['necessity'])
-        self.assert_equal('42', meta[libc]['some-random-key'])
+        self.assert_equal('mandatory', libc['pdk', 'necessity'])
+        self.assert_equal('default', apache['pdk', 'necessity'])
+        self.assert_equal('42', libc['pdk', 'some-random-key'])
 
     def test_empty_meta_element(self):
         open('test.xml', 'w').write('''<?xml version="1.0"?>
@@ -342,8 +341,7 @@ EOF
         desc = ComponentDescriptor('test.xml')
         cache = ShamCache()
         cache.add(MockPackage('a', '1', deb, 'sha-1:aaa'))
-        meta = ComponentMeta()
-        desc.load(meta, cache)
+        desc.load(cache)
         desc.write()
         expected = '''<?xml version="1.0" encoding="utf-8"?>
 <component>
@@ -392,11 +390,10 @@ EOF
         cache = ShamCache()
         package = MockPackage('a', '1', deb, 'sha-1:aaa')
         cache.add(package)
-        meta = ComponentMeta()
         desc = ComponentDescriptor('test1.xml')
-        desc.load(meta, cache)
-        assert package in meta
-        self.assert_equal("mandatory", meta[package]["necessity"])
+        comp = desc.load(cache)
+        assert package in comp.packages
+        self.assert_equal("mandatory", package[('pdk', 'necessity')])
 
     def test_meta_implicit_ref(self):
         """Check that implicit references in metadata are supported and
@@ -410,16 +407,14 @@ EOF
 </component>
 ''')
         desc = ComponentDescriptor('test.xml')
-        meta = ComponentMeta()
-        comp = desc.load(meta, Cache(os.path.join(self.work_dir, 'cache')))
-        assert comp in meta
-        self.assert_equal('mandatory', meta[comp]['necessity'])
+        comp = desc.load(Cache(os.path.join(self.work_dir, 'cache')))
+        self.assert_equal('mandatory', comp.meta[('pdk', 'necessity')])
 
     def test_iter_package_refs(self):
         class MockRef(PackageReference):
             def __init__(self, label):
                 PackageReference.__init__(self, deb, None,
-                                          [('name', 'apache')], [])
+                                          [('pdk', 'name', 'apache')], [])
                 self.label = label
                 self.children = []
 
@@ -454,9 +449,8 @@ EOF
         self.assert_equal('hello', entity1[('a', 'name')])
         self.assert_equal('whodo whodo whodo',
                           entity1[('b', 'description')])
-        meta = ComponentMeta()
         cache = ShamCache()
-        comp = desc.load(meta, cache)
+        comp = desc.load(cache)
         entity2 = comp.entities[('some-ent', 'can-do')]
         self.assert_equal('hello', entity2[('a', 'name')])
         self.assert_equal('whodo whodo whodo',
@@ -480,11 +474,10 @@ EOF
 
         desc = ComponentDescriptor('test.xml')
         self.assert_equal([('some-meta', 'can-do')], desc.contents[0].links)
-        meta = ComponentMeta()
         cache = ShamCache()
         package = MockPackage('a', '1', deb, 'sha-1:aaa')
         cache.add(package)
-        comp = desc.load(meta, cache)
+        comp = desc.load(cache)
         self.assert_equals([('some-meta', 'can-do')],
                            comp.entities.links['deb', 'sha-1:aaa'])
 
@@ -502,20 +495,22 @@ class TestPackageRef(Test):
         assert abstract_ref.is_abstract()
 
     def test_field_lookups(self):
-        ref = PackageReference(deb, 'sha-1:aaa', [('name', 'apache')], [])
+        ref = PackageReference(deb, 'sha-1:aaa',
+                               [('pdk', 'name', 'apache')], [])
 
-        assert 'name' in ref
-        assert 'version' not in ref
-        self.assert_equal('apache', ref['name'])
+        assert ('pdk', 'name') in ref
+        assert ('pdk', 'version') not in ref
+        self.assert_equal('apache', ref[('pdk', 'name')])
         self.assert_equal('apache', ref.name)
         self.assert_equal('', ref.version)
         self.assert_equal('', ref.arch)
 
     def test_comparable(self):
-        fields = [('name', 'apache')]
+        fields = [('pdk', 'name', 'apache')]
         refa1 = PackageReference(deb, 'sha-1:aaa', fields, [])
         refa2 = PackageReference(deb, 'sha-1:aaa', fields, [])
-        refb = PackageReference(deb, 'sha-1:aaa', [('name', 'xsok')], [])
+        refb = PackageReference(deb, 'sha-1:aaa',
+                                [('pdk', 'name', 'xsok')], [])
 
         assert refa1 == refa2
         assert refa1 < refb
@@ -540,12 +535,13 @@ class TestPackageRef(Test):
 
     def test_get_deb_child_condition_data(self):
         sp_version = DebianVersion('1-2')
-        extra = {'sp-name': 'one', 'sp-version': sp_version}
-        apache_deb = MockPackage('apache', '1', deb, 'sha-1:aaa', **extra)
+        extra = {('pdk', 'sp-name'): 'one',
+                 ('pdk', 'sp-version'): sp_version}
+        apache_deb = MockPackage('apache', '1', deb, 'sha-1:aaa', extra)
 
-        expected = [ ('name', 'one'),
-                     ('version', '1-2'),
-                     ('type', 'dsc') ]
+        expected = [ ('pdk', 'name', 'one'),
+                     ('pdk', 'version', '1-2'),
+                     ('pdk', 'type', 'dsc') ]
 
         self.assert_equals(expected,
                            get_deb_child_condition_data(apache_deb))
@@ -554,11 +550,11 @@ class TestPackageRef(Test):
         version = DebianVersion('1-2')
         apache_dsc = MockPackage('apache', version, dsc, 'sha-1:aaa')
 
-        expected = [ ('sp-name', 'apache'),
-                     ('sp-version', '1-2'),
+        expected = [ ('pdk', 'sp-name', 'apache'),
+                     ('pdk', 'sp-version', '1-2'),
                      [ 'or',
-                       ('type', 'deb'),
-                       ('type', 'udeb') ] ]
+                       ('pdk', 'type', 'deb'),
+                       ('pdk', 'type', 'udeb') ] ]
 
         self.assert_equals(expected,
                            get_dsc_child_condition_data(apache_dsc))
@@ -566,12 +562,12 @@ class TestPackageRef(Test):
 
     def test_get_rpm_child_condition_data(self):
         version = RPMVersion(version_tuple = (None, '1', '2'))
-        extra = {'source-rpm': 'apache.src.rpm'}
+        extras = {('pdk', 'source-rpm'): 'apache.src.rpm'}
         apache_rpm = MockPackage('apache', version, rpm, 'sha-1:aaa',
-                                 **extra)
+                                 extras = extras)
 
-        expected = [ ('filename', 'apache.src.rpm'),
-                     ('type', 'srpm') ]
+        expected = [ ('pdk', 'filename', 'apache.src.rpm'),
+                     ('pdk', 'type', 'srpm') ]
 
         self.assert_equals(expected,
                            get_rpm_child_condition_data(apache_rpm))
@@ -579,8 +575,8 @@ class TestPackageRef(Test):
     def test_get_srpm_child_condition_data(self):
         version = RPMVersion(version_tuple = (None, '1', '2'))
         apache_srpm = MockPackage('apache', version, srpm, 'sha-1:aaa')
-        expected = [ ('source-rpm', 'apache-1-2.src.rpm'),
-                     ('type', 'rpm') ]
+        expected = [ ('pdk', 'source-rpm', 'apache-1-2.src.rpm'),
+                     ('pdk', 'type', 'rpm') ]
 
         self.assert_equals(expected,
                            get_srpm_child_condition_data(apache_srpm))

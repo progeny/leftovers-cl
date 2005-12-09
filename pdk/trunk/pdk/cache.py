@@ -347,7 +347,7 @@ class Cache(SimpleCache):
             os.unlink(temp_path)
 
 
-    def load_package(self, meta, blob_id, package_format):
+    def load_package(self, blob_id, package_format):
         """Load the raw header data into memory from a package
         """
         package_type = get_package_type(format = package_format)
@@ -370,6 +370,6 @@ class Cache(SimpleCache):
             self.add_header(header, blob_id)
 
         header = open(header_file).read()
-        return package_type.parse(meta, header, blob_id)
+        return package_type.parse(header, blob_id)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

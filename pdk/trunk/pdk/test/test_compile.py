@@ -21,8 +21,6 @@ from sets import Set
 from pdk.test.utest_util import TempDirTest
 from pdk.cache import Cache
 from pdk.util import pjoin, cpath
-from pdk.package import Package
-from pdk.component import ComponentMeta
 
 from pdk.repogen import DebianReleaseWriter, LazyWriter, \
      DebianDirectPoolRepo, DebianPoolInjector, Compiler
@@ -74,11 +72,6 @@ EOF
 
 '''
 
-def make_package(package_type, arch, dfsg_section):
-    return Package({'type': package_type,
-                    'arch': arch,
-                    'dfsg-section': dfsg_section}, None)
-
 class CacheFixture(TempDirTest):
     def set_up(self):
         super(CacheFixture, self).set_up()
@@ -89,7 +82,6 @@ class CacheFixture(TempDirTest):
 class DebianPoolFixture(CacheFixture):
     def set_up(self):
         super(DebianPoolFixture, self).set_up()
-        self.meta = ComponentMeta()
         self.repo = DebianDirectPoolRepo(pjoin(self.work_dir, '.'),
                                          'dists/happy',
                                          Set(['i386', 'sparc', 'source']),
@@ -171,12 +163,12 @@ class TestDebianPoolInjector(DebianPoolFixture):
         super(TestDebianPoolInjector, self).set_up()
 
         blob_id = 'sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b'
-        self.bin = self.cache.load_package(self.meta, blob_id, 'deb')
+        self.bin = self.cache.load_package(blob_id, 'deb')
         self.bin_injector = DebianPoolInjector(self.cache, self.bin, 'main',
                                                self.repo.repo_dir)
 
         blob_id = 'sha-1:9d26152e78ca33a3d435433c67644b52ae4c670c'
-        self.src = self.cache.load_package(self.meta, blob_id, 'dsc')
+        self.src = self.cache.load_package(blob_id, 'dsc')
         self.src_injector = DebianPoolInjector(self.cache, self.src, 'main',
                                                self.repo.repo_dir)
 
@@ -195,7 +187,7 @@ class TestDebianPoolInjector(DebianPoolFixture):
         extras = {}
         extras.update(dict([ (pjoin(src_package_dir, filename), blob_id)
                              for blob_id, dummy, filename
-                             in self.src.extra_file ]))
+                             in self.src.pdk.extra_file ]))
         actual_extras = self.src_injector.get_extra_pool_locations()
         self.assert_equals_long(extras, actual_extras)
 
@@ -209,7 +201,7 @@ class TestDebianPoolInjector(DebianPoolFixture):
     def test_get_links(self):
         package_location = self.src_injector.get_pool_location()
         package_dir = pjoin(self.src_injector.get_pool_location(), '..')
-        files = [ t[0] for t in self.src.extra_file ]
+        files = [ t[0] for t in self.src.pdk.extra_file ]
         files.sort()
         expected = { package_location: self.src.blob_id,
                      pjoin(package_dir, 'apache2_2.0.53-5.diff.gz'):
@@ -224,10 +216,14 @@ class TestReleaseWriter(TempDirTest):
         super(self.__class__, self).set_up()
         self.search_path = pjoin(self.work_dir, 'repo', 'stuff')
         release_time = 'Wed, 22 Mar 2005 21:20:00 UTC'
-        contents = { 'archive': 'stable', 'version': '3.0r4',
-                     'origin': 'Debian', 'label': 'Debian2',
-                     'suite': 'happy', 'codename': 'woody',
-                     'date': release_time, 'description': 'Hello World!' }
+        contents = { ('apt-deb', 'archive'): 'stable',
+                     ('apt-deb', 'version'): '3.0r4',
+                     ('apt-deb', 'origin'): 'Debian',
+                     ('apt-deb', 'label'): 'Debian2',
+                     ('apt-deb', 'suite'): 'happy',
+                     ('apt-deb', 'codename'): 'woody',
+                     ('apt-deb', 'date'): release_time,
+                     ('apt-deb', 'description'): 'Hello World!' }
         self.writer = DebianReleaseWriter(contents, ['i386', 'alpha'],
                                           ['main', 'contrib'],
                                           self.search_path)

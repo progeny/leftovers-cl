@@ -25,6 +25,7 @@ fields, and generators which iterate of files using fixed block sizes.
 """
 __revision__ = "$Progeny$"
 import os
+import re
 import sys
 import inspect
 import stat
@@ -668,5 +669,20 @@ def moo(args):
     print "Have you mooed today?"
     if args:
         print "You said '%s'" % ' '.join([str(x) for x in args])
+
+def parse_domain(raw_string):
+    """Parse the domain and value out of a raw meta value."""
+    match = re.match(r'(.*?)\.(.*)', raw_string)
+    if match:
+        return (match.group(1), match.group(2))
+    else:
+        return ('pdk', raw_string)
+
+def string_domain(domain, predicate):
+    '''Reassemble a domain, predicate pair, leaving out "pdk." prefixes.'''
+    if not domain or domain == 'pdk':
+        return predicate
+    else:
+        return '%s.%s' % (domain, predicate)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

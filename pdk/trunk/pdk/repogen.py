@@ -29,10 +29,10 @@ import md5
 from sets import Set
 from itertools import chain
 from commands import mkarg
-from pdk.component import ComponentMeta
 from pdk.exceptions import SemanticError, InputError, IntegrityFault
 import pdk.log as log
-from pdk.util import ensure_directory_exists, pjoin, LazyWriter
+from pdk.util import ensure_directory_exists, pjoin, LazyWriter, \
+     parse_domain
 from pdk.package import udeb
 
 logger = log.get_logger()
@@ -99,15 +99,11 @@ def compile_product(component_name, cache, repo_dir, get_desc):
                    'apt-deb': compiler.create_debian_pool_repo,
                    'raw': compiler.create_raw_package_dump_repo }
 
-    meta = ComponentMeta()
-    product = get_desc(component_name).load(meta, cache)
-    if product in meta:
-        contents = meta[product].as_dict()
-    else:
-        contents = {}
+    product = get_desc(component_name).load(cache)
+    contents = product.meta
 
-    if 'repo-type' in contents:
-        repo_type_string = contents['repo-type']
+    if ('pdk', 'repo-type') in contents:
+        repo_type_string = contents['pdk', 'repo-type']
     else:
         try:
             first_package = product.packages[0]
@@ -155,9 +151,9 @@ class DebianPoolInjector(object):
     def get_pool_dir(self):
         """Return the top-level absolute path for the pool."""
         if self.package.role == 'binary':
-            name = self.package.sp_name
+            name = self.package.pdk.sp_name
         else:
-            name = self.package.name
+            name = self.package.pdk.name
 
         return pjoin(self.repo_dir, 'pool', self.section, name[0], name)
 
@@ -191,12 +187,12 @@ class DebianPoolInjector(object):
         Return a dictionary relating pool_locations to
         filerefs. This method only handles extra files. (diff.gz etc.)
         """
-        if not hasattr(self.package, 'extra_file'):
+        if not hasattr(self.package.pdk, 'extra_file'):
             return {}
         pool_dir = self.get_pool_dir()
         return dict([ (pjoin(pool_dir, filename), blob_id)
                       for blob_id, dummy, filename
-                      in self.package.extra_file ])
+                      in self.package.pdk.extra_file ])
 
 
     def get_links(self):
@@ -239,16 +235,13 @@ class DebianPoolInjector(object):
         apt_fields = {}
         # I'm not entirely sure about this, as we are tangling apt
         # knowledge with deb knowledge.
-        for field in self.package.contents.get_domain_predicates('deb'):
-            if field == 'name':
-                key, value = 'Package', self.package.name
-            elif field == 'version':
-                key, value = 'Version', self.package.version.full_version
-            elif field == 'arch':
-                key, value = 'Architecture', self.package.arch
-            else:
-                key, value = field, self.package[field]
-            apt_fields[key] = value
+        apt_fields['Package'] = self.package.name
+        apt_fields['Version'] = self.package.version.full_version
+        apt_fields['Architecture'] = self.package.arch
+        for predicate, value in self.package.iter_by_domains(('deb')):
+            if predicate == 'arch':
+                continue
+            apt_fields[predicate] = value
 
         pool_path_dir = self.get_relative_pool_path()
         (size, md5_digest) = self.get_file_size_and_hash()
@@ -256,8 +249,8 @@ class DebianPoolInjector(object):
             field_cmp = deb_binary_field_cmp
             pool_path = os.path.join(pool_path_dir, self.package.filename)
 
-            sp_name_str = self.package.sp_name
-            if self.package.sp_version != self.package.version:
+            sp_name_str = self.package.pdk.sp_name
+            if self.package.pdk.sp_version != self.package.version:
                 sp_version_str = self.package.sp_version.full_version
                 source_value = '%s (%s)' % (sp_name_str, sp_version_str)
             else:
@@ -275,7 +268,7 @@ class DebianPoolInjector(object):
             blob_id = self.package.blob_id
             filename = self.package.filename
             extra_files.append(self.get_source_file_line(blob_id, filename))
-            for blob_id, dummy, filename in self.package.extra_file:
+            for blob_id, dummy, filename in self.package.pdk.extra_file:
                 extra_files.append(self.get_source_file_line(blob_id,
                                                              filename))
             extra_files_str = '\n'.join(extra_files)
@@ -540,14 +533,14 @@ class DebianReleaseWriter(object):
     """
 
     def __init__(self, contents, raw_arches, raw_sections, search_path):
-        self.archive = contents['archive']
-        self.version = contents['version']
-        self.origin = contents['origin']
-        self.label = contents['label']
-        self.suite = contents['suite']
-        self.codename = contents['codename']
-        self.release_time = contents['date']
-        self.description = contents['description']
+        self.archive = contents['apt-deb', 'archive']
+        self.version = contents['apt-deb', 'version']
+        self.origin = contents['apt-deb', 'origin']
+        self.label = contents['apt-deb', 'label']
+        self.suite = contents['apt-deb', 'suite']
+        self.codename = contents['apt-deb', 'codename']
+        self.release_time = contents['apt-deb', 'date']
+        self.description = contents['apt-deb', 'description']
         self.search_path = str(search_path)
 
         self.arches = list(raw_arches)
@@ -633,18 +626,18 @@ class Compiler:
         # some sane defaults for contents
         default_date = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
         default_apt_suite_name = get_apt_component_name(product.ref)
-        contents = { 'suite': default_apt_suite_name,
-                     'version' : '0',
-                     'origin': default_apt_suite_name,
-                     'label': default_apt_suite_name,
-                     'codename': default_apt_suite_name,
-                     'date': default_date,
-                     'description': default_apt_suite_name,
-                     'split-apt-components': ''}
+        contents = { ('apt-deb', 'suite'): default_apt_suite_name,
+                     ('apt-deb', 'version'): '0',
+                     ('apt-deb', 'origin'):default_apt_suite_name,
+                     ('apt-deb', 'label'): default_apt_suite_name,
+                     ('apt-deb', 'codename'): default_apt_suite_name,
+                     ('apt-deb', 'date'): default_date,
+                     ('apt-deb', 'description'): default_apt_suite_name,
+                     ('apt-deb', 'split-apt-components'): ''}
         contents.update(provided_contents)
 
-        suite = contents['suite']
-        if contents['split-apt-components']:
+        suite = contents['apt-deb', 'suite']
+        if contents['apt-deb', 'split-apt-components']:
             # an apt splittable component should not directly reference
             # packages
             if product.direct_packages:
@@ -676,7 +669,7 @@ class Compiler:
                                         repo_dir)
 
         search_path = pjoin(repo.repo_dir, repo.dist)
-        contents['archive'] = suite
+        contents['apt-deb', 'archive'] = suite
         writer = DebianReleaseWriter(contents, arches, sections,
                                      search_path)
         repo.make_all_dirs()
@@ -700,10 +693,10 @@ class Compiler:
     def dump_report(self, component, contents, dummy):
         """Instead of building a repo, dump a report of component contents.
         """
-        if 'format' not in contents:
+        if ('pdk', 'format') not in contents:
             raise InputError, 'Component descriptor missing format element'
 
-        format = contents['format']
+        format = contents['pdk', 'format']
         lines = []
         for package in component.packages:
             cache_location = self.cache.file_path(package.blob_id)
@@ -728,15 +721,26 @@ class overlay_getitem(object):
         self.cache_location = cache_location
         self.default = default
 
-    def __getitem__(self, key):
-        if key in ('cache-location', 'cache_location'):
+    def default_wrap(self, value):
+        '''If value is None return self.default, otherwise, return value.
+        '''
+        if value is None:
+            return self.default
+        else:
+            return value
+
+    def __getitem__(self, raw_key):
+        domain, predicate = parse_domain(raw_key)
+        key = (domain, predicate)
+        if predicate in ('cache-location', 'cache_location'):
             return self.cache_location
+
         try:
-            value = self.target[key]
-            if value is None:
-                return self.default
-            else:
-                return value
+            if domain == 'version':
+                return self.default_wrap(getattr(self.target.version,
+                                                 predicate))
+
+            return self.default_wrap(self.target[key])
         except KeyError:
             return self.default
 

@@ -37,15 +37,15 @@ cat >product.xml <<EOF
   <requires>a</requires>
   <provides>b</provides>
   <meta>
-    <id>product</id>
-    <origin>community</origin>
-    <label>distro</label>
-    <version>1.0</version>
-    <codename>zip</codename>
-    <suite>stable</suite>
-    <date>Tue, 22 Mar 2005 21:20:00 +0000</date>
-    <description>Hello World!</description>
-    <split-apt-components>yes</split-apt-components>
+    <apt-deb.id>product</apt-deb.id>
+    <apt-deb.origin>community</apt-deb.origin>
+    <apt-deb.label>distro</apt-deb.label>
+    <apt-deb.version>1.0</apt-deb.version>
+    <apt-deb.codename>zip</apt-deb.codename>
+    <apt-deb.suite>stable</apt-deb.suite>
+    <apt-deb.date>Tue, 22 Mar 2005 21:20:00 +0000</apt-deb.date>
+    <apt-deb.description>Hello World!</apt-deb.description>
+    <apt-deb.split-apt-components>yes</apt-deb.split-apt-components>
   </meta>
   <contents>
     <component>main.xml</component>

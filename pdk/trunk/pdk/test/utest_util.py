@@ -26,7 +26,6 @@ import md5
 from pprint import pformat
 from unittest import TestCase
 from pdk.package import Package, DebianVersion
-from pdk.component import ComponentMeta
 
 __revision__ = '$Progeny$'
 
@@ -100,7 +99,7 @@ class ShamCache(object):
     def __init__(self):
         self.expected_packages = {}
 
-    def load_package(self, dummy, ref, package_type):
+    def load_package(self, ref, package_type):
         key = (ref, package_type)
         assert key in self.expected_packages, '%s missing' % str(key)
         return self.expected_packages[key]
@@ -111,22 +110,29 @@ class ShamCache(object):
 
 class MockPackage(Package):
     def __init__(self, name, raw_version, package_type, blob_id = None,
-                 **kw):
-        meta = ComponentMeta()
+                 extras = None, **kw):
+        if extras == None:
+            extras = {}
+
         if blob_id is None:
             ident_string = '%s %r %s %r' \
                            % (name, raw_version, package_type, kw)
             digest = md5.md5(ident_string).hexdigest()
             blob_id = 'md5:' + digest
 
-        super(MockPackage, self).__init__(meta, package_type, blob_id)
+        super(MockPackage, self).__init__(package_type, blob_id)
 
         if isinstance(raw_version, basestring):
             version = DebianVersion(raw_version)
         else:
             version = raw_version
         domain = package_type.format_string
-        meta.set(self, domain, 'name', name)
-        meta.set(self, domain, 'version', version)
+
+        self[('pdk', 'name')] = name
+        self[('pdk', 'version')] = version
+        for key, value in extras.iteritems():
+            self[key] = value
+
         for key, value in kw.iteritems():
-            meta.set(self, domain, key, value)
+            self[(domain, key)] = value
+

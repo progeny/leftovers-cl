@@ -19,7 +19,6 @@
 from sets import Set
 from pdk.test.utest_util import Test, MockPackage
 
-from pdk.component import ComponentMeta
 from pdk.package import \
      get_package_type, udeb, deb, dsc, srpm, rpm, \
      sanitize_deb_header, \
@@ -29,25 +28,12 @@ __revision__ = "$Progeny$"
 
 class TestPackageClass(Test):
     def test_emulation_behaviors(self):
-        p = MockPackage('name', '2', deb,
-                        **{'a' : 1, 'b' : 2, 'ccc': 3, 'd-d': 4})
-        self.assert_equal(1, p.a)
-        self.assert_equal(2, p.b)
-        self.assert_equal(3, p.ccc)
-        self.assert_equal(4, p.d_d)
-        self.assert_equal(1, p['a'])
-        self.assert_equal(2, p['b'])
-        self.assert_equal(3, p['ccc'])
-        self.assert_equal(4, p['d-d'])
-        self.assert_equal(4, p['d_d'])
+        p = MockPackage('name', '2', deb, extras = {('pdk', 'a'): 1})
+        self.assert_equal(1, p.pdk.a)
+        self.assert_equal('name', p.pdk.name)
+        self.assert_equal(DebianVersion('2'), p.pdk.version)
 
-        assert 'a' in p
-        assert 'b' in p
-        assert 'ccc' in p
-        assert 'd-d' in p
-        assert 'd_d' in p
-
-        self.assert_equal(6, len(p))
+        self.assert_equal(3, len(p))
 
         try:
             p.z
@@ -68,12 +54,15 @@ class TestPackageClass(Test):
     def test_get_file(self):
         class MockType(object):
             format_string = 'deb'
+            type_string = 'dsc'
             def get_filename(self, dummy):
                 return 'asdfjkl'
 
         package_type = MockType()
         p = MockPackage('a', '2.3-1.1', package_type, arch ='i386')
         self.assert_equal('asdfjkl', p.filename)
+        p[('pdk', 'filename')] = 'superduper'
+        self.assert_equal('superduper', p.filename)
 
 class TestDeb(Test):
     def test_parse(self):
@@ -81,14 +70,14 @@ class TestDeb(Test):
 Depends: z
 Version: 0:2-3
 Architecture: i386
+Replaces: y
 Description: abc
  def
   ghi
  jkl mno
 
 """
-        meta = ComponentMeta()
-        package = deb.parse(meta, header, 'zzz')
+        package = deb.parse(header, 'zzz')
         self.assert_equal(deb, package.package_type)
         self.assert_equal('zzz', package.blob_id)
         self.assertEquals('name', package.name)
@@ -96,15 +85,11 @@ Description: abc
         self.assertEquals('2', package.version.version)
         self.assertEquals('3', package.version.release)
         self.assertEquals('i386', package.arch)
-        self.assertEquals('name', package.sp_name)
-        self.assertEquals('0', package.sp_version.epoch)
-        self.assertEquals('2', package.sp_version.version)
-        self.assertEquals('3', package.sp_version.release)
-        assert not 'filename' in package
-        assert not 'summary' in package
-        assert not 'description' in package
-        assert not 'depends' in package
-        assert not 'dfsg-section' in package
+        self.assertEquals('name', package.pdk.sp_name)
+        self.assertEquals('0', package.pdk.sp_version.epoch)
+        self.assertEquals('2', package.pdk.sp_version.version)
+        self.assertEquals('3', package.pdk.sp_version.release)
+        self.assert_equals('y', package['deb', 'Replaces'])
 
     def test_has_source(self):
         header = """Package: name
@@ -119,9 +104,8 @@ Description: asdf
  Then more stuff.
 
 """
-        meta = ComponentMeta()
-        package = deb.parse(meta, header, 'zzz')
-        self.assertEquals('a', package['sp-name'])
+        package = deb.parse(header, 'zzz')
+        self.assertEquals('a', package[('pdk', 'sp-name')])
 
     def test_has_source_version(self):
         header = """Package: name
@@ -136,12 +120,11 @@ Description: asdf
  Then more stuff.
 
 """
-        meta = ComponentMeta()
-        package = deb.parse(meta, header, 'zzz')
-        self.assertEquals('a', package['sp-name'])
-        self.assertEquals(None, package.sp_version.epoch)
-        self.assertEquals('0.24', package.sp_version.version)
-        self.assertEquals('3.2', package.sp_version.release)
+        package = deb.parse(header, 'zzz')
+        self.assertEquals('a', package[('pdk', 'sp-name')])
+        self.assertEquals(None, package.pdk.sp_version.epoch)
+        self.assertEquals('0.24', package.pdk.sp_version.version)
+        self.assertEquals('3.2', package.pdk.sp_version.release)
 
 class TestDsc(Test):
     def test_parse(self):
@@ -155,8 +138,7 @@ Files:
  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 111 zippy.orig.tar.gz
 
 """
-        meta = ComponentMeta()
-        package = dsc.parse(meta, header, 'zzz')
+        package = dsc.parse(header, 'zzz')
         self.assert_equal(dsc, package.package_type)
         self.assert_equal('zzz', package.blob_id)
         self.assertEquals('zippy', package.name)
@@ -170,10 +152,26 @@ Files:
                           ('md5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
                            '111',
                            'zippy.orig.tar.gz') )
-        actual_files = package['extra-file']
+        actual_files = package.extra_files
         self.assert_equals_long(expected_files, actual_files)
-        assert not 'filename' in package
-        assert not 'dfsg-section' in package
+        assert ('pdk', 'raw-filename') not in package
+
+    def test_parse_with_raw_filename(self):
+        header = """Format: 1.0
+Package: zippy
+Section: contrib/net
+Version: 0.6.6.1-2
+Architecture: all
+Files:
+ bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb 267 zippy.dsc
+ 300039c03ecb76239b2d74ade0868311 2676 zippy.diff.gz
+ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 111 zippy.orig.tar.gz
+
+"""
+        package = dsc.parse(header, 'zzz')
+        self.assert_equal(dsc, package.package_type)
+        self.assert_equals('zippy.dsc', package.pdk.raw_filename)
+        self.assert_equals(267, package.size)
 
 class TestGetPackageType(Test):
     def test_get_package_type(self):
