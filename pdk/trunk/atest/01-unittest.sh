@@ -23,5 +23,5 @@
 
 . atest/test_lib.sh
 
-python bin/utest.py
-python bin/picax-utest.py
+python $(which bin/utest.py)
+python $(which picax-utest.py)
