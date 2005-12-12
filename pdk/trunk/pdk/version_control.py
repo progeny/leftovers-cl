@@ -237,6 +237,13 @@ class Git(object):
         if os.path.exists(index_file):
             os.unlink(index_file)
 
+    def write_empty_tree(self):
+        '''Create an empty tree object and return its tree_id.'''
+        self.unlink_index()
+        self.run_update_index([])
+        tree_id = self.shell_to_string('git-write-tree').strip()
+        return tree_id
+
     def iter_diff_index(self, tree_id):
         '''Run git-diff-index aginst the given tree.
 
@@ -431,7 +438,7 @@ class Git(object):
         '''
         refs = Set(raw_refs)
         head_ids = self.get_all_refs()
-        refs_here = self.get_rev_list(head_ids, [])
+        refs_here = Set(self.get_rev_list(head_ids, []))
         return refs_here & refs
 
     def get_rev_list(self, head_ids, limits):
@@ -443,7 +450,7 @@ class Git(object):
         command = 'git-rev-list %s %s' % (self.quote_args(head_ids),
                                           limit_string)
         output = self.shell_to_string(command)
-        refs_here = Set([ i.strip() for i in output.split() ])
+        refs_here = [ i.strip() for i in output.split() ]
         return refs_here
 
     def direct_fetch(self, url, upstream_name):
@@ -653,6 +660,7 @@ class VersionControl(object):
         """
         add_remove = self.get_add_remove()
         self.assert_known(files, True)
+        add_remove.clear(files)
         self.update_index(add_remove, files, self.alt_git)
 
         iter_tree = self.git.iter_ls_tree('HEAD', files)
@@ -745,11 +753,16 @@ class VersionControl(object):
         '''
         Send git status information to standard out.
         '''
+        if self.is_new():
+            tree_id = self.alt_git.write_empty_tree()
+        else:
+            tree_id = 'HEAD'
+
         files = []
         add_remove = self.get_add_remove()
         self.update_index(add_remove, files, self.alt_git)
 
-        iter_diff = self.alt_git.iter_diff_index('HEAD')
+        iter_diff = self.alt_git.iter_diff_index(tree_id)
         for status, filename, extra in iter_diff:
             # corner case: If it's deleted but we don't know about it,
             # then it's missing.
@@ -771,6 +784,10 @@ class VersionControl(object):
         '''
         Send commit messages to standard out.
         '''
+        if self.is_new():
+            message = 'Log not available on new workspaces. ' + \
+                      'Commit something first.'
+            raise InputError(message)
         revs = self.git.get_rev_list(['HEAD'], limits)
         for rev in revs:
             print self.git.get_commit(rev)

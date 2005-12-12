@@ -77,6 +77,9 @@ EOF
 
     pdk push production
 
+    # make sure we have the remote blob list for production
+    ls etc/channels | grep _production$
+
     # make sure that we can't push to repositories that don't exist.
     pdk push oops && fail 'push to non-workspace should fail'
 popd

@@ -331,6 +331,9 @@ popd
 Here we do a fairly tricky revert. It modifies three files but only
 reverts two.
 
+Also, revert should "un-add" an added file.
+
+
 @$@<Revert@>==@{
 pdk workspace create revert
 pushd revert
@@ -353,6 +356,16 @@ EOF
 EOF
     diff -u - file-c <<EOF
 1
+EOF
+
+    echo "hello" >file-d
+    pdk add file-d
+    pdk revert file-d
+
+    pdk status >../status.txt
+    diff -u - ../status.txt <<EOF
+M@^H(09)file-b
+?@^H(09)file-d
 EOF
 
 popd
@@ -513,10 +526,76 @@ popd
 
 @B
 
+No commits yet? This is a corner case which presents a special case
+for nearly every pdk command.
+
+It is a case which naturally gets little testing, as once it has been
+passed, it never returns.
+
+Furthermore, it is the first case presented to every user. *sigh*
+
+@$@<New Repositories@>==@{
+
+pdk workspace create no-commits-allowed
+pushd no-commits-allowed
+
+    # log command
+    pdk log 2>../errors.txt || status=$?
+    [ "$status" = 3 ] || fail 'pdk log should have failed.'
+    grep -i log ../errors.txt
+
+    # empty status
+    pdk status >../status.txt
+    diff -u - ../status.txt <<EOF
+EOF
+
+    # status after adding files.
+    echo "Hello World!" >hello.txt
+    pdk add hello.txt
+    echo "Now is the time for" >>all.txt
+    pdk status >../status.txt
+    diff -u - ../status.txt <<EOF
+A@^H(09)hello.txt
+?@^H(09)all.txt
+EOF
+
+popd
+
+@}
+
+@B
+
+pdk log should output commit logs in reverse chronological order,
+modulo parallel, which should probably be grouped by line.
+
+Here we just verify the simple linear case.
+
+@$@<Commit Ordering In Log@>==@{
+pdk workspace create commit-ordering
+pushd commit-ordering
+    echo 1 >file
+    pdk commit -m '>> a' file
+    echo 2 >file
+    pdk commit -m '>> b' file
+    echo 3 >file
+    pdk commit -m '>> c' file
+    pdk log | grep '^>>' > ../log.txt
+    diff -u - ../log.txt <<EOF
+>> c
+>> b
+>> a
+EOF
+popd
+@}
+
+@B
+
 Here's the whole test.
 
 @O@<atest/local-vc.fw.sh@>==@{
 @<Test Setup@>
+@<Commit Ordering In Log@>
+@<New Repositories@>
 @<Add and Commit@>
 @<Add and Commit: Multiple Arguments@>
 @<Commit Regression: Initial Cmd Line@>

@@ -184,7 +184,7 @@ cat >many.xml <<EOF
 EOF
 
     time pdk download progeny.com/hello.xml
-    time PDK_PROF_DUMP=$dev_dir/pdk.prof pdk resolve many.xml
+    time pdk resolve many.xml
     time pdk upgrade many.xml
 
 popd

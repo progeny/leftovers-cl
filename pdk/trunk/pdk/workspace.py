@@ -25,6 +25,7 @@ __revision__ = '$Progeny$'
 
 import os
 import sys
+import stat
 import optparse
 from urlparse import urlsplit
 from itertools import chain
@@ -1014,17 +1015,44 @@ class Net(object):
 
     def send_pull_blob_list(self, section):
         '''Initiate pulling the remote blob_list.'''
+        index_file = self.ws.cache.get_index_file()
+        if os.path.exists(index_file):
+            index_mtime = os.stat(index_file)[stat.ST_MTIME]
+        else:
+            index_mtime = 0
         self.framer.write_stream(['pull-blob-list'])
-        handle = open(section.channel_file, 'w')
-        for frame in self.framer.iter_stream():
-            handle.write(frame)
-        handle.close()
+        self.framer.write_stream([str(index_mtime)])
+        op = self.framer.read_frame()
+        if op == 'new-data':
+            new_mtime = int(self.framer.read_frame())
+            handle = open(section.channel_file, 'w')
+            for frame in self.framer.iter_stream():
+                handle.write(frame)
+            handle.close()
+            os.utime(section.channel_file, (new_mtime, new_mtime))
+        elif op == 'up-to-date':
+            self.framer.assert_end_of_stream()
+        else:
+            message = 'unknown frame recieved after pull-blob-list'
+            raise SemanticError, message
 
     def handle_pull_blob_list(self):
         '''Handle a pull blob list request.'''
-        index_handle = open(self.ws.cache.get_index_file())
-        self.framer.write_handle(index_handle)
-        index_handle.close()
+        index_file = self.ws.cache.get_index_file()
+        puller_mtime = int(self.framer.read_frame())
+        self.framer.assert_end_of_stream()
+        if os.path.exists(index_file):
+            index_mtime = os.stat(index_file)[stat.ST_MTIME]
+            if puller_mtime < index_mtime:
+                self.framer.write_frame('new-data')
+                self.framer.write_frame(str(index_mtime))
+                index_handle = open(index_file)
+                self.framer.write_handle(index_handle)
+                index_handle.close()
+            else:
+                self.framer.write_stream(['up-to-date'])
+        else:
+            self.framer.write_stream(['new-data', '0'])
 
     def handle_pull_blobs(self):
         '''Handle a pull blobs request.'''
@@ -1196,6 +1224,7 @@ class Conveyor(object):
         remote_blob_ids = index.get_blob_ids(self.upstream_name)
         net = Net(framer, self.workspace)
         net.verify_protocol()
+        net.send_pull_blob_list(self.channel)
         net.send_push_blobs(remote_blob_ids)
         try:
             net.send_push_pack(head_id, remote_commit_ids)
