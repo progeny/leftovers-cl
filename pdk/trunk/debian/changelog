@@ -1,3 +1,10 @@
+pdk (0.0.23) unstable; urgency=low
+
+  * Conflict with original picax package.
+  * Fix bug where apt-deb channels showed spurious meta-adds on resolve.
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue, 13 Dec 2005 13:30:43 -0500
+
 pdk (0.0.22) unstable; urgency=low
 
   * Add very very basic entities and links. See link-report.html.
