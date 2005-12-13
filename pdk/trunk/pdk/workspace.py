@@ -39,7 +39,7 @@ from pdk.util import pjoin, make_self_framer, cached_property, \
      relative_path, get_remote_file_as_string, make_ssh_framer, \
      make_fs_framer, get_remote_file, noop, string_domain
 from pdk.semdiff import print_bar_separated, print_man, \
-     iter_diffs, iter_diffs_meta, field_filter, filter_data
+     iter_diffs, iter_diffs_meta, filter_predicate, filter_data
 from pdk.component import ComponentDescriptor
 from pdk.repogen import compile_product
 from pdk.progress import ConsoleMassProgress, NullMassProgress, \
@@ -668,11 +668,10 @@ def dumpmeta(args):
                 name = item.name
 
             for key, value in meta.iteritems():
-                domain, predicate = key
-                if predicate in field_filter:
+                if not filter_predicate(key):
                     continue
 
-                tag = string_domain(domain, predicate)
+                tag = string_domain(*key)
                 print '|'.join([ent_id, ent_type, name, tag, str(value)])
 
 dumpmeta = make_invokable(dumpmeta)

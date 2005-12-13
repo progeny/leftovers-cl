@@ -27,7 +27,7 @@ from sets import Set
 from itertools import chain
 from pdk.util import string_domain
 
-field_filter = Set([
+predicate_filter = Set([
     'Architecture', 'Binary', 'Build-Conflicts', 'Build-Conflicts-Indep',
     'Build-Depends', 'Build-Depends-Indep', 'Conffiles', 'Conflicts',
     'Depends', 'Description', 'Directory', 'Essential', 'Filename', 'Files',
@@ -35,7 +35,11 @@ field_filter = Set([
     'Pre-Depends', 'Priority', 'Provides', 'Recommends', 'Replaces',
     'SHA1Sum', 'Section', 'Size', 'Source', 'Standards-Version', 'Status',
     'Suggests', 'Version', 'Uploaders', 'arch', 'name', 'extra-file',
-    'found-filename', 'source-rpm', 'sp-name', 'sp-version', 'version'])
+    'found-filename', 'raw-filename', 'size', 'source-rpm', 'sp-name',
+    'sp-version', 'version'])
+
+full_predicate_filter = Set([
+    ('deb', 'directory'), ('deb', 'Enhances')])
 
 def index_by_fields(packages, fields):
     """Scan packages, return a dict indexed by the given fields."""
@@ -128,6 +132,18 @@ def get_meta_key(package):
     """
     return (package.name, package.type, package.arch)
 
+def filter_predicate(predicate):
+    '''Is this predicate one which we tend to not show the user?
+
+    Some predicates are too trivial to warrant reporting.
+    '''
+    parsed_predicate = predicate[1]
+    if parsed_predicate in predicate_filter:
+        return False
+    if predicate in full_predicate_filter:
+        return False
+    return True
+
 def get_joinable_meta_list(component):
     """Take meta and get an iterable suitable for feeding to list_merge."""
     for package in component.direct_packages:
@@ -135,7 +151,7 @@ def get_joinable_meta_list(component):
         for key, target in package.iteritems():
             domain, predicate = key
             tag = string_domain(domain, predicate)
-            if predicate not in field_filter:
+            if filter_predicate(key):
                 yield new_key, tag, target
 
 def iter_diffs_meta(old_component, new_component):

@@ -406,11 +406,26 @@ Here we put resolve through some additional gymnastics. Resolve is run
 in a subdirectory. As a bonus we download twice. On the second
 download, there should be no warnings.
 
+We also test that some channel related metadata doesn't show up in the
+change report.
+
 @$@<Apt Channel Test@>+=@{
 
 @<Create Components@>
 
-pdk resolve apache.xml
+pdk resolve -m apache.xml >changes.txt
+
+assert_no_meta_add() {
+    local field="$1"
+    awk -v FS="|" -v field="$1" \
+        '$1 == "meta-add" && $5 == field { print; exit 1}' \
+        <changes.txt \
+        || fail "found forbidden meta-add field $1"
+}
+
+assert_no_meta_add size
+assert_no_meta_add raw-filename
+assert_no_meta_add deb.directory
 
 mkdir junk
 pushd junk
