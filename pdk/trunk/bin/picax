@@ -15,7 +15,6 @@
 # 2.3 or later.
 
 import sys
-import os
 import traceback
 
 import picax.config
@@ -33,11 +32,13 @@ import pdb
 # Main function
 
 def main():
+    "Main function."
+
     # Retrieve the configuration.
 
     try:
         picax.config.handle_args(sys.argv[1:])
-    except picax.config.ConfigError, e:
+    except picax.config.ConfigError:
         sys.stderr.write("Configuration system failed\n")
         sys.exit(1)
 
@@ -61,7 +62,8 @@ def main():
 
         log.info("Reading indexes")
 
-        (package_list, source_list) = picax.package.get_all_distro_packages()
+        (package_list, source_list) = \
+            picax.package.get_all_distro_packages()
 
         # Put the installer on the media, if any, and register the space
         # used.
@@ -87,7 +89,6 @@ def main():
 
         log.info("Writing packages into media groups")
 
-        hash_parts = []
         for part in range(0, len(package_group)):
             log.info("Writing group %d" % (part + 1,))
 
@@ -107,7 +108,7 @@ def main():
 
         picax.media.create_media()
 
-    except Exception, e:
+    except Exception:
 
         # Generic error handling code for any problems.
 

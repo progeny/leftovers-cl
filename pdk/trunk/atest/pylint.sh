@@ -431,6 +431,10 @@ ignore_message '^picax.modules.*:R0401'
 
 ignore_message '^pdk.version_control:W0704:.*:Git.iter_diff_files'
 
+# The picax script is temporary, so ignore its problems.
+
+ignore_message '^bin_picax:'
+
 # for unit tests only
 ignore_message '^pdk.test..*:E0201:.*assert_'
 ignore_message '^pdk.test..*:E0201:.*fail_'

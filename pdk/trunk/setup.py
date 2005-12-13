@@ -25,7 +25,7 @@ from distutils.core import setup
 # isn't actually needed at runtime.
 
 setup(name="pdk",
-      scripts=["bin/pdk", "utest.py", "picax-utest.py"],
+      scripts=["bin/pdk", "bin/picax", "utest.py", "picax-utest.py"],
       packages=["pdk", "picax", "picax.modules", "pdk.test", "picax.test"],
       py_modules=["hashfile"])
 
