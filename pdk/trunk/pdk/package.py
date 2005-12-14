@@ -198,12 +198,12 @@ def split_deb_version(raw_version):
 
 class DebianVersion(object):
     """A comparable Debian package version number."""
-    __slots__ = ('original_header', 'epoch', 'version', 'release',
+    __slots__ = ('version_string', 'epoch', 'version', 'release',
                  'string_without_epoch', 'full_version')
-    def __init__(self, original_header):
-        self.original_header = original_header
+    def __init__(self, version_string):
+        self.version_string = version_string
         self.epoch, self.version, self.release = \
-            split_deb_version(original_header)
+            split_deb_version(version_string)
         self.string_without_epoch = \
             synthesize_version_string(None, self.version, self.release)
         self.full_version = \
@@ -213,7 +213,7 @@ class DebianVersion(object):
         if isinstance(other, basestring):
             other = DebianVersion(other)
         from smart.backends.deb.debver import vercmp as smart_vercmp
-        return smart_vercmp(self.original_header, other.original_header)
+        return smart_vercmp(self.version_string, other.version_string)
 
     def __str__(self):
         return '<dver %r>' % self.full_version
@@ -229,6 +229,7 @@ class _Dsc(object):
     type_string = 'dsc'
     format_string = 'deb'
     role_string = 'source'
+    version_class = DebianVersion
 
     def parse(self, control, blob_id):
         """Parse control file contents. Returns a package object."""
@@ -313,6 +314,7 @@ class _Deb(object):
     type_string = 'deb'
     format_string = 'deb'
     role_string = 'binary'
+    version_class = DebianVersion
 
     def parse(self, control, blob_id):
         """Parse control file contents. Returns a package object."""
@@ -458,6 +460,7 @@ class _Rpm(object):
     type_string = 'rpm'
     format_string = 'rpm'
     role_string = 'binary'
+    version_class = RPMVersion
 
     def parse(self, raw_header, blob_id):
         """Parse an rpm header. Returns a package object."""

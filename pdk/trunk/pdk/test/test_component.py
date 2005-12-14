@@ -26,7 +26,7 @@ from pdk.meta import Entity, Entities
 from pdk.cache import Cache
 from pdk.rules import AndCondition, OrCondition, FieldMatchCondition, \
      RelationCondition
-from operator import lt, le, gt, ge
+from operator import lt, le, gt, ge, eq
 
 from pdk.component import \
      ComponentDescriptor, Component, PackageReference, \
@@ -89,6 +89,40 @@ class TestActions(Test):
         self.assert_equals({('a', 'b'): 'c'}, actual)
 
 class TestCompDesc(TempDirTest):
+    def test_write_relation(self):
+        os.system('''
+cat >a.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <deb>
+      <version>2.0.53</version>
+      <version-lt>2.0.53</version-lt>
+      <version-lt-eq>2.0.53</version-lt-eq>
+      <version-gt>2.0.53</version-gt>
+      <version-gt-eq>2.0.53</version-gt-eq>
+    </deb>
+    <dsc>
+      <version>2.0.53</version>
+      <version-lt>2.0.53</version-lt>
+    </dsc>
+    <rpm>
+      <version>2.0.53-0</version>
+      <version-lt>2.0.53-0</version-lt>
+    </rpm>
+    <srpm>
+      <version>2.0.53-0</version>
+      <version-lt>2.0.53-0</version-lt>
+    </srpm>
+  </contents>
+</component>
+EOF
+cp a.xml b.xml
+''')
+        desc = ComponentDescriptor('a.xml')
+        desc.write()
+        self.assert_equals_long(open('b.xml').read(), open('a.xml').read())
+
     def test_read_relation_condition(self):
         os.system('''
 cat >a.xml <<EOF
@@ -115,20 +149,53 @@ cat >a.xml <<EOF
     </srpm>
   </contents>
 </component>
+EOF
 ''')
         desc = ComponentDescriptor('a.xml')
         deb_ref = desc.contents[0]
         dv = DebianVersion
-        self.assert_equal(('pdk', 'version', dv('2.0.53')),
+        self.assert_equal((eq, 'pdk', 'version', dv('2.0.53')),
                           deb_ref.fields[0])
+        assert isinstance(deb_ref.fields[0][3], DebianVersion)
         self.assert_equal((lt, 'pdk', 'version', dv('2.0.53')),
                           deb_ref.fields[1])
+        assert isinstance(deb_ref.fields[1][3], DebianVersion)
         self.assert_equal((le, 'pdk', 'version', dv('2.0.53')),
                           deb_ref.fields[2])
+        assert isinstance(deb_ref.fields[2][3], DebianVersion)
         self.assert_equal((gt, 'pdk', 'version', dv('2.0.53')),
                           deb_ref.fields[3])
+        assert isinstance(deb_ref.fields[3][3], DebianVersion)
         self.assert_equal((ge, 'pdk', 'version', dv('2.0.53')),
                           deb_ref.fields[4])
+        assert isinstance(deb_ref.fields[4][3], DebianVersion)
+
+        dsc_ref = desc.contents[1]
+        self.assert_equal((eq, 'pdk', 'version', dv('2.0.53')),
+                          dsc_ref.fields[0])
+        assert isinstance(dsc_ref.fields[0][3], DebianVersion)
+        self.assert_equal((lt, 'pdk', 'version', dv('2.0.53')),
+                          dsc_ref.fields[1])
+        assert isinstance(dsc_ref.fields[1][3], DebianVersion)
+
+        def rv(version):
+            return RPMVersion(version_string = version)
+
+        rpm_ref = desc.contents[2]
+        self.assert_equal((eq, 'pdk', 'version', rv('2.0.53')),
+                          rpm_ref.fields[0])
+        assert isinstance(rpm_ref.fields[0][3], RPMVersion)
+        self.assert_equal((lt, 'pdk', 'version', rv('2.0.53')),
+                          rpm_ref.fields[1])
+        assert isinstance(rpm_ref.fields[1][3], RPMVersion)
+
+        srpm_ref = desc.contents[3]
+        self.assert_equal((eq, 'pdk', 'version', rv('2.0.53')),
+                          srpm_ref.fields[0])
+        assert isinstance(srpm_ref.fields[0][3], RPMVersion)
+        self.assert_equal((lt, 'pdk', 'version', rv('2.0.53')),
+                          srpm_ref.fields[1])
+        assert isinstance(srpm_ref.fields[1][3], RPMVersion)
 
     def test_load_empty(self):
         """compdesc.load returns an empty component"""

@@ -24,7 +24,7 @@ machine modifying components.
 
 """
 import os
-from operator import lt, le, gt, ge
+from operator import lt, le, gt, ge, eq
 from itertools import chain
 from sets import Set
 from pdk.util import write_pretty_xml, parse_xml, parse_domain, \
@@ -213,10 +213,22 @@ class ComponentDescriptor(object):
         name = reference.package_type.type_string
         ref_element = SubElement(parent, name, attributes)
 
-        for domain, name, value in reference.fields:
-            tag_name = string_domain(domain, name)
-            condition_element = SubElement(ref_element, tag_name)
-            condition_element.text = value
+        for field_tuple in reference.fields:
+            if len(field_tuple) == 3:
+                domain, name, value = field_tuple
+                tag_name = string_domain(domain, name)
+                condition_element = SubElement(ref_element, tag_name)
+                condition_element.text = value
+            elif len(field_tuple) == 4:
+                relation_map = { 'eq': 'version',
+                                 'lt': 'version-lt',
+                                 'le': 'version-lt-eq',
+                                 'gt': 'version-gt',
+                                 'ge': 'version-gt-eq' }
+                relation_fn, domain, name, value = field_tuple
+                tag_name = relation_map[relation_fn.__name__]
+                condition_element = SubElement(ref_element, tag_name)
+                condition_element.text = value.full_version
 
         predicates = reference.predicates
         if predicates:
@@ -463,7 +475,8 @@ class ComponentDescriptor(object):
         relation_tags = { 'version-lt': ('version', lt),
                           'version-lt-eq': ('version', le),
                           'version-gt': ('version', gt),
-                          'version-gt-eq': ('version', ge) }
+                          'version-gt-eq': ('version', ge),
+                          'version': ('version', eq) }
         if ref_element.text and ref_element.text.strip():
             target = ref_element.text.strip()
             fields.append(('pdk', 'name', target))
@@ -476,7 +489,9 @@ class ComponentDescriptor(object):
                     ref_unlinks.extend(unlinks)
                 elif element.tag in relation_tags:
                     predicate, relation_fn = relation_tags[element.tag]
-                    target = element.text.strip()
+                    target_str = element.text.strip()
+                    target_class = package_type.version_class
+                    target = target_class(version_string = target_str)
                     fields.append((relation_fn, 'pdk', predicate, target))
                 elif self.is_package_ref(element):
                     inner_ref = self.build_package_ref(element)
