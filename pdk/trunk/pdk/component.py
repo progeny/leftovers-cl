@@ -84,6 +84,7 @@ class ComponentDescriptor(object):
 
         self.meta = []
         self.links = []
+        self.unlinks = []
         self.entities = Entities()
         self.contents = []
 
@@ -421,13 +422,16 @@ class ComponentDescriptor(object):
         '''Return a list of tuples (predicate, object) for a "meta" tag.'''
         metas = []
         links = []
+        unlinks = []
         for element in meta_element:
             domain, name = parse_domain(element.tag)
             if (domain, name) == ('pdk', 'link'):
                 links.extend(self.build_links(element))
+            elif (domain, name) == ('pdk', 'unlink'):
+                unlinks.extend(self.build_links(element))
             else:
                 metas.append((domain, name, element.text))
-        return metas, links
+        return metas, links, unlinks
 
     def is_package_ref(self, rule_element):
         '''Does this element represent a single package?
@@ -452,6 +456,7 @@ class ComponentDescriptor(object):
         package_type = get_package_type(format = ref_element.tag)
 
         ref_links = []
+        ref_unlinks = []
         predicates = []
         inner_refs = []
         if ref_element.text and ref_element.text.strip():
@@ -460,9 +465,10 @@ class ComponentDescriptor(object):
         else:
             for element in ref_element:
                 if element.tag == 'meta':
-                    meta, links = self.build_meta(element)
+                    meta, links, unlinks = self.build_meta(element)
                     predicates.extend(meta)
                     ref_links.extend(links)
+                    ref_unlinks.extend(unlinks)
                 elif self.is_package_ref(element):
                     inner_ref = self.build_package_ref(element)
                     inner_refs.append(inner_ref)
@@ -473,6 +479,7 @@ class ComponentDescriptor(object):
         ref = PackageReference(package_type, blob_id, fields, predicates)
         ref.children = inner_refs
         ref.links = ref_links
+        ref.unlinks = ref_unlinks
         return ref
 
     def normalize_text(self, element, strip):
@@ -546,9 +553,10 @@ class ComponentDescriptor(object):
 
         meta_element = component_element.find('meta')
         if meta_element:
-            meta, links = self.build_meta(meta_element)
+            meta, links, unlinks = self.build_meta(meta_element)
             self.meta.extend(meta)
             self.links.extend(links)
+            self.unlinks.extend(unlinks)
 
         self.id = self.read_field(component_element, 'id')
         self.name = self.read_field(component_element, 'name')
@@ -702,6 +710,7 @@ class PackageReference(object):
         self.predicates = predicates
         self.children = []
         self.links = []
+        self.unlinks = []
 
     def from_package(package):
         '''Instantiate a reference for the given package.'''
@@ -769,6 +778,7 @@ class PackageReference(object):
         all_fields.append(('pdk', 'type', self.package_type.type_string))
         actions = [ ActionMetaSet(*p) for p in self.predicates ]
         actions += [ ActionLinkEntities(*p) for p in self.links ]
+        actions += [ ActionUnlinkEntities(*p) for p in self.unlinks ]
         action = CompositeAction(actions)
         return Rule(build_condition(all_fields), action)
     rule = property(get_rule)
@@ -834,6 +844,31 @@ class ActionLinkEntities(object):
 
     def __str__(self):
         return 'link %r' % ((self.ent_type, self.ent_id),)
+
+    __repr__ = __str__
+
+class ActionUnlinkEntities(object):
+    '''A rule action which unlinks two entities.
+
+    ent_type, type of the entity to link to.
+    ent_id, ent_id of the entity to link to.
+
+    If the unlinked entity does not exist, this action is a noop.
+    '''
+    def __init__(self, ent_type, ent_id):
+        self.ent_type = ent_type
+        self.ent_id = ent_id
+
+    def execute(self, entity, entities):
+        '''Execute this action.'''
+        ent_list = entities.links.get((entity.ent_type,
+                                       entity.ent_id), [])
+        reference = (self.ent_type, self.ent_id)
+        while reference in ent_list:
+            ent_list.remove(reference)
+
+    def __str__(self):
+        return 'unlink %r' % ((self.ent_type, self.ent_id),)
 
     __repr__ = __str__
 

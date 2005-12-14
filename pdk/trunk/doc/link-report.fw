@@ -29,17 +29,7 @@ readable report of links that exist.
 
 @t table_of_contents
 
-
-@B@<Test Outline@>
-
-This is the macro wrapper for the test.
-
-@O@<atest/link-report.fw.sh@>==@{
-. atest/utils/repogen-fixture.sh
-
-set_up_repogen_fixture link-report
-pushd link-report
-
+@$@<Link Entity@>==@{
 cat >links.xml <<EOF
 <?xml version="1.0"?>
 <component>
@@ -77,6 +67,59 @@ diff -u - report.txt <<EOF
 deb|md5:5acd04d4cc6e9d1530aad04accdc8eb5|vuln|CAN-30
 EOF
 
-popd semdiff
 @}
 
+Now we add an unlink. After unlinking there should be no link.
+
+@$@<Link and Unlink Entity@>==@{
+
+cat >unlink.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <deb>
+      <name>apache2-common</name>
+      <meta>
+        <pdk.unlink>
+          <vuln>CAN-30</vuln>
+        </pdk.unlink>
+      </meta>
+    </deb>
+  </contents>
+</component>
+EOF
+
+cat >product.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <component>links.xml</component>
+    <component>unlink.xml</component>
+    <component>progeny.com/apache.xml</component>
+  </contents>
+</component>
+EOF
+
+pdk dumplinks product.xml >report.txt
+
+diff -u - report.txt <<EOF
+EOF
+
+@}
+
+@B@<Test Outline@>
+
+This is the macro wrapper for the test.
+
+@O@<atest/link-report.fw.sh@>==@{
+. atest/utils/repogen-fixture.sh
+
+set_up_repogen_fixture link-report
+pushd link-report
+
+@<Link Entity@>
+@<Link and Unlink Entity@>
+
+popd
+
+@}

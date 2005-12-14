@@ -22,6 +22,7 @@ from cStringIO import StringIO as stringio
 from pdk.test.utest_util import Test, TempDirTest, ShamCache, MockPackage
 from pdk.package import udeb, deb, dsc, rpm, srpm, RPMVersion, \
      DebianVersion
+from pdk.meta import Entity, Entities
 from pdk.cache import Cache
 
 from pdk.component import \
@@ -32,6 +33,7 @@ from pdk.component import \
      get_rpm_child_condition_data, \
      get_srpm_child_condition_data, \
      ActionLinkEntities, \
+     ActionUnlinkEntities, \
      ActionMetaSet
 
 __revision__ = "$Progeny$"
@@ -54,6 +56,26 @@ class TestActions(Test):
     def test_link_ent_str(self):
         action = ActionLinkEntities('a', 'b')
         self.assert_equals("link ('a', 'b')", str(action))
+
+    def test_link_exe(self):
+        ent = Entity('c', 'd')
+        action = ActionLinkEntities('a', 'b')
+        entities = Entities()
+
+        action.execute(ent, entities)
+        self.assert_equal({('c', 'd'): [('a', 'b')]}, entities.links)
+
+    def test_unlink_ent_str(self):
+        action = ActionUnlinkEntities('a', 'b')
+        self.assert_equals("unlink ('a', 'b')", str(action))
+
+    def test_unlink_exe(self):
+        ent = Entity('c', 'd')
+        action = ActionUnlinkEntities('a', 'b')
+        entities = Entities()
+        entities.links = {('c', 'd'): [('a', 'b')]}
+        action.execute(ent, entities)
+        self.assert_equal({('c', 'd'): []}, entities.links)
 
     def test_action_meta_set(self):
         action = ActionMetaSet('a', 'b', 'c')
