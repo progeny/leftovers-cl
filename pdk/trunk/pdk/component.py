@@ -205,6 +205,38 @@ class ComponentDescriptor(object):
             os.makedirs(dirname)
         write_pretty_xml(tree, self.filename)
 
+    def write_condition_fields(self, parent, fields):
+        '''Build elements out of condition fields.'''
+        for field in fields:
+            if isinstance(field, tuple):
+                if len(field) == 3:
+                    domain, name, value = field
+                    tag_name = string_domain(domain, name)
+                    condition_element = SubElement(parent, tag_name)
+                    condition_element.text = value
+                elif len(field) == 4:
+                    relation_map = { 'eq': 'version',
+                                     'lt': 'version-lt',
+                                     'le': 'version-lt-eq',
+                                     'gt': 'version-gt',
+                                     'ge': 'version-gt-eq' }
+                    relation_fn, domain, name, value = field
+                    tag_name = relation_map[relation_fn.__name__]
+                    condition_element = SubElement(parent, tag_name)
+                    condition_element.text = value.full_version
+            elif isinstance(field, list):
+                if field[0] == 'or':
+                    nested_element = SubElement(parent, 'or')
+                    contained_fields = field[1:]
+                else:
+                    nested_element = SubElement(parent, 'and')
+                    if field[0] == 'and':
+                        contained_fields = field[1:]
+                    else:
+                        contained_fields = field
+                self.write_condition_fields(nested_element,
+                                            contained_fields)
+
     def write_package_reference(self, parent, reference):
         """Build elements for a single package reference."""
         attributes = {}
@@ -213,23 +245,7 @@ class ComponentDescriptor(object):
         name = reference.package_type.type_string
         ref_element = SubElement(parent, name, attributes)
 
-        for field_tuple in reference.fields:
-            if len(field_tuple) == 3:
-                domain, name, value = field_tuple
-                tag_name = string_domain(domain, name)
-                condition_element = SubElement(ref_element, tag_name)
-                condition_element.text = value
-            elif len(field_tuple) == 4:
-                relation_map = { 'eq': 'version',
-                                 'lt': 'version-lt',
-                                 'le': 'version-lt-eq',
-                                 'gt': 'version-gt',
-                                 'ge': 'version-gt-eq' }
-                relation_fn, domain, name, value = field_tuple
-                tag_name = relation_map[relation_fn.__name__]
-                condition_element = SubElement(ref_element, tag_name)
-                condition_element.text = value.full_version
-
+        self.write_condition_fields(ref_element, reference.fields)
         predicates = reference.predicates
         if predicates:
             meta_element = SubElement(ref_element, 'meta')
@@ -454,6 +470,38 @@ class ComponentDescriptor(object):
         '''
         return rule_element.tag in ('deb', 'udeb', 'dsc', 'rpm', 'srpm')
 
+    def build_condition_fields(self, element, package_type):
+        '''Build up lists of lists and tuples to use as package ref fields.
+        '''
+        relation_tags = { 'version-lt': ('version', lt),
+                          'version-lt-eq': ('version', le),
+                          'version-gt': ('version', gt),
+                          'version-gt-eq': ('version', ge),
+                          'version': ('version', eq) }
+        if element.tag in relation_tags:
+            predicate, relation_fn = relation_tags[element.tag]
+            target_str = element.text.strip()
+            target_class = package_type.version_class
+            target = target_class(version_string = target_str)
+            return (relation_fn, 'pdk', predicate, target)
+        elif element.tag == 'and':
+            and_fields = []
+            for and_element in element:
+                and_fields.append(self.build_condition_fields(and_element,
+                                                              package_type))
+            return and_fields
+        elif element.tag == 'or':
+            or_fields = ['or']
+            for or_element in element:
+                or_fields.append(self.build_condition_fields(or_element,
+                                                             package_type))
+            return or_fields
+        else:
+            target = element.text.strip()
+            domain, name = parse_domain(element.tag)
+            return (domain, name, target)
+
+
     def build_package_ref(self, ref_element):
         '''Return a package_ref given an element.
 
@@ -472,11 +520,6 @@ class ComponentDescriptor(object):
         ref_unlinks = []
         predicates = []
         inner_refs = []
-        relation_tags = { 'version-lt': ('version', lt),
-                          'version-lt-eq': ('version', le),
-                          'version-gt': ('version', gt),
-                          'version-gt-eq': ('version', ge),
-                          'version': ('version', eq) }
         if ref_element.text and ref_element.text.strip():
             target = ref_element.text.strip()
             fields.append(('pdk', 'name', target))
@@ -487,19 +530,12 @@ class ComponentDescriptor(object):
                     predicates.extend(meta)
                     ref_links.extend(links)
                     ref_unlinks.extend(unlinks)
-                elif element.tag in relation_tags:
-                    predicate, relation_fn = relation_tags[element.tag]
-                    target_str = element.text.strip()
-                    target_class = package_type.version_class
-                    target = target_class(version_string = target_str)
-                    fields.append((relation_fn, 'pdk', predicate, target))
                 elif self.is_package_ref(element):
                     inner_ref = self.build_package_ref(element)
                     inner_refs.append(inner_ref)
                 else:
-                    target = element.text.strip()
-                    domain, name = parse_domain(element.tag)
-                    fields.append((domain, name, target))
+                    fields.append(self.build_condition_fields(element,
+                                                              package_type))
         ref = PackageReference(package_type, blob_id, fields, predicates)
         ref.children = inner_refs
         ref.links = ref_links

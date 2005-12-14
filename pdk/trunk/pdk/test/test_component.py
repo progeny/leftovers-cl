@@ -89,6 +89,41 @@ class TestActions(Test):
         self.assert_equals({('a', 'b'): 'c'}, actual)
 
 class TestCompDesc(TempDirTest):
+    def test_read_write_and_or(self):
+        os.system('''
+cat >a.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <deb>
+      <or>
+        <and>
+          <name>a</name>
+          <arch>b</arch>
+        </and>
+        <name>c</name>
+      </or>
+      <my.some>value</my.some>
+    </deb>
+  </contents>
+</component>
+EOF
+cp a.xml b.xml
+''')
+        desc = ComponentDescriptor('a.xml')
+
+        deb_ref = desc.contents[0]
+        expected = [
+            [ 'or',
+              [ ('pdk', 'name', 'a'),
+                ('pdk', 'arch', 'b') ],
+              ('pdk', 'name', 'c') ],
+            ('my', 'some', 'value'), ]
+        self.assert_equals_long(expected, deb_ref.fields)
+
+        desc.write()
+        self.assert_equals_long(open('b.xml').read(), open('a.xml').read())
+
     def test_write_relation(self):
         os.system('''
 cat >a.xml <<EOF
