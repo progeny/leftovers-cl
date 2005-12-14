@@ -82,6 +82,29 @@ class FieldMatchCondition(object):
         tag = string_domain(self.domain, self.field_name)
         return "[%s] is '%s'" % (tag, self.target)
 
+class RelationCondition(object):
+    '''A condition designed to compare versions.
+
+    condition - A function taking to parameters and returning a boolean.
+    field     - The field of candidate objects to use for comparing.
+    r_value   - The second value passed to the condition function.
+
+    When evaluating, the candidate field will be passed as the first
+    argument to the condition function.
+    '''
+    def __init__(self, condition, domain, predicate, value):
+        self.condition = condition
+        self.domain = domain
+        self.predicate = predicate
+        self.value = value
+
+    def evaluate(self, candidate):
+        field = (self.domain, self.predicate)
+        if field in candidate:
+            return self.condition(candidate[field], self.value)
+        else:
+            return False
+
 class AndCondition(object):
     '''Check that the provided object meets all the provided conditions.'''
     def __init__(self, conditions):

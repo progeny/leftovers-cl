@@ -24,6 +24,9 @@ from pdk.package import udeb, deb, dsc, rpm, srpm, RPMVersion, \
      DebianVersion
 from pdk.meta import Entity, Entities
 from pdk.cache import Cache
+from pdk.rules import AndCondition, OrCondition, FieldMatchCondition, \
+     RelationCondition
+from operator import lt, le, gt, ge
 
 from pdk.component import \
      ComponentDescriptor, Component, PackageReference, \
@@ -34,7 +37,9 @@ from pdk.component import \
      get_srpm_child_condition_data, \
      ActionLinkEntities, \
      ActionUnlinkEntities, \
-     ActionMetaSet
+     ActionMetaSet, \
+     build_condition
+
 
 __revision__ = "$Progeny$"
 
@@ -84,6 +89,47 @@ class TestActions(Test):
         self.assert_equals({('a', 'b'): 'c'}, actual)
 
 class TestCompDesc(TempDirTest):
+    def test_read_relation_condition(self):
+        os.system('''
+cat >a.xml <<EOF
+<component>
+  <contents>
+    <deb>
+      <version>2.0.53</version>
+      <version-lt>2.0.53</version-lt>
+      <version-lt-eq>2.0.53</version-lt-eq>
+      <version-gt>2.0.53</version-gt>
+      <version-gt-eq>2.0.53</version-gt-eq>
+    </deb>
+    <dsc>
+      <version>2.0.53</version>
+      <version-lt>2.0.53</version-lt>
+    </dsc>
+    <rpm>
+      <version>2.0.53</version>
+      <version-lt>2.0.53</version-lt>
+    </rpm>
+    <srpm>
+      <version>2.0.53</version>
+      <version-lt>2.0.53</version-lt>
+    </srpm>
+  </contents>
+</component>
+''')
+        desc = ComponentDescriptor('a.xml')
+        deb_ref = desc.contents[0]
+        dv = DebianVersion
+        self.assert_equal(('pdk', 'version', dv('2.0.53')),
+                          deb_ref.fields[0])
+        self.assert_equal((lt, 'pdk', 'version', dv('2.0.53')),
+                          deb_ref.fields[1])
+        self.assert_equal((le, 'pdk', 'version', dv('2.0.53')),
+                          deb_ref.fields[2])
+        self.assert_equal((gt, 'pdk', 'version', dv('2.0.53')),
+                          deb_ref.fields[3])
+        self.assert_equal((ge, 'pdk', 'version', dv('2.0.53')),
+                          deb_ref.fields[4])
+
     def test_load_empty(self):
         """compdesc.load returns an empty component"""
         os.system('''
@@ -504,6 +550,49 @@ EOF
                            comp.entities.links['deb', 'sha-1:aaa'])
 
 class TestPackageRef(Test):
+    def test_build_condition(self):
+        fields = \
+               [ ('pdk', 'name', 'a'),
+                 ('deb', 'arch', 'c'),
+                 [ 'or',
+                   ('deb', 'hello', 'e'),
+                   ('deb', 'hello', 'f') ],
+                 (ge, 'pdk', 'version', 4) ]
+        condition = build_condition(fields)
+        assert isinstance(condition, AndCondition)
+        and_conds = condition.conditions
+        self.assert_equals(4, len(and_conds))
+
+        assert isinstance(and_conds[0], FieldMatchCondition)
+        self.assert_equals('pdk', and_conds[0].domain)
+        self.assert_equals('name', and_conds[0].field_name)
+        self.assert_equals('a', and_conds[0].target)
+
+        assert isinstance(and_conds[1], FieldMatchCondition)
+        self.assert_equals('deb', and_conds[1].domain)
+        self.assert_equals('arch', and_conds[1].field_name)
+        self.assert_equals('c', and_conds[1].target)
+
+        assert isinstance(and_conds[2], OrCondition)
+        or_conds = and_conds[2].conditions
+        self.assert_equals(2, len(or_conds))
+
+        assert isinstance(or_conds[0], FieldMatchCondition)
+        self.assert_equals('deb', or_conds[0].domain)
+        self.assert_equals('hello', or_conds[0].field_name)
+        self.assert_equals('e', or_conds[0].target)
+
+        assert isinstance(or_conds[1], FieldMatchCondition)
+        self.assert_equals('deb', or_conds[1].domain)
+        self.assert_equals('hello', or_conds[1].field_name)
+        self.assert_equals('f', or_conds[1].target)
+
+        assert isinstance(and_conds[3], RelationCondition)
+        self.assert_equals(ge, and_conds[3].condition)
+        self.assert_equals('pdk', and_conds[3].domain)
+        self.assert_equals('version', and_conds[3].predicate)
+        self.assert_equals(4, and_conds[3].value)
+
     def test_is_abstract(self):
         concrete_ref_a = \
             PackageReference(deb, 'sha-1:aaa', None, None)

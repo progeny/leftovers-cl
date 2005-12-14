@@ -16,10 +16,13 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
+from operator import ge
 from pdk.test.utest_util import Test, MockPackage
 from pdk.package import deb
+from pdk.meta import Entity
 
 from pdk.rules import FieldMatchCondition, AndCondition, OrCondition, \
+     RelationCondition, \
      OneMatchMetacondition, TrueCondition, Rule, RuleSystem, CompositeAction
 
 class ShamAction(object):
@@ -45,6 +48,12 @@ class ConditionsAndRulesFixture(Test):
         self.b2 = MockPackage('b', '2', deb)
 
         self.all_packages = [ self.a1, self.a2, self.b1, self.b2 ]
+
+    def test_version_relation(self):
+        vrc = RelationCondition(ge, 'pdk', 'version', 3)
+        assert vrc.evaluate({('pdk', 'version'): 4})
+        assert vrc.evaluate({('pdk', 'version'): 3})
+        assert not vrc.evaluate({('pdk', 'version'): 2})
 
     def test_field_match(self):
         assert self.name_condition.evaluate(self.a1)

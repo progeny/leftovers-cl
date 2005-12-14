@@ -24,13 +24,14 @@ machine modifying components.
 
 """
 import os
+from operator import lt, le, gt, ge
 from itertools import chain
 from sets import Set
 from pdk.util import write_pretty_xml, parse_xml, parse_domain, \
      string_domain
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, RuleSystem, AndCondition, OrCondition, \
-     FieldMatchCondition, CompositeAction
+     FieldMatchCondition, RelationCondition, CompositeAction
 from pdk.package import get_package_type
 from pdk.exceptions import PdkException, InputError, SemanticError
 from pdk.meta import Entity, Entities
@@ -459,6 +460,10 @@ class ComponentDescriptor(object):
         ref_unlinks = []
         predicates = []
         inner_refs = []
+        relation_tags = { 'version-lt': ('version', lt),
+                          'version-lt-eq': ('version', le),
+                          'version-gt': ('version', gt),
+                          'version-gt-eq': ('version', ge) }
         if ref_element.text and ref_element.text.strip():
             target = ref_element.text.strip()
             fields.append(('pdk', 'name', target))
@@ -469,6 +474,10 @@ class ComponentDescriptor(object):
                     predicates.extend(meta)
                     ref_links.extend(links)
                     ref_unlinks.extend(unlinks)
+                elif element.tag in relation_tags:
+                    predicate, relation_fn = relation_tags[element.tag]
+                    target = element.text.strip()
+                    fields.append((relation_fn, 'pdk', predicate, target))
                 elif self.is_package_ref(element):
                     inner_ref = self.build_package_ref(element)
                     inner_refs.append(inner_ref)
@@ -693,9 +702,15 @@ def build_condition(raw_condition_data):
     condition = condition_type_map[condition_type]([])
     for item in condition_data:
         if isinstance(item, tuple):
-            domain, name, value = item
-            condition.conditions.append(FieldMatchCondition(domain, name,
-                                                            value))
+            if len(item) == 4 and callable(item[0]):
+                condition_fn, domain, name, value = item
+                rc = RelationCondition
+                condition.conditions.append(rc(condition_fn, domain, name,
+                                               value))
+            else:
+                domain, name, value = item
+                fmc = FieldMatchCondition
+                condition.conditions.append(fmc(domain, name, value))
         else:
             condition.conditions.append(build_condition(item))
     return condition

@@ -107,6 +107,70 @@ EOF
 
 @}
 
+@B
+
+In this test we don't cover every combination of version ranges, as
+these are covered in the internal unit tests.
+
+Notice here that we use an exclusive upper bound in the CAN-31
+link. That will result in CAN-31 not being linked.
+
+@$@<Version Range@>==@{
+
+cat >links.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <deb>
+      <name>apache2-common</name>
+      <version-lt>2.0.53-5</version-lt>
+      <meta>
+        <pdk.link>
+          <vuln>CAN-31</vuln>
+        </pdk.link>
+      </meta>
+    </deb>
+    <deb>
+      <name>apache2-common</name>
+      <version-lt-eq>2.0.53-5</version-lt-eq>
+      <version-gt>2.0.52</version-gt>
+      <meta>
+        <pdk.link>
+          <vuln>CAN-30</vuln>
+        </pdk.link>
+      </meta>
+    </deb>
+  </contents>
+  <entities>
+    <vuln id="CAN-30">
+      <description>bad bad bad</description>
+    </vuln>
+    <vuln id="CAN-31">
+      <description>not so bad</description>
+    </vuln>
+  </entities>
+</component>
+EOF
+
+cat >product.xml <<EOF
+<?xml version="1.0"?>
+<component>
+  <contents>
+    <component>links.xml</component>
+    <component>progeny.com/apache.xml</component>
+  </contents>
+</component>
+EOF
+
+
+pdk dumplinks product.xml >report.txt
+
+diff -u - report.txt <<EOF
+deb|md5:5acd04d4cc6e9d1530aad04accdc8eb5|vuln|CAN-30
+EOF
+
+@}
+
 @B@<Test Outline@>
 
 This is the macro wrapper for the test.
@@ -119,6 +183,7 @@ pushd link-report
 
 @<Link Entity@>
 @<Link and Unlink Entity@>
+@<Version Range@>
 
 popd
 
