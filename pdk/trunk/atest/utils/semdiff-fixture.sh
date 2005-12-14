@@ -81,12 +81,12 @@ cat >timex-12.xml <<EOF
       <name>adjtimex</name>
       <srpm ref="md5:3132a135dd01a5df9da9bc4ce94445a8">
         <name>adjtimex</name>
-        <version>/1.13/12</version>
+        <version>1.13-12</version>
         <arch>x86_64</arch>
       </srpm>
       <rpm ref="md5:b4f3deace0a3e92765555e7efa75ab59">
         <name>adjtimex</name>
-        <version>/1.13/12</version>
+        <version>-1.13-12</version>
         <arch>i386</arch>
       </rpm>
     </rpm>
@@ -102,7 +102,7 @@ cat >timex-12-nosrc.xml <<EOF
       <name>adjtimex</name>
       <rpm ref="md5:b4f3deace0a3e92765555e7efa75ab59">
         <name>adjtimex</name>
-        <version>/1.13/12</version>
+        <version>1.13-12</version>
         <arch>i386</arch>
       </rpm>
     </rpm>
@@ -118,12 +118,12 @@ cat >timex-13.xml <<EOF
       <name>adjtimex</name>
       <srpm ref="md5:adf064bd5d34ee4522a01fd15176d9b6">
         <name>adjtimex</name>
-        <version>/1.13/13</version>
+        <version>1.13-13</version>
         <arch>x86_64</arch>
       </srpm>
       <rpm ref="md5:2c0376dce66844970269876d1e09fea9">
         <name>adjtimex</name>
-        <version>/1.13/13</version>
+        <version>1.13-13</version>
         <arch>i386</arch>
       </rpm>
     </rpm>

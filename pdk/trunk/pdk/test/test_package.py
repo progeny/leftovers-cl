@@ -22,7 +22,8 @@ from pdk.test.utest_util import Test, MockPackage
 from pdk.package import \
      get_package_type, udeb, deb, dsc, srpm, rpm, \
      sanitize_deb_header, \
-     UnknownPackageTypeError, synthesize_version_string, DebianVersion
+     UnknownPackageTypeError, synthesize_version_string, DebianVersion, \
+     RPMVersion
 
 __revision__ = "$Progeny$"
 
@@ -230,7 +231,7 @@ class TestSynthesizeVersionString(Test):
     def test_all(self):
         self.assert_equal('3:4-5', self.svs('3', '4', '5'))
 
-class TestPackageVersionCmp(Test):
+class TestPackageVersion(Test):
     def test_deb(self):
         new = DebianVersion('2:0.4-4')
         old = DebianVersion('1.2-3')
@@ -252,6 +253,42 @@ class TestPackageVersionCmp(Test):
         self.assert_equal(None, old.epoch)
         self.assert_equal('1.2', old.version)
         self.assert_equal('3', old.release)
+
+    def test_rpm(self):
+        ver = RPMVersion(version_string = '2')
+        self.assert_equal(None, ver.epoch)
+        self.assert_equal('2', ver.version)
+        self.assert_equal('0', ver.release)
+
+        self.assert_equal('2-0', ver.full_version)
+        self.assert_equal('2-0', ver.string_without_epoch)
+        self.assert_equal(('', '2', '0'), ver.tuple)
+
+        full = RPMVersion(version_string = '1-2-3')
+        self.assert_equal('1', full.epoch)
+        self.assert_equal('2', full.version)
+        self.assert_equal('3', full.release)
+
+        self.assert_equal('1-2-3', full.full_version)
+        self.assert_equal('2-3', full.string_without_epoch)
+        self.assert_equal(('1', '2', '3'), full.tuple)
+
+        complete = RPMVersion(version_string = '1-2')
+        self.assert_equal(None, complete.epoch)
+        self.assert_equal('1', complete.version)
+        self.assert_equal('2', complete.release)
+
+        self.assert_equal('1-2', complete.full_version)
+        self.assert_equal('1-2', complete.string_without_epoch)
+        self.assert_equal(('', '1', '2'), complete.tuple)
+
+        same_as_complete = RPMVersion(version_string = '1-2')
+
+        assert complete < full
+        assert same_as_complete == complete
+        assert complete == '1-2'
+        assert complete > '0-2'
+        assert complete < '1-2-2'
 
 class TestSortPackages(Test):
     def test_sort(self):

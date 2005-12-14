@@ -672,7 +672,7 @@ class TestPackageRef(Test):
 
 
     def test_get_rpm_child_condition_data(self):
-        version = RPMVersion(version_tuple = (None, '1', '2'))
+        version = RPMVersion(version_string = '1-2')
         extras = {('pdk', 'source-rpm'): 'apache.src.rpm'}
         apache_rpm = MockPackage('apache', version, rpm, 'sha-1:aaa',
                                  extras = extras)
@@ -684,7 +684,7 @@ class TestPackageRef(Test):
                            get_rpm_child_condition_data(apache_rpm))
 
     def test_get_srpm_child_condition_data(self):
-        version = RPMVersion(version_tuple = (None, '1', '2'))
+        version = RPMVersion(version_string = '1-2')
         apache_srpm = MockPackage('apache', version, srpm, 'sha-1:aaa')
         expected = [ ('pdk', 'source-rpm', 'apache-1-2.src.rpm'),
                      ('pdk', 'type', 'rpm') ]

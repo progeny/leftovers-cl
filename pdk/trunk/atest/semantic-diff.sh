@@ -36,15 +36,15 @@ pdk commit -m 'message'
 
 pdk semdiff --show-unchanged -m time.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-unchanged|rpm|adjtimex|/1.13/12|/1.13/12|i386|time.xml
-unchanged|srpm|adjtimex|/1.13/12|/1.13/12|x86_64|time.xml
+unchanged|rpm|adjtimex|1.13-12|1.13-12|i386|time.xml
+unchanged|srpm|adjtimex|1.13-12|1.13-12|x86_64|time.xml
 EOF
 
 cp timex-13.xml time.xml
 pdk semdiff --show-unchanged -m time.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-upgrade|rpm|adjtimex|/1.13/12|/1.13/13|i386|time.xml
-upgrade|srpm|adjtimex|/1.13/12|/1.13/13|x86_64|time.xml
+upgrade|rpm|adjtimex|1.13-12|1.13-13|i386|time.xml
+upgrade|srpm|adjtimex|1.13-12|1.13-13|x86_64|time.xml
 EOF
 
 pdk commit -m 'message'
@@ -52,8 +52,8 @@ pdk commit -m 'message'
 cp timex-12.xml time.xml
 pdk semdiff --show-unchanged -m time.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-downgrade|rpm|adjtimex|/1.13/13|/1.13/12|i386|time.xml
-downgrade|srpm|adjtimex|/1.13/13|/1.13/12|x86_64|time.xml
+downgrade|rpm|adjtimex|1.13-13|1.13-12|i386|time.xml
+downgrade|srpm|adjtimex|1.13-13|1.13-12|x86_64|time.xml
 EOF
 
 pdk commit -m 'message'
@@ -62,7 +62,7 @@ cp timex-12-nosrc.xml time.xml
 pdk semdiff --show-unchanged -m time.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-drop|srpm|adjtimex|/1.13/12|x86_64|time.xml
+drop|srpm|adjtimex|1.13-12|x86_64|time.xml
 EOF
 
 pdk commit -m 'message'
@@ -71,7 +71,7 @@ cp timex-12.xml time.xml
 pdk semdiff --show-unchanged -m time.xml | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-add|srpm|adjtimex|/1.13/12|x86_64|time.xml
+add|srpm|adjtimex|1.13-12|x86_64|time.xml
 EOF
 
 pdk commit -m 'message'

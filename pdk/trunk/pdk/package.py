@@ -412,7 +412,7 @@ class RPMVersion(object):
     """A comparable RPM package version."""
     __slots__ = ('epoch', 'version', 'release', 'string_without_epoch',
                  'full_version', 'tuple')
-    def __init__(self, header = None, version_tuple = None):
+    def __init__(self, header = None, version_string = None):
         if header:
             if header[rpm_api.RPMTAG_EPOCH]:
                 self.epoch = str(header[rpm_api.RPMTAG_EPOCH])
@@ -421,14 +421,31 @@ class RPMVersion(object):
             self.version = header[rpm_api.RPMTAG_VERSION]
             self.release = header[rpm_api.RPMTAG_RELEASE]
         else:
-            self.epoch, self.version, self.release = version_tuple
+            parts = version_string.split('-')
+            if len(parts) == 1:
+                self.epoch = None
+                self.version = parts[0]
+                self.release = '0'
+            elif len(parts) == 2:
+                self.epoch = None
+                self.version, self.release = parts
+            elif len(parts) == 3:
+                self.epoch, self.version, self.release = \
+                    [ p or None for p in parts ]
+            else:
+                raise InputError('Invalid rpm version string: "%s"'
+                                 % version_string)
+
         self.tuple = (self.epoch or '',  self.version, self.release)
         self.string_without_epoch = '-'.join([self.version, self.release])
-        self.full_version = '/'.join(self.tuple)
+        if self.epoch:
+            self.full_version = '-'.join(self.tuple)
+        else:
+            self.full_version = self.string_without_epoch
 
     def __cmp__(self, other):
         if isinstance(other, basestring):
-            other = RPMVersion(version_tuple = other.split('/'))
+            other = RPMVersion(version_string = other)
         return rpm_api.labelCompare(self.tuple, other.tuple)
 
     def __str__(self):

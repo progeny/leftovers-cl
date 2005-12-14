@@ -152,7 +152,7 @@ diff -u - weird-adjtimex.xml <<EOF
       <name>adjtimex</name>
       <rpm ref="md5:b4f3deace0a3e92765555e7efa75ab59">
         <name>adjtimex</name>
-        <version>/1.13/12</version>
+        <version>1.13-12</version>
         <arch>i386</arch>
         <meta>
           <filename>at.rpm</filename>
@@ -160,7 +160,7 @@ diff -u - weird-adjtimex.xml <<EOF
       </rpm>
       <srpm ref="md5:3132a135dd01a5df9da9bc4ce94445a8">
         <name>adjtimex</name>
-        <version>/1.13/12</version>
+        <version>1.13-12</version>
         <arch>x86_64</arch>
         <meta>
           <filename>at.src.rpm</filename>

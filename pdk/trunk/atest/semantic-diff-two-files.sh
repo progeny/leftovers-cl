@@ -39,36 +39,36 @@ EOF
 pdk semdiff --show-unchanged -m timex-12.xml timex-12.xml \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-unchanged|rpm|adjtimex|/1.13/12|/1.13/12|i386|timex-12.xml
-unchanged|srpm|adjtimex|/1.13/12|/1.13/12|x86_64|timex-12.xml
+unchanged|rpm|adjtimex|1.13-12|1.13-12|i386|timex-12.xml
+unchanged|srpm|adjtimex|1.13-12|1.13-12|x86_64|timex-12.xml
 EOF
 
 pdk semdiff --show-unchanged -m timex-12.xml timex-13.xml \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-upgrade|rpm|adjtimex|/1.13/12|/1.13/13|i386|timex-13.xml
-upgrade|srpm|adjtimex|/1.13/12|/1.13/13|x86_64|timex-13.xml
+upgrade|rpm|adjtimex|1.13-12|1.13-13|i386|timex-13.xml
+upgrade|srpm|adjtimex|1.13-12|1.13-13|x86_64|timex-13.xml
 EOF
 
 pdk semdiff --show-unchanged -m timex-13.xml timex-12.xml \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-downgrade|rpm|adjtimex|/1.13/13|/1.13/12|i386|timex-12.xml
-downgrade|srpm|adjtimex|/1.13/13|/1.13/12|x86_64|timex-12.xml
+downgrade|rpm|adjtimex|1.13-13|1.13-12|i386|timex-12.xml
+downgrade|srpm|adjtimex|1.13-13|1.13-12|x86_64|timex-12.xml
 EOF
 
 pdk semdiff --show-unchanged -m timex-12.xml timex-12-nosrc.xml \
     | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-drop|srpm|adjtimex|/1.13/12|x86_64|timex-12-nosrc.xml
+drop|srpm|adjtimex|1.13-12|x86_64|timex-12-nosrc.xml
 EOF
 
 pdk semdiff --show-unchanged -m timex-12-nosrc.xml timex-12.xml \
     | grep -v ^unchanged \
     | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
-add|srpm|adjtimex|/1.13/12|x86_64|timex-12.xml
+add|srpm|adjtimex|1.13-12|x86_64|timex-12.xml
 EOF
 
 # --------------------------------
