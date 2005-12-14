@@ -19,7 +19,6 @@
 from operator import ge
 from pdk.test.utest_util import Test, MockPackage
 from pdk.package import deb
-from pdk.meta import Entity
 
 from pdk.rules import FieldMatchCondition, AndCondition, OrCondition, \
      RelationCondition, \
