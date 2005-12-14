@@ -1,3 +1,11 @@
+pdk (0.0.24) unstable; urgency=low
+
+  * Add ability to unlink entities.
+  * Add version ranges to link ability.
+  * Provide picax to allow old picax modules to install.
+
+ -- Darrin Thompson <darrint@progeny.com>  Wed, 14 Dec 2005 15:33:46 -0500
+
 pdk (0.0.23) unstable; urgency=low
 
   * Conflict with original picax package.
