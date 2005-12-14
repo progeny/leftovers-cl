@@ -10,6 +10,7 @@ Architecture: all
 Depends: ${shlibs:Depends}, git-core, python-apt, python-gnupginterface, python2.3, python2.3-celementtree, python2.3-pycurl, python2.3-xml, smartpm, funnelweb
 Conflicts: picax
 Replaces: picax
+Provides: picax
 Suggests: apache2, curl, libapache2-svn, openssl, python-librpm4.4, python2.3-pylint, rpm-4.4, subversion
 Description: Componentized Linux Platform Development Kit (PDK)
  Simply put, Componentized Linux is a platform for building
