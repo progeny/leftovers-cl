@@ -290,6 +290,13 @@ class TestPackageVersion(Test):
         assert complete > '0-2'
         assert complete < '1-2-2'
 
+    def test_mixed(self):
+        rpm_ver = RPMVersion(version_string = '1-2')
+        deb_ver = DebianVersion('2:0.4-4')
+
+        assert rpm_ver != deb_ver
+        assert deb_ver != rpm_ver
+
 class TestSortPackages(Test):
     def test_sort(self):
         def make_package(name, version, arch, package_type):

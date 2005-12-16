@@ -762,7 +762,8 @@ class LimitedWorldDataIndex(object):
         '''Iterate over all package candidates filtered by channel name.'''
         icc = self.data_index.iter_channel_candidates
         for item in icc(self.channel_names):
-            yield item
+            if item.package:
+                yield item
 
 class MassAcquirer(object):
     '''Acquire blob_ids from multiple sources with one method call.

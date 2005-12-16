@@ -332,8 +332,13 @@ class ComponentDescriptor(object):
             child_condition, candidate_key_info = \
                 get_child_condition(ghost_package, ref)
 
-            parent_candidates = world_index.iter_candidates(('pdk', 'name'),
-                                                            ref.name)
+            if ref.name:
+                item_list = world_index.iter_candidates(('pdk', 'name'),
+                                                        ref.name)
+            else:
+                item_list = world_index.iter_all_candidates()
+            parent_candidates = item_list
+
             key_domain, key_field, key_value = candidate_key_info
             candidate_key = (key_domain, key_field)
             child_candidates = world_index.iter_candidates(candidate_key,
@@ -718,7 +723,7 @@ def get_child_condition(package, ref):
     parent_condition = rules.ac([ ref.condition,
                                   rules.rc(eq, 'pdk', 'version',
                                            package.version) ])
-    key_condition = condition_fn(package).conditions[0]
+    key_condition = child_condition.conditions[0]
     key_info = (key_condition.domain, key_condition.predicate,
                 key_condition.target)
     return rules.oc([child_condition, parent_condition]), key_info

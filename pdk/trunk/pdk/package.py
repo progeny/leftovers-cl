@@ -213,7 +213,8 @@ class DebianVersion(object):
         if isinstance(other, basestring):
             other = DebianVersion(other)
         from smart.backends.deb.debver import vercmp as smart_vercmp
-        return smart_vercmp(self.version_string, other.version_string)
+        return cmp(self.__class__, other.__class__) or \
+               smart_vercmp(self.version_string, other.version_string)
 
     def __repr__(self):
         return '<dver %r>' % self.full_version
@@ -452,7 +453,8 @@ class RPMVersion(object):
     def __cmp__(self, other):
         if isinstance(other, basestring):
             other = RPMVersion(version_string = other)
-        return rpm_api.labelCompare(self.tuple, other.tuple)
+        return cmp(self.__class__, other.__class__) or \
+               rpm_api.labelCompare(self.tuple, other.tuple)
 
     def __repr__(self):
         return '<rver %r>' % self.full_version

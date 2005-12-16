@@ -444,6 +444,7 @@ EOF
 
 @<Check Permissions@>
 
+popd
 @}
 
 @B
@@ -472,12 +473,70 @@ compare_timestamps \
 
 @}
 
+@B
+
+Use of references that have no name field should still result in a
+successful resolve.
+
+@$@<Nameless Reference@>==@{
+pdk workspace create nameless
+pushd nameless
+
+make_channel channel-1 ida_2.01-1.2_arm.deb ida_2.01-1.2.diff.gz \
+    ida_2.01-1.2.dsc ida_2.01.orig.tar.gz
+
+cat >etc/channels.xml <<EOF
+<?xml version="1.0"?>
+<channels>
+  <channel-1>
+    <type>dir</type>
+    <path>$(pwd)/channel-1</path>
+  </channel-1>
+</channels>
+EOF
+
+pdk channel update
+
+cat >nameless.xml <<EOF
+<component>
+  <contents>
+    <dsc/>
+  </contents>
+</component>
+EOF
+
+pdk resolve nameless.xml
+
+diff -u - nameless.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <dsc>
+      <deb ref="md5:fe2f5a4e8d4e7ae422e71b5bdfaa1e9c">
+        <name>ida</name>
+        <version>2.01-1.2</version>
+        <arch>arm</arch>
+      </deb>
+      <dsc ref="md5:64863d0fde185cc7e572556729fa6f33">
+        <name>ida</name>
+        <version>2.01-1.2</version>
+      </dsc>
+    </dsc>
+  </contents>
+</component>
+EOF
+
+popd
+
+@}
+
 @B@<Test Outline@>
 
 This is the macro wrapper for the test.
 
 @O@<atest/resolve.fw.sh@>==@{
 @<Prep work@>
+@<Nameless Reference@>
 @<Dir Channel Test@>
 @<Apt Channel Test@>
 @}
