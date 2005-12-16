@@ -30,8 +30,8 @@ from sets import Set
 from pdk.util import write_pretty_xml, parse_xml, parse_domain, \
      string_domain
 from cElementTree import ElementTree, Element, SubElement
-from pdk.rules import Rule, RuleSystem, AndCondition, OrCondition, \
-     FieldMatchCondition, RelationCondition, CompositeAction
+from pdk.rules import Rule, RuleSystem, CompositeAction
+from pdk import rules
 from pdk.package import get_package_type
 from pdk.exceptions import PdkException, InputError, SemanticError
 from pdk.meta import Entity, Entities
@@ -205,37 +205,30 @@ class ComponentDescriptor(object):
             os.makedirs(dirname)
         write_pretty_xml(tree, self.filename)
 
-    def write_condition_fields(self, parent, fields):
+    def write_condition_fields(self, parent, outer_condition):
         '''Build elements out of condition fields.'''
-        for field in fields:
-            if isinstance(field, tuple):
-                if len(field) == 3:
-                    domain, name, value = field
-                    tag_name = string_domain(domain, name)
-                    condition_element = SubElement(parent, tag_name)
-                    condition_element.text = value
-                elif len(field) == 4:
-                    relation_map = { 'eq': 'version',
-                                     'lt': 'version-lt',
-                                     'le': 'version-lt-eq',
-                                     'gt': 'version-gt',
-                                     'ge': 'version-gt-eq' }
-                    relation_fn, domain, name, value = field
-                    tag_name = relation_map[relation_fn.__name__]
-                    condition_element = SubElement(parent, tag_name)
-                    condition_element.text = value.full_version
-            elif isinstance(field, list):
-                if field[0] == 'or':
+        for condition in outer_condition.conditions:
+            if isinstance(condition, rules.fmc):
+                tag_name = string_domain(condition.domain,
+                                         condition.predicate)
+                condition_element = SubElement(parent, tag_name)
+                condition_element.text = str(condition.target)
+            elif isinstance(condition, rules.rc):
+                relation_map = { 'eq': 'version',
+                                 'lt': 'version-lt',
+                                 'le': 'version-lt-eq',
+                                 'gt': 'version-gt',
+                                 'ge': 'version-gt-eq' }
+                tag_name = relation_map[condition.condition.__name__]
+                condition_element = SubElement(parent, tag_name)
+                condition_element.text = condition.target.full_version
+            elif isinstance(condition, (rules.ac, rules.oc)):
+                if isinstance(condition, rules.oc):
                     nested_element = SubElement(parent, 'or')
-                    contained_fields = field[1:]
-                else:
+                elif isinstance(condition, rules.ac):
                     nested_element = SubElement(parent, 'and')
-                    if field[0] == 'and':
-                        contained_fields = field[1:]
-                    else:
-                        contained_fields = field
                 self.write_condition_fields(nested_element,
-                                            contained_fields)
+                                            condition)
 
     def write_package_reference(self, parent, reference):
         """Build elements for a single package reference."""
@@ -245,7 +238,7 @@ class ComponentDescriptor(object):
         name = reference.package_type.type_string
         ref_element = SubElement(parent, name, attributes)
 
-        self.write_condition_fields(ref_element, reference.fields)
+        self.write_condition_fields(ref_element, reference.condition)
         predicates = reference.predicates
         if predicates:
             meta_element = SubElement(ref_element, 'meta')
@@ -470,8 +463,8 @@ class ComponentDescriptor(object):
         '''
         return rule_element.tag in ('deb', 'udeb', 'dsc', 'rpm', 'srpm')
 
-    def build_condition_fields(self, element, package_type):
-        '''Build up lists of lists and tuples to use as package ref fields.
+    def build_condition(self, element, package_type):
+        '''Build up a condition from xml.
         '''
         relation_tags = { 'version-lt': ('version', lt),
                           'version-lt-eq': ('version', le),
@@ -483,23 +476,19 @@ class ComponentDescriptor(object):
             target_str = element.text.strip()
             target_class = package_type.version_class
             target = target_class(version_string = target_str)
-            return (relation_fn, 'pdk', predicate, target)
-        elif element.tag == 'and':
-            and_fields = []
+            return rules.rc(relation_fn, 'pdk', predicate, target)
+        elif element.tag in ('and', 'or'):
+            condition_class_map = {'and': rules.ac, 'or': rules.oc}
+            condition = condition_class_map[element.tag]([])
+            conditions = condition.conditions
             for and_element in element:
-                and_fields.append(self.build_condition_fields(and_element,
-                                                              package_type))
-            return and_fields
-        elif element.tag == 'or':
-            or_fields = ['or']
-            for or_element in element:
-                or_fields.append(self.build_condition_fields(or_element,
-                                                             package_type))
-            return or_fields
+                conditions.append(self.build_condition(and_element,
+                                                       package_type))
+            return condition
         else:
             target = element.text.strip()
             domain, name = parse_domain(element.tag)
-            return (domain, name, target)
+            return rules.fmc(domain, name, target)
 
 
     def build_package_ref(self, ref_element):
@@ -508,7 +497,7 @@ class ComponentDescriptor(object):
         This function should only be applied to elements which pass the
         is_package_ref test.
         '''
-        fields = []
+        condition = rules.ac([])
 
         blob_id = None
         if 'ref' in ref_element.attrib:
@@ -522,7 +511,7 @@ class ComponentDescriptor(object):
         inner_refs = []
         if ref_element.text and ref_element.text.strip():
             target = ref_element.text.strip()
-            fields.append(('pdk', 'name', target))
+            condition.conditions.append(rules.fmc('pdk', 'name', target))
         else:
             for element in ref_element:
                 if element.tag == 'meta':
@@ -534,9 +523,10 @@ class ComponentDescriptor(object):
                     inner_ref = self.build_package_ref(element)
                     inner_refs.append(inner_ref)
                 else:
-                    fields.append(self.build_condition_fields(element,
-                                                              package_type))
-        ref = PackageReference(package_type, blob_id, fields, predicates)
+                    inner_condition = self.build_condition(element,
+                                                           package_type)
+                    condition.conditions.append(inner_condition)
+        ref = PackageReference(package_type, blob_id, condition, predicates)
         ref.children = inner_refs
         ref.links = ref_links
         ref.unlinks = ref_unlinks
@@ -683,96 +673,72 @@ class Component(object):
         return hash(self._get_values())
 
 
-def get_deb_child_condition_data(package):
+def get_deb_child_condition(package):
     """Get child condition data for a deb."""
-    return [ ('pdk', 'name', package.pdk.sp_name),
-             ('pdk', 'version', package.pdk.sp_version),
-             ('pdk', 'type', 'dsc') ]
+    return rules.ac([ rules.fmc('pdk', 'name', package.pdk.sp_name),
+                      rules.fmc('pdk', 'version', package.pdk.sp_version),
+                      rules.fmc('pdk', 'type', 'dsc') ])
 
-def get_dsc_child_condition_data(package):
+def get_dsc_child_condition(package):
     """Get child condition data for a dsc."""
-    return [ ('pdk', 'sp-name', package.name),
-             ('pdk', 'sp-version', package.version.full_version),
-             [ 'or',
-               ('pdk', 'type', 'deb'),
-               ('pdk', 'type', 'udeb') ] ]
+    type_condition = rules.oc([ rules.fmc('pdk', 'type', 'deb'),
+                                rules.fmc('pdk', 'type', 'udeb') ])
 
-def get_rpm_child_condition_data(package):
+    return rules.ac([ rules.fmc('pdk', 'sp-name', package.name),
+                      rules.fmc('pdk', 'sp-version',
+                                package.version),
+                      type_condition ])
+
+def get_rpm_child_condition(package):
     """Get child condition data for an rpm."""
-    return [ ('pdk', 'filename', package.pdk.source_rpm),
-             ('pdk', 'type', 'srpm') ]
+    return rules.ac([ rules.fmc('pdk', 'filename', package.pdk.source_rpm),
+                      rules.fmc('pdk', 'type', 'srpm') ])
 
-def get_srpm_child_condition_data(package):
+def get_srpm_child_condition(package):
     """Get child condition data for an srpm."""
-    return [ ('pdk', 'source-rpm', package.filename),
-             ('pdk', 'type', 'rpm') ]
+    return rules.ac([ rules.fmc('pdk', 'source-rpm', package.filename),
+                      rules.fmc('pdk', 'type', 'rpm') ])
 
-def get_general_fields(package):
+def get_general_condition(package):
     """Get condition data for any package."""
-    fields = [ ('pdk', 'name', package.name),
-               ('pdk', 'version', package.version.full_version) ]
+    condition = rules.ac([ rules.fmc('pdk', 'name', package.name),
+                           rules.fmc('pdk', 'version',
+                                     package.version) ])
     if package.role == 'binary':
-        fields.append(('pdk', 'arch', package.arch))
-    return fields
+        condition.conditions.append(rules.fmc('pdk', 'arch', package.arch))
+    return condition
 
 def get_child_condition(package, ref):
     """Get child condition data for any package."""
     condition_fn = get_child_condition_fn(package)
-    child_condition = build_condition(condition_fn(package))
+    child_condition = condition_fn(package)
     # Always pin the the child's parent to a single version.
     # Someday we may need a more sophisticated mechanism for RPM.
     # I'm just not sure. -dt
-    parent_version = package.version.full_version
-    parent_condition = build_condition(ref.fields +
-                                       [('pdk', 'version', parent_version)])
-    key_info = condition_fn(package)[0]
-    return OrCondition([child_condition, parent_condition]), key_info
+    parent_condition = rules.ac([ ref.condition,
+                                  rules.rc(eq, 'pdk', 'version',
+                                           package.version) ])
+    key_condition = condition_fn(package).conditions[0]
+    key_info = (key_condition.domain, key_condition.predicate,
+                key_condition.target)
+    return rules.oc([child_condition, parent_condition]), key_info
 
 child_condition_fn_map = {
-    'deb': get_deb_child_condition_data,
-    'udeb': get_deb_child_condition_data,
-    'dsc': get_dsc_child_condition_data,
-    'rpm': get_rpm_child_condition_data,
-    'srpm': get_srpm_child_condition_data }
+    'deb': get_deb_child_condition,
+    'udeb': get_deb_child_condition,
+    'dsc': get_dsc_child_condition,
+    'rpm': get_rpm_child_condition,
+    'srpm': get_srpm_child_condition }
 def get_child_condition_fn(package):
     """Determine which child condition function to use on a package."""
     return child_condition_fn_map[package.type]
 
-condition_type_map = {
-    'and': AndCondition,
-    'or': OrCondition
-    }
-def build_condition(raw_condition_data):
-    """Build an 'and' condition from a list of tuples."""
-    if isinstance(raw_condition_data[0], basestring):
-        condition_type = raw_condition_data[0]
-        condition_data = raw_condition_data[1:]
-    else:
-        condition_type = 'and'
-        condition_data = raw_condition_data
-    condition = condition_type_map[condition_type]([])
-    for item in condition_data:
-        if isinstance(item, tuple):
-            if len(item) == 4 and callable(item[0]):
-                condition_fn, domain, name, value = item
-                rc = RelationCondition
-                condition.conditions.append(rc(condition_fn, domain, name,
-                                               value))
-            else:
-                domain, name, value = item
-                fmc = FieldMatchCondition
-                condition.conditions.append(fmc(domain, name, value))
-        else:
-            condition.conditions.append(build_condition(item))
-    return condition
-
-
 class PackageReference(object):
     '''Represents a concrete package reference.'''
-    def __init__(self, package_type, blob_id, fields, predicates):
+    def __init__(self, package_type, blob_id, condition, predicates):
         self.package_type = package_type
         self.blob_id = blob_id
-        self.fields = fields
+        self.condition = condition
         self.predicates = predicates
         self.children = []
         self.links = []
@@ -780,7 +746,7 @@ class PackageReference(object):
 
     def from_package(package):
         '''Instantiate a reference for the given package.'''
-        fields = get_general_fields(package)
+        fields = get_general_condition(package)
         return PackageReference(package.package_type, package.blob_id,
                                 fields, [])
     from_package = staticmethod(from_package)
@@ -800,12 +766,27 @@ class PackageReference(object):
         '''Return true if this package reference is abstact.'''
         return not (bool(self.blob_id) or bool(self.children))
 
+    def get_condition_dict(self):
+        '''Get a dictionary relating predicates to conditions.
+
+        Only root level predicates are used. Predicates in deeper in
+        and or or conditions are ignored.
+
+        This is really just a hack to make __contains__ and
+        __getitem__ work.
+        '''
+        condition_dict = {}
+        for condition in self.condition.conditions:
+            if hasattr(condition, 'predicate'):
+                key = (condition.domain, condition.predicate)
+                condition_dict[key] = condition
+        return condition_dict
+
     def __contains__(self, field):
-        return field in [ t[0:2] for t in self.fields ]
+        return field in self.get_condition_dict()
 
     def __getitem__(self, field):
-        fields_dict = dict([ (t[0:2], t[2]) for t in self.fields ])
-        return fields_dict[field]
+        return self.get_condition_dict()[field].target
 
     def get_name(self):
         '''Get the expected name of the referenced package(s).
@@ -836,17 +817,20 @@ class PackageReference(object):
 
     def get_rule(self):
         '''Construct a rule object for this reference.'''
-        all_fields = ['and']
+        rule_condition = rules.ac([])
+        rule_conditions = rule_condition.conditions
         if self.blob_id:
-            all_fields.append(('pdk', 'blob-id', self.blob_id))
+            blob_id_condition = rules.fmc('pdk', 'blob-id', self.blob_id)
+            rule_conditions.append(blob_id_condition)
 
-        all_fields.extend(self.fields)
-        all_fields.append(('pdk', 'type', self.package_type.type_string))
+        rule_conditions.extend(self.condition.conditions)
+        rule_conditions.append(rules.fmc('pdk', 'type',
+                                         self.package_type.type_string))
         actions = [ ActionMetaSet(*p) for p in self.predicates ]
         actions += [ ActionLinkEntities(*p) for p in self.links ]
         actions += [ ActionUnlinkEntities(*p) for p in self.unlinks ]
         action = CompositeAction(actions)
-        return Rule(build_condition(all_fields), action)
+        return Rule(rule_condition, action)
     rule = property(get_rule)
 
     def __identity_tuple(self):
@@ -855,7 +839,7 @@ class PackageReference(object):
                self.package_type.role_string, \
                self.package_type.type_string, \
                self.name, self.version, self.arch, self.blob_id, \
-               tuple(self.fields), tuple(self.predicates), \
+               self.condition, tuple(self.predicates), \
                tuple(self.children)
 
     def __cmp__(self, other):

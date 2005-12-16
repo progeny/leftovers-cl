@@ -41,16 +41,28 @@ Rule:
 
 from pdk.util import string_domain
 
+def make_comparable(cls):
+    '''Make a condition class comparable using its get_identity function'''
+    def __cmp__(self, other):
+        return cmp(self.__class__, other.__class__) or \
+               cmp(self.get_identity(), other.get_identity())
+
+    def __hash__(self):
+        return hash(self.get_identity())
+
+    cls.__cmp__ = __cmp__
+    cls.__hash__ = __hash__
+
 class FieldMatchCondition(object):
     '''Check that the provided object has a particular attribute and value.
     '''
-    def __init__(self, domain, field_name, target):
+    def __init__(self, domain, predicate, target):
         self.domain = domain
-        self.field_name = field_name
+        self.predicate = predicate
         self.target = target
 
     def evaluate(self, candidate):
-        key = (self.domain, self.field_name)
+        key = (self.domain, self.predicate)
 
         # Unfortunately components are special cases.
         #
@@ -71,39 +83,56 @@ class FieldMatchCondition(object):
         #
         # Maybe someday we can rid ourselves of this special case.
         if self.domain == 'pdk':
-            return hasattr(candidate, self.field_name) and \
-                   getattr(candidate, self.field_name) == self.target
-
-    def __repr__(self):
-        return 'cond fm (%s, %s, %s)' % (self.domain, self.field_name,
-                                         self.target)
+            return hasattr(candidate, self.predicate) and \
+                   getattr(candidate, self.predicate) == self.target
 
     def __str__(self):
-        tag = string_domain(self.domain, self.field_name)
+        tag = string_domain(self.domain, self.predicate)
         return "[%s] is '%s'" % (tag, self.target)
+
+    __repr__ = __str__
+
+    def get_identity(self):
+        '''Return the comparable identity for this object.'''
+        return (self.domain, self.predicate, self.target)
+
+make_comparable(FieldMatchCondition)
 
 class RelationCondition(object):
     '''A condition designed to compare versions.
 
     condition - A function taking to parameters and returning a boolean.
-    field     - The field of candidate objects to use for comparing.
-    r_value   - The second value passed to the condition function.
+    domain, predicate - The domain and predicate to be matched.
+    target    - The second value passed to the condition function.
 
     When evaluating, the candidate field will be passed as the first
     argument to the condition function.
     '''
-    def __init__(self, condition, domain, predicate, value):
+    def __init__(self, condition, domain, predicate, target):
         self.condition = condition
         self.domain = domain
         self.predicate = predicate
-        self.value = value
+        self.target = target
 
     def evaluate(self, candidate):
         field = (self.domain, self.predicate)
         if field in candidate:
-            return self.condition(candidate[field], self.value)
+            return self.condition(candidate[field], self.target)
         else:
             return False
+
+    def __str__(self):
+        tag = string_domain(self.domain, self.predicate)
+        return "[%s] is %s '%s'" % (tag, self.condition.__name__,
+                                    self.target)
+
+    __repr__ = __str__
+
+    def get_identity(self):
+        '''Return the comparable identity for this object.'''
+        return (self.condition, self.domain, self.predicate, self.target)
+
+make_comparable(RelationCondition)
 
 class AndCondition(object):
     '''Check that the provided object meets all the provided conditions.'''
@@ -116,13 +145,17 @@ class AndCondition(object):
                 return False
         return True
 
-    def __repr__(self):
-        return 'cond and %s' % self.conditions
-
     def __str__(self):
         child_strings = [str(x) for x in self.conditions]
-        return ' AND '.join(child_strings)
+        return '( %s )' % ' AND '.join(child_strings)
 
+    __repr__ = __str__
+
+    def get_identity(self):
+        '''Return the comparable identity for this object.'''
+        return tuple(self.conditions)
+
+make_comparable(AndCondition)
 
 class OrCondition(object):
     '''Check that the provided object meets one of the conditions.'''
@@ -135,13 +168,17 @@ class OrCondition(object):
                 return True
         return False
 
-    def __repr__(self):
-        return 'cond or %s' % self.conditions
-
     def __str__(self):
         child_strings = [str(x) for x in self.conditions]
-        return ' OR '.join(child_strings)
+        return '( %s )' % ' OR '.join(child_strings)
 
+    __repr__ = __str__
+
+    def get_identity(self):
+        '''Return the comparable identity for this object.'''
+        return tuple(self.conditions)
+
+make_comparable(OrCondition)
 
 class OneMatchMetacondition(object):
     '''Check that the success_count attribute is 1.'''
@@ -222,3 +259,11 @@ class CompositeAction(object):
 
     def __str__(self):
         return str(self.actions)
+
+# some abbreviations.
+
+fmc = FieldMatchCondition
+rc = RelationCondition
+ac = AndCondition
+oc = OrCondition
+tc = TrueCondition

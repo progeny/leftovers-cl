@@ -64,9 +64,9 @@ EOF
 pdk resolve -R apache.xml 2>&1 | cut -d ' ' -f 3- >errors
 diff -u - errors <<EOF
 WARNING Unresolved references remain in apache.xml
-WARNING No dsc where [name] is 'ida' AND [type] is 'dsc' action: []
-WARNING No deb where [name] is 'snorklewink2' AND [type] is 'deb' action: []
-WARNING No deb where [name] is 'snorklewink3' AND [type] is 'deb' action: [set meta ('pdk', 'test', 'data')]
+WARNING No dsc where ( [name] is 'ida' AND [type] is 'dsc' ) action: []
+WARNING No deb where ( [name] is 'snorklewink2' AND [type] is 'deb' ) action: []
+WARNING No deb where ( [name] is 'snorklewink3' AND [type] is 'deb' ) action: [set meta ('pdk', 'test', 'data')]
 EOF
 
 # try again with all references resolvable.

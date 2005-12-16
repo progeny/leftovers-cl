@@ -24,22 +24,21 @@ from pdk.package import udeb, deb, dsc, rpm, srpm, RPMVersion, \
      DebianVersion
 from pdk.meta import Entity, Entities
 from pdk.cache import Cache
-from pdk.rules import AndCondition, OrCondition, FieldMatchCondition, \
-     RelationCondition
+from pdk import rules
 from operator import lt, le, gt, ge, eq
 
 from pdk.component import \
      ComponentDescriptor, Component, PackageReference, \
      get_child_condition_fn, \
-     get_deb_child_condition_data, \
-     get_dsc_child_condition_data, \
-     get_rpm_child_condition_data, \
-     get_srpm_child_condition_data, \
+     get_general_condition, \
+     get_child_condition, \
+     get_deb_child_condition, \
+     get_dsc_child_condition, \
+     get_rpm_child_condition, \
+     get_srpm_child_condition, \
      ActionLinkEntities, \
      ActionUnlinkEntities, \
-     ActionMetaSet, \
-     build_condition
-
+     ActionMetaSet
 
 __revision__ = "$Progeny$"
 
@@ -113,13 +112,12 @@ cp a.xml b.xml
         desc = ComponentDescriptor('a.xml')
 
         deb_ref = desc.contents[0]
-        expected = [
-            [ 'or',
-              [ ('pdk', 'name', 'a'),
-                ('pdk', 'arch', 'b') ],
-              ('pdk', 'name', 'c') ],
-            ('my', 'some', 'value'), ]
-        self.assert_equals_long(expected, deb_ref.fields)
+        expected = rules.ac([
+            rules.oc([ rules.ac([ rules.fmc('pdk', 'name', 'a'),
+                                  rules.fmc('pdk', 'arch', 'b') ]),
+                       rules.fmc('pdk', 'name', 'c') ]),
+            rules.fmc('my', 'some', 'value') ])
+        self.assert_equals_long(expected, deb_ref.condition)
 
         desc.write()
         self.assert_equals_long(open('b.xml').read(), open('a.xml').read())
@@ -187,50 +185,50 @@ cat >a.xml <<EOF
 EOF
 ''')
         desc = ComponentDescriptor('a.xml')
-        deb_ref = desc.contents[0]
+        deb_conditions = desc.contents[0].condition.conditions
         dv = DebianVersion
-        self.assert_equal((eq, 'pdk', 'version', dv('2.0.53')),
-                          deb_ref.fields[0])
-        assert isinstance(deb_ref.fields[0][3], DebianVersion)
-        self.assert_equal((lt, 'pdk', 'version', dv('2.0.53')),
-                          deb_ref.fields[1])
-        assert isinstance(deb_ref.fields[1][3], DebianVersion)
-        self.assert_equal((le, 'pdk', 'version', dv('2.0.53')),
-                          deb_ref.fields[2])
-        assert isinstance(deb_ref.fields[2][3], DebianVersion)
-        self.assert_equal((gt, 'pdk', 'version', dv('2.0.53')),
-                          deb_ref.fields[3])
-        assert isinstance(deb_ref.fields[3][3], DebianVersion)
-        self.assert_equal((ge, 'pdk', 'version', dv('2.0.53')),
-                          deb_ref.fields[4])
-        assert isinstance(deb_ref.fields[4][3], DebianVersion)
+        self.assert_equal(rules.rc(eq, 'pdk', 'version', dv('2.0.53')),
+                          deb_conditions[0])
+        assert isinstance(deb_conditions[0].target, DebianVersion)
+        self.assert_equal(rules.rc(lt, 'pdk', 'version', dv('2.0.53')),
+                          deb_conditions[1])
+        assert isinstance(deb_conditions[1].target, DebianVersion)
+        self.assert_equal(rules.rc(le, 'pdk', 'version', dv('2.0.53')),
+                          deb_conditions[2])
+        assert isinstance(deb_conditions[2].target, DebianVersion)
+        self.assert_equal(rules.rc(gt, 'pdk', 'version', dv('2.0.53')),
+                          deb_conditions[3])
+        assert isinstance(deb_conditions[3].target, DebianVersion)
+        self.assert_equal(rules.rc(ge, 'pdk', 'version', dv('2.0.53')),
+                          deb_conditions[4])
+        assert isinstance(deb_conditions[4].target, DebianVersion)
 
-        dsc_ref = desc.contents[1]
-        self.assert_equal((eq, 'pdk', 'version', dv('2.0.53')),
-                          dsc_ref.fields[0])
-        assert isinstance(dsc_ref.fields[0][3], DebianVersion)
-        self.assert_equal((lt, 'pdk', 'version', dv('2.0.53')),
-                          dsc_ref.fields[1])
-        assert isinstance(dsc_ref.fields[1][3], DebianVersion)
+        dsc_conditions = desc.contents[1].condition.conditions
+        self.assert_equal(rules.rc(eq, 'pdk', 'version', dv('2.0.53')),
+                          dsc_conditions[0])
+        assert isinstance(dsc_conditions[0].target, DebianVersion)
+        self.assert_equal(rules.rc(lt, 'pdk', 'version', dv('2.0.53')),
+                          dsc_conditions[1])
+        assert isinstance(dsc_conditions[1].target, DebianVersion)
 
         def rv(version):
             return RPMVersion(version_string = version)
 
-        rpm_ref = desc.contents[2]
-        self.assert_equal((eq, 'pdk', 'version', rv('2.0.53')),
-                          rpm_ref.fields[0])
-        assert isinstance(rpm_ref.fields[0][3], RPMVersion)
-        self.assert_equal((lt, 'pdk', 'version', rv('2.0.53')),
-                          rpm_ref.fields[1])
-        assert isinstance(rpm_ref.fields[1][3], RPMVersion)
+        rpm_conditions = desc.contents[2].condition.conditions
+        self.assert_equal(rules.rc(eq, 'pdk', 'version', rv('2.0.53')),
+                          rpm_conditions[0])
+        assert isinstance(rpm_conditions[0].target, RPMVersion)
+        self.assert_equal(rules.rc(lt, 'pdk', 'version', rv('2.0.53')),
+                          rpm_conditions[1])
+        assert isinstance(rpm_conditions[1].target, RPMVersion)
 
-        srpm_ref = desc.contents[3]
-        self.assert_equal((eq, 'pdk', 'version', rv('2.0.53')),
-                          srpm_ref.fields[0])
-        assert isinstance(srpm_ref.fields[0][3], RPMVersion)
-        self.assert_equal((lt, 'pdk', 'version', rv('2.0.53')),
-                          srpm_ref.fields[1])
-        assert isinstance(srpm_ref.fields[1][3], RPMVersion)
+        srpm_conditions = desc.contents[3].condition.conditions
+        self.assert_equal(rules.rc(eq, 'pdk', 'version', rv('2.0.53')),
+                          srpm_conditions[0])
+        assert isinstance(srpm_conditions[0].target, RPMVersion)
+        self.assert_equal(rules.rc(lt, 'pdk', 'version', rv('2.0.53')),
+                          srpm_conditions[1])
+        assert isinstance(srpm_conditions[1].target, RPMVersion)
 
     def test_load_empty(self):
         """compdesc.load returns an empty component"""
@@ -583,8 +581,8 @@ EOF
     def test_iter_package_refs(self):
         class MockRef(PackageReference):
             def __init__(self, label):
-                PackageReference.__init__(self, deb, None,
-                                          [('pdk', 'name', 'apache')], [])
+                condition = rules.ac([('pdk', 'name', 'apache')])
+                PackageReference.__init__(self, deb, None, condition, [])
                 self.label = label
                 self.children = []
 
@@ -652,49 +650,6 @@ EOF
                            comp.entities.links['deb', 'sha-1:aaa'])
 
 class TestPackageRef(Test):
-    def test_build_condition(self):
-        fields = \
-               [ ('pdk', 'name', 'a'),
-                 ('deb', 'arch', 'c'),
-                 [ 'or',
-                   ('deb', 'hello', 'e'),
-                   ('deb', 'hello', 'f') ],
-                 (ge, 'pdk', 'version', 4) ]
-        condition = build_condition(fields)
-        assert isinstance(condition, AndCondition)
-        and_conds = condition.conditions
-        self.assert_equals(4, len(and_conds))
-
-        assert isinstance(and_conds[0], FieldMatchCondition)
-        self.assert_equals('pdk', and_conds[0].domain)
-        self.assert_equals('name', and_conds[0].field_name)
-        self.assert_equals('a', and_conds[0].target)
-
-        assert isinstance(and_conds[1], FieldMatchCondition)
-        self.assert_equals('deb', and_conds[1].domain)
-        self.assert_equals('arch', and_conds[1].field_name)
-        self.assert_equals('c', and_conds[1].target)
-
-        assert isinstance(and_conds[2], OrCondition)
-        or_conds = and_conds[2].conditions
-        self.assert_equals(2, len(or_conds))
-
-        assert isinstance(or_conds[0], FieldMatchCondition)
-        self.assert_equals('deb', or_conds[0].domain)
-        self.assert_equals('hello', or_conds[0].field_name)
-        self.assert_equals('e', or_conds[0].target)
-
-        assert isinstance(or_conds[1], FieldMatchCondition)
-        self.assert_equals('deb', or_conds[1].domain)
-        self.assert_equals('hello', or_conds[1].field_name)
-        self.assert_equals('f', or_conds[1].target)
-
-        assert isinstance(and_conds[3], RelationCondition)
-        self.assert_equals(ge, and_conds[3].condition)
-        self.assert_equals('pdk', and_conds[3].domain)
-        self.assert_equals('version', and_conds[3].predicate)
-        self.assert_equals(4, and_conds[3].value)
-
     def test_is_abstract(self):
         concrete_ref_a = \
             PackageReference(deb, 'sha-1:aaa', None, None)
@@ -708,8 +663,8 @@ class TestPackageRef(Test):
         assert abstract_ref.is_abstract()
 
     def test_field_lookups(self):
-        ref = PackageReference(deb, 'sha-1:aaa',
-                               [('pdk', 'name', 'apache')], [])
+        condition = rules.ac([rules.fmc('pdk', 'name', 'apache')])
+        ref = PackageReference(deb, 'sha-1:aaa', condition, [])
 
         assert ('pdk', 'name') in ref
         assert ('pdk', 'version') not in ref
@@ -719,11 +674,11 @@ class TestPackageRef(Test):
         self.assert_equal('', ref.arch)
 
     def test_comparable(self):
-        fields = [('pdk', 'name', 'apache')]
+        fields = rules.ac([('pdk', 'name', 'apache')])
         refa1 = PackageReference(deb, 'sha-1:aaa', fields, [])
         refa2 = PackageReference(deb, 'sha-1:aaa', fields, [])
         refb = PackageReference(deb, 'sha-1:aaa',
-                                [('pdk', 'name', 'xsok')], [])
+                                rules.ac([('pdk', 'name', 'xsok')]), [])
 
         assert refa1 == refa2
         assert refa1 < refb
@@ -735,62 +690,105 @@ class TestPackageRef(Test):
         apache_dsc = MockPackage('apache', '1', dsc, 'sha-1:aaa')
         apache_srpm = MockPackage('apache', '1', srpm, 'sha-1:aaa')
 
-        self.assert_equals(get_deb_child_condition_data,
+        self.assert_equals(get_deb_child_condition,
                            get_child_condition_fn(apache_deb))
-        self.assert_equals(get_deb_child_condition_data,
+        self.assert_equals(get_deb_child_condition,
                            get_child_condition_fn(apache_udeb))
-        self.assert_equals(get_dsc_child_condition_data,
+        self.assert_equals(get_dsc_child_condition,
                            get_child_condition_fn(apache_dsc))
-        self.assert_equals(get_rpm_child_condition_data,
+        self.assert_equals(get_rpm_child_condition,
                            get_child_condition_fn(apache_rpm))
-        self.assert_equals(get_srpm_child_condition_data,
+        self.assert_equals(get_srpm_child_condition,
                            get_child_condition_fn(apache_srpm))
 
-    def test_get_deb_child_condition_data(self):
+    def test_get_deb_child_condition(self):
         sp_version = DebianVersion('1-2')
         extra = {('pdk', 'sp-name'): 'one',
                  ('pdk', 'sp-version'): sp_version}
         apache_deb = MockPackage('apache', '1', deb, 'sha-1:aaa', extra)
 
-        expected = [ ('pdk', 'name', 'one'),
-                     ('pdk', 'version', '1-2'),
-                     ('pdk', 'type', 'dsc') ]
+        expected = rules.ac([ rules.fmc('pdk', 'name', 'one'),
+                              rules.fmc('pdk', 'version', '1-2'),
+                              rules.fmc('pdk', 'type', 'dsc') ])
 
         self.assert_equals(expected,
-                           get_deb_child_condition_data(apache_deb))
+                           get_deb_child_condition(apache_deb))
 
-    def test_get_dsc_child_condition_data(self):
+    def test_get_dsc_child_condition(self):
         version = DebianVersion('1-2')
         apache_dsc = MockPackage('apache', version, dsc, 'sha-1:aaa')
 
-        expected = [ ('pdk', 'sp-name', 'apache'),
-                     ('pdk', 'sp-version', '1-2'),
-                     [ 'or',
-                       ('pdk', 'type', 'deb'),
-                       ('pdk', 'type', 'udeb') ] ]
+        type_condition = rules.oc([ rules.fmc('pdk', 'type', 'deb'),
+                                    rules.fmc('pdk', 'type', 'udeb')])
+        expected = rules.ac([ rules.fmc('pdk', 'sp-name', 'apache'),
+                              rules.fmc('pdk', 'sp-version', '1-2'),
+                              type_condition ])
 
         self.assert_equals(expected,
-                           get_dsc_child_condition_data(apache_dsc))
+                           get_dsc_child_condition(apache_dsc))
 
 
-    def test_get_rpm_child_condition_data(self):
+    def test_get_rpm_child_condition(self):
         version = RPMVersion(version_string = '1-2')
         extras = {('pdk', 'source-rpm'): 'apache.src.rpm'}
         apache_rpm = MockPackage('apache', version, rpm, 'sha-1:aaa',
                                  extras = extras)
 
-        expected = [ ('pdk', 'filename', 'apache.src.rpm'),
-                     ('pdk', 'type', 'srpm') ]
+        expected = rules.ac([ rules.fmc('pdk', 'filename',
+                                        'apache.src.rpm'),
+                              rules.fmc('pdk', 'type', 'srpm') ])
 
         self.assert_equals(expected,
-                           get_rpm_child_condition_data(apache_rpm))
+                           get_rpm_child_condition(apache_rpm))
 
-    def test_get_srpm_child_condition_data(self):
+    def test_get_srpm_child_condition(self):
         version = RPMVersion(version_string = '1-2')
         apache_srpm = MockPackage('apache', version, srpm, 'sha-1:aaa')
-        expected = [ ('pdk', 'source-rpm', 'apache-1-2.src.rpm'),
-                     ('pdk', 'type', 'rpm') ]
+        expected = rules.ac([ rules.fmc('pdk', 'source-rpm',
+                                        'apache-1-2.src.rpm'),
+                              rules.fmc('pdk', 'type', 'rpm') ])
 
         self.assert_equals(expected,
-                           get_srpm_child_condition_data(apache_srpm))
+                           get_srpm_child_condition(apache_srpm))
 
+
+    def test_get_general_condition(self):
+        version = DebianVersion('1-2')
+        apache_dsc = MockPackage('apache', version, dsc, 'sha-1:aaa')
+
+        sp_version = DebianVersion('1-2')
+        extra = {('pdk', 'sp-name'): 'one',
+                 ('pdk', 'sp-version'): sp_version,
+                 ('deb', 'arch'): 'i386'}
+        apache_deb = MockPackage('apache', '1-2', deb, 'sha-1:aaa', extra)
+
+        expected = rules.ac([ rules.fmc('pdk', 'name', 'apache'),
+                              rules.fmc('pdk', 'version', version) ])
+        self.assert_equals(expected, get_general_condition(apache_dsc))
+
+        expected = rules.ac([ rules.fmc('pdk', 'name', 'apache'),
+                              rules.fmc('pdk', 'version', version),
+                              rules.fmc('pdk', 'arch', 'i386') ])
+        self.assert_equals(expected, get_general_condition(apache_deb))
+
+    def test_get_child_condition(self):
+        sp_version = DebianVersion('1-3')
+        extra = {('pdk', 'sp-name'): 'apache',
+                 ('pdk', 'sp-version'): sp_version,
+                 ('deb', 'arch'): 'i386'}
+        apache_deb = MockPackage('apache', '1-2', deb, 'sha-1:aaa', extra)
+
+        ref_condition = rules.ac([rules.fmc('pdk', 'name', 'apache')])
+        apache_ref = PackageReference(deb, 'sha-1:aaa', ref_condition, [])
+
+
+        parent_condition = rules.ac([ apache_ref.condition,
+                                      rules.rc(eq, 'pdk', 'version',
+                                                DebianVersion('1-2')) ])
+        child_condition = get_deb_child_condition(apache_deb)
+        expected_rule = rules.oc([child_condition, parent_condition])
+        expected_key_info = ('pdk', 'name', 'apache')
+        actual_rule, actual_key_info = get_child_condition(apache_deb,
+                                                          apache_ref)
+        self.assert_equals(expected_rule, actual_rule)
+        self.assert_equals(expected_key_info, actual_key_info)

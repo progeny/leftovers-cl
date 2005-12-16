@@ -20,9 +20,7 @@ from operator import ge
 from pdk.test.utest_util import Test, MockPackage
 from pdk.package import deb
 
-from pdk.rules import FieldMatchCondition, AndCondition, OrCondition, \
-     RelationCondition, \
-     OneMatchMetacondition, TrueCondition, Rule, RuleSystem, CompositeAction
+from pdk import rules
 
 class ShamAction(object):
     def __init__(self):
@@ -31,14 +29,42 @@ class ShamAction(object):
     def execute(self, entity, entities):
         self.calls.append((entity, entities))
 
+class TestRuleIdentities(Test):
+    def test_field_match_condition(self):
+        first = rules.fmc('a', 'b', 'c')
+        same_as_first = rules.fmc('a', 'b', 'c')
+        second = rules.fmc('d', 'e', 'f')
+
+        assert first == same_as_first
+        assert second != first
+        assert hash(first) == hash(same_as_first)
+
+    def test_relation_condition(self):
+        first = rules.rc(ge, 'a', 'b', 'c')
+        same_as_first = rules.rc(ge, 'a', 'b', 'c')
+        second = rules.rc(ge, 'd', 'e', 'f')
+
+        assert first == same_as_first
+        assert second != first
+        assert hash(first) == hash(same_as_first)
+
+    def test_and_or_condition(self):
+        first = rules.ac([1, 2, 3])
+        same_as_first = rules.ac([1, 2, 3])
+        second = rules.oc([1, 2, 3])
+
+        assert first == same_as_first
+        assert second != first
+        assert hash(first) == hash(same_as_first)
+
 class ConditionsAndRulesFixture(Test):
     def set_up(self):
         super(ConditionsAndRulesFixture, self).set_up()
-        self.name_condition = FieldMatchCondition('pdk', 'name', 'a')
-        self.version_condition = FieldMatchCondition('pdk', 'version', '1')
-        self.and_condition = AndCondition([self.name_condition,
+        self.name_condition = rules.fmc('pdk', 'name', 'a')
+        self.version_condition = rules.fmc('pdk', 'version', '1')
+        self.and_condition = rules.ac([self.name_condition,
                                            self.version_condition])
-        self.or_condition = OrCondition([self.name_condition,
+        self.or_condition = rules.oc([self.name_condition,
                                          self.version_condition])
 
         self.a1 = MockPackage('a', '1', deb)
@@ -49,7 +75,7 @@ class ConditionsAndRulesFixture(Test):
         self.all_packages = [ self.a1, self.a2, self.b1, self.b2 ]
 
     def test_version_relation(self):
-        vrc = RelationCondition(ge, 'pdk', 'version', 3)
+        vrc = rules.rc(ge, 'pdk', 'version', 3)
         assert vrc.evaluate({('pdk', 'version'): 4})
         assert vrc.evaluate({('pdk', 'version'): 3})
         assert not vrc.evaluate({('pdk', 'version'): 2})
@@ -77,20 +103,20 @@ class ConditionsAndRulesFixture(Test):
         assert not self.or_condition.evaluate(self.b2)
 
     def test_basic_metaconditions(self):
-        assert TrueCondition().evaluate(None)
+        assert rules.tc().evaluate(None)
 
         class MockRule(object):
             success_count = 0
 
         rule = MockRule()
-        assert not OneMatchMetacondition().evaluate(rule)
+        assert not rules.OneMatchMetacondition().evaluate(rule)
         rule.success_count = 1
-        assert OneMatchMetacondition().evaluate(rule)
+        assert rules.OneMatchMetacondition().evaluate(rule)
 
     def test_composite_action(self):
         sham1 = ShamAction()
         sham2 = ShamAction()
-        actions = CompositeAction([sham1, sham2])
+        actions = rules.CompositeAction([sham1, sham2])
         actions.execute('a', 'b')
         actions.execute('d', 'e')
         expected_calls = [ ('a', 'b'), ('d', 'e') ]
@@ -98,7 +124,7 @@ class ConditionsAndRulesFixture(Test):
         self.assert_equals(expected_calls, sham2.calls)
 
     def test_rule(self):
-        rule = Rule(self.and_condition, None)
+        rule = rules.Rule(self.and_condition, None)
         assert not rule.evaluate_metacondition()
         rule.action = ShamAction()
         rule.fire(self.b2, 'b')
@@ -112,10 +138,10 @@ class ConditionsAndRulesFixture(Test):
         assert rule.evaluate_metacondition()
 
     def test_rule_system(self):
-        rule_a = Rule(self.and_condition, None)
-        rule_b = Rule(FieldMatchCondition('pdk', 'name', 'b'), None)
+        rule_a = rules.Rule(self.and_condition, None)
+        rule_b = rules.Rule(rules.fmc('pdk', 'name', 'b'), None)
 
-        composite = RuleSystem([rule_a, rule_b])
+        composite = rules.RuleSystem([rule_a, rule_b])
         assert not composite.evaluate_metacondition()
 
         expected_empty = []

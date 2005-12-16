@@ -33,7 +33,7 @@ class TestComponentTreeBuilder(Test):
         for condition in rule.condition.conditions:
             assert condition.__class__ == FieldMatchCondition
             actual_fields.append((condition.domain,
-                                  condition.field_name,
+                                  condition.predicate,
                                   condition.target))
         self.assert_equals_long(expected_fields, actual_fields)
 

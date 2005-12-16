@@ -215,10 +215,14 @@ class DebianVersion(object):
         from smart.backends.deb.debver import vercmp as smart_vercmp
         return smart_vercmp(self.version_string, other.version_string)
 
-    def __str__(self):
+    def __repr__(self):
         return '<dver %r>' % self.full_version
 
-    __repr__ = __str__
+    def __str__(self):
+        return self.full_version
+
+    def __hash__(self):
+        return hash((self.version, self.release))
 
 def sanitize_deb_header(header):
     """Normalize the whitespace around the deb header/control contents."""
@@ -450,10 +454,14 @@ class RPMVersion(object):
             other = RPMVersion(version_string = other)
         return rpm_api.labelCompare(self.tuple, other.tuple)
 
-    def __str__(self):
+    def __repr__(self):
         return '<rver %r>' % self.full_version
 
-    __repr__ = __str__
+    def __str__(self):
+        return self.full_version
+
+    def __hash__(self):
+        return hash((self.version, self.release))
 
 class _Rpm(object):
     """Handle binary rpm packages."""
