@@ -1,3 +1,10 @@
+pdk (0.0.25) unstable; urgency=low
+
+  * Fix 2 regressions.
+  * Expand the capabilities of the plugin system.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu, 22 Dec 2005 15:47:36 -0500
+
 pdk (0.0.24) unstable; urgency=low
 
   * Add ability to unlink entities.
