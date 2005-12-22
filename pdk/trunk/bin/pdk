@@ -30,7 +30,7 @@ import sys
 import pdk.log as log
 import pdk.command_base as command_base
 from pdk.exceptions import ConfigurationError
-from pdk.util import assert_python_version
+from pdk.util import assert_python_version, pjoin
 assert_python_version()
 
 from warnings import filterwarnings
@@ -192,7 +192,7 @@ class Pdk(command_base.CmdBase):
 
 
 plugin_locations = [
-    "~/.pdk_addins"
+    pjoin(os.environ.get('HOME', '.'), ".pdk_addins")
     , ".pdk_addins"
     , ".pdk_plugins"
 ]

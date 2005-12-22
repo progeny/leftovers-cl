@@ -75,11 +75,10 @@ def load_addins(base, *config_files):
             if not line:
                 continue
             # We only do cmd.add_external_plugins now
-            try:
-                modpath, modfunc, local = line.split()
-                addin_list.append( (modpath, modfunc, local) )
-            except ValueError:
+            line_list = line.split()
+            if len(line_list) not in (1, 3):
                 raise InputError("wrong number of fields: %s" % line)
+            addin_list.append(line_list)
 
     base.add_external_plugins(addin_list)
 
@@ -284,8 +283,13 @@ class CmdBase(cmd.Cmd):
         example:
               doghouse.doggy bark4me  bark
         """
-        for module_path, module_function, localname in plugins:
-            ref = LazyModuleRef(module_path, module_function)
-            setattr(self, "do_%s" % localname, ref)
+        for plugin_params in plugins:
+            if len(plugin_params) == 3:
+                module_path, module_function, localname = plugin_params
+                ref = LazyModuleRef(module_path, module_function)
+                setattr(self, "do_%s" % localname, ref)
+            else:
+                module_name = plugin_params[0]
+                __import__(module_name, globals(), locals())
 
 # vim:ai:et:sts=4:sw=4:tw=0:
