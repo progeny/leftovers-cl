@@ -251,7 +251,7 @@ class DebianPoolInjector(object):
 
             sp_name_str = self.package.pdk.sp_name
             if self.package.pdk.sp_version != self.package.version:
-                sp_version_str = self.package.sp_version.full_version
+                sp_version_str = self.package.pdk.sp_version.full_version
                 source_value = '%s (%s)' % (sp_name_str, sp_version_str)
             else:
                 source_value = sp_name_str

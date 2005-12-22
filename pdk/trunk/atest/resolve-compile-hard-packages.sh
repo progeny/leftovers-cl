@@ -85,6 +85,11 @@ cat >etc/channels.xml <<EOF
 EOF
 popd
 
+plumb_files \
+    packages/gcc_4.0.2-2_i386.deb \
+    packages/gcc-defaults_1.30.dsc \
+    packages/gcc-defaults_1.30.tar.gz
+
 file1=packages/ethereal_0.9.13-1.0progeny1.dsc
 file2=packages/ethereal_0.9.13-1.0progeny1.diff.gz
 file3=packages/ethereal_0.9.13.orig.tar.gz
