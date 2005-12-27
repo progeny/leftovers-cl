@@ -446,7 +446,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5269 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5270 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."
@@ -501,15 +501,18 @@ def usage(out, options = None):
                 option_str = option_str + " "
             out.write(option_str + option_doc + "\n")
 
-def handle_args(arglist = None, component_file = None):
+def handle_args(arglist = None, component = None):
     "Parse the argument list and store the initial configuration."
 
     global config
     global main_options
     global module_prefixes
 
-    if arglist is None and component_file is None:
+    if arglist is None and component is None:
         raise ValueError, "handle_args not given a proper config source"
+    if arglist is not None and component is not None:
+        raise ValueError, \
+              "handle_args must only receive a single config source"
 
     # Initialize the global config dictionary.
 
@@ -520,6 +523,13 @@ def handle_args(arglist = None, component_file = None):
     # may be.
 
     if arglist is not None:
+
+        # Command line parsing.  This is made slightly more complicated
+        # because there are multiple configuration sources, with priority:
+        # command line trumps saved XML configuration.  So, we have to
+        # load the two configuration sources into separate dictionaries,
+        # and merge them in the proper order.
+
         cmdline_config = _init()
         xml_config = cmdline_config.copy()
 
@@ -540,6 +550,15 @@ def handle_args(arglist = None, component_file = None):
         for config_key in cmdline_config.keys():
             if config_key not in [x[2] for x in module_prefixes]:
                 config[config_key] = cmdline_config[config_key]
+    else:
+
+        # Component configuration.  Simple, because there's only
+        # one source for configuration.
+
+        (remaining, subprefix_arglist) = _parse_component(config,
+                                                          component,
+                                                          main_options,
+                                                          module_prefixes)
 
     # Do some interpretation and sanity-checking of the configuration.
 
