@@ -183,11 +183,7 @@ def _get_module_options(prefix):
     raise ValueError, "invalid prefix"
 
 def _init():
-    global config
-    global main_options
-
-    if config:
-        return
+    "Return a blank, initialized config dictionary."
 
     config = { "repository_list": [],
                "debug": False }
@@ -199,6 +195,8 @@ def _init():
 
     if os.environ.has_key("PICAX_DEBUG"):
         config["debug"] == True
+
+    return config
 
 def _dom_to_config(this_config, topnode, options, prefixes = ()):
     for child in topnode.childNodes:
@@ -448,7 +446,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5199 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5269 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."
@@ -503,46 +501,61 @@ def usage(out, options = None):
                 option_str = option_str + " "
             out.write(option_str + option_doc + "\n")
 
-def handle_args(arglist):
+def handle_args(arglist = None, component_file = None):
     "Parse the argument list and store the initial configuration."
 
     global config
     global main_options
     global module_prefixes
 
-    _init()
-    cmdline_config = config.copy()
-    xml_config = config.copy()
+    if arglist is None and component_file is None:
+        raise ValueError, "handle_args not given a proper config source"
 
-    (remaining, subprefix_arglist) = _parse_args(cmdline_config, arglist,
-                                                 main_options,
-                                                 module_prefixes)
+    # Initialize the global config dictionary.
 
+    config = _init()
     _set_defaults(config, main_options)
 
-    if cmdline_config.has_key("input_config_path"):
-        try:
-            document = xml.dom.minidom.parse(
-                cmdline_config["input_config_path"])
-        except:
-            raise ConfigError, "cannot parse XML configuration file"
-        xml_config = _dom_to_config(xml_config, document.documentElement,
-                                    main_options, module_prefixes)
-        config.update(xml_config)
+    # Read the configuration from the proper source(s), whatever they
+    # may be.
 
-    for config_key in cmdline_config.keys():
-        if config_key not in [x[2] for x in module_prefixes]:
-            config[config_key] = cmdline_config[config_key]
+    if arglist is not None:
+        cmdline_config = _init()
+        xml_config = cmdline_config.copy()
+
+        (remaining, subprefix_arglist) = _parse_args(cmdline_config, arglist,
+                                                     main_options,
+                                                     module_prefixes)
+
+        if cmdline_config.has_key("input_config_path"):
+            try:
+                document = xml.dom.minidom.parse(
+                    cmdline_config["input_config_path"])
+            except:
+                raise ConfigError, "cannot parse XML configuration file"
+            xml_config = _dom_to_config(xml_config, document.documentElement,
+                                        main_options, module_prefixes)
+            config.update(xml_config)
+
+        for config_key in cmdline_config.keys():
+            if config_key not in [x[2] for x in module_prefixes]:
+                config[config_key] = cmdline_config[config_key]
+
+    # Do some interpretation and sanity-checking of the configuration.
 
     _interpret_args(config, subprefix_arglist, remaining)
 
-    if config.has_key("output_config_path"):
+    # Command-line configuration allows for the current configuration
+    # to be saved to an XML file.  Do that now if we need to.
+
+    if arglist is not None and config.has_key("output_config_path"):
         document = _config_to_dom(config, main_options, module_prefixes)
         outfile = open(config["output_config_path"], "w")
         outfile.write(document.toprettyxml("    "))
         outfile.close()
 
-    # Handle architecture after writing the default.
+    # Handle architecture after writing the default, so the arch
+    # doesn't show up in the configuration unless explicitly added.
 
     if not config.has_key("arch"):
         arch_f = os.popen("uname -a")
