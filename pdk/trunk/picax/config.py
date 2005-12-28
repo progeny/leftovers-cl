@@ -366,8 +366,16 @@ def _parse_component(this_config, component, options, sub_prefixes = ()):
 
     media_meta = dict([(x[1], component.meta[x])
                        for x in component.meta if x[0] == std_prefix])
+
+    # Separate out the repository information, and save the rest
+    # into the configuration dictionary.
+
     for metakey in media_meta:
-        this_config[metakey] = media_meta[metakey]
+        if metakey == "repository":
+            (distro, section) = media_meta[metakey].split(":")
+            this_config["repository_list"].append((distro, section))
+        else:
+            this_config[metakey] = media_meta[metakey]
 
     # Load module metadata.
 
@@ -381,10 +389,20 @@ def _parse_component(this_config, component, options, sub_prefixes = ()):
         else:
             this_config[mod_config_key] = moditems
 
-    # Return "leftover arguments" containing the directory to use.
-    # For PDK, this should be the repogen destination.
+    # Build a blank subprefix dictionary.  This is necessary to clue
+    # _interpret_args() to parse and fill out a module's configuration,
+    # whether or not there are actual configuration items in the
+    # component for the module.
 
-    return [os.getcwd() + "/repo"]
+    submod_config = {}
+    for mod in submod_list:
+        submod_config[mod] = []
+
+    # Return "leftover arguments".  Here, this includes the blank
+    # submodules lists and the path to the repository, which is
+    # always the repository created by repogen.
+
+    return ([os.getcwd() + "/repo"], submod_config)
 
 def _interpret_args(this_config, subprefix_arglist, arglist):
     if os.environ.has_key("PICAX_DEBUG"):
@@ -482,7 +500,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5271 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5272 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."
@@ -591,9 +609,10 @@ def handle_args(arglist = None, component = None):
         # Component configuration.  Simple, because there's only
         # one source for configuration.
 
-        remaining = _parse_component(config, component, main_options,
-                                     module_prefixes)
-        subprefix_arglist = []
+        (remaining, subprefix_arglist) = _parse_component(config,
+                                                          component,
+                                                          main_options,
+                                                          module_prefixes)
 
     # Do some interpretation and sanity-checking of the configuration.
 
