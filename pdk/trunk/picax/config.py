@@ -185,18 +185,18 @@ def _get_module_options(prefix):
 def _init():
     "Return a blank, initialized config dictionary."
 
-    config = { "repository_list": [],
+    conf = { "repository_list": [],
                "debug": False }
 
     if os.environ.has_key("TMPDIR"):
-        config["temp_dir"] = os.environ["TMPDIR"]
+        conf["temp_dir"] = os.environ["TMPDIR"]
     else:
-        config["temp_dir"] = "/tmp"
+        conf["temp_dir"] = "/tmp"
 
     if os.environ.has_key("PICAX_DEBUG"):
-        config["debug"] == True
+        conf["debug"] == True
 
-    return config
+    return conf
 
 def _dom_to_config(this_config, topnode, options, prefixes = ()):
     for child in topnode.childNodes:
@@ -350,7 +350,7 @@ def _parse_args(this_config, arglist, options, sub_prefixes = ()):
 
     return (temp_arglist, subprefix_arglist)
 
-def _parse_component(this_config, component, options, sub_prefixes = ()):
+def _parse_component(this_config, component, dummy, sub_prefixes = ()):
     "Read configuration data from component metadata."
 
     std_prefix = "mediagen"
@@ -368,7 +368,10 @@ def _parse_component(this_config, component, options, sub_prefixes = ()):
                        for x in component.meta if x[0] == std_prefix])
 
     # Separate out the repository information, and save the rest
-    # into the configuration dictionary.
+    # into the configuration dictionary.  At some point, we should
+    # validate the configuration items against the options list,
+    # which is passed in the 'dummy' parameter above to keep
+    # pylint quiet.
 
     for metakey in media_meta:
         if metakey == "repository":
@@ -500,7 +503,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5272 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5274 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."
@@ -587,7 +590,8 @@ def handle_args(arglist = None, component = None):
         cmdline_config = _init()
         xml_config = cmdline_config.copy()
 
-        (remaining, subprefix_arglist) = _parse_args(cmdline_config, arglist,
+        (remaining, subprefix_arglist) = _parse_args(cmdline_config,
+                                                     arglist,
                                                      main_options,
                                                      module_prefixes)
 
@@ -597,7 +601,8 @@ def handle_args(arglist = None, component = None):
                     cmdline_config["input_config_path"])
             except:
                 raise ConfigError, "cannot parse XML configuration file"
-            xml_config = _dom_to_config(xml_config, document.documentElement,
+            xml_config = _dom_to_config(xml_config,
+                                        document.documentElement,
                                         main_options, module_prefixes)
             config.update(xml_config)
 

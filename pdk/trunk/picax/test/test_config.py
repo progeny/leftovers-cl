@@ -320,6 +320,7 @@ class TestComponentMeta(ConfigComponentBaseHarness):
 """
 
     def testLoadComponent(self):
+        "Test that component configuration can be loaded."
         picax.config.handle_args(component = self.component)
 
         conf = picax.config.get_config()
