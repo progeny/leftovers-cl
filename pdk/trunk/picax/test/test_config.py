@@ -20,6 +20,7 @@
 
 import os
 import unittest
+import pdk.component
 import picax.config
 
 class ConfigBaseHarness(unittest.TestCase):
@@ -57,6 +58,33 @@ class ConfigFileBaseHarness(ConfigBaseHarness):
         for fn in (self.test_fn, self.test_out_fn):
             if os.path.exists(fn):
                 os.unlink(fn)
+
+class ConfigComponentBaseHarness(ConfigBaseHarness):
+    """Shared base for tests requiring PDK component descriptor metadata
+    for configuration.  Set self.xml_text to the contents of the
+    component descriptor file to use for the tests."""
+
+    xml_text = ""
+
+    def setUp(self):
+        "Set the tests up with a component descriptor."
+
+        self.component_name = "test.xml"
+
+        f = open(self.component_name, "w")
+        f.write(self.xml_text)
+        f.close()
+
+        desc = pdk.component.ComponentDescriptor(self.component_name)
+        self.component = desc.load(None)
+
+    def tearDown(self):
+        "Delete the components generated from the tests."
+
+        ConfigBaseHarness.tearDown(self)
+
+        if os.path.exists(self.component_name):
+            os.unlink(self.component_name)
 
 class TestCommandLine(ConfigBaseHarness):
     "Test command-line parsing and most options settings."
@@ -277,3 +305,29 @@ class TestRepoMissingInFile(TestBrokenConfigFile):
 </picaxconfig>
 """
     fail_msg = "No repositories defined."
+
+class TestComponentMeta(ConfigComponentBaseHarness):
+    """Test that configuration can be loaded properly from a component
+    descriptor."""
+
+    xml_text = """<?xml version='1.0' encoding='utf-8'?>
+<component>
+  <meta>
+    <mediagen.repository>foo:bar</mediagen.repository>
+    <mediagen.media_component>cd</mediagen.media_component>
+  </meta>
+</component>
+"""
+
+    def testLoadComponent(self):
+        picax.config.handle_args(component = self.component)
+
+        conf = picax.config.get_config()
+        self.failUnless(len(conf.keys()),
+                        "size of configuration dictionary is zero")
+        self.failUnless(conf["repository_list"][0] == ("foo", "bar"),
+                        "wrong repo: distro %s, section %s"
+                        % conf["repository_list"][0])
+        self.failUnless(conf["dest_path"][-6:] == "images",
+                        "wrong destination path: %s"
+                        % (conf["dest_path"],))
