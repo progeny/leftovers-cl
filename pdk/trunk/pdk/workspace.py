@@ -451,12 +451,6 @@ def mediagen(args):
     picax.config.handle_args(component = comp)
 
     picax_conf = picax.config.get_config()
-    if args.opts.output_dest:
-        conf["base_path"] = pjoin(
-            ws.location, ws.reorient_filename(args.opts.output_dest))
-    else:
-        conf["base_path"] = pjoin(ws.location, 'repo')
-
     picax.apt.init()
     (package_list, source_list) = \
         picax.package.get_all_distro_packages()
@@ -467,7 +461,7 @@ def mediagen(args):
 
     for part in range(0, len(package_group)):
         current_group = package_group[part]
-        top_path = "%s/bin%d" % (conf["dest_path"], part + 1)
+        top_path = "%s/bin%d" % (picax_conf["dest_path"], part + 1)
         newrepo = picax.newrepo.NewRepository(current_group, top_path)
         newrepo.write_repo()
 
