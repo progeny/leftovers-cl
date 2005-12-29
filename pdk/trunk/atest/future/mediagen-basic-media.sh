@@ -30,7 +30,9 @@ cat >distro.xml <<EOF
 <?xml version="1.0"?>
 <component>
   <meta>
-    <media>cd</media>
+    <mediagen.media>cd</mediagen.media>
+    <mediagen.repository>distro:main</mediagen.repository>
+    <mediagen.source>immediate</mediagen.source>
   </meta>
   <contents>
     <component>progeny.com/apache.xml</component>
