@@ -435,6 +435,45 @@ def mediagen(args):
     Generate media for a linux product.
     """
 
+    import picax.config
+    import picax.apt
+    import picax.package
+    import picax.installer
+    import picax.order
+    import picax.split
+    import picax.newrepo
+    import picax.media
+
+    ws = current_workspace()
+    product_file = args.get_one_reoriented_file(ws)
+    desc = ws.get_component_descriptor(product_file)
+    comp = desc.load(ws.cache)
+    picax.config.handle_args(component = comp)
+
+    picax_conf = picax.config.get_config()
+    if args.opts.output_dest:
+        conf["base_path"] = pjoin(
+            ws.location, ws.reorient_filename(args.opts.output_dest))
+    else:
+        conf["base_path"] = pjoin(ws.location, 'repo')
+
+    picax.apt.init()
+    (package_list, source_list) = \
+        picax.package.get_all_distro_packages()
+    first_part_space = picax.installer.install()
+    order_list = picax.order.order(package_list)
+    package_group = picax.split.split(order_list, package_list,
+                                      source_list, first_part_space)
+
+    for part in range(0, len(package_group)):
+        current_group = package_group[part]
+        top_path = "%s/bin%d" % (conf["dest_path"], part + 1)
+        newrepo = picax.newrepo.NewRepository(current_group, top_path)
+        newrepo.write_repo()
+
+    picax.installer.post_install()
+    picax.media.create_media()
+
 mediagen = make_invokable(mediagen)
 
 def add(args):
