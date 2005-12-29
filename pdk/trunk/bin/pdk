@@ -60,6 +60,7 @@ class Pdk(command_base.CmdBase):
     do_cat = LazyModuleRef('pdk.workspace', 'cat')
     ##do_checkin = LazyModuleRef('pdk.version_control', 'checkin')
     do_repogen = LazyModuleRef('pdk.workspace','repogen')
+    do_mediagen = LazyModuleRef('pdk.workspace', 'mediagen')
     do_dumpmeta = LazyModuleRef('pdk.workspace', 'dumpmeta')
     do_semdiff = LazyModuleRef('pdk.workspace', 'semdiff')
     do_resolve = LazyModuleRef('pdk.workspace', 'resolve')

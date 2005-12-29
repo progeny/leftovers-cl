@@ -429,6 +429,14 @@ def repogen(args):
 
 repogen = make_invokable(repogen, 'output-dest')
 
+def mediagen(args):
+    """usage: pdk mediagen COMPONENT
+
+    Generate media for a linux product.
+    """
+
+mediagen = make_invokable(mediagen)
+
 def add(args):
     """usage: pdk add FILES
 
