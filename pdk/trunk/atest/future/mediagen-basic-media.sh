@@ -34,7 +34,6 @@ cat >distro.xml <<EOF
   </meta>
   <contents>
     <component>progeny.com/apache.xml</component>
-    <component>progeny.com/time.xml</component>
   </contents>
 </component>
 EOF
