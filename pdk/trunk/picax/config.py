@@ -350,7 +350,7 @@ def _parse_args(this_config, arglist, options, sub_prefixes = ()):
 
     return (temp_arglist, subprefix_arglist)
 
-def _parse_component(this_config, component, dummy, sub_prefixes = ()):
+def _parse_component(this_config, component, options, sub_prefixes = ()):
     "Read configuration data from component metadata."
 
     std_prefix = "mediagen"
@@ -369,16 +369,15 @@ def _parse_component(this_config, component, dummy, sub_prefixes = ()):
 
     # Separate out the repository information, and save the rest
     # into the configuration dictionary.  At some point, we should
-    # validate the configuration items against the options list,
-    # which is passed in the 'dummy' parameter above to keep
-    # pylint quiet.
+    # validate the configuration items against the options list.
 
     for metakey in media_meta:
         if metakey == "repository":
             (distro, section) = media_meta[metakey].split(":")
             this_config["repository_list"].append((distro, section))
         else:
-            this_config[metakey] = media_meta[metakey]
+            configkey = options[metakey]["config-key"]
+            this_config[configkey] = media_meta[metakey]
 
     # Load module metadata.
 
@@ -503,7 +502,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5274 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5279 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."
