@@ -43,6 +43,6 @@ EOF
 pdk repogen distro.xml
 pdk mediagen distro.xml
 
-EXPECTED_MD5="No MD5 expected yet."
-GEN_MD5=`isoinfo -i images/img-bin1.iso -f -J | sort | md5sum`
+EXPECTED_MD5="d638b0f010c1f0e8ec05fa0b1ba2282e"
+GEN_MD5=`isoinfo -i images/img-bin1.iso -fJ | sort | md5sum | awk '{print $1}'`
 test ${GEN_MD5} = ${EXPECTED_MD5} || fail "Image contents different than expected"
