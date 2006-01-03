@@ -38,12 +38,14 @@ def build_tree(parent, element):
 
     Actually builds the tree represented by the file contents.
     '''
-    if len(element):
-        if element[0].tag == '_':
+    children = [ e for e in element if isinstance(e.tag, basestring) ]
+    if children:
+        if children[0].tag == '_':
             container = []
         else:
             container = {}
-        for child in element:
+
+        for child in children:
             build_tree(container, child)
             data = container
     else:

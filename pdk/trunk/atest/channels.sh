@@ -20,6 +20,8 @@
 # $Progeny$
 #
 # Try to update from channels of various types.
+#
+# Also test a regression where comments in channels.xml would bomb pdk.
 
 . atest/test_lib.sh
 
@@ -57,6 +59,7 @@ pdk repogen product.xml
 cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
+  <!-- This comment stands to trigger an old bug. -->
   <local>
     <type>dir</type>
     <path>repo/pool</path>
