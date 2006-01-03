@@ -478,8 +478,17 @@ class OutsideWorldFactory(object):
                     message = "path in channels.xml must end in a slash"
                     raise InputError, message
                 dist = data_dict['dist']
-                components = data_dict['components'].split()
-                archs = data_dict['archs'].split()
+                nodists = dist[-1] == '/'
+                if nodists:
+                    components = ['']
+                    if 'archs' in data_dict:
+                        archs = data_dict['archs'].split()
+                    if not archs:
+                        archs = ('binary', 'source')
+                else:
+                    components = data_dict['components'].split()
+                    archs = data_dict['archs'].split()
+
                 for component in components:
                     for arch in archs:
                         # note that '/debian-installer' is treated as
@@ -499,8 +508,15 @@ class OutsideWorldFactory(object):
                             else:
                                 strategy = AptDebBinaryStrategy(path)
 
-                        parts = [path[:-1], 'dists', dist, component,
+                        if nodists:
+                            arch_part = ''
+                            dists_part = ''
+                        else:
+                            dists_part = 'dists'
+
+                        parts = [path[:-1], dists_part, dist, component,
                                  arch_part, filename]
+                        parts = [ p for p in parts if p ]
                         full_path = '/'.join(parts)
                         channel_file = self.get_channel_file(full_path)
                         yield AptDebSection(full_path, channel_file,
