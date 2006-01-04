@@ -33,6 +33,7 @@ cat >distro.xml <<EOF
     <mediagen.media>cd</mediagen.media>
     <mediagen.repository>distro:main</mediagen.repository>
     <mediagen.source>immediate</mediagen.source>
+    <mediagen.no-debootstrap>true</mediagen.no-debootstrap>
   </meta>
   <contents>
     <component>progeny.com/apache.xml</component>
@@ -43,6 +44,37 @@ EOF
 pdk repogen distro.xml
 pdk mediagen distro.xml
 
-EXPECTED_MD5="d638b0f010c1f0e8ec05fa0b1ba2282e"
-GEN_MD5=`isoinfo -i images/img-bin1.iso -fJ | sort | md5sum | awk '{print $1}'`
-test ${GEN_MD5} = ${EXPECTED_MD5} || fail "Image contents different than expected"
+isoinfo -i images/img-bin1.iso -fJ | LANG=C sort >iso-list.txt
+
+diff -u - iso-list.txt <<EOF
+/TRANS.TBL
+/dists
+/dists/TRANS.TBL
+/dists/distro
+/dists/distro/Release
+/dists/distro/TRANS.TBL
+/dists/distro/main
+/dists/distro/main/TRANS.TBL
+/dists/distro/main/binary-i386
+/dists/distro/main/binary-i386/Packages
+/dists/distro/main/binary-i386/Packages.gz
+/dists/distro/main/binary-i386/Release
+/dists/distro/main/binary-i386/TRANS.TBL
+/dists/distro/main/source
+/dists/distro/main/source/Release
+/dists/distro/main/source/Sources
+/dists/distro/main/source/Sources.gz
+/dists/distro/main/source/TRANS.TBL
+/pool
+/pool/TRANS.TBL
+/pool/main
+/pool/main/TRANS.TBL
+/pool/main/a
+/pool/main/a/TRANS.TBL
+/pool/main/a/apache2
+/pool/main/a/apache2/TRANS.TBL
+/pool/main/a/apache2/apache2-common_2.0.53-5_i386.deb
+/pool/main/a/apache2/apache2_2.0.53-5.diff.gz
+/pool/main/a/apache2/apache2_2.0.53-5.dsc
+/pool/main/a/apache2/apache2_2.0.53.orig.tar.gz
+EOF
