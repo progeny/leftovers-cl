@@ -368,6 +368,13 @@ class command_args_spec(object):
                    default = False,
                    help = "Show unchanged items in report.")
 
+            elif item == 'force':
+                op('-f', '--force',
+                   action = "store_true",
+                   dest = 'force',
+                   default = False,
+                   help = "Force the operation.")
+
             else:
                 assert False, "Unknown command line specification. '%s'" \
                        % item
@@ -487,12 +494,15 @@ def remove(args):
 
     Remove files from version control. The removal is essentially
     noted in the changeset of the next commit.
+
+    Use of the force option also unlinks the file. Without it, the file
+    must have already been unlinked or the command will fail.
     """
     ws = current_workspace()
     files = args.get_reoriented_files(ws, 0)
-    return ws.remove(files)
+    return ws.remove(files, args.opts.force)
 
-remove = make_invokable(remove)
+remove = make_invokable(remove, 'force')
 
 def cat(args):
     """usage: pdk cat FILE
@@ -883,11 +893,11 @@ class _Workspace(object):
         """
         return self.vc.add(files)
 
-    def remove(self, files):
+    def remove(self, files, force):
         """
         Remove an item from local version control
         """
-        return self.vc.remove(files)
+        return self.vc.remove(files, force)
 
     def cat(self, name):
         """

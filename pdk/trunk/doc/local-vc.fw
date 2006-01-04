@@ -322,6 +322,34 @@ EOF
     diff -u - ../output.txt <<EOF
 EOF
 
+    # Wild corner case: Remove a file and delete the directory it is
+    # in, then commit.
+
+    mkdir somedir
+    echo info >>somedir/delete-me
+    pdk commit -m 'put one file in a directory' somedir/delete-me
+    rm -r somedir
+    pdk remove somedir/delete-me
+    pdk commit -m 'remove the file and the directory at the same time'
+    pdk status >../output.txt
+    diff -u - ../output.txt <<EOF
+EOF
+
+    # Use of the '-f' force option:
+
+    echo info >>force-remove
+    pdk commit -m 'Before force remove' force-remove
+    pdk remove -f force-remove
+    [ -e force-remove ] && fail 'pdk remove -f should unlink file'
+    pdk status >../output.txt
+    diff -u - ../output.txt <<EOF
+D@^H(09)force-remove
+EOF
+    pdk commit -m 'After force remove'
+    pdk status >../output.txt
+    diff -u - ../output.txt <<EOF
+EOF
+
 popd
 
 @}

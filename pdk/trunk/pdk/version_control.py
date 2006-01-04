@@ -640,16 +640,19 @@ class VersionControl(object):
         add_remove.add(files)
         add_remove.save()
 
-    def remove(self, files):
+    def remove(self, files, force):
         """
-        Initialize version control
+        Remove files from version control.
         """
         self.assert_no_dirs(files)
         self.assert_known(files, True)
         for name in files:
             if os.path.exists(pjoin(self.work_dir, name)):
-                message = 'File %s exists. Remove it and retry.' % name
-                raise SemanticError(message)
+                if force:
+                    os.unlink(name)
+                else:
+                    message = 'File %s exists. Remove it and retry.' % name
+                    raise SemanticError(message)
         add_remove = self.get_add_remove()
         add_remove.remove(files)
         add_remove.save()
@@ -685,6 +688,10 @@ class VersionControl(object):
 
         if not self.is_new():
             for item in self.git.iter_ls_tree('HEAD', []):
+                # don't bother verifying directories
+                mode = item[0]
+                if mode.startswith('04'):
+                    continue
                 filename = item[3]
                 if add_remove.get_status(filename):
                     continue
