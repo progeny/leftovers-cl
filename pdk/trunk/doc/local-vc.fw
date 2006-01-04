@@ -395,6 +395,12 @@ EOF
 M@^H(09)file-b
 ?@^H(09)file-d
 EOF
+    pdk commit -m 'Commit'
+
+    # corner case: revert immediately after remoove
+    rm file-b
+    pdk remove file-b
+    pdk revert file-b
 
 popd
 @}

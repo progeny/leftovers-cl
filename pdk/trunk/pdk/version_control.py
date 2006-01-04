@@ -662,6 +662,10 @@ class VersionControl(object):
         Initialize version control
         """
         add_remove = self.get_add_remove()
+        removed_files = add_remove.get_removed_files()
+        for filename in files:
+            if filename in removed_files:
+                add_remove.clear([filename])
         self.assert_known(files, True)
         add_remove.clear(files)
         self.update_index(add_remove, files, self.alt_git)
