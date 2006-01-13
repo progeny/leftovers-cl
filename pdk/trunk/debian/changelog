@@ -1,3 +1,10 @@
+pdk (0.0.27) unstable; urgency=low
+
+  * Try to make pdk push more reliably pull remote cache lists.
+  * Update to work with newer Git.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu, 12 Jan 2006 16:23:31 -0500
+
 pdk (0.0.26) unstable; urgency=low
 
   * Add mediagen.
