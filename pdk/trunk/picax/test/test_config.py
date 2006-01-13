@@ -315,6 +315,7 @@ class TestComponentMeta(ConfigComponentBaseHarness):
   <meta>
     <mediagen.repository>foo:bar</mediagen.repository>
     <mediagen.media>cd</mediagen.media>
+    <mediagen.media-image-size>650</mediagen.media-image-size>
   </meta>
 </component>
 """

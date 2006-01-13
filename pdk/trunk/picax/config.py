@@ -375,6 +375,8 @@ def _parse_component(this_config, component, options, sub_prefixes = ()):
         if metakey == "repository":
             (distro, section) = media_meta[metakey].split(":")
             this_config["repository_list"].append((distro, section))
+        elif "-" in metakey and metakey.split("-", 1)[0] in submod_list:
+            pass
         else:
             configkey = options[metakey]["config-key"]
             this_config[configkey] = media_meta[metakey]
@@ -502,7 +504,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5279 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5300 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."
