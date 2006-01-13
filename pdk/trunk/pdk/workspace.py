@@ -1080,6 +1080,7 @@ class Net(object):
                 handle.write(frame)
             handle.close()
             os.utime(section.channel_file, (new_mtime, new_mtime))
+            self.ws.world.index_world_data()
         elif op == 'up-to-date':
             self.framer.assert_end_of_stream()
         else:
@@ -1271,10 +1272,10 @@ class Conveyor(object):
         except CommitNotFound:
             remote_commit_ids = []
         index = self.world.index
-        remote_blob_ids = index.get_blob_ids(self.upstream_name)
         net = Net(framer, self.workspace)
         net.verify_protocol()
         net.send_pull_blob_list(self.channel)
+        remote_blob_ids = index.get_blob_ids(self.upstream_name)
         net.send_push_blobs(remote_blob_ids)
         try:
             net.send_push_pack(head_id, remote_commit_ids)

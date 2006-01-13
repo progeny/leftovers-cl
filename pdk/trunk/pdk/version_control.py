@@ -590,7 +590,9 @@ class VersionControl(object):
         Populate self.vc_dir with a git skeleton.
         """
         self.git.run_init_db()
-        os.makedirs(pjoin(self.vc_dir, 'remotes'))
+        remotes_dir = pjoin(self.vc_dir, 'remotes')
+        if not os.path.exists(remotes_dir):
+            os.makedirs(remotes_dir)
         os.makedirs(self.priv_dir)
         print >> open(self.exclude, 'w'), 'etc/*'
 

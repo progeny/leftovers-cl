@@ -30,6 +30,7 @@ verify_new_workspace() {
     diff -u - actual.txt <<EOF
 ./.git
 ./etc/git/HEAD
+./etc/git/config
 ./etc/git/description
 ./etc/git/info/exclude
 ./etc/schema
