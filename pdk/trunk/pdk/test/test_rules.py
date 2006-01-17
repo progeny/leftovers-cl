@@ -26,8 +26,8 @@ class ShamAction(object):
     def __init__(self):
         self.calls = []
 
-    def execute(self, entity, entities):
-        self.calls.append((entity, entities))
+    def execute(self, entity):
+        self.calls.append(entity)
 
 class TestRuleIdentities(Test):
     def test_field_match_condition(self):
@@ -117,9 +117,9 @@ class ConditionsAndRulesFixture(Test):
         sham1 = ShamAction()
         sham2 = ShamAction()
         actions = rules.CompositeAction([sham1, sham2])
-        actions.execute('a', 'b')
-        actions.execute('d', 'e')
-        expected_calls = [ ('a', 'b'), ('d', 'e') ]
+        actions.execute('a')
+        actions.execute('b')
+        expected_calls = [ 'a', 'b' ]
         self.assert_equals(expected_calls, sham1.calls)
         self.assert_equals(expected_calls, sham2.calls)
 
@@ -127,13 +127,13 @@ class ConditionsAndRulesFixture(Test):
         rule = rules.Rule(self.and_condition, None)
         assert not rule.evaluate_metacondition()
         rule.action = ShamAction()
-        rule.fire(self.b2, 'b')
+        rule.fire(self.b2)
         expected = []
         self.assert_equal(expected, rule.action.calls)
         assert not rule.evaluate_metacondition()
         rule.action = ShamAction()
-        rule.fire(self.a1, 'b')
-        expected = [ (self.a1, 'b') ]
+        rule.fire(self.a1)
+        expected = [ self.a1 ]
         self.assert_equal(expected, rule.action.calls)
         assert rule.evaluate_metacondition()
 
@@ -148,16 +148,16 @@ class ConditionsAndRulesFixture(Test):
 
         rule_a.action = ShamAction()
         rule_b.action = ShamAction()
-        composite.fire(self.a1, 'b')
-        expected_data = [ (self.a1, 'b') ]
+        composite.fire(self.a1)
+        expected_data = [ self.a1 ]
         self.assert_equal(expected_data, rule_a.action.calls)
         self.assert_equal(expected_empty, rule_b.action.calls)
         assert not composite.evaluate_metacondition()
 
         rule_a.action = ShamAction()
         rule_b.action = ShamAction()
-        composite.fire(self.b2, 'b')
-        expected_data = [ (self.b2, 'b') ]
+        composite.fire(self.b2)
+        expected_data = [ self.b2 ]
         self.assert_equal(expected_empty, rule_a.action.calls)
         self.assert_equal(expected_data, rule_b.action.calls)
         assert composite.evaluate_metacondition()

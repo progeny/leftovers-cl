@@ -64,8 +64,8 @@ class TestComponentTreeBuilder(Test):
 </deb>
 ''')
         ref = builder.build_package_ref(element)
-        assert not ref.blob_id
-        self.assert_equal('deb', ref.package_type.type_string)
+        assert not ref.reference.blob_id
+        self.assert_equal('deb', ref.reference.package_type.type_string)
         self.assert_rule_matches([('pdk', 'name', 'hello'),
                                   ('pdk', 'type', 'deb')],
                                  [('pdk', 'ice', 'cube')], [], ref.rule)
@@ -81,8 +81,8 @@ class TestComponentTreeBuilder(Test):
 </deb>
 ''')
         ref = builder.build_package_ref(element)
-        self.assert_equal('deb', ref.package_type.type_string)
-        self.assert_equal('md5:aaa', ref.blob_id)
+        self.assert_equal('deb', ref.reference.package_type.type_string)
+        self.assert_equal('md5:aaa', ref.reference.blob_id)
         self.assert_rule_matches([('pdk', 'blob-id', 'md5:aaa'),
                                   ('pdk', 'name', 'hello'),
                                   ('pdk', 'type', 'deb')],
@@ -95,8 +95,8 @@ class TestComponentTreeBuilder(Test):
         builder = ComponentDescriptor(None)
         name_element = XML('<deb>some-name</deb>')
         ref = builder.build_package_ref(name_element)
-        assert not ref.blob_id
-        self.assert_equal('deb', ref.package_type.type_string)
+        assert not ref.reference.blob_id
+        self.assert_equal('deb', ref.reference.package_type.type_string)
         self.assert_rule_matches([('pdk', 'name', 'some-name'),
                                   ('pdk', 'type', 'deb')],
                                  [], [], ref.rule)
@@ -113,8 +113,8 @@ class TestComponentTreeBuilder(Test):
 </deb>
 ''')
         ref = builder.build_package_ref(element)
-        assert not ref.blob_id
-        self.assert_equal('deb', ref.package_type.type_string)
+        assert not ref.reference.blob_id
+        self.assert_equal('deb', ref.reference.package_type.type_string)
         self.assert_rule_matches([('pdk', 'name', 'hello'),
                                   ('pdk', 'type', 'deb')],
                                  [('pdk', 'ice', 'cube')],

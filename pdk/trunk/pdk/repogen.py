@@ -106,8 +106,8 @@ def compile_product(component_name, cache, repo_dir, get_desc):
         repo_type_string = contents['pdk', 'repo-type']
     else:
         try:
-            first_package = product.packages[0]
-        except IndexError:
+            first_package = product.iter_packages().next()
+        except StopIteration:
             message = 'The component given to repogen must have ' + \
                       'at least one package.'
             raise InputError(message)
@@ -640,19 +640,20 @@ class Compiler:
         if contents['apt-deb', 'split-apt-components']:
             # an apt splittable component should not directly reference
             # packages
-            if product.direct_packages:
+            if list(product.iter_direct_packages()):
                 raise InputError, 'No direct package references ' + \
                       'allowed with split-components is in effect'
             packages_dict = {}
             # sort packages belonging to various apt_components in a dict
             # keyed by apt component name
-            for apt_component in product.direct_components:
+            for apt_component in product.iter_direct_components():
                 apt_name = get_apt_component_name(apt_component.ref)
-                packages_dict[apt_name] = apt_component.packages
+                component_packages = list(apt_component.iter_packages())
+                packages_dict[apt_name] = component_packages
         else:
             # default behavior: dists/$compname/main .
             # see default suite value in contents above.
-            packages_dict = { 'main': product.packages }
+            packages_dict = { 'main': list(product.iter_packages()) }
 
 
         sections = packages_dict.keys()
@@ -685,7 +686,7 @@ class Compiler:
     def create_raw_package_dump_repo(self, component, dummy, repo_dir):
         """Link all the packages in the product to the repository."""
         os.mkdir(repo_dir)
-        for package in component.packages:
+        for package in component.iter_packages():
             os.link(self.cache.file_path(package.blob_id),
                     os.path.join(repo_dir, package.filename)
                     )
@@ -698,7 +699,7 @@ class Compiler:
 
         format = contents['pdk', 'format']
         lines = []
-        for package in component.packages:
+        for package in component.iter_packages():
             cache_location = self.cache.file_path(package.blob_id)
             overlaid_package = overlay_getitem(package, cache_location, '')
             lines.append(format % overlaid_package)

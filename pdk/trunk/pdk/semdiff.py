@@ -146,7 +146,7 @@ def filter_predicate(predicate):
 
 def get_joinable_meta_list(component):
     """Take meta and get an iterable suitable for feeding to list_merge."""
-    for package in component.direct_packages:
+    for package in component.iter_direct_packages():
         new_key = get_meta_key(package)
         for key, target in package.iteritems():
             domain, predicate = key
@@ -177,8 +177,8 @@ def filter_data(data, show_unchanged):
 
 def print_report(old_component, new_component, show_unchanged, printer):
     '''Print a human readable report diffing two components.'''
-    old_package_list = old_component.direct_packages
-    new_package_list = new_component.direct_packages
+    old_package_list = list(old_component.iter_direct_packages())
+    new_package_list = list(new_component.iter_direct_packages())
     diffs = iter_diffs(old_package_list, new_package_list)
     diffs_meta = iter_diffs_meta(old_component, new_component)
     data = filter_data(chain(diffs, diffs_meta), show_unchanged)

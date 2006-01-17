@@ -209,7 +209,7 @@ class Rule(object):
         '''Evalute the metacondition with self.'''
         return self.metacondition.evaluate(self)
 
-    def fire(self, entity, entities):
+    def fire(self, entity):
         '''If the condition matches, yield a sequence of 3-tuples.
         The first element of the tuple will be the provided
         object. The second and third correspond to the fields of the
@@ -217,7 +217,7 @@ class Rule(object):
         '''
         if self.condition.evaluate(entity):
             self.success_count += 1
-            self.action.execute(entity, entities)
+            self.action.execute(entity)
 
     def __str__(self):
         text = "where " + str(self.condition)
@@ -237,12 +237,12 @@ class RuleSystem(object):
                 return False
         return True
 
-    def fire(self, entity, entities):
+    def fire(self, entity):
         '''Fire all rules, passing the given object to each.
         Chains all the yielded statements into a single iterator.
         '''
         for rule in self.rules:
-            rule.fire(entity, entities)
+            rule.fire(entity)
 
     def __str__(self):
         return " AND ".join( [ str(r) for r in self.rules ])
@@ -252,10 +252,10 @@ class CompositeAction(object):
     def __init__(self, actions):
         self.actions = actions
 
-    def execute(self, entity, entities):
+    def execute(self, entity):
         '''Execute all the actions in sequence.'''
         for action in self.actions:
-            action.execute(entity, entities)
+            action.execute(entity)
 
     def __str__(self):
         return str(self.actions)

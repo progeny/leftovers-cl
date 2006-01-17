@@ -76,10 +76,9 @@ def audit(argv):
         # Get the set of packages in the component
         descriptor = ComponentDescriptor(component_name)
         component = descriptor.load(my_cache)
-        set_of_packages = component.packages
 
         # predict expected blob_ids and headers
-        for package in set_of_packages:
+        for package in component.iter_packages():
             _note_blob_id(package.blob_id)
             arbiter.predict(InCache(package.blob_id + '.header'),
                             True, component_name)
@@ -88,14 +87,14 @@ def audit(argv):
                 _note_blob_id(blob_id)
 
         # predict upcoming source packages
-        for package in set_of_packages:
+        for package in component.iter_packages():
             if package.role == 'binary':
                 fact = HasSource(package.format, package.pdk.sp_name,
                                  package.pdk.sp_version.full_version)
                 arbiter.predict(fact, True, component_name)
 
         # warrant source packages found
-        for package in set_of_packages:
+        for package in component.iter_packages():
             if package.role == 'source':
                 fact = HasSource(package.format, package.name,
                                  package.version.full_version)

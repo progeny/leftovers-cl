@@ -20,21 +20,19 @@
 '''
 
 class Entities(dict):
-    '''A container class designed to hold entities and links between them.
-
-    The links attribute is an EntityLinks object.
-
-    No real checking is done to verify that all linked objects exist
-    or anything like that.
+    '''A container class designed to hold entities, keyed by type and id.
     '''
-    def __init__(self):
-        super(Entities, self).__init__()
-        self.links = EntityLinks()
 
 class Entity(dict):
     '''Represents a single entity.
 
     Keys are tuples of (domain, predicate).
+
+    The links attribute is a list to (type, id) tuples, referring to the
+    keys of entities stored in an Entities class.
+
+    No real checking is done to verify that all linked objects exist
+    or anything like that.
     '''
 
     # To keep performance in some situations snappy, we keep
@@ -45,11 +43,12 @@ class Entity(dict):
     # future. If a profiler indicates that the complexity is needless,
     # anyone may remove the optimization.
 
-    __slots__ = ('ent_type', '__ent_id', '__hash')
+    __slots__ = ('ent_type', '__ent_id', '__hash', 'links')
 
     def __init__(self, ent_type, ent_id):
         super(Entity, self).__init__()
         self.ent_type = ent_type
+        self.links = []
 
         # Initializing to make pylint happy.
         self.__ent_id = None
@@ -75,7 +74,3 @@ class Entity(dict):
             domain = key[0]
             if domain in domains:
                 yield key[1], value
-
-class EntityLinks(dict):
-    '''Holds links between entities.'''
-    pass

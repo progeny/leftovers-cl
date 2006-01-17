@@ -32,7 +32,7 @@ from pdk.util import write_pretty_xml, parse_xml, parse_domain, \
 from cElementTree import ElementTree, Element, SubElement
 from pdk.rules import Rule, RuleSystem, CompositeAction
 from pdk import rules
-from pdk.package import get_package_type
+from pdk.package import get_package_type, Package
 from pdk.exceptions import PdkException, InputError, SemanticError
 from pdk.meta import Entity, Entities
 from xml.parsers.expat import ExpatError
@@ -94,7 +94,7 @@ class ComponentDescriptor(object):
     def load_raw(self, cache):
         """Build up the raw component/package tree but don't fire any rules.
         """
-        component = Component(self.filename)
+        component = Component(self.filename, cache)
         field_names = ('id', 'name', 'description', 'requires', 'provides')
         for field_name in field_names:
             value = getattr(self, field_name)
@@ -102,27 +102,24 @@ class ComponentDescriptor(object):
 
         group_message = ""
         local_rules = []
-        for ref in self.contents:
+        all_rules = []
+        for stanza in self.contents:
             try:
-                if isinstance(ref, PackageReference):
-                    if ref.blob_id:
-                        refs = [ref] + ref.children
+                if isinstance(stanza, PackageStanza):
+                    if stanza.reference.blob_id:
+                        stanzas = [stanza] + stanza.children
                     else:
-                        local_rules.append(ref.rule)
-                        refs = ref.children
-                    for concrete_ref in refs:
-                        package = concrete_ref.load(cache)
-                        component.packages.append(package)
-                        component.direct_packages.append(package)
+                        local_rules.append(stanza.rule)
+                        stanzas = stanza.children
+                    for concrete_ref in stanzas:
                         local_rules.append(concrete_ref.rule)
-                elif isinstance(ref, ComponentReference):
-                    child_descriptor = ref.load(self.get_desc)
+                        contents = component.ordered_contents
+                        contents.append(concrete_ref.reference)
+                elif isinstance(stanza, ComponentReference):
+                    child_descriptor = stanza.load(self.get_desc)
                     child_component = child_descriptor.load_raw(cache)
-                    component.direct_components.append(child_component)
-                    component.components.append(child_component)
-                    component.components.extend(child_component.components)
-                    component.packages.extend(child_component.packages)
-                    component.rules.extend(child_component.rules)
+                    component.ordered_contents.append(child_component)
+                    all_rules.extend(child_component.system.rules)
                     component.entities.update(child_component.entities)
 
             except PdkException, local_message:
@@ -135,22 +132,19 @@ class ComponentDescriptor(object):
         if group_message:
             raise SemanticError(group_message)
 
-        component.rules.extend(local_rules)
+        all_rules.extend(local_rules)
+        component.system = RuleSystem(all_rules)
         component.entities.update(self.entities)
         return component
 
     def load(self, cache):
         """Instantiate a component object tree for this descriptor."""
         component = self.load_raw(cache)
-        system = RuleSystem(component.rules)
-
-        # fire rule on all packages
-        for package in component.packages:
-            system.fire(package, component.entities)
+        system = component.system
 
         # fire rule on all components
-        for decendent_component in component.components:
-            system.fire(decendent_component, component.entities)
+        for decendent_component in component.iter_components():
+            system.fire(decendent_component)
 
         # add local metadata last
         for domain, predicate, target in self.meta:
@@ -194,7 +188,7 @@ class ComponentDescriptor(object):
 
         # last, write the contents element
         for reference in self.contents:
-            if isinstance(reference, PackageReference):
+            if isinstance(reference, PackageStanza):
                 self.write_package_reference(contents_element, reference)
             elif isinstance(reference, ComponentReference):
                 component_element = SubElement(contents_element,
@@ -230,16 +224,16 @@ class ComponentDescriptor(object):
                 self.write_condition_fields(nested_element,
                                             condition)
 
-    def write_package_reference(self, parent, reference):
-        """Build elements for a single package reference."""
+    def write_package_reference(self, parent, stanza):
+        """Build elements for a single package stanza."""
         attributes = {}
-        if reference.blob_id:
-            attributes['ref'] = reference.blob_id
-        name = reference.package_type.type_string
+        if stanza.reference.blob_id:
+            attributes['ref'] = stanza.reference.blob_id
+        name = stanza.reference.package_type.type_string
         ref_element = SubElement(parent, name, attributes)
 
-        self.write_condition_fields(ref_element, reference.condition)
-        predicates = reference.predicates
+        self.write_condition_fields(ref_element, stanza.reference.condition)
+        predicates = stanza.predicates
         if predicates:
             meta_element = SubElement(ref_element, 'meta')
             for domain, predicate, target in predicates:
@@ -247,7 +241,7 @@ class ComponentDescriptor(object):
                 predicate_element = SubElement(meta_element, tag)
                 predicate_element.text = target
 
-        for inner_ref in reference.children:
+        for inner_ref in stanza.children:
             self.write_package_reference(ref_element, inner_ref)
 
 
@@ -257,7 +251,7 @@ class ComponentDescriptor(object):
         """
         logger = get_logger()
         unresolved = [r for r in self.contents 
-                       if isinstance(r,PackageReference) 
+                       if isinstance(r,PackageStanza) 
                          and r.is_abstract()
                       ]
         if unresolved:
@@ -265,9 +259,9 @@ class ComponentDescriptor(object):
                 'Unresolved references remain in %s' \
                 % self.filename
                 )
-            for reference in unresolved:
-                pkgtype = reference.package_type.type_string
-                condition = str(reference.rule)
+            for stanza in unresolved:
+                pkgtype = stanza.reference.package_type.type_string
+                condition = str(stanza.rule)
                 logger.warn(
                     "No %s %s" % (pkgtype, condition)
                 )
@@ -372,7 +366,7 @@ class ComponentDescriptor(object):
                 ghost_package = item.package
                 if child_condition.evaluate(ghost_package):
                     new_child_ref = \
-                        PackageReference.from_package(ghost_package)
+                        PackageStanza.from_package(ghost_package)
                     expected_filename = ghost_package.filename
                     found_filename = ghost_package.pdk.found_filename
                     if expected_filename != found_filename:
@@ -382,20 +376,20 @@ class ComponentDescriptor(object):
 
     def note_download_info(self, acquirer, extended_cache):
         '''Recursively traverse and note blob ids in the acquirer.'''
-        for ref in self.iter_full_package_refs():
-            if not ref.blob_id:
+        for stanza in self.iter_full_package_refs():
+            if not stanza.reference.blob_id:
                 continue
-            blob_id = ref.blob_id
+            blob_id = stanza.reference.blob_id
             acquirer.add_blob(blob_id)
             try:
-                package = ref.load(extended_cache)
+                package = stanza.load(extended_cache)
             except PackageNotFoundError:
                 continue
             for extra_blob_id, dummy, dummy in package.extra_files:
                 acquirer.add_blob(extra_blob_id)
 
-        for ref in self.iter_component_refs():
-            child_desc = ref.load(self.get_desc)
+        for stanza in self.iter_component_refs():
+            child_desc = stanza.load(self.get_desc)
             child_desc.note_download_info(acquirer, extended_cache)
 
     def iter_component_refs(self):
@@ -431,7 +425,7 @@ class ComponentDescriptor(object):
     def enumerate_package_refs(self):
         '''Yield all index, package_reference pairs in self.contents.'''
         for index, ref in enumerate(self.contents):
-            if isinstance(ref, PackageReference):
+            if isinstance(ref, PackageStanza):
                 yield index, ref
 
 
@@ -531,7 +525,7 @@ class ComponentDescriptor(object):
                     inner_condition = self.build_condition(element,
                                                            package_type)
                     condition.conditions.append(inner_condition)
-        ref = PackageReference(package_type, blob_id, condition, predicates)
+        ref = PackageStanza(package_type, blob_id, condition, predicates)
         ref.children = inner_refs
         ref.links = ref_links
         ref.unlinks = ref_unlinks
@@ -634,18 +628,15 @@ class Component(object):
     Do not mutate the fields of Component objects. They are meant to
     be used as hash 
     """
-    __slots__ = ('ref', 'type',
+    __slots__ = ('ref', 'cache', 'type', 'links',
                  'id', 'name', 'description', 'requires', 'provides',
-                 'packages', 'direct_packages',
-                 'components', 'direct_components', 'rules',
-                 'entities', 'meta')
+                 'ordered_contents', 'system', 'entities', 'meta')
     identity_fields = ('ref', 'type',
-                       'id', 'name', 'description', 'requires', 'provides',
-                       'direct_packages',
-                       'direct_components')
+                       'id', 'name', 'description', 'requires', 'provides')
 
-    def __init__(self, ref):
+    def __init__(self, ref, cache):
         self.ref = ref
+        self.cache = cache
         self.type = 'component'
 
         self.id = ''
@@ -653,14 +644,73 @@ class Component(object):
         self.description = ''
         self.requires = []
         self.provides = []
+        self.links = []
 
-        self.packages = []
-        self.components = []
-        self.direct_packages = []
-        self.direct_components = []
-        self.rules = []
+        self.ordered_contents = []
+        self.system = None
         self.entities = Entities()
         self.meta = {}
+
+    def get_ent_type(self):
+        '''Getter for virtual ent_type.'''
+        return self.type
+    ent_type = property(get_ent_type)
+
+    def get_ent_id(self):
+        '''Getter for virtal ent_id.'''
+        return self.ref
+    ent_id = property(get_ent_id)
+
+    def iter_contents(self):
+        '''Iterate over all the items in ordered_contents.'''
+        return self.iter_ordered_contents((Package, Component), True)
+
+    def iter_ordered_contents(self, classes, recursive, entities = None,
+                              system = None):
+        '''Iterate over ordered_contents and load objects as needed.
+
+        classes -       Only instantiate objects which would be instances
+                        of the given classes.
+        recursive -     True/False, recurse into child components.
+        entities -      Optional, an entities object for linking.
+        system -        Optional, a rule system to fire on packages.
+        '''
+        if not entities:
+            entities = self.entities
+        if not system:
+            system = self.system
+        for item in self.ordered_contents:
+            if Package in classes and isinstance(item, PackageReference):
+                package = item.load(self.cache)
+                system.fire(package)
+                yield package
+            elif isinstance(item, Component):
+                if Component in classes:
+                    yield item
+                if recursive:
+                    for inner_item in item.iter_ordered_contents(classes,
+                                                                 recursive,
+                                                                 entities,
+                                                                 system):
+                        yield inner_item
+
+    def iter_direct_packages(self):
+        '''Iterate over packages which are direct children.
+        '''
+        return self.iter_ordered_contents((Package,), False)
+
+    def iter_packages(self):
+        '''Iterate over all child packages of this component.
+        '''
+        return self.iter_ordered_contents((Package,), True)
+
+    def iter_direct_components(self):
+        '''Iterate over direct child components.'''
+        return self.iter_ordered_contents((Component,), False)
+
+    def iter_components(self):
+        '''Iterate over all child components.'''
+        return self.iter_ordered_contents((Component,), True)
 
     def _get_values(self):
         '''Return an immutable value representing the full identity.'''
@@ -713,14 +763,14 @@ def get_general_condition(package):
         condition.conditions.append(rules.fmc('pdk', 'arch', package.arch))
     return condition
 
-def get_child_condition(package, ref):
+def get_child_condition(package, stanza):
     """Get child condition data for any package."""
     condition_fn = get_child_condition_fn(package)
     child_condition = condition_fn(package)
     # Always pin the the child's parent to a single version.
     # Someday we may need a more sophisticated mechanism for RPM.
     # I'm just not sure. -dt
-    parent_condition = rules.ac([ ref.condition,
+    parent_condition = rules.ac([ stanza.reference.condition,
                                   rules.rc(eq, 'pdk', 'version',
                                            package.version) ])
     key_condition = child_condition.conditions[0]
@@ -740,27 +790,16 @@ def get_child_condition_fn(package):
 
 class PackageReference(object):
     '''Represents a concrete package reference.'''
-    def __init__(self, package_type, blob_id, condition, predicates):
+    def __init__(self, package_type, blob_id, condition):
         self.package_type = package_type
         self.blob_id = blob_id
         self.condition = condition
-        self.predicates = predicates
-        self.children = []
-        self.links = []
-        self.unlinks = []
-
-    def from_package(package):
-        '''Instantiate a reference for the given package.'''
-        fields = get_general_condition(package)
-        return PackageReference(package.package_type, package.blob_id,
-                                fields, [])
-    from_package = staticmethod(from_package)
 
     def load(self, cache):
         '''Load the package associated with this ref.'''
         type_string = self.package_type.type_string
         package = cache.load_package(self.blob_id, type_string)
-        if not(self.rule.condition.evaluate(package)):
+        if not(self.condition.evaluate(package)):
             message = 'Concrete package does not ' + \
                       'meet expected constraints: %s' \
                       % package.blob_id
@@ -769,7 +808,37 @@ class PackageReference(object):
 
     def is_abstract(self):
         '''Return true if this package reference is abstact.'''
-        return not (bool(self.blob_id) or bool(self.children))
+        return not bool(self.blob_id)
+
+class PackageStanza(object):
+    '''Represents a package stanza as found in a component descriptor.
+
+    This object may be somewhat recursive, as abstract stanza may also
+    contain concrete stanzas.
+    '''
+    __slots__ = ('reference', 'predicates', 'children', 'links', 'unlinks')
+    def __init__(self, package_type, blob_id, condition, predicates):
+        self.reference = PackageReference(package_type, blob_id,
+                                          condition)
+        self.predicates = predicates
+        self.children = []
+        self.links = []
+        self.unlinks = []
+
+    def from_package(package):
+        '''Instantiate a reference for the given package.'''
+        fields = get_general_condition(package)
+        return PackageStanza(package.package_type, package.blob_id,
+                                fields, [])
+    from_package = staticmethod(from_package)
+
+    def load(self, cache):
+        '''Load the package associated with this ref.'''
+        return self.reference.load(cache)
+
+    def is_abstract(self):
+        '''Return true if this package stanza is abstact.'''
+        return self.reference.is_abstract() and not bool(self.children)
 
     def get_condition_dict(self):
         '''Get a dictionary relating predicates to conditions.
@@ -781,7 +850,7 @@ class PackageReference(object):
         __getitem__ work.
         '''
         condition_dict = {}
-        for condition in self.condition.conditions:
+        for condition in self.reference.condition.conditions:
             if hasattr(condition, 'predicate'):
                 key = (condition.domain, condition.predicate)
                 condition_dict[key] = condition
@@ -824,13 +893,14 @@ class PackageReference(object):
         '''Construct a rule object for this reference.'''
         rule_condition = rules.ac([])
         rule_conditions = rule_condition.conditions
-        if self.blob_id:
-            blob_id_condition = rules.fmc('pdk', 'blob-id', self.blob_id)
+        if self.reference.blob_id:
+            blob_id_condition = rules.fmc('pdk', 'blob-id',
+                                          self.reference.blob_id)
             rule_conditions.append(blob_id_condition)
 
-        rule_conditions.extend(self.condition.conditions)
-        rule_conditions.append(rules.fmc('pdk', 'type',
-                                         self.package_type.type_string))
+        rule_conditions.extend(self.reference.condition.conditions)
+        type_string = self.reference.package_type.type_string
+        rule_conditions.append(rules.fmc('pdk', 'type', type_string))
         actions = [ ActionMetaSet(*p) for p in self.predicates ]
         actions += [ ActionLinkEntities(*p) for p in self.links ]
         actions += [ ActionUnlinkEntities(*p) for p in self.unlinks ]
@@ -840,11 +910,11 @@ class PackageReference(object):
 
     def __identity_tuple(self):
         '''Return a tuple to help cmp and hash handle this object.'''
-        return self.package_type.format_string, \
-               self.package_type.role_string, \
-               self.package_type.type_string, \
-               self.name, self.version, self.arch, self.blob_id, \
-               self.condition, tuple(self.predicates), \
+        return self.reference.package_type.format_string, \
+               self.reference.package_type.role_string, \
+               self.reference.package_type.type_string, \
+               self.name, self.version, self.arch, self.reference.blob_id, \
+               self.reference.condition, tuple(self.predicates), \
                tuple(self.children)
 
     def __cmp__(self, other):
@@ -872,7 +942,7 @@ class ActionMetaSet(object):
         self.predicate = predicate
         self.target = target
 
-    def execute(self, entity, dummy):
+    def execute(self, entity):
         '''Execute this action.'''
         entity[(self.domain, self.predicate)] = self.target
 
@@ -891,14 +961,18 @@ class ActionLinkEntities(object):
         self.ent_type = ent_type
         self.ent_id = ent_id
 
-    def execute(self, entity, entities):
+    def get_key(self):
+        '''Getter for the complete key.'''
+        return (self.ent_type, self.ent_id)
+    key = property(get_key)
+
+    def execute(self, entity):
         '''Execute this action.'''
-        ent_list = entities.links.setdefault((entity.ent_type,
-                                              entity.ent_id), [])
-        ent_list.append((self.ent_type, self.ent_id))
+        if self.key not in entity.links:
+            entity.links.append(self.key)
 
     def __str__(self):
-        return 'link %r' % ((self.ent_type, self.ent_id),)
+        return 'link %r' % (self.key,)
 
     __repr__ = __str__
 
@@ -914,16 +988,18 @@ class ActionUnlinkEntities(object):
         self.ent_type = ent_type
         self.ent_id = ent_id
 
-    def execute(self, entity, entities):
+    def get_key(self):
+        '''Getter for the complete key.'''
+        return (self.ent_type, self.ent_id)
+    key = property(get_key)
+
+    def execute(self, entity):
         '''Execute this action.'''
-        ent_list = entities.links.get((entity.ent_type,
-                                       entity.ent_id), [])
-        reference = (self.ent_type, self.ent_id)
-        while reference in ent_list:
-            ent_list.remove(reference)
+        while self.key in entity.links:
+            entity.links.remove(self.key)
 
     def __str__(self):
-        return 'unlink %r' % ((self.ent_type, self.ent_id),)
+        return 'unlink %r' % (self.key,)
 
     __repr__ = __str__
 

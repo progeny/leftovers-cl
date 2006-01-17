@@ -655,10 +655,14 @@ def semdiff(args):
             def __init__(self, direct_packages):
                 self.direct_packages = direct_packages
 
+            def iter_direct_packages(self):
+                '''Imitate Component class'''
+                return self.direct_packages
+
         ref = files[0]
         desc = get_desc(ref)
         old_component = desc.load(cache)
-        old_package_list = old_component.direct_packages
+        old_package_list = list(old_component.iter_direct_packages())
         world_index = workspace.world.get_limited_index(args.opts.channels)
         new_package_list = [ i.package
                              for i in world_index.iter_all_candidates() ]
@@ -668,21 +672,21 @@ def semdiff(args):
         # Get old
         old_desc = get_desc(ref, workspace.vc.cat(ref))
         old_component = old_desc.load(cache)
-        old_package_list = old_component.direct_packages
+        old_package_list = list(old_component.iter_direct_packages())
         # Get new
         new_desc = get_desc(ref)
         new_component = new_desc.load(cache)
-        new_package_list = new_component.direct_packages
+        new_package_list = list(new_component.iter_direct_packages())
     elif len(files) == 2:
         ref = files[1]
         # get old
         old_desc = get_desc(files[0])
         old_component = old_desc.load(cache)
-        old_package_list = old_component.direct_packages
+        old_package_list = list(old_component.iter_direct_packages())
         # Get new
         new_desc = get_desc(files[1])
         new_component = new_desc.load(cache)
-        new_package_list = new_component.direct_packages
+        new_package_list = list(new_component.iter_direct_packages())
     else:
         raise CommandLineError("Argument list is invalid")
 
@@ -705,7 +709,9 @@ def dumpmeta(args):
     component_refs = args.get_reoriented_files(workspace)
     for component_ref in component_refs:
         comp = get_desc(component_ref).load(cache)
-        for item in chain(comp.packages, comp.components, [comp]):
+        for item in chain(comp.iter_packages(),
+                          comp.iter_components(),
+                          [comp]):
             if hasattr(item, 'meta'):
                 # must be a component
                 meta = item.meta
@@ -739,9 +745,9 @@ def dumplinks(args):
     component_ref = args.get_one_reoriented_file(workspace)
 
     component = get_desc(component_ref).load(cache)
-    for key, ent_list in component.entities.links.iteritems():
-        for value in ent_list:
-            print '|'.join((key[0], key[1], value[0], value[1]))
+    for item in component.iter_contents():
+        for ent_type, ent_id in item.links:
+            print '|'.join((item.ent_type, item.ent_id, ent_type, ent_id))
 
 dumplinks = make_invokable(dumplinks)
 

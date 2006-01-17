@@ -22,13 +22,13 @@ from cStringIO import StringIO as stringio
 from pdk.test.utest_util import Test, TempDirTest, ShamCache, MockPackage
 from pdk.package import udeb, deb, dsc, rpm, srpm, RPMVersion, \
      DebianVersion
-from pdk.meta import Entity, Entities
+from pdk.meta import Entity
 from pdk.cache import Cache
 from pdk import rules
 from operator import lt, le, gt, ge, eq
 
 from pdk.component import \
-     ComponentDescriptor, Component, PackageReference, \
+     ComponentDescriptor, Component, PackageStanza, \
      get_child_condition_fn, \
      get_general_condition, \
      get_child_condition, \
@@ -64,10 +64,8 @@ class TestActions(Test):
     def test_link_exe(self):
         ent = Entity('c', 'd')
         action = ActionLinkEntities('a', 'b')
-        entities = Entities()
-
-        action.execute(ent, entities)
-        self.assert_equal({('c', 'd'): [('a', 'b')]}, entities.links)
+        action.execute(ent)
+        self.assert_equal([('a', 'b')], ent.links)
 
     def test_unlink_ent_str(self):
         action = ActionUnlinkEntities('a', 'b')
@@ -76,15 +74,24 @@ class TestActions(Test):
     def test_unlink_exe(self):
         ent = Entity('c', 'd')
         action = ActionUnlinkEntities('a', 'b')
-        entities = Entities()
-        entities.links = {('c', 'd'): [('a', 'b')]}
-        action.execute(ent, entities)
-        self.assert_equal({('c', 'd'): []}, entities.links)
+        ent.links.append(('a', 'b'))
+        action.execute(ent)
+        self.assert_equal([], ent.links)
+
+    def test_link_twice_then_unlink(self):
+        ent = Entity('c', 'd')
+        link_action = ActionLinkEntities('a', 'b')
+        link_action.execute(ent)
+        link_action.execute(ent)
+        self.assert_equal([('a', 'b')], ent.links)
+        unlink_action = ActionUnlinkEntities('a', 'b')
+        unlink_action.execute(ent)
+        self.assert_equal([], ent.links)
 
     def test_action_meta_set(self):
         action = ActionMetaSet('a', 'b', 'c')
         actual = {}
-        action.execute(actual, None)
+        action.execute(actual)
         self.assert_equals({('a', 'b'): 'c'}, actual)
 
 class TestCompDesc(TempDirTest):
@@ -117,7 +124,7 @@ cp a.xml b.xml
                                   rules.fmc('pdk', 'arch', 'b') ]),
                        rules.fmc('pdk', 'name', 'c') ]),
             rules.fmc('my', 'some', 'value') ])
-        self.assert_equals_long(expected, deb_ref.condition)
+        self.assert_equals_long(expected, deb_ref.reference.condition)
 
         desc.write()
         self.assert_equals_long(open('b.xml').read(), open('a.xml').read())
@@ -185,7 +192,7 @@ cat >a.xml <<EOF
 EOF
 ''')
         desc = ComponentDescriptor('a.xml')
-        deb_conditions = desc.contents[0].condition.conditions
+        deb_conditions = desc.contents[0].reference.condition.conditions
         dv = DebianVersion
         self.assert_equal(rules.rc(eq, 'pdk', 'version', dv('2.0.53')),
                           deb_conditions[0])
@@ -203,7 +210,7 @@ EOF
                           deb_conditions[4])
         assert isinstance(deb_conditions[4].target, DebianVersion)
 
-        dsc_conditions = desc.contents[1].condition.conditions
+        dsc_conditions = desc.contents[1].reference.condition.conditions
         self.assert_equal(rules.rc(eq, 'pdk', 'version', dv('2.0.53')),
                           dsc_conditions[0])
         assert isinstance(dsc_conditions[0].target, DebianVersion)
@@ -214,7 +221,7 @@ EOF
         def rv(version):
             return RPMVersion(version_string = version)
 
-        rpm_conditions = desc.contents[2].condition.conditions
+        rpm_conditions = desc.contents[2].reference.condition.conditions
         self.assert_equal(rules.rc(eq, 'pdk', 'version', rv('2.0.53')),
                           rpm_conditions[0])
         assert isinstance(rpm_conditions[0].target, RPMVersion)
@@ -222,7 +229,7 @@ EOF
                           rpm_conditions[1])
         assert isinstance(rpm_conditions[1].target, RPMVersion)
 
-        srpm_conditions = desc.contents[3].condition.conditions
+        srpm_conditions = desc.contents[3].reference.condition.conditions
         self.assert_equal(rules.rc(eq, 'pdk', 'version', rv('2.0.53')),
                           srpm_conditions[0])
         assert isinstance(srpm_conditions[0].target, RPMVersion)
@@ -259,12 +266,12 @@ EOF
         cache.add(MockPackage('a', '1', deb, 'sha-1:aaa'))
         component = desc.load(cache)
         assert isinstance(component, Component)
-        self.assert_equal(1, len(component.packages))
-        self.assert_equal(1, len(component.direct_packages))
+        self.assert_equal(1, len(list(component.iter_packages())))
+        self.assert_equal(1, len(list(component.iter_direct_packages())))
         self.assert_equal(['sha-1:aaa'],
-                          [ p.blob_id for p in component.packages ])
-        self.assert_equal(0, len(component.direct_components))
-        self.assert_equal(0, len(component.components))
+                          [ p.blob_id for p in component.iter_packages() ])
+        self.assert_equal(0, len(list(component.iter_direct_components())))
+        self.assert_equal(0, len(list(component.iter_components())))
 
     def test_load_file_object(self):
         """compdesc.load returns a component with packages"""
@@ -281,12 +288,12 @@ EOF
         component = desc.load(cache)
         assert isinstance(component, Component)
         self.assert_equal('a.xml', desc.filename)
-        self.assert_equal(1, len(component.packages))
-        self.assert_equal(1, len(component.direct_packages))
+        self.assert_equal(1, len(list(component.iter_packages())))
+        self.assert_equal(1, len(list(component.iter_direct_packages())))
         self.assert_equal(['sha-1:aaa'],
-                          [ p.blob_id for p in component.packages ])
-        self.assert_equal(0, len(component.direct_components))
-        self.assert_equal(0, len(component.components))
+                          [ p.blob_id for p in component.iter_packages() ])
+        self.assert_equal(0, len(list(component.iter_direct_components())))
+        self.assert_equal(0, len(list(component.iter_components())))
 
     def test_load_component_meta(self):
         """compdesc.load finds component metadata"""
@@ -405,12 +412,14 @@ EOF
         assert isinstance(component_b, Component)
         self.assert_equal('b.xml', desc_b.filename)
         self.assert_equal('b.xml', component_b.ref)
-        self.assert_equal(2, len(component_b.packages))
+        self.assert_equal(2, len(list(component_b.iter_packages())))
         self.assert_equal(['sha-1:aaa', 'sha-1:bbb'],
-                          [ p.blob_id for p in component_b.packages ])
-        self.assert_equal(1, len(component_b.direct_packages))
-        self.assert_equal(1, len(component_b.direct_components))
-        self.assert_equal(1, len(component_b.components))
+                          [ p.blob_id
+                            for p in component_b.iter_packages() ])
+        self.assert_equal(1, len(list(component_b.iter_direct_packages())))
+        self.assert_equal(1,
+                          len(list(component_b.iter_direct_components())))
+        self.assert_equal(1, len(list(component_b.iter_components())))
         self.assert_equal('optional',
                           libc['pdk', 'necessity'])
         self.assert_equal('optional',
@@ -425,12 +434,14 @@ EOF
         desc_a = ComponentDescriptor('a.xml')
         component_a = desc_a.load(cache)
         assert isinstance(component_a, Component)
-        self.assert_equal(2, len(component_a.packages))
+        self.assert_equal(2, len(list(component_a.iter_packages())))
         self.assert_equal(['sha-1:aaa', 'sha-1:bbb'],
-                          [ p.blob_id for p in component_a.packages ])
-        self.assert_equal(0, len(component_a.direct_packages))
-        self.assert_equal(1, len(component_a.direct_components))
-        self.assert_equal(2, len(component_a.components))
+                          [ p.blob_id
+                            for p in component_a.iter_packages() ])
+        self.assert_equal(0, len(list(component_a.iter_direct_packages())))
+        self.assert_equal(1,
+                          len(list(component_a.iter_direct_components())))
+        self.assert_equal(2, len(list(component_a.iter_components())))
         self.assert_equal('mandatory', libc['pdk', 'necessity'])
         self.assert_equal('default', apache['pdk', 'necessity'])
         self.assert_equal('42', libc['pdk', 'some-random-key'])
@@ -560,7 +571,7 @@ EOF
         cache.add(package)
         desc = ComponentDescriptor('test1.xml')
         comp = desc.load(cache)
-        assert package in comp.packages
+        assert package in list(comp.iter_packages())
         self.assert_equal("mandatory", package[('pdk', 'necessity')])
 
     def test_meta_implicit_ref(self):
@@ -579,10 +590,10 @@ EOF
         self.assert_equal('mandatory', comp.meta[('pdk', 'necessity')])
 
     def test_iter_package_refs(self):
-        class MockRef(PackageReference):
+        class MockRef(PackageStanza):
             def __init__(self, label):
                 condition = rules.ac([('pdk', 'name', 'apache')])
-                PackageReference.__init__(self, deb, None, condition, [])
+                PackageStanza.__init__(self, deb, None, condition, [])
                 self.label = label
                 self.children = []
 
@@ -646,25 +657,25 @@ EOF
         package = MockPackage('a', '1', deb, 'sha-1:aaa')
         cache.add(package)
         comp = desc.load(cache)
-        self.assert_equals([('some-meta', 'can-do')],
-                           comp.entities.links['deb', 'sha-1:aaa'])
+        package = comp.iter_packages().next()
+        self.assert_equals([('some-meta', 'can-do')], package.links)
 
 class TestPackageRef(Test):
     def test_is_abstract(self):
         concrete_ref_a = \
-            PackageReference(deb, 'sha-1:aaa', None, None)
+            PackageStanza(deb, 'sha-1:aaa', None, None)
         assert not concrete_ref_a.is_abstract()
 
-        concrete_ref_b = PackageReference(deb, None, None, None)
+        concrete_ref_b = PackageStanza(deb, None, None, None)
         concrete_ref_b.children.append(concrete_ref_a)
         assert not concrete_ref_b.is_abstract()
 
-        abstract_ref = PackageReference(deb, None, None, None)
+        abstract_ref = PackageStanza(deb, None, None, None)
         assert abstract_ref.is_abstract()
 
     def test_field_lookups(self):
         condition = rules.ac([rules.fmc('pdk', 'name', 'apache')])
-        ref = PackageReference(deb, 'sha-1:aaa', condition, [])
+        ref = PackageStanza(deb, 'sha-1:aaa', condition, [])
 
         assert ('pdk', 'name') in ref
         assert ('pdk', 'version') not in ref
@@ -675,9 +686,9 @@ class TestPackageRef(Test):
 
     def test_comparable(self):
         fields = rules.ac([('pdk', 'name', 'apache')])
-        refa1 = PackageReference(deb, 'sha-1:aaa', fields, [])
-        refa2 = PackageReference(deb, 'sha-1:aaa', fields, [])
-        refb = PackageReference(deb, 'sha-1:aaa',
+        refa1 = PackageStanza(deb, 'sha-1:aaa', fields, [])
+        refa2 = PackageStanza(deb, 'sha-1:aaa', fields, [])
+        refb = PackageStanza(deb, 'sha-1:aaa',
                                 rules.ac([('pdk', 'name', 'xsok')]), [])
 
         assert refa1 == refa2
@@ -779,10 +790,10 @@ class TestPackageRef(Test):
         apache_deb = MockPackage('apache', '1-2', deb, 'sha-1:aaa', extra)
 
         ref_condition = rules.ac([rules.fmc('pdk', 'name', 'apache')])
-        apache_ref = PackageReference(deb, 'sha-1:aaa', ref_condition, [])
+        apache_ref = PackageStanza(deb, 'sha-1:aaa', ref_condition, [])
 
 
-        parent_condition = rules.ac([ apache_ref.condition,
+        parent_condition = rules.ac([ apache_ref.reference.condition,
                                       rules.rc(eq, 'pdk', 'version',
                                                 DebianVersion('1-2')) ])
         child_condition = get_deb_child_condition(apache_deb)
