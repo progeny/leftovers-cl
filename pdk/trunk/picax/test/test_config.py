@@ -315,13 +315,14 @@ class TestComponentMeta(ConfigComponentBaseHarness):
   <meta>
     <mediagen.repository>foo:bar</mediagen.repository>
     <mediagen.media>cd</mediagen.media>
-    <mediagen.media-image-size>650</mediagen.media-image-size>
+    <mediagen.media-label>foo</mediagen.media-label>
   </meta>
 </component>
 """
 
     def testLoadComponent(self):
         "Test that component configuration can be loaded."
+
         picax.config.handle_args(component = self.component)
 
         conf = picax.config.get_config()
@@ -333,3 +334,33 @@ class TestComponentMeta(ConfigComponentBaseHarness):
         self.failUnless(conf["dest_path"][-6:] == "images",
                         "wrong destination path: %s"
                         % (conf["dest_path"],))
+        self.failUnless(conf["media_options"]["label"] == "foo",
+                        "wrong media label: %s"
+                        % (conf["media_options"]["label"],))
+        self.failUnless(conf["media_options"]["image_size"] == 650,
+                        "wrong media size: %d"
+                        % (conf["media_options"]["image_size"],))
+
+class TestComponentDefaults(ConfigComponentBaseHarness):
+    """Test that default values are set correctly from components."""
+
+    xml_text = """<?xml version='1.0' encoding='utf-8'?>
+<component>
+  <meta>
+    <mediagen.repository>foo:bar</mediagen.repository>
+    <mediagen.media>cd</mediagen.media>
+  </meta>
+</component>
+"""
+
+    def testDefaults(self):
+        "Test that component configuration can be loaded."
+
+        picax.config.handle_args(component = self.component)
+
+        conf = picax.config.get_config()
+        self.failUnless("image_size" in conf["media_options"],
+                        "no default image size set")
+        self.failUnless(conf["media_options"]["image_size"] == 650,
+                        "wrong media size: %d"
+                        % (conf["media_options"]["image_size"],))

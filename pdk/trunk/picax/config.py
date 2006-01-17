@@ -354,7 +354,7 @@ def _parse_component(this_config, component, options, sub_prefixes = ()):
     "Read configuration data from component metadata."
 
     std_prefix = "mediagen"
-
+    submod_config = {}
     submod_list = [x[0] for x in sub_prefixes]
 
     # For PDK, we always write our media to the same place in the
@@ -372,39 +372,39 @@ def _parse_component(this_config, component, options, sub_prefixes = ()):
     # validate the configuration items against the options list.
 
     for metakey in media_meta:
+        if "-" in metakey:
+            submod = metakey.split("-", 1)[0]
+        else:
+            submod = None
+
+        # Map "repository" specially, since we can't do attributes
+        # in component metadata.
+
         if metakey == "repository":
             (distro, section) = media_meta[metakey].split(":")
             this_config["repository_list"].append((distro, section))
-        elif "-" in metakey and metakey.split("-", 1)[0] in submod_list:
-            pass
+
+        # Sub-module information.  Save it for _interpret_args,
+        # and make it look like command-line arguments.
+
+        elif submod and submod in submod_list:
+            if submod not in submod_config:
+                submod_config[submod] = []
+            if media_meta[metakey]:
+                submod_config[submod].append(
+                    "--%s=%s" % (metakey, media_meta[metakey]))
+            else:
+                submod_config[submod].append("--" + metakey)
+
+        # Everything else should just get configured.
+
         else:
             configkey = options[metakey]["config-key"]
             this_config[configkey] = media_meta[metakey]
 
-    # Load module metadata.
-
-    for mod in submod_list:
-        modkey = "%s_%s" % (std_prefix, mod)
-        moditems = dict([(x[1], component.meta[x])
-                         for x in component.meta if x[0] == modkey])
-        mod_config_key = [x[2] for x in sub_prefixes if x[0] == mod][0]
-        if mod_config_key in this_config:
-            this_config[mod_config_key].update(moditems)
-        else:
-            this_config[mod_config_key] = moditems
-
-    # Build a blank subprefix dictionary.  This is necessary to clue
-    # _interpret_args() to parse and fill out a module's configuration,
-    # whether or not there are actual configuration items in the
-    # component for the module.
-
-    submod_config = {}
-    for mod in submod_list:
-        submod_config[mod] = []
-
-    # Return "leftover arguments".  Here, this includes the blank
-    # submodules lists and the path to the repository, which is
-    # always the repository created by repogen.
+    # Return "leftover arguments".  Here, this includes the submodules
+    # lists and the path to the repository, which is always the repository
+    # created by repogen.
 
     return ([os.getcwd() + "/repo"], submod_config)
 
@@ -468,9 +468,9 @@ def _interpret_args(this_config, subprefix_arglist, arglist):
         if this_config.has_key(mname + "_component"):
             if not this_config.has_key(mkey):
                 this_config[mkey] = {}
+            module_options = mfunc()
+            _set_defaults(this_config[mkey], module_options)
             if subprefix_arglist.has_key(mprefix):
-                module_options = mfunc()
-                _set_defaults(this_config[mkey], module_options)
                 _parse_args(this_config[mkey], subprefix_arglist[mprefix],
                             module_options)
         else:
@@ -504,7 +504,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5300 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5307 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."
