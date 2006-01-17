@@ -284,7 +284,16 @@ class ComponentDescriptor(object):
         '''Creates "match tuples" associating packages with matched refs.
 
         tuple looks like: (package, ref)
+
+        Apply policy when the same ref matches more than one package.
+        Current policy is roughly the same as debian. Use the "newest"
+        package.
         '''
+
+        def _cmp_packages(a, b):
+            '''Compare two packages.'''
+            return -cmp(a.version, b.version)
+
         match_information = []
 
         # first run the packages through base level package references.
@@ -299,30 +308,25 @@ class ComponentDescriptor(object):
                           ' condition = %r' % ref.rule.condition
                 logger = get_logger()
                 logger.warn(message)
-            for item in item_list:
-                ghost_package = item.package
-                if ref.rule.condition.evaluate(ghost_package):
-                    match_information.append((ghost_package, ref))
+
+            matching_packages = \
+                [ i.package for i in item_list
+                  if ref.rule.condition.evaluate(i.package) ]
+            if matching_packages:
+                matching_packages.sort(_cmp_packages)
+                first_package = matching_packages[0]
+                match_information.append((first_package, ref))
+
         return match_information
 
-    def _resolve_conflicting_matches(self, world_index, parent_matches):
+    def _get_child_conditions(self, world_index, parent_matches):
         '''Apply policy when the same ref matches more than one package.
 
         Current policy is roughly the same as debian. Use the "newest"
         package.
         '''
-        def _cmp_matches(a, b):
-            '''Compare two match tuples.'''
-            return -cmp(a[0].version, b[0].version)
-
-        parent_matches.sort(_cmp_matches)
-        last_ref = None
         child_conditions = []
-        for this_match in parent_matches:
-            ghost_package, ref = this_match
-            if last_ref is not None and ref == last_ref:
-                # skip this record as a newer one has already been found.
-                continue
+        for ghost_package, ref in parent_matches:
             child_condition, candidate_key_info = \
                 get_child_condition(ghost_package, ref)
 
@@ -338,9 +342,7 @@ class ComponentDescriptor(object):
             child_candidates = world_index.iter_candidates(candidate_key,
                                                            key_value)
             candidates = chain(parent_candidates, child_candidates)
-            child_conditions.append((child_condition, this_match[1],
-                                     candidates))
-            last_ref = ref
+            child_conditions.append((child_condition, ref, candidates))
         return child_conditions
 
     def resolve(self, world_index, abstract_constraint):
@@ -350,8 +352,8 @@ class ComponentDescriptor(object):
         """
         parent_matches = self._get_parent_matches(world_index,
                                                   abstract_constraint)
-        child_conditions = self._resolve_conflicting_matches(world_index,
-                                                             parent_matches)
+        child_conditions = self._get_child_conditions(world_index,
+                                                      parent_matches)
 
         # run through the new list of matched refs and clear the child
         # lists.
