@@ -948,7 +948,6 @@ class _Workspace(object):
         """
         conveyor = Conveyor(self, upstream_name)
         conveyor.pull()
-        self.world.index_world_data()
 
     def push(self, upstream_name):
         """
@@ -1241,6 +1240,7 @@ class Conveyor(object):
 
         blob_list_url = self.full_path + '/etc/cache/blob_list.gz'
         get_remote_file(blob_list_url, self.channel.channel_file)
+        self.world.index_world_data()
 
         git_path = self.full_path + '/etc/git'
         self.vc.direct_pull(git_path, self.upstream_name)
