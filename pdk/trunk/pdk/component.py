@@ -112,6 +112,13 @@ class ComponentDescriptor(object):
                         local_rules.append(stanza.rule)
                         stanzas = stanza.children
                     for concrete_ref in stanzas:
+                        if concrete_ref.is_abstract():
+                            condition = concrete_ref.reference.condition
+                            message = 'Child reference is abstract: %s %s' \
+                                      % (self.filename, str(condition))
+                            logger = get_logger()
+                            logger.warn(message)
+                            continue
                         local_rules.append(concrete_ref.rule)
                         contents = component.ordered_contents
                         contents.append(concrete_ref.reference)
