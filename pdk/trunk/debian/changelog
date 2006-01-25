@@ -1,3 +1,12 @@
+pdk (0.0.28) unstable; urgency=low
+
+  * Warn and ignore abstract references which are children of other abstract
+    references.
+  * Don't update channels twice on pull.
+  * Add an api intro doc.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu, 19 Jan 2006 16:03:01 -0500
+
 pdk (0.0.27) unstable; urgency=low
 
   * Try to make pdk push more reliably pull remote cache lists.
