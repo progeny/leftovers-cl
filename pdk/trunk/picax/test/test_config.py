@@ -313,7 +313,10 @@ class TestComponentMeta(ConfigComponentBaseHarness):
     xml_text = """<?xml version='1.0' encoding='utf-8'?>
 <component>
   <meta>
-    <mediagen.repository>foo:bar</mediagen.repository>
+    <mediagen.repository>
+      suite:main
+      suite:contrib
+    </mediagen.repository>
     <mediagen.media>cd</mediagen.media>
     <mediagen.media-label>foo</mediagen.media-label>
   </meta>
@@ -328,9 +331,10 @@ class TestComponentMeta(ConfigComponentBaseHarness):
         conf = picax.config.get_config()
         self.failUnless(len(conf.keys()),
                         "size of configuration dictionary is zero")
-        self.failUnless(conf["repository_list"][0] == ("foo", "bar"),
-                        "wrong repo: distro %s, section %s"
-                        % conf["repository_list"][0])
+        self.failUnless(conf["repository_list"] ==
+                            [('suite', 'main'), ('suite', 'contrib')],
+                        "wrong repository list: %r"
+                        % (conf["repository_list"],))
         self.failUnless(conf["dest_path"][-6:] == "images",
                         "wrong destination path: %s"
                         % (conf["dest_path"],))
