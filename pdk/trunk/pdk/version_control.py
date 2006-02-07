@@ -338,7 +338,8 @@ class Git(object):
 
         Yields filename.
         '''
-        cmd = 'git-ls-files -z -o --exclude-from=%s' % self.exclude_file
+        cmd = 'git-ls-files -z -o --directory --exclude-from=%s' \
+              % self.exclude_file
         remote_in, remote_out, waiter = self.popen2(cmd)
         remote_in.close()
         for filename in NullTerminated(remote_out):
@@ -603,7 +604,7 @@ class VersionControl(object):
         if not os.path.exists(remotes_dir):
             os.makedirs(remotes_dir)
         os.makedirs(self.priv_dir)
-        print >> open(self.exclude, 'w'), 'etc/*'
+        print >> open(self.exclude, 'w'), 'etc'
 
     def assert_no_dirs(self, files):
         '''Assert that none of the given files is a directory.'''
