@@ -526,17 +526,6 @@ The status command can detect renames.
 @$@<Status@>==@{
 pdk workspace create status
 pushd status
-    # don't recurse into unknown directories
-    mkdir unknown
-    echo info >unknown/a
-    echo info >unknown/b
-    echo info >unknown/c
-    pdk status >../output.txt
-    diff -u - ../output.txt <<EOF
-?@^H(09)unknown/
-EOF
-    rm -r unknown
-
     echo info >>file-a
     pdk commit -m "Initial Commit" file-a
     pdk status >../output.txt
