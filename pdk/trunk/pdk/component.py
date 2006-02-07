@@ -397,6 +397,8 @@ class ComponentDescriptor(object):
 
         abstract_constraint is passed to self.iter_package_refs().
         """
+        if ('pdk', 'no-resolve', '1') in self.meta:
+            return
         parent_matches = self._get_parent_matches(world_index,
                                                   abstract_constraint)
         child_conditions = self._get_child_conditions(world_index,

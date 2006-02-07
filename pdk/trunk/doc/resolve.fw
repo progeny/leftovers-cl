@@ -530,12 +530,82 @@ popd
 
 @}
 
+@B
+
+Some components are meant only to contain metadata. Resolving them should
+be a noop. For now we aren't making it an error. In the big deep future we
+may make resolve recursive, and the noop behavior would just work.
+
+@$@<Resolveproof Components@>==@{
+
+pdk workspace create no-resolve
+pushd no-resolve
+
+make_channel channel-1 apache2_2.0.53-5.diff.gz apache2_2.0.53-5.dsc \
+    apache2_2.0.53.orig.tar.gz apache2-common_2.0.53-5_i386.deb
+
+cat >etc/channels.xml <<EOF
+<?xml version="1.0"?>
+<channels>
+  <channel-1>
+    <type>dir</type>
+    <path>$(pwd)/channel-1</path>
+  </channel-1>
+</channels>
+EOF
+
+pdk channel update
+
+cat >no-resolve.xml <<EOF
+<component>
+  <meta>
+    <no-resolve>1</no-resolve>
+  </meta>
+  <contents>
+    <dsc>
+      <name>apache2</name>
+      <meta>
+        <link>
+          <vuln>CAN-31</vuln>
+        </link>
+      </meta>
+    </dsc>
+  </contents>
+</component>
+EOF
+
+pdk resolve no-resolve.xml
+
+diff -u - no-resolve.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <meta>
+    <no-resolve>1</no-resolve>
+  </meta>
+  <contents>
+    <dsc>
+      <name>apache2</name>
+      <meta>
+        <link>
+          <vuln>CAN-31</vuln>
+        </link>
+      </meta>
+    </dsc>
+  </contents>
+</component>
+EOF
+
+popd
+
+@}
+
 @B@<Test Outline@>
 
 This is the macro wrapper for the test.
 
 @O@<atest/resolve.fw.sh@>==@{
 @<Prep work@>
+@<Resolveproof Components@>
 @<Nameless Reference@>
 @<Dir Channel Test@>
 @<Apt Channel Test@>
