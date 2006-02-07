@@ -511,7 +511,8 @@ class ComponentDescriptor(object):
         Returns true for elements representing both concrete and abstract
         references.
         '''
-        return rule_element.tag in ('deb', 'udeb', 'dsc', 'rpm', 'srpm')
+        return rule_element.tag in ('deb', 'udeb', 'dsc', 'rpm', 'srpm',
+                                    'src', 'bin')
 
     def build_condition(self, element, package_type, blob_id):
         '''Build up a condition from xml.
@@ -1095,8 +1096,12 @@ class PhantomConditionWrapper(object):
             if blob_id:
                 conditions.append(rules.fmc('pdk', 'blob-id', blob_id))
             conditions.extend(condition.conditions)
-            type_string = package_type.type_string
-            conditions.append(rules.fmc('pdk', 'type', type_string))
+            if package_type.format_string == 'unknown':
+                role_string = package_type.role_string
+                conditions.append(rules.fmc('pdk', 'role', role_string))
+            else:
+                type_string = package_type.type_string
+                conditions.append(rules.fmc('pdk', 'type', type_string))
 
     def evaluate(self, candidate):
         '''Use the full wrapper to evaluate the condition.'''

@@ -368,6 +368,12 @@ cat >a.xml <<EOF
     <dsc>
       <cond><![CDATA[ * apache (>=2) ]]></cond>
     </dsc>
+    <src>
+      <cond><![CDATA[ * apache (>=2) ]]></cond>
+    </src>
+    <bin>
+      <cond><![CDATA[ * apache-common (>=2) ]]></cond>
+    </bin>
   </contents>
 </component>
 EOF
@@ -388,6 +394,12 @@ cp a.xml b.xml
         assert condition.evaluate(a)
         assert condition.evaluate(b)
         assert not condition.evaluate(c)
+
+        src_condition = desc.contents[2].rule.condition
+        assert src_condition.evaluate(a)
+        assert src_condition.evaluate(b)
+        assert not src_condition.evaluate(c)
+
 
     def test_load_file_object(self):
         """compdesc.load returns a component with packages"""

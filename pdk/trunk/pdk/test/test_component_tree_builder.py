@@ -120,6 +120,23 @@ class TestComponentTreeBuilder(Test):
                                  [('pdk', 'ice', 'cube')],
                                  [('vuln', 'can-do')], ref.rule)
 
+    def test_build_general_ref(self):
+        builder = ComponentDescriptor(None)
+        element = XML('''
+<src>
+  <name>hello</name>
+  <meta>
+    <ice>cube</ice>
+  </meta>
+</src>
+''')
+        ref = builder.build_package_ref(element)
+        assert not ref.reference.blob_id
+        self.assert_equal('src', ref.reference.package_type.type_string)
+        self.assert_rule_matches([('pdk', 'name', 'hello'),
+                                  ('pdk', 'role', 'source')],
+                                 [('pdk', 'ice', 'cube')], [], ref.rule)
+
     def test_is_package_ref(self):
         builder = ComponentDescriptor(None)
 

@@ -393,6 +393,8 @@ ignore_message '^pdk.package:W0232:.*:_Deb:'
 ignore_message '^pdk.package:W0232:.*:_UDeb:'
 ignore_message '^pdk.package:W0232:.*:_SRpm:'
 ignore_message '^pdk.package:W0232:.*:_Rpm:'
+ignore_message '^pdk.package:W0232:.*:_Bin:'
+ignore_message '^pdk.package:W0232:.*:_Src:'
 ignore_message '^pdk.package:E0201:.*:Package.*'
 ignore_message '^pdk.package:E0601:.*:.*self.*'
 

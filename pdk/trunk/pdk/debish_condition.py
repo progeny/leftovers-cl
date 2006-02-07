@@ -238,8 +238,12 @@ class DebishParser(object):
                 conditions.append(fmc('pdk', 'blob-id', self.blob_id))
             conditions.append(condition)
             if self.package_type:
-                type_string = self.package_type.type_string
-                conditions.append(fmc('pdk', 'type', type_string))
+                if self.package_type.format_string == 'unknown':
+                    role_string = self.package_type.role_string
+                    conditions.append(fmc('pdk', 'role', role_string))
+                else:
+                    type_string = self.package_type.type_string
+                    conditions.append(fmc('pdk', 'type', type_string))
             return wrapper
         else:
             return condition

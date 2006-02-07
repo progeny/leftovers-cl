@@ -516,6 +516,24 @@ class _SRpm(_Rpm):
 
 srpm = _SRpm()
 
+class _Bin(object):
+    """Handle any binary package."""
+    type_string = 'bin'
+    format_string = 'unknown'
+    role_string = 'binary'
+    version_class = str
+
+bin = _Bin
+
+class _Src(object):
+    """Handle any source package."""
+    type_string = 'src'
+    format_string = 'unknown'
+    role_string = 'source'
+    version_class = str
+
+src = _Src
+
 def get_package_type(filename = '', format = ''):
     """Return a packge type for a filename or package reference format."""
     if filename.endswith('.deb') or format == 'deb':
@@ -528,6 +546,10 @@ def get_package_type(filename = '', format = ''):
         return srpm
     elif filename.endswith('.rpm') or format == 'rpm':
         return rpm
+    elif format == 'bin':
+        return bin
+    elif format == 'src':
+        return src
     else:
         raise UnknownPackageTypeError((filename, format))
 

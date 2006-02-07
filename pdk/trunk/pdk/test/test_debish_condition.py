@@ -22,7 +22,7 @@ from pdk.exceptions import InputError
 from pdk.rules import fmc, ac, oc, rc, starc, notc
 from pdk.debish_condition import compile_debish, DebishLex, \
      PeekableIterator
-from pdk.package import deb, DebianVersion
+from pdk.package import deb, DebianVersion, src
 from operator import eq, ge, lt
 
 class TestPeekableIterator(Test):
@@ -158,3 +158,11 @@ Expected end, got ) at character 7'''
                       expected,
                       fmc('pdk', 'type', 'deb')])
         self.assert_equals(wrapper, actual)
+
+    def test_build_general_debish_ref(self):
+        actual = compile_debish('apache', src, None)
+        expected = ac([fmc('pdk', 'name', 'apache')])
+        wrapper = ac([expected,
+                      fmc('pdk', 'role', 'source')])
+        self.assert_equals(wrapper, actual)
+
