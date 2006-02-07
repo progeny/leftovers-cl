@@ -106,22 +106,41 @@ class ComponentDescriptor(object):
         for stanza in self.contents:
             try:
                 if isinstance(stanza, PackageStanza):
-                    if stanza.reference.blob_id:
-                        stanzas = [stanza] + stanza.children
-                    else:
-                        local_rules.append(stanza.rule)
-                        stanzas = stanza.children
-                    for concrete_ref in stanzas:
-                        if concrete_ref.is_abstract():
-                            condition = concrete_ref.reference.condition
+                    children = []
+                    # Prescan the stanza looking for abstract children.
+                    # These are ignored.
+                    for concrete_stanza in stanza.children:
+                        if concrete_stanza.is_abstract():
+                            condition = concrete_stanza.reference.condition
                             message = 'Child reference is abstract: %s %s' \
                                       % (self.filename, str(condition))
                             logger = get_logger()
                             logger.warn(message)
                             continue
-                        local_rules.append(concrete_ref.rule)
+                        children.append(concrete_stanza)
+
+                    if stanza.reference.blob_id:
+                        stanzas = [stanza] + children
+                    else:
+                        local_rules.append(stanza.rule)
+                        stanzas = children
+
+                    # calculate complement information
+                    comp_filler = {'binary': [], 'source': []}
+                    for concrete_stanza in stanzas:
+                        reference = concrete_stanza.reference
+                        if reference.package_type.role_string == 'source':
+                            comp_filler['binary'].append(reference)
+                        else:
+                            comp_filler['source'].append(reference)
+
+                    for concrete_stanza in stanzas:
+                        local_rules.append(concrete_stanza.rule)
                         contents = component.ordered_contents
-                        contents.append(concrete_ref.reference)
+                        reference = concrete_stanza.reference
+                        role = reference.package_type.role_string
+                        reference.complement = comp_filler[role]
+                        contents.append(reference)
                 elif isinstance(stanza, ComponentReference):
                     child_descriptor = stanza.load(self.get_desc)
                     child_component = child_descriptor.load_raw(cache)
@@ -691,6 +710,8 @@ class Component(object):
         for item in self.ordered_contents:
             if Package in classes and isinstance(item, PackageReference):
                 package = item.load(self.cache)
+                for comp_ref in item.complement:
+                    package.complement.append(comp_ref.load(self.cache))
                 system.fire(package)
                 yield package
             elif isinstance(item, Component):
@@ -803,6 +824,7 @@ class PackageReference(object):
         self.package_type = package_type
         self.blob_id = blob_id
         self.condition = condition
+        self.complement = []
 
     def load(self, cache):
         '''Load the package associated with this ref.'''

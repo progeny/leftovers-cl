@@ -88,6 +88,7 @@ class Package(Entity):
         super(Package, self).__init__(package_type.type_string, blob_id)
         self.package_type = package_type
         self.pdk = DomainAttributeAdapter('pdk', self)
+        self.complement = []
 
     def set_blob_id(self, blob_id):
         """Set the blob_id and update the internal hash."""
@@ -186,7 +187,7 @@ class Package(Entity):
         return cmp(self._get_values(), other._get_values())
 
     def __eq__(self, other):
-        return self.__class__ == other.__class__ \
+        return self.ent_type == other.ent_type \
                and self.ent_id == other.ent_id
 
 # evil hack so that getattr and hasattr will work for blob DASH id

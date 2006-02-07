@@ -249,6 +249,48 @@ EOF
         descriptor = desc.load(None)
         assert isinstance(descriptor, Component)
 
+    def test_complement(self):
+        """compdesc.load returns a component with packages"""
+        os.system('''
+cat >a.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <deb>
+      <deb ref="sha-1:aaa"/>
+      <deb ref="sha-1:bbb"/>
+      <dsc ref="sha-1:ccc"/>
+    </deb>
+    <dsc>
+      <dsc ref="sha-1:ccc"/>
+      <deb ref="sha-1:aaa"/>
+      <deb ref="sha-1:bbb"/>
+      <deb ref="sha-1:ddd"/>
+    </dsc>
+  </contents>
+</component>
+EOF
+''')
+        desc = ComponentDescriptor('a.xml')
+        cache = ShamCache(make_copies = True)
+        a = MockPackage('a', '1', deb, 'sha-1:aaa', arch='i386')
+        b = MockPackage('b', '1', deb, 'sha-1:bbb', arch='i386')
+        c = MockPackage('c', '1', dsc, 'sha-1:ccc', arch='any')
+        d = MockPackage('b', '1', deb, 'sha-1:ddd', arch='i386')
+        cache.add(a)
+        cache.add(b)
+        cache.add(c)
+        cache.add(d)
+        component = desc.load(cache)
+        packages = list(component.iter_packages())
+        self.assert_equal([c], packages[0].complement)
+        self.assert_equal([c], packages[1].complement)
+        self.assert_equal([a, b], packages[2].complement)
+        self.assert_equal([a, b, d], packages[3].complement)
+        self.assert_equal([c], packages[4].complement)
+        self.assert_equal([c], packages[5].complement)
+        self.assert_equal([c], packages[6].complement)
+
     def test_load(self):
         """compdesc.load returns a component with packages"""
         os.system('''

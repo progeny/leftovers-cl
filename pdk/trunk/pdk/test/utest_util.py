@@ -96,13 +96,22 @@ class TempDirTest(Test):
         shutil.rmtree(self.work_dir)
 
 class ShamCache(object):
-    def __init__(self):
+    def __init__(self, make_copies = False):
         self.expected_packages = {}
+        self.make_copies = make_copies
+
+    def copy(self, package):
+        if self.make_copies:
+            package_copy = Package(package.package_type, package.ent_id)
+            package_copy.update(package)
+            return package_copy
+        else:
+            return package
 
     def load_package(self, ref, package_type):
         key = (ref, package_type)
         assert key in self.expected_packages, '%s missing' % str(key)
-        return self.expected_packages[key]
+        return self.copy(self.expected_packages[key])
 
     def add(self, package):
         self.expected_packages[(package.blob_id, package.type)] = \
@@ -135,4 +144,3 @@ class MockPackage(Package):
 
         for key, value in kw.iteritems():
             self[(domain, key)] = value
-
