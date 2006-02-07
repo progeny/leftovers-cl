@@ -30,7 +30,7 @@ from sets import Set
 from pdk.util import write_pretty_xml, parse_xml, parse_domain, \
      string_domain
 from cElementTree import ElementTree, Element, SubElement
-from pdk.rules import Rule, RuleSystem, CompositeAction
+from pdk.rules import Rule, RuleSystem, CompositeAction, make_comparable
 from pdk import rules
 from pdk.package import get_package_type, Package
 from pdk.exceptions import PdkException, InputError, SemanticError
@@ -39,6 +39,7 @@ from xml.parsers.expat import ExpatError
 from pdk.log import get_logger
 from pdk.semdiff import print_report
 from pdk.channels import PackageNotFoundError
+from pdk.debish_condition import compile_debish
 
 class ComponentDescriptor(object):
     """Represents a component descriptor object.
@@ -64,7 +65,7 @@ class ComponentDescriptor(object):
             try:
                 tree = parse_xml(handle)
             except ExpatError, message:
-                raise InputError(str(message))
+                raise InputError(filename, str(message))
 
         else:
             if os.path.exists(filename):
@@ -227,7 +228,13 @@ class ComponentDescriptor(object):
 
     def write_condition_fields(self, parent, outer_condition):
         '''Build elements out of condition fields.'''
+        if hasattr(outer_condition, 'debish'):
+            cond_element = SubElement(parent, 'cond')
+            cond_element.text = outer_condition.debish
+            return
+
         for condition in outer_condition.conditions:
+
             if isinstance(condition, rules.fmc):
                 tag_name = string_domain(condition.domain,
                                          condition.predicate)
@@ -490,7 +497,7 @@ class ComponentDescriptor(object):
         '''
         return rule_element.tag in ('deb', 'udeb', 'dsc', 'rpm', 'srpm')
 
-    def build_condition(self, element, package_type):
+    def build_condition(self, element, package_type, blob_id):
         '''Build up a condition from xml.
         '''
         relation_tags = { 'version-lt': ('version', lt),
@@ -510,7 +517,8 @@ class ComponentDescriptor(object):
             conditions = condition.conditions
             for and_element in element:
                 conditions.append(self.build_condition(and_element,
-                                                       package_type))
+                                                       package_type,
+                                                       blob_id))
             return condition
         else:
             target = element.text.strip()
@@ -524,7 +532,8 @@ class ComponentDescriptor(object):
         This function should only be applied to elements which pass the
         is_package_ref test.
         '''
-        condition = rules.ac([])
+        xml_condition = rules.ac([])
+        debish_condition = None
 
         blob_id = None
         if 'ref' in ref_element.attrib:
@@ -538,7 +547,8 @@ class ComponentDescriptor(object):
         inner_refs = []
         if ref_element.text and ref_element.text.strip():
             target = ref_element.text.strip()
-            condition.conditions.append(rules.fmc('pdk', 'name', target))
+            xml_condition.conditions.append(rules.fmc('pdk', 'name',
+                                            target))
         else:
             for element in ref_element:
                 if element.tag == 'meta':
@@ -549,10 +559,29 @@ class ComponentDescriptor(object):
                 elif self.is_package_ref(element):
                     inner_ref = self.build_package_ref(element)
                     inner_refs.append(inner_ref)
+                elif element.tag == 'cond':
+                    if debish_condition:
+                        raise InputError, \
+                              "Only one debish condition allowed."
+                    debish_condition = compile_debish(element.text,
+                                                      package_type,
+                                                      blob_id)
                 else:
                     inner_condition = self.build_condition(element,
-                                                           package_type)
-                    condition.conditions.append(inner_condition)
+                                                           package_type,
+                                                           blob_id)
+                    xml_condition.conditions.append(inner_condition)
+
+        if debish_condition and xml_condition.conditions:
+            raise InputError, \
+                  "Can't mix debish and xml conditions"
+
+        if debish_condition:
+            condition = debish_condition
+        else:
+            condition = PhantomConditionWrapper(xml_condition, package_type,
+                                                blob_id)
+
         ref = PackageStanza(package_type, blob_id, condition, predicates)
         ref.children = inner_refs
         ref.links = ref_links
@@ -922,21 +951,16 @@ class PackageStanza(object):
 
     def get_rule(self):
         '''Construct a rule object for this reference.'''
-        rule_condition = rules.ac([])
-        rule_conditions = rule_condition.conditions
-        if self.reference.blob_id:
-            blob_id_condition = rules.fmc('pdk', 'blob-id',
-                                          self.reference.blob_id)
-            rule_conditions.append(blob_id_condition)
-
-        rule_conditions.extend(self.reference.condition.conditions)
-        type_string = self.reference.package_type.type_string
-        rule_conditions.append(rules.fmc('pdk', 'type', type_string))
+        raw_condition = self.reference.condition
+        if isinstance(raw_condition, PhantomConditionWrapper):
+            condition = raw_condition.phantom_wrapper
+        else:
+            condition = raw_condition
         actions = [ ActionMetaSet(*p) for p in self.predicates ]
         actions += [ ActionLinkEntities(*p) for p in self.links ]
         actions += [ ActionUnlinkEntities(*p) for p in self.unlinks ]
         action = CompositeAction(actions)
-        return Rule(rule_condition, action)
+        return Rule(condition, action)
     rule = property(get_rule)
 
     def __identity_tuple(self):
@@ -1033,5 +1057,44 @@ class ActionUnlinkEntities(object):
         return 'unlink %r' % (self.key,)
 
     __repr__ = __str__
+
+class PhantomConditionWrapper(object):
+    '''A delicate utility class for making conditions write to xml.
+
+    Don't use this class outside this module. It is purpose built for a
+    single use and probably won't work for much of anything else.
+
+    condition       - assumed to be an and condition.
+    package_type    - Optional: package type candidates must match
+    blob_id         - Optional: blob_id of candidates
+    '''
+    def __init__(self, condition, package_type, blob_id):
+        self.package_type = package_type
+        self.blob_id = blob_id
+        self.phantom_wrapper = rules.ac([])
+        self.condition = condition
+        self.conditions = self.condition.conditions
+        conditions = self.phantom_wrapper.conditions
+        if blob_id or package_type:
+            if blob_id:
+                conditions.append(rules.fmc('pdk', 'blob-id', blob_id))
+            conditions.extend(condition.conditions)
+            type_string = package_type.type_string
+            conditions.append(rules.fmc('pdk', 'type', type_string))
+
+    def evaluate(self, candidate):
+        '''Use the full wrapper to evaluate the condition.'''
+        return self.phantom_wrapper.evaluate(candidate)
+
+    def get_identity(self):
+        '''Return the identity of this object for comparisons.'''
+        return self.phantom_wrapper
+
+    def __str__(self):
+        return '(*phantom* %s )' % self.condition
+
+    __repr__ = __str__
+
+make_comparable(PhantomConditionWrapper)
 
 # vim:ai:et:sts=4:sw=4:tw=0:

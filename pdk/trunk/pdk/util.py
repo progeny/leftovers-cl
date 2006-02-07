@@ -298,7 +298,15 @@ class PrettyWriter(object):
         '''Start and end an element with no element children.'''
         self.tab()
         self.writer.startElement(name, attributes)
-        self.writer.characters(text, 0, len(text))
+        for evil_char in '<&>':
+            if evil_char in text:
+                # we wish this wasn't buggy. We have to work around.
+                #self.writer.handle_cdata(text)
+                self.writer._check_pending_content()
+                self.writer._write('<![CDATA[%s]]>' % text)
+                break
+        else:
+            self.writer.characters(text, 0, len(text))
         self.writer.endElement(name)
         self.newline()
 

@@ -38,7 +38,8 @@ from pdk.component import \
      get_srpm_child_condition, \
      ActionLinkEntities, \
      ActionUnlinkEntities, \
-     ActionMetaSet
+     ActionMetaSet, \
+     PhantomConditionWrapper
 
 __revision__ = "$Progeny$"
 
@@ -124,6 +125,7 @@ cp a.xml b.xml
                                   rules.fmc('pdk', 'arch', 'b') ]),
                        rules.fmc('pdk', 'name', 'c') ]),
             rules.fmc('my', 'some', 'value') ])
+        expected = PhantomConditionWrapper(expected, deb, None)
         self.assert_equals_long(expected, deb_ref.reference.condition)
 
         desc.write()
@@ -314,6 +316,78 @@ EOF
                           [ p.blob_id for p in component.iter_packages() ])
         self.assert_equal(0, len(list(component.iter_direct_components())))
         self.assert_equal(0, len(list(component.iter_components())))
+
+    def test_load_and_write_cond(self):
+        """compdesc.load returns a component with packages"""
+        os.system('''
+cat >a.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <deb>
+      <cond><![CDATA[ apache (>>2) ]]></cond>
+      <deb ref="sha-1:aaa">
+        <cond>apache</cond>
+      </deb>
+    </deb>
+  </contents>
+</component>
+EOF
+cp a.xml b.xml
+''')
+        desc = ComponentDescriptor('a.xml')
+        desc.write()
+        self.assert_equals_long(open('b.xml').read(), open('a.xml').read())
+        condition = desc.contents[0].reference.condition
+
+        a = MockPackage('apache', '2-1', deb, 'sha-1:aaa')
+        b = MockPackage('apache', '1.3', deb, 'sha-1:bbb')
+
+        assert condition.evaluate(a)
+        assert not condition.evaluate(b)
+
+    def test_load_and_use_star_cond(self):
+        """compdesc.load returns a component with packages"""
+        os.system('''
+cat >a.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <dsc>
+      <name>apache</name>
+      <dsc ref="sha-1:ccc">
+        <name>apache</name>
+      </dsc>
+      <deb ref="sha-1:aaa">
+        <name>apache</name>
+      </deb>
+      <deb ref="sha-1:bbb">
+        <name>apache-common</name>
+      </deb>
+    </dsc>
+    <dsc>
+      <cond><![CDATA[ * apache (>=2) ]]></cond>
+    </dsc>
+  </contents>
+</component>
+EOF
+cp a.xml b.xml
+''')
+        desc = ComponentDescriptor('a.xml')
+        desc.write()
+        self.assert_equals_long(open('b.xml').read(), open('a.xml').read())
+        condition = desc.contents[1].rule.condition
+
+        a = MockPackage('apache', '2', deb, 'sha-1:aaa')
+        b = MockPackage('apache-commmon', '2', deb, 'sha-1:bbb')
+        c = MockPackage('apache', '2', dsc, 'sha-1:ccc')
+        a.complement = [c]
+        b.complement = [c]
+        c.complement = [a, b]
+
+        assert condition.evaluate(a)
+        assert condition.evaluate(b)
+        assert not condition.evaluate(c)
 
     def test_load_file_object(self):
         """compdesc.load returns a component with packages"""

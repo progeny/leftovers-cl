@@ -410,6 +410,8 @@ ignore_message '^pdk.repogen:E0101:.*:DebianReleaseWriter'
 ignore_message '^pdk.rules:W0131:.*evaluate.*'
 ignore_message '^pdk.rules:W0232:.*: Class has no __init__ method'
 
+ignore_message '^pdk.debish_condition:W0131:.*:DebishParser.parse_.*'
+
 ignore_message '^pdk.meta:E0201:.*:_ComponentMetaGroup'
 
 ignore_message '^pdk.version_control:W0704:.*:Git.iter_diff_files'

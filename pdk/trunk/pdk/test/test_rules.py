@@ -18,7 +18,7 @@
 
 from operator import ge
 from pdk.test.utest_util import Test, MockPackage
-from pdk.package import deb
+from pdk.package import deb, dsc
 
 from pdk import rules
 
@@ -71,8 +71,24 @@ class ConditionsAndRulesFixture(Test):
         self.a2 = MockPackage('a', '2', deb)
         self.b1 = MockPackage('b', '1', deb)
         self.b2 = MockPackage('b', '2', deb)
+        self.c = MockPackage('c', '1', dsc)
+        self.d = MockPackage('d', '1', dsc)
+        self.a1.complement.append(self.c)
+        self.a2.complement.append(self.d)
 
-        self.all_packages = [ self.a1, self.a2, self.b1, self.b2 ]
+    def test_not(self):
+        condition = rules.notc(self.name_condition)
+        assert not condition.evaluate(self.a1)
+        assert not condition.evaluate(self.a2)
+        assert condition.evaluate(self.b1)
+        assert condition.evaluate(self.b2)
+
+    def test_star(self):
+        condition = rules.starc(rules.fmc('pdk', 'name', 'c'))
+        assert condition.evaluate(self.a1)
+        assert not condition.evaluate(self.a2)
+        assert not condition.evaluate(self.b1)
+        assert not condition.evaluate(None)
 
     def test_version_relation(self):
         vrc = rules.rc(ge, 'pdk', 'version', 3)

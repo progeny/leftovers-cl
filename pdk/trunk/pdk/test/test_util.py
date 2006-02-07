@@ -117,6 +117,7 @@ expected_xml_output = '''<?xml version="1.0" encoding="utf-8"?>
     <!--a comment-->
     <c d="e">
       <f>g</f>
+      <h><![CDATA[i << >> << &&]]></h>
     </c>
     <?pdk processing instruction?>
   </b>
@@ -131,6 +132,8 @@ class TestXML(Test):
         c = SubElement(b, 'c', d = 'e')
         f = SubElement(c, 'f')
         f.text = 'g'
+        h = SubElement(c, 'h')
+        h.text = 'i << >> << &&'
         b.append(ProcessingInstruction('pdk', 'processing instruction'))
         tree = ElementTree(a)
         output = stringio()

@@ -180,6 +180,58 @@ class OrCondition(object):
 
 make_comparable(OrCondition)
 
+class NotCondition(object):
+    '''Invert the value of evaluating the contained condition.'''
+    def __init__(self, condition):
+        self.condition = condition
+
+    def evaluate(self, candidate):
+        return not self.condition.evaluate(candidate)
+
+    def __str__(self):
+        return '*not*( %s )' % self.condition
+
+    __repr__ = __str__
+
+    def get_identity(self):
+        '''Return the comparable identity for this object.'''
+        return self.condition
+
+make_comparable(NotCondition)
+
+class StarCondition(object):
+    '''Make the contained condition evaluate against the complement.
+
+    The contained condition will be run against the candidate complement if
+    it is present.
+
+    If the candidate has no complement attibute, the condition
+    automatically fails.
+
+    Rule actions are applied to the candidate itself, not the complement.
+    '''
+    def __init__(self, condition):
+        self.condition = condition
+
+    def evaluate(self, candidate):
+        if not hasattr(candidate, 'complement'):
+            return False
+        for comp in candidate.complement:
+            if self.condition.evaluate(comp):
+                return True
+        return False
+
+    def __str__(self):
+        return '*star*( %s )' % self.condition
+
+    __repr__ = __str__
+
+    def get_identity(self):
+        '''Return the comparable identity for this object.'''
+        return self.condition
+
+make_comparable(StarCondition)
+
 class OneMatchMetacondition(object):
     '''Check that the success_count attribute is 1.'''
     def evaluate(self, rule):
@@ -267,3 +319,5 @@ rc = RelationCondition
 ac = AndCondition
 oc = OrCondition
 tc = TrueCondition
+starc = StarCondition
+notc = NotCondition
