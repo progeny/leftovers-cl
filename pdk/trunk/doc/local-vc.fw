@@ -570,6 +570,14 @@ R100@^H(09)file-b@^H(09)file-c
 EOF
     pdk commit -m 'rename file-b to file-c'
 
+    # Regression: File committed as empty, then modified: Status bombs.
+    touch some-file
+    pdk add some-file
+    pdk commit -m 'initial empty'
+    pdk status
+    echo 'hello world!' >some-file
+    pdk status
+
 popd
 @}
 
@@ -696,6 +704,5 @@ This is invoked early in the test to import utility functions.
 @<Assert Status@>
 
 @}
-
 
 # vim:ai:et:sts=4:sw=4:tw=0:
