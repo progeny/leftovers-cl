@@ -153,6 +153,20 @@ popd
 
 @}
 
+@B
+
+Pull should not be allowed on a dirty repsitory
+
+@$@<Pull Dirty@>==@{
+
+pushd dest
+    echo >>progeny.com/apache.xml
+    pdk pull product 2>errors.txt\
+        && fail "pdk pull should fail when workspace is dirty"
+    grep -i uncommitted errors.txt
+
+@}
+
 @B@<Test Outline@>
 
 Note that the client pull section gets run twice. The first run is a
@@ -167,5 +181,6 @@ popd
 @<Pull and check.@>
 @<Set up source for subsequent pull.@>
 @<Pull and check.@>
+@<Pull Dirty@>
 @}
 

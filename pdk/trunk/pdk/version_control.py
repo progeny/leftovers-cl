@@ -416,6 +416,15 @@ class Git(object):
         '''Run git-update-index --refresh.'''
         self.shell_to_string('git-update-index --refresh || true')
 
+    def has_index_changed(self, tree_id):
+        '''Make sure that the index file is identical to the given tree.'''
+        output = self.shell_to_string('git-diff-index --cached %s'
+                                      % mkarg(tree_id))
+        if output.strip():
+            return True
+        else:
+            return False
+
     def run_commit(self, commit_message_file, commit_message):
         '''Run git commit. Add -F or -m as needed. See code for
         details.
@@ -878,6 +887,10 @@ class VersionControl(object):
             add_remove = self.get_add_remove()
             self.verify_add_remove(add_remove)
             self.update_index(add_remove, [], self.alt_git)
+            if self.alt_git.has_index_changed('HEAD'):
+                raise InputError, \
+                      'Cannot merge with uncommitted changes in the ' + \
+                      'workspace.'
             self.alt_git.merge('HEAD', branch_name, silent)
             add_remove.clear([])
 
