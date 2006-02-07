@@ -4,8 +4,11 @@ pdk (0.0.28) unstable; urgency=low
     references.
   * Don't update channels twice on pull.
   * Add an api intro doc.
+  * Add "debish" condition language.
+  * Allow conditions to match arbitrary binaries and sources.
+  * A number of bug fixes.
 
- -- Darrin Thompson <darrint@progeny.com>  Thu, 19 Jan 2006 16:03:01 -0500
+ -- Darrin Thompson <darrint@progeny.com>  Mon,  6 Feb 2006 17:47:15 -0500
 
 pdk (0.0.27) unstable; urgency=low
 
