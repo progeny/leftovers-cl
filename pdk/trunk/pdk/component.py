@@ -267,12 +267,26 @@ class ComponentDescriptor(object):
 
         self.write_condition_fields(ref_element, stanza.reference.condition)
         predicates = stanza.predicates
-        if predicates:
+        links = stanza.links
+        unlinks = stanza.unlinks
+        if predicates or links or unlinks:
             meta_element = SubElement(ref_element, 'meta')
             for domain, predicate, target in predicates:
                 tag = string_domain(domain, predicate)
                 predicate_element = SubElement(meta_element, tag)
                 predicate_element.text = target
+
+        if links:
+            link_element = SubElement(meta_element, 'link')
+            for ent_type, ent_id in links:
+                ent_element = SubElement(link_element, ent_type)
+                ent_element.text = ent_id
+
+        if unlinks:
+            unlink_element = SubElement(meta_element, 'unlink')
+            for ent_type, ent_id in unlinks:
+                ent_element = SubElement(unlink_element, ent_type)
+                ent_element.text = ent_id
 
         for inner_ref in stanza.children:
             self.write_package_reference(ref_element, inner_ref)

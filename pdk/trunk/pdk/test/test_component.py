@@ -586,6 +586,12 @@ EOF
     <deb ref="sha-1:aaa">
       <meta>
         <other-key>other-value</other-key>
+        <link>
+          <vuln>22</vuln>
+        </link>
+        <unlink>
+          <vuln>20</vuln>
+        </unlink>
       </meta>
     </deb>
   </contents>
@@ -602,6 +608,12 @@ EOF
     <deb ref="sha-1:aaa">
       <meta>
         <other-key>other-value</other-key>
+        <link>
+          <vuln>22</vuln>
+        </link>
+        <unlink>
+          <vuln>20</vuln>
+        </unlink>
       </meta>
     </deb>
   </contents>
