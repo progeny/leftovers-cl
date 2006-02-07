@@ -207,6 +207,38 @@ popd
 
 @B
 
+Another commit regression, this one where you coudn't commit named files
+when in a subdirectory.
+
+We test it both for initial commit and subsequent commit.
+
+@$@<Commit Regression: In Subdir@>==@{
+pdk workspace create commit-reg-subdir-1
+pushd commit-reg-subdir-1
+    mkdir subdir
+    echo info >>subdir/file-a
+    pdk commit -m 'test regression' subdir/file-a
+    pushd subdir
+    echo info >>file-a
+    pdk commit -m 'test regression' file-a
+    popd
+popd
+
+pdk workspace create commit-reg-subdir-2
+pushd commit-reg-subdir-2
+    mkdir subdir
+    pushd subdir
+    echo info >>file-a
+    pdk commit -m 'test regression' file-a
+    echo info >>file-a
+    pdk commit -m 'test regression' file-a
+    popd
+popd
+
+@}
+
+@B
+
 This is another little test to make sure that pdk add and commit
 respect multiple arguments.
 
@@ -628,6 +660,7 @@ Here's the whole test.
 
 @O@<atest/local-vc.fw.sh@>==@{
 @<Test Setup@>
+@<Commit Regression: In Subdir@>
 @<Commit Ordering In Log@>
 @<New Repositories@>
 @<Add and Commit@>

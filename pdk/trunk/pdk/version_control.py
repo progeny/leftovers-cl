@@ -726,7 +726,8 @@ class VersionControl(object):
                                                modified_flag = True))
         modified_files = []
         for filename in iter_modified:
-            if os.path.exists(filename):
+            full_path = pjoin(self.work_dir, filename)
+            if os.path.exists(full_path):
                 modified_files.append(filename)
 
         modified_files.extend(add_remove.filter_add_files(files))
@@ -746,7 +747,8 @@ class VersionControl(object):
         removed_files = add_remove.get_removed_files()
         implicit_add_files = given_files - all_files - removed_files
         for implicit_add in implicit_add_files:
-            if not os.path.exists(implicit_add):
+            full_path = pjoin(self.work_dir, implicit_add)
+            if not os.path.exists(full_path):
                 message = 'Missing file "%s".' % implicit_add
                 raise SemanticError, message
 
