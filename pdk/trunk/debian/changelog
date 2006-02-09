@@ -1,3 +1,10 @@
+pdk (0.0.30) unstable; urgency=low
+
+  * Add condition inclusion of components.
+  * Expand debish language with some new operators.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu,  9 Feb 2006 14:24:57 -0500
+
 pdk (0.0.29) unstable; urgency=low
 
   * Add dependency on mx.TextTools.
