@@ -92,10 +92,10 @@ class ComponentDescriptor(object):
 
         self.build_component_descriptor(tree.getroot())
 
-    def load_raw(self, cache):
+    def load_raw(self, cache, package_condition):
         """Build up the raw component/package tree but don't fire any rules.
         """
-        component = Component(self.filename, cache)
+        component = Component(self.filename, cache, package_condition)
         field_names = ('id', 'name', 'description', 'requires', 'provides')
         for field_name in field_names:
             value = getattr(self, field_name)
@@ -144,7 +144,8 @@ class ComponentDescriptor(object):
                         contents.append(reference)
                 elif isinstance(stanza, ComponentReference):
                     child_descriptor = stanza.load(self.get_desc)
-                    child_component = child_descriptor.load_raw(cache)
+                    loader = child_descriptor.load_raw
+                    child_component = loader(cache, stanza.condition)
                     component.ordered_contents.append(child_component)
                     all_rules.extend(child_component.system.rules)
                     component.entities.update(child_component.entities)
@@ -164,9 +165,9 @@ class ComponentDescriptor(object):
         component.entities.update(self.entities)
         return component
 
-    def load(self, cache):
+    def load(self, cache, package_condition = rules.tc()):
         """Instantiate a component object tree for this descriptor."""
-        component = self.load_raw(cache)
+        component = self.load_raw(cache, package_condition)
         system = component.system
 
         # fire rule on all components
@@ -218,13 +219,29 @@ class ComponentDescriptor(object):
             if isinstance(reference, PackageStanza):
                 self.write_package_reference(contents_element, reference)
             elif isinstance(reference, ComponentReference):
-                component_element = SubElement(contents_element,
-                                               'component')
-                component_element.text = reference.filename
+                self.write_component_reference(contents_element, reference)
         dirname = os.path.dirname(self.filename) or "."
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         write_pretty_xml(tree, self.filename)
+
+    def write_component_reference(self, parent, reference):
+        '''Build elements from a component reference.'''
+        component_element = SubElement(parent, 'component')
+        if isinstance(reference.condition, rules.tc):
+            component_element.text = reference.filename
+        else:
+            file_element = SubElement(component_element, 'file')
+            file_element.text = reference.filename
+            for ref_condition in reference.condition.conditions:
+                if isinstance(ref_condition, rules.notc):
+                    tag_name = 'mask'
+                    condition = ref_condition.condition
+                else:
+                    tag_name = 'narrow'
+                    condition = ref_condition
+                cond_element = SubElement(component_element, tag_name)
+                cond_element.text = condition.debish
 
     def write_condition_fields(self, parent, outer_condition):
         '''Build elements out of condition fields.'''
@@ -656,6 +673,34 @@ class ComponentDescriptor(object):
             entity[key_tuple] = element.text
         return entity
 
+    def build_component_reference(self, component_ref_element):
+        '''Build up a component reference from a component element.'''
+        if component_ref_element.text.strip():
+            ref = ComponentReference(component_ref_element.text.strip())
+            return ref
+        else:
+            conditions = []
+            ref_file = None
+            for element in component_ref_element:
+                if element.tag == 'narrow':
+                    condition = compile_debish(element.text, None, None)
+                    conditions.append(condition)
+                elif element.tag == 'mask':
+                    n_condition = compile_debish(element.text, None, None)
+                    condition = rules.notc(n_condition)
+                    conditions.append(condition)
+                elif element.tag == 'file':
+                    ref_file = element.text.strip()
+                else:
+                    raise InputError, \
+                          'Unexpected "%s" tag in component reference' \
+                          % element.tag
+            if not ref_file:
+                raise InputError, "No filename provided for component."
+            root_condition = rules.ac(conditions)
+            ref = ComponentReference(ref_file, root_condition)
+            return ref
+
     def build_component_descriptor(self, component_element):
         '''Build up the state of this descriptor from the given element.'''
         contents_element = component_element.find('contents')
@@ -665,7 +710,7 @@ class ComponentDescriptor(object):
                     ref = self.build_package_ref(element)
                     self.contents.append(ref)
                 elif element.tag == 'component':
-                    ref = ComponentReference(element.text.strip())
+                    ref = self.build_component_reference(element)
                     self.contents.append(ref)
 
         entities_element = component_element.find('entities')
@@ -702,15 +747,16 @@ class Component(object):
     Do not mutate the fields of Component objects. They are meant to
     be used as hash 
     """
-    __slots__ = ('ref', 'cache', 'type', 'links',
+    __slots__ = ('ref', 'cache', 'package_condition', 'type', 'links',
                  'id', 'name', 'description', 'requires', 'provides',
                  'ordered_contents', 'system', 'entities', 'meta')
     identity_fields = ('ref', 'type',
                        'id', 'name', 'description', 'requires', 'provides')
 
-    def __init__(self, ref, cache):
+    def __init__(self, ref, cache, package_condition):
         self.ref = ref
         self.cache = cache
+        self.package_condition = package_condition
         self.type = 'component'
 
         self.id = ''
@@ -741,6 +787,21 @@ class Component(object):
 
     def iter_ordered_contents(self, classes, recursive, entities = None,
                               system = None):
+        '''Iterate over ordered_contents and filter by package_condition.
+
+        The filtering is only performed on Package object.
+        '''
+        for item in self.iter_raw_ordered_contents(classes, recursive,
+                                                   entities, system):
+            if isinstance(item, Package):
+                package = item
+                if self.package_condition.evaluate(package):
+                    yield package
+            else:
+                yield item
+
+    def iter_raw_ordered_contents(self, classes, recursive, entities = None,
+                                  system = None):
         '''Iterate over ordered_contents and load objects as needed.
 
         classes -       Only instantiate objects which would be instances
@@ -1000,8 +1061,9 @@ class ComponentReference(object):
 
     Use self.load() as a shortcut to the component descriptor.
     '''
-    def __init__(self, filename):
+    def __init__(self, filename, condition = rules.tc()):
         self.filename = filename
+        self.condition = condition
 
     def load(self, get_desc):
         '''Instantiate the ComponentDescriptor object for this reference.'''

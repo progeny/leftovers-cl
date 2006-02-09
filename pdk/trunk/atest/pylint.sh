@@ -447,6 +447,7 @@ ignore_message '^pdk.test..*:W0201:'
 ignore_message '^pdk.test..*:W0704:'
 ignore_message '^pdk.test..*:W0232:'
 ignore_message '^pdk.test..*:W0131:'
+ignore_message '^pdk.test.test_component:W0302:.*'
 
 cat pylint.txt
 if [ $(wc -l <pylint.txt) != "0" ]; then

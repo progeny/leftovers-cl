@@ -19,6 +19,7 @@
 """Unit test for component operations"""
 import os
 from cStringIO import StringIO as stringio
+from pdk.exceptions import InputError
 from pdk.test.utest_util import Test, TempDirTest, ShamCache, MockPackage
 from pdk.package import udeb, deb, dsc, rpm, srpm, RPMVersion, \
      DebianVersion
@@ -799,6 +800,97 @@ EOF
         comp = desc.load(cache)
         package = comp.iter_packages().next()
         self.assert_equals([('some-meta', 'can-do')], package.links)
+
+    def test_conditional_include(self):
+        os.system('''
+cat >b.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <deb ref="sha-1:aaa">
+      <name>apache</name>
+    </deb>
+    <deb ref="sha-1:bbb">
+      <name>libc6</name>
+    </deb>
+    <deb ref="sha-1:ccc">
+      <name>ls</name>
+    </deb>
+  </contents>
+</component>
+EOF
+''')
+        os.system('''
+cat >a.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <component>
+      <file>b.xml</file>
+      <narrow>apache</narrow>
+      <mask>ls</mask>
+    </component>
+  </contents>
+</component>
+EOF
+cp a.xml c.xml
+''')
+        apache = MockPackage('apache', '1', deb, 'sha-1:aaa',
+                             arch = 'i386')
+        libc = MockPackage('libc6', '1', deb, 'sha-1:bbb', arch = 'i386')
+        ls = MockPackage('ls', '1', deb, 'sha-1:ccc', arch = 'i386')
+        cache = ShamCache()
+        cache.add(apache)
+        cache.add(libc)
+        cache.add(ls)
+
+        desc_a = ComponentDescriptor('a.xml')
+        desc_a.write()
+        self.assert_equals_long(open('c.xml').read(), open('a.xml').read())
+        component_a = desc_a.load(cache)
+        assert isinstance(component_a, Component)
+        expected = [ apache ]
+        actual = list(component_a.iter_packages())
+        self.assert_equal(expected, actual)
+
+    def test_bad_comp_ref(self):
+        os.system('''
+cat >a.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <component>
+      <narrow><![CDATA[ apache ]]></narrow>
+    </component>
+  </contents>
+</component>
+EOF
+''')
+        try:
+            ComponentDescriptor('a.xml').load(ShamCache())
+            self.fail('should have thrown exception')
+        except InputError:
+            pass
+
+        os.system('''
+cat >a.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <component>
+      <zzz></zzz>
+      <narrow><![CDATA[ apache ]]></narrow>
+    </component>
+  </contents>
+</component>
+EOF
+''')
+        try:
+            ComponentDescriptor('a.xml').load(ShamCache())
+            self.fail('should have thrown exception')
+        except InputError, error:
+            assert '"zzz"' in str(error)
+
 
 class TestPackageRef(Test):
     def test_is_abstract(self):
