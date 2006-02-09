@@ -42,7 +42,7 @@ binaries. Likewise, the complement of a source package is it's binaries.
 '''
 
 from pdk.exceptions import InputError
-from pdk.rules import ac, oc, rc, fmc, starc, notc
+from pdk.rules import ac, oc, rc, relrc, fmc, starc, star2c, notc
 from operator import gt, lt, ge, le, eq
 from mx.TextTools import tag, whitespace, IsNotIn, AllNotIn, AllIn, Is, \
      IsIn, Table, MatchOk, EOF, Here
@@ -103,12 +103,13 @@ def compile_debish(debish, package_type, blob_id):
 
 # taglists for mx.TextTools
 
-not_word = '()[]{}=<>|*!'
+not_word = '()[]{}=<>|*!%'
 
 word = (('a', IsNotIn, whitespace + not_word),
         ('b', AllNotIn, whitespace + not_word, MatchOk))
 
-op = ((None, Is, '=', +1, MatchOk),
+op = ((None, Is, '%', +1),
+      (None, Is, '=', +1, MatchOk),
       (None, IsIn, '<>'),
       (None, IsIn, '<=>', MatchOk))
 
@@ -166,11 +167,16 @@ class DebishLex(object):
         token_tuple = self.iterator.peek(index)
         return token_tuple[0], token_tuple[1]
 
-op_map = {'=' : eq,
-          '>>': gt,
-          '>=': ge,
-          '<<': lt,
-          '<=': le }
+op_map = {'=' : (rc, eq),
+          '>>': (rc, gt),
+          '>=': (rc, ge),
+          '<<': (rc, lt),
+          '<=': (rc, le),
+          '%=' : (relrc, eq),
+          '%>>': (relrc, gt),
+          '%>=': (relrc, ge),
+          '%<<': (relrc, lt),
+          '%<=': (relrc, le) }
 
 def format_error_messaage(lex, message):
     '''Create a useful error message regarding a debish condition.
@@ -251,16 +257,23 @@ class DebishParser(object):
     def parse_star(self, lex):
         token_type, dummy = lex.peek()
         if token_type == '*':
-            star = True
             self.assert_type(lex, '*')
+            token_type, dummy = lex.peek()
+            if token_type == '*':
+                self.assert_type(lex, '*')
+                star = 2
+            else:
+                star = 1
         else:
-            star = False
+            star = 0
 
         condition = self.wrap_condition(self.parse_or(lex))
 
         # here is where we plug in the blob_id and package_type
-        if star:
+        if star == 1:
             return starc(condition)
+        elif star == 2:
+            return star2c(condition)
         else:
             return condition
 
@@ -296,10 +309,11 @@ class DebishParser(object):
         if token_type == '(':
             self.assert_type(lex, '(')
             while 1:
-                op_func = self.parse_op(lex)
+                rel_type, op_func = self.parse_op(lex)
                 version_str = self.assert_type(lex, 'word')
                 version = self.version_class(version_str)
-                conditions.append(rc(op_func, 'pdk', 'version', version))
+                conditions.append(rel_type(op_func, 'pdk', 'version',
+                                           version))
                 token_type, dummy = lex.peek()
                 if token_type == ')':
                     self.assert_type(lex, ')')
@@ -350,11 +364,11 @@ class DebishParser(object):
                     domain = 'pdk'
                     predicate = pred_str
 
-                op_func = self.parse_op(lex)
+                rel_type, op_func = self.parse_op(lex)
                 target = self.assert_type(lex, 'word')
 
-                and_conditions.append(rc(op_func, domain, predicate,
-                                         target))
+                and_conditions.append(rel_type(op_func, domain, predicate,
+                                               target))
                 token_type, dummy = lex.peek()
                 if token_type == '}':
                     self.assert_type(lex, '}')

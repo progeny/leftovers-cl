@@ -19,7 +19,7 @@
 from pdk.test.utest_util import Test
 
 from pdk.exceptions import InputError
-from pdk.rules import fmc, ac, oc, rc, starc, notc
+from pdk.rules import fmc, ac, oc, rc, relrc, starc, star2c, notc
 from pdk.debish_condition import compile_debish, DebishLex, \
      PeekableIterator
 from pdk.package import deb, DebianVersion, src
@@ -119,6 +119,12 @@ Expected end, got ) at character 7'''
                       fmc('pdk', 'type', 'deb')])
         self.assert_equals(wrapper, actual)
 
+    def test_relaxed_relation(self):
+        actual = compile_debish('apache {a:b %= c}', None, None)
+        expected = ac([fmc('pdk', 'name', 'apache'),
+                       ac([relrc(eq, 'a', 'b', 'c')])])
+        self.assert_equals(expected, actual)
+
     def test_or(self):
         actual = compile_debish('apache | apache2', None, None)
         expected = oc([ac([fmc('pdk', 'name', 'apache')]),
@@ -137,6 +143,12 @@ Expected end, got ) at character 7'''
     def test_star(self):
         actual = compile_debish('* apache | apache2', None, None)
         expected = starc(oc([ac([fmc('pdk', 'name', 'apache')]),
+                             ac([fmc('pdk', 'name', 'apache2')])]))
+        self.assert_equals(expected, actual)
+
+    def test_star2(self):
+        actual = compile_debish('** apache | apache2', None, None)
+        expected = star2c(oc([ac([fmc('pdk', 'name', 'apache')]),
                              ac([fmc('pdk', 'name', 'apache2')])]))
         self.assert_equals(expected, actual)
 

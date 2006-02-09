@@ -16,7 +16,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-from operator import ge
+from operator import ge, eq
 from pdk.test.utest_util import Test, MockPackage
 from pdk.package import deb, dsc
 
@@ -71,8 +71,8 @@ class ConditionsAndRulesFixture(Test):
         self.a2 = MockPackage('a', '2', deb)
         self.b1 = MockPackage('b', '1', deb)
         self.b2 = MockPackage('b', '2', deb)
-        self.c = MockPackage('c', '1', dsc)
-        self.d = MockPackage('d', '1', dsc)
+        self.c = MockPackage('c', '1', dsc, lang = 'de')
+        self.d = MockPackage('d', '1', dsc, lang = 'en')
         self.a1.complement.append(self.c)
         self.a2.complement.append(self.d)
 
@@ -88,7 +88,24 @@ class ConditionsAndRulesFixture(Test):
         assert condition.evaluate(self.a1)
         assert not condition.evaluate(self.a2)
         assert not condition.evaluate(self.b1)
+        assert not condition.evaluate(self.c)
         assert not condition.evaluate(None)
+
+    def test_star2(self):
+        condition = rules.star2c(rules.fmc('pdk', 'name', 'c'))
+        assert condition.evaluate(self.a1)
+        assert not condition.evaluate(self.a2)
+        assert not condition.evaluate(self.b1)
+        assert condition.evaluate(self.c)
+        assert not condition.evaluate(self.d)
+        assert not condition.evaluate(None)
+
+    def test_relaxed_relation(self):
+        condition = rules.relrc(eq, 'deb', 'lang', 'en')
+        assert condition.evaluate(self.d)
+        assert condition.evaluate(self.a1)
+        assert condition.evaluate(self.b1)
+        assert not condition.evaluate(self.c)
 
     def test_version_relation(self):
         vrc = rules.rc(ge, 'pdk', 'version', 3)

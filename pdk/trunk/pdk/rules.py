@@ -98,6 +98,54 @@ class FieldMatchCondition(object):
 
 make_comparable(FieldMatchCondition)
 
+class RelaxedRelationCondition(object):
+    '''Like RelationCondition but only rejects if the predicate is defined.
+
+    If the given predicate is not present in the candidate, the candidate
+    passes.
+
+    condition - A function taking to parameters and returning a boolean.
+    domain, predicate - The domain and predicate to be matched.
+    target    - The second value passed to the condition function.
+
+    When evaluating, the candidate field will be passed as the first
+    argument to the condition function.
+    '''
+    def __init__(self, condition, domain, predicate, target):
+        self.condition = condition
+        self.domain = domain
+        self.predicate = predicate
+        self.target = target
+
+    def evaluate(self, candidate):
+        field = (self.domain, self.predicate)
+        if field in candidate:
+            return self.condition(candidate[field], self.target)
+        else:
+            # The pdk domain is special, we can evalute it against raw
+            # entity attributes.
+            #
+            # Maybe someday we can rid ourselves of this special case.
+            if self.domain == 'pdk':
+                if hasattr(candidate, self.predicate):
+                    return self.condition(getattr(candidate,
+                                                  self.predicate),
+                                          self.target)
+            return True
+
+    def __str__(self):
+        tag = string_domain(self.domain, self.predicate)
+        return "[%s] (relaxed) is %s '%s'" % (tag, self.condition.__name__,
+                                              self.target)
+
+    __repr__ = __str__
+
+    def get_identity(self):
+        '''Return the comparable identity for this object.'''
+        return (self.condition, self.domain, self.predicate, self.target)
+
+make_comparable(RelaxedRelationCondition)
+
 class RelationCondition(object):
     '''A condition designed to compare versions.
 
@@ -119,6 +167,15 @@ class RelationCondition(object):
         if field in candidate:
             return self.condition(candidate[field], self.target)
         else:
+            # The pdk domain is special, we can evalute it against raw
+            # entity attributes.
+            #
+            # Maybe someday we can rid ourselves of this special case.
+            if self.domain == 'pdk':
+                if hasattr(candidate, self.predicate):
+                    return self.condition(getattr(candidate,
+                                                  self.predicate),
+                                          self.target)
             return False
 
     def __str__(self):
@@ -232,6 +289,39 @@ class StarCondition(object):
 
 make_comparable(StarCondition)
 
+class Star2Condition(object):
+    '''Make the contained condition evaluate against the complement.
+
+    The contained condition will be run against the candidate complement if
+    it is present, as well as the candidate itself. Contrast with
+    StarCondition which runs only against the complement.
+
+    Rule actions are applied to the candidate itself, not the complement.
+    '''
+    def __init__(self, condition):
+        self.condition = condition
+
+    def evaluate(self, candidate):
+        if self.condition.evaluate(candidate):
+            return True
+        if not hasattr(candidate, 'complement'):
+            return False
+        for comp in candidate.complement:
+            if self.condition.evaluate(comp):
+                return True
+        return False
+
+    def __str__(self):
+        return '*star2*( %s )' % self.condition
+
+    __repr__ = __str__
+
+    def get_identity(self):
+        '''Return the comparable identity for this object.'''
+        return self.condition
+
+make_comparable(Star2Condition)
+
 class OneMatchMetacondition(object):
     '''Check that the success_count attribute is 1.'''
     def evaluate(self, rule):
@@ -316,8 +406,10 @@ class CompositeAction(object):
 
 fmc = FieldMatchCondition
 rc = RelationCondition
+relrc = RelaxedRelationCondition
 ac = AndCondition
 oc = OrCondition
 tc = TrueCondition
 starc = StarCondition
+star2c = Star2Condition
 notc = NotCondition
