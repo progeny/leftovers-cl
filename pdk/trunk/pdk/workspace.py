@@ -375,6 +375,11 @@ class command_args_spec(object):
                    default = False,
                    help = "Force the operation.")
 
+
+            elif item == 'revision':
+                op('-r', '--rev', '--revision',
+                   dest = 'revision',
+                   metavar = 'REV')
             else:
                 assert False, "Unknown command line specification. '%s'" \
                        % item
@@ -667,26 +672,31 @@ def semdiff(args):
         new_package_list = [ i.package
                              for i in world_index.iter_all_candidates() ]
         new_component = faux_component(new_package_list)
-    elif len(files) == 1:
+    elif len(files) == 1 or args.opts.revision:
+        if args.opts.revision:
+            revision = args.opts.revision
+        else:
+            revision = 'HEAD'
         ref = files[0]
         # Get old
-        old_desc = get_desc(ref, workspace.vc.cat(ref))
+        get_hist_desc = workspace.get_historical_component_descriptor
+        old_desc = get_hist_desc(ref, revision)
         old_component = old_desc.load(cache)
-        old_package_list = list(old_component.iter_direct_packages())
+        old_package_list = list(old_component.iter_packages())
         # Get new
         new_desc = get_desc(ref)
         new_component = new_desc.load(cache)
-        new_package_list = list(new_component.iter_direct_packages())
+        new_package_list = list(new_component.iter_packages())
     elif len(files) == 2:
         ref = files[1]
         # get old
         old_desc = get_desc(files[0])
         old_component = old_desc.load(cache)
-        old_package_list = list(old_component.iter_direct_packages())
+        old_package_list = list(old_component.iter_packages())
         # Get new
         new_desc = get_desc(files[1])
         new_component = new_desc.load(cache)
-        new_package_list = list(new_component.iter_direct_packages())
+        new_package_list = list(new_component.iter_packages())
     else:
         raise CommandLineError("Argument list is invalid")
 
@@ -696,7 +706,7 @@ def semdiff(args):
     printer(ref, data)
 
 semdiff = make_invokable(semdiff, 'machine-readable', 'channels',
-                         'show-unchanged')
+                         'show-unchanged', 'revision')
 
 def dumpmeta(args):
     """usgage: pdk dumpmeta COMPONENTS
@@ -976,6 +986,16 @@ class _Workspace(object):
                 raise InputError(message)
         return ComponentDescriptor(oriented_name, handle,
                                    self.get_component_descriptor)
+
+    def get_historical_component_descriptor(self, oriented_name, revision):
+        '''Using oriented_name and revision, create a new descriptor.'''
+        def load_other_components(oriented_name):
+            '''Load future descriptors from this revision.'''
+            return self.get_historical_component_descriptor(oriented_name,
+                                                            revision)
+        handle = self.vc.cat(oriented_name, revision)
+        return ComponentDescriptor(oriented_name, handle,
+                                   load_other_components)
 
 class Net(object):
     '''Encapsulates the details of most framer conversations.

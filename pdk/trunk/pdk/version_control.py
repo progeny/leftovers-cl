@@ -1,4 +1,3 @@
-#   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
 #
@@ -817,18 +816,22 @@ class VersionControl(object):
         for rev in revs:
             print self.git.get_commit(rev)
 
-    def cat(self, filename):
-        '''Get the unchanged version of the given filename.'''
+    def cat(self, filename, revision = 'HEAD'):
+        '''Get the historical version of the given filename.
+
+        Returns a handle.
+        '''
         self.assert_no_dirs([filename])
         if self.is_new():
             message = 'Empty version control. Need an initial commit.'
             raise SemanticError(message)
 
-        matching_files = list(self.git.iter_ls_tree('HEAD', [filename]))
+        matching_files = list(self.git.iter_ls_tree(revision, [filename]))
         matches = len(matching_files)
         assert matches in (0, 1)
         if matches == 0:
-            raise SemanticError('No file by that name in version HEAD')
+            raise SemanticError('No file by that name in version %s'
+                                % revision)
         elif matches == 1:
             blob_id = matching_files[0][2]
             return self.git.get_blob(blob_id)
