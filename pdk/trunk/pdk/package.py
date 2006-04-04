@@ -507,7 +507,7 @@ rpm = _Rpm()
 class _SRpm(_Rpm):
     """Handle source rpm packages."""
     type_string = 'srpm'
-    role_string_string = 'source'
+    role_string = 'source'
 
     def get_filename(self, package):
         """Return a reasonable srpm package filename."""
