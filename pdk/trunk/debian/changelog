@@ -1,3 +1,11 @@
+pdk (0.0.31) unstable; urgency=low
+
+  * Make semdiff work "deep".
+  * Fix bug which caused SRPMS to be handled as binaries.
+  * Add some media handling utility classes.
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue,  4 Apr 2006 09:01:25 -0400
+
 pdk (0.0.30) unstable; urgency=low
 
   * Add condition inclusion of components.
