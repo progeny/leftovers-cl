@@ -3,8 +3,9 @@ pdk (0.0.31) unstable; urgency=low
   * Make semdiff work "deep".
   * Fix bug which caused SRPMS to be handled as binaries.
   * Add some media handling utility classes.
+  * Update to work with git 1.2.4.
 
- -- Darrin Thompson <darrint@progeny.com>  Tue,  4 Apr 2006 09:01:25 -0400
+ -- Darrin Thompson <darrint@progeny.com>  Wed,  5 Apr 2006 08:15:12 -0400
 
 pdk (0.0.30) unstable; urgency=low
 

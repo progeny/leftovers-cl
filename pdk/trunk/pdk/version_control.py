@@ -43,9 +43,12 @@ integrate this exploding behavior.
 """
 __revision__ = '$Progeny$'
 
+import sys
 import os
 from sets import Set
 from commands import mkarg
+from shutil import copyfileobj
+from tempfile import mkstemp
 from pdk.exceptions import InputError, SemanticError
 from pdk.util import pjoin, shell_command, NullTerminated
 
@@ -426,19 +429,48 @@ class Git(object):
             return False
 
     def run_commit(self, commit_message_file, commit_message):
-        '''Run git commit. Add -F or -m as needed. See code for
-        details.
-        '''
-        if commit_message_file:
-            message_opt = '-F %s' % mkarg(commit_message_file)
-        elif commit_message:
-            message_opt = '-m ' + mkarg(commit_message)
-        else:
-            message_opt = ''
+        '''Execute a raw git commit.
 
-        cmd = 'git commit %s' % message_opt
-        waiter = self.popen2(cmd, False)
+        This is only used for simple one parent commits.
+        '''
+        if self.is_new():
+            parent_arg = ''
+        else:
+            parent = self.shell_to_string('git-rev-parse HEAD').strip()
+            parent_arg = '-p %s' % parent
+
+        tree_id = self.shell_to_string('git-write-tree').strip()
+        cmd = 'git-commit-tree %s %s' % (tree_id, parent_arg)
+
+        remote_in, remote_out, waiter = self.popen2(cmd)
+        if commit_message_file:
+            if commit_message_file == '-':
+                handle = sys.stdin
+            else:
+                handle = open(commit_message_file)
+            copyfileobj(handle, remote_in)
+            if handle != sys.stdin:
+                handle.close()
+        elif commit_message:
+            remote_in.write(commit_message)
+        else:
+            fd_no, temp_file = mkstemp('.txt', 'commit-msg')
+            os.close(fd_no)
+            self.shell_to_string('git-status > %s' % temp_file)
+            editor = os.environ.get('EDITOR', 'vi')
+            edit_waiter = self.popen2('%s %s' % (editor, temp_file), False)
+            edit_waiter()
+            handle = open(temp_file)
+            copyfileobj(handle, remote_in)
+            handle.close()
+            os.unlink(temp_file)
+
+        remote_in.close()
+        commit_id = remote_out.read().strip()
+        remote_out.close()
         waiter()
+        self.shell_to_string('git-update-ref HEAD %s' % commit_id)
+        self.shell_to_string('git-update-server-info')
 
     def filter_refs(self, raw_refs):
         '''Return a list of refs that are given and present.
@@ -503,9 +535,10 @@ class Git(object):
     def get_commit_id(self, ref_name):
         '''Return the commit_id for a given name.'''
         command_string = 'git-rev-parse %s' % ref_name
-        commit_id = self.shell_to_string(command_string).strip()
-        if commit_id == ref_name:
-            raise CommitNotFound('not commit for "%s"' % ref_name)
+        try:
+            commit_id = self.shell_to_string(command_string).strip()
+        except SemanticError:
+            raise CommitNotFound('No commit for "%s"' % ref_name)
         return commit_id
 
     def note_ref(self, upstream_name, commit_id):
@@ -522,8 +555,12 @@ class Git(object):
 
     def is_new(self):
         '''Is this a "new" (no commits) git repository?'''
-        head_file = pjoin(self.git_dir, 'HEAD')
-        return not os.path.exists(head_file)
+        command_string = 'git-rev-parse HEAD 2>/dev/null'
+        try:
+            self.shell_to_string(command_string)
+        except SemanticError:
+            return True
+        return False
 
     def clean_fetch_head(self):
         '''Remove any "FETCH_HEAD" present.'''
@@ -718,7 +755,7 @@ class VersionControl(object):
     def update_index(self, add_remove, files, git):
         '''Write from scratch a correct index file for this workspace.'''
         if self.is_new():
-            git.unlink_index()
+            pass
         else:
             git.run_read_tree('HEAD')
             git.refresh_index()
