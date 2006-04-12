@@ -336,11 +336,17 @@ class Rule(object):
         text += " action: " + str(self.action)
         return text
 
+    def __nonzero__(self):
+        return bool(self.action)
+
 
 class RuleSystem(object):
     '''Composite a number of rule objects.'''
     def __init__(self, rules):
-        self.rules = rules
+        self.rules = []
+        for rule in rules:
+            if rule:
+                self.rules.append(rule)
 
     def evaluate_metacondition(self):
         '''Evaluate all meta conditions. Stop on the first failure.'''
@@ -371,6 +377,9 @@ class CompositeAction(object):
 
     def __str__(self):
         return str(self.actions)
+
+    def __nonzero__(self):
+        return bool(self.actions)
 
 # some abbreviations.
 

@@ -162,8 +162,8 @@ class ConditionsAndRulesFixture(Test):
         assert rule.evaluate_metacondition()
 
     def test_rule_system(self):
-        rule_a = rules.Rule(self.and_condition, None)
-        rule_b = rules.Rule(rules.rc(eq, 'pdk', 'name', 'b'), None)
+        rule_a = rules.Rule(self.and_condition, True)
+        rule_b = rules.Rule(rules.rc(eq, 'pdk', 'name', 'b'), True)
 
         composite = rules.RuleSystem([rule_a, rule_b])
         assert not composite.evaluate_metacondition()
@@ -185,3 +185,17 @@ class ConditionsAndRulesFixture(Test):
         self.assert_equal(expected_empty, rule_a.action.calls)
         self.assert_equal(expected_data, rule_b.action.calls)
         assert composite.evaluate_metacondition()
+
+    def test_rule_system_ignores_impotent_rules(self):
+        potent_action = rules.CompositeAction([ShamAction()])
+        potent_rule = rules.Rule(self.and_condition, potent_action)
+        impotent_action = rules.CompositeAction([])
+        impotent_rule = rules.Rule(self.and_condition, impotent_action)
+
+        assert potent_action
+        assert not impotent_action
+        assert potent_rule
+        assert not impotent_rule
+        system = rules.RuleSystem([potent_rule, impotent_rule])
+
+        self.assert_equal([potent_rule], system.rules)
