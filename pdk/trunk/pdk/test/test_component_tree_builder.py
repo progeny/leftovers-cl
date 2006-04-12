@@ -16,9 +16,10 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
+from operator import eq
 from cElementTree import XML, Element
-from pdk.rules import Rule, AndCondition, FieldMatchCondition, \
-     OneMatchMetacondition
+from pdk.rules import Rule, AndCondition, OneMatchMetacondition
+from pdk import rules
 from pdk.test.utest_util import Test
 
 from pdk.component import ComponentDescriptor, ActionMetaSet, \
@@ -31,7 +32,8 @@ class TestComponentTreeBuilder(Test):
         assert rule.condition.__class__ == AndCondition
         actual_fields = []
         for condition in rule.condition.conditions:
-            assert condition.__class__ == FieldMatchCondition
+            self.assert_equal(condition.__class__, rules.rc)
+            assert condition.condition == eq
             actual_fields.append((condition.domain,
                                   condition.predicate,
                                   condition.target))

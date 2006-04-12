@@ -252,7 +252,8 @@ class ComponentDescriptor(object):
 
         for condition in outer_condition.conditions:
 
-            if isinstance(condition, rules.fmc):
+            if isinstance(condition, rules.rc) \
+                    and condition.condition == eq:
                 tag_name = string_domain(condition.domain,
                                          condition.predicate)
                 condition_element = SubElement(parent, tag_name)
@@ -557,7 +558,7 @@ class ComponentDescriptor(object):
         else:
             target = element.text.strip()
             domain, name = parse_domain(element.tag)
-            return rules.fmc(domain, name, target)
+            return rules.rc(eq, domain, name, target)
 
 
     def build_package_ref(self, ref_element):
@@ -581,7 +582,7 @@ class ComponentDescriptor(object):
         inner_refs = []
         if ref_element.text and ref_element.text.strip():
             target = ref_element.text.strip()
-            xml_condition.conditions.append(rules.fmc('pdk', 'name',
+            xml_condition.conditions.append(rules.rc(eq, 'pdk', 'name',
                                             target))
         else:
             for element in ref_element:
@@ -867,37 +868,40 @@ class Component(object):
 
 def get_deb_child_condition(package):
     """Get child condition data for a deb."""
-    return rules.ac([ rules.fmc('pdk', 'name', package.pdk.sp_name),
-                      rules.fmc('pdk', 'version', package.pdk.sp_version),
-                      rules.fmc('pdk', 'type', 'dsc') ])
+    return rules.ac([ rules.rc(eq, 'pdk', 'name', package.pdk.sp_name),
+                      rules.rc(eq, 'pdk', 'version',
+                               package.pdk.sp_version),
+                      rules.rc(eq, 'pdk', 'type', 'dsc') ])
 
 def get_dsc_child_condition(package):
     """Get child condition data for a dsc."""
-    type_condition = rules.oc([ rules.fmc('pdk', 'type', 'deb'),
-                                rules.fmc('pdk', 'type', 'udeb') ])
+    type_condition = rules.oc([ rules.rc(eq, 'pdk', 'type', 'deb'),
+                                rules.rc(eq, 'pdk', 'type', 'udeb') ])
 
-    return rules.ac([ rules.fmc('pdk', 'sp-name', package.name),
-                      rules.fmc('pdk', 'sp-version',
+    return rules.ac([ rules.rc(eq, 'pdk', 'sp-name', package.name),
+                      rules.rc(eq, 'pdk', 'sp-version',
                                 package.version),
                       type_condition ])
 
 def get_rpm_child_condition(package):
     """Get child condition data for an rpm."""
-    return rules.ac([ rules.fmc('pdk', 'filename', package.pdk.source_rpm),
-                      rules.fmc('pdk', 'type', 'srpm') ])
+    return rules.ac([ rules.rc(eq, 'pdk', 'filename',
+                               package.pdk.source_rpm),
+                      rules.rc(eq, 'pdk', 'type', 'srpm') ])
 
 def get_srpm_child_condition(package):
     """Get child condition data for an srpm."""
-    return rules.ac([ rules.fmc('pdk', 'source-rpm', package.filename),
-                      rules.fmc('pdk', 'type', 'rpm') ])
+    return rules.ac([ rules.rc(eq, 'pdk', 'source-rpm', package.filename),
+                      rules.rc(eq, 'pdk', 'type', 'rpm') ])
 
 def get_general_condition(package):
     """Get condition data for any package."""
-    condition = rules.ac([ rules.fmc('pdk', 'name', package.name),
-                           rules.fmc('pdk', 'version',
+    condition = rules.ac([ rules.rc(eq, 'pdk', 'name', package.name),
+                           rules.rc(eq, 'pdk', 'version',
                                      package.version) ])
     if package.role == 'binary':
-        condition.conditions.append(rules.fmc('pdk', 'arch', package.arch))
+        condition.conditions.append(rules.rc(eq, 'pdk', 'arch',
+                                             package.arch))
     return condition
 
 def get_child_condition(package, stanza):
@@ -1156,14 +1160,14 @@ class PhantomConditionWrapper(object):
         conditions = self.phantom_wrapper.conditions
         if blob_id or package_type:
             if blob_id:
-                conditions.append(rules.fmc('pdk', 'blob-id', blob_id))
+                conditions.append(rules.rc(eq, 'pdk', 'blob-id', blob_id))
             conditions.extend(condition.conditions)
             if package_type.format_string == 'unknown':
                 role_string = package_type.role_string
-                conditions.append(rules.fmc('pdk', 'role', role_string))
+                conditions.append(rules.rc(eq, 'pdk', 'role', role_string))
             else:
                 type_string = package_type.type_string
-                conditions.append(rules.fmc('pdk', 'type', type_string))
+                conditions.append(rules.rc(eq, 'pdk', 'type', type_string))
 
     def evaluate(self, candidate):
         '''Use the full wrapper to evaluate the condition.'''

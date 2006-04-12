@@ -30,15 +30,6 @@ class ShamAction(object):
         self.calls.append(entity)
 
 class TestRuleIdentities(Test):
-    def test_field_match_condition(self):
-        first = rules.fmc('a', 'b', 'c')
-        same_as_first = rules.fmc('a', 'b', 'c')
-        second = rules.fmc('d', 'e', 'f')
-
-        assert first == same_as_first
-        assert second != first
-        assert hash(first) == hash(same_as_first)
-
     def test_relation_condition(self):
         first = rules.rc(ge, 'a', 'b', 'c')
         same_as_first = rules.rc(ge, 'a', 'b', 'c')
@@ -60,8 +51,8 @@ class TestRuleIdentities(Test):
 class ConditionsAndRulesFixture(Test):
     def set_up(self):
         super(ConditionsAndRulesFixture, self).set_up()
-        self.name_condition = rules.fmc('pdk', 'name', 'a')
-        self.version_condition = rules.fmc('pdk', 'version', '1')
+        self.name_condition = rules.rc(eq, 'pdk', 'name', 'a')
+        self.version_condition = rules.rc(eq, 'pdk', 'version', '1')
         self.and_condition = rules.ac([self.name_condition,
                                            self.version_condition])
         self.or_condition = rules.oc([self.name_condition,
@@ -84,7 +75,7 @@ class ConditionsAndRulesFixture(Test):
         assert condition.evaluate(self.b2)
 
     def test_star(self):
-        condition = rules.starc(rules.fmc('pdk', 'name', 'c'))
+        condition = rules.starc(rules.rc(eq, 'pdk', 'name', 'c'))
         assert condition.evaluate(self.a1)
         assert not condition.evaluate(self.a2)
         assert not condition.evaluate(self.b1)
@@ -92,7 +83,7 @@ class ConditionsAndRulesFixture(Test):
         assert not condition.evaluate(None)
 
     def test_star2(self):
-        condition = rules.star2c(rules.fmc('pdk', 'name', 'c'))
+        condition = rules.star2c(rules.rc(eq, 'pdk', 'name', 'c'))
         assert condition.evaluate(self.a1)
         assert not condition.evaluate(self.a2)
         assert not condition.evaluate(self.b1)
@@ -172,7 +163,7 @@ class ConditionsAndRulesFixture(Test):
 
     def test_rule_system(self):
         rule_a = rules.Rule(self.and_condition, None)
-        rule_b = rules.Rule(rules.fmc('pdk', 'name', 'b'), None)
+        rule_b = rules.Rule(rules.rc(eq, 'pdk', 'name', 'b'), None)
 
         composite = rules.RuleSystem([rule_a, rule_b])
         assert not composite.evaluate_metacondition()

@@ -122,10 +122,10 @@ cp a.xml b.xml
 
         deb_ref = desc.contents[0]
         expected = rules.ac([
-            rules.oc([ rules.ac([ rules.fmc('pdk', 'name', 'a'),
-                                  rules.fmc('pdk', 'arch', 'b') ]),
-                       rules.fmc('pdk', 'name', 'c') ]),
-            rules.fmc('my', 'some', 'value') ])
+            rules.oc([ rules.ac([ rules.rc(eq, 'pdk', 'name', 'a'),
+                                  rules.rc(eq, 'pdk', 'arch', 'b') ]),
+                       rules.rc(eq, 'pdk', 'name', 'c') ]),
+            rules.rc(eq, 'my', 'some', 'value') ])
         expected = PhantomConditionWrapper(expected, deb, None)
         self.assert_equals_long(expected, deb_ref.reference.condition)
 
@@ -906,7 +906,7 @@ class TestPackageRef(Test):
         assert abstract_ref.is_abstract()
 
     def test_field_lookups(self):
-        condition = rules.ac([rules.fmc('pdk', 'name', 'apache')])
+        condition = rules.ac([rules.rc(eq, 'pdk', 'name', 'apache')])
         ref = PackageStanza(deb, 'sha-1:aaa', condition, [])
 
         assert ('pdk', 'name') in ref
@@ -950,9 +950,9 @@ class TestPackageRef(Test):
                  ('pdk', 'sp-version'): sp_version}
         apache_deb = MockPackage('apache', '1', deb, 'sha-1:aaa', extra)
 
-        expected = rules.ac([ rules.fmc('pdk', 'name', 'one'),
-                              rules.fmc('pdk', 'version', '1-2'),
-                              rules.fmc('pdk', 'type', 'dsc') ])
+        expected = rules.ac([ rules.rc(eq, 'pdk', 'name', 'one'),
+                              rules.rc(eq, 'pdk', 'version', '1-2'),
+                              rules.rc(eq, 'pdk', 'type', 'dsc') ])
 
         self.assert_equals(expected,
                            get_deb_child_condition(apache_deb))
@@ -961,10 +961,10 @@ class TestPackageRef(Test):
         version = DebianVersion('1-2')
         apache_dsc = MockPackage('apache', version, dsc, 'sha-1:aaa')
 
-        type_condition = rules.oc([ rules.fmc('pdk', 'type', 'deb'),
-                                    rules.fmc('pdk', 'type', 'udeb')])
-        expected = rules.ac([ rules.fmc('pdk', 'sp-name', 'apache'),
-                              rules.fmc('pdk', 'sp-version', '1-2'),
+        type_condition = rules.oc([ rules.rc(eq, 'pdk', 'type', 'deb'),
+                                    rules.rc(eq, 'pdk', 'type', 'udeb')])
+        expected = rules.ac([ rules.rc(eq, 'pdk', 'sp-name', 'apache'),
+                              rules.rc(eq, 'pdk', 'sp-version', '1-2'),
                               type_condition ])
 
         self.assert_equals(expected,
@@ -977,9 +977,9 @@ class TestPackageRef(Test):
         apache_rpm = MockPackage('apache', version, rpm, 'sha-1:aaa',
                                  extras = extras)
 
-        expected = rules.ac([ rules.fmc('pdk', 'filename',
+        expected = rules.ac([ rules.rc(eq, 'pdk', 'filename',
                                         'apache.src.rpm'),
-                              rules.fmc('pdk', 'type', 'srpm') ])
+                              rules.rc(eq, 'pdk', 'type', 'srpm') ])
 
         self.assert_equals(expected,
                            get_rpm_child_condition(apache_rpm))
@@ -987,9 +987,9 @@ class TestPackageRef(Test):
     def test_get_srpm_child_condition(self):
         version = RPMVersion(version_string = '1-2')
         apache_srpm = MockPackage('apache', version, srpm, 'sha-1:aaa')
-        expected = rules.ac([ rules.fmc('pdk', 'source-rpm',
+        expected = rules.ac([ rules.rc(eq, 'pdk', 'source-rpm',
                                         'apache-1-2.src.rpm'),
-                              rules.fmc('pdk', 'type', 'rpm') ])
+                              rules.rc(eq, 'pdk', 'type', 'rpm') ])
 
         self.assert_equals(expected,
                            get_srpm_child_condition(apache_srpm))
@@ -1005,13 +1005,13 @@ class TestPackageRef(Test):
                  ('deb', 'arch'): 'i386'}
         apache_deb = MockPackage('apache', '1-2', deb, 'sha-1:aaa', extra)
 
-        expected = rules.ac([ rules.fmc('pdk', 'name', 'apache'),
-                              rules.fmc('pdk', 'version', version) ])
+        expected = rules.ac([ rules.rc(eq, 'pdk', 'name', 'apache'),
+                              rules.rc(eq, 'pdk', 'version', version) ])
         self.assert_equals(expected, get_general_condition(apache_dsc))
 
-        expected = rules.ac([ rules.fmc('pdk', 'name', 'apache'),
-                              rules.fmc('pdk', 'version', version),
-                              rules.fmc('pdk', 'arch', 'i386') ])
+        expected = rules.ac([ rules.rc(eq, 'pdk', 'name', 'apache'),
+                              rules.rc(eq, 'pdk', 'version', version),
+                              rules.rc(eq, 'pdk', 'arch', 'i386') ])
         self.assert_equals(expected, get_general_condition(apache_deb))
 
     def test_get_child_condition(self):
@@ -1021,7 +1021,7 @@ class TestPackageRef(Test):
                  ('deb', 'arch'): 'i386'}
         apache_deb = MockPackage('apache', '1-2', deb, 'sha-1:aaa', extra)
 
-        ref_condition = rules.ac([rules.fmc('pdk', 'name', 'apache')])
+        ref_condition = rules.ac([rules.rc(eq, 'pdk', 'name', 'apache')])
         apache_ref = PackageStanza(deb, 'sha-1:aaa', ref_condition, [])
 
 

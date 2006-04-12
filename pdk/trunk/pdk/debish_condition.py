@@ -42,7 +42,7 @@ binaries. Likewise, the complement of a source package is it's binaries.
 '''
 
 from pdk.exceptions import InputError
-from pdk.rules import ac, oc, rc, relrc, fmc, starc, star2c, notc
+from pdk.rules import ac, oc, rc, relrc, starc, star2c, notc
 from operator import gt, lt, ge, le, eq
 from mx.TextTools import tag, whitespace, IsNotIn, AllNotIn, AllIn, Is, \
      IsIn, Table, MatchOk, EOF, Here
@@ -241,15 +241,15 @@ class DebishParser(object):
             wrapper = ac([])
             conditions = wrapper.conditions
             if self.blob_id:
-                conditions.append(fmc('pdk', 'blob-id', self.blob_id))
+                conditions.append(rc(eq, 'pdk', 'blob-id', self.blob_id))
             conditions.append(condition)
             if self.package_type:
                 if self.package_type.format_string == 'unknown':
                     role_string = self.package_type.role_string
-                    conditions.append(fmc('pdk', 'role', role_string))
+                    conditions.append(rc(eq, 'pdk', 'role', role_string))
                 else:
                     type_string = self.package_type.type_string
-                    conditions.append(fmc('pdk', 'type', type_string))
+                    conditions.append(rc(eq, 'pdk', 'type', type_string))
             return wrapper
         else:
             return condition
@@ -302,7 +302,7 @@ class DebishParser(object):
         token_type, dummy = lex.peek()
         if token_type == 'word':
             dummy, name = lex.next()
-            conditions.append(fmc('pdk', 'name', name))
+            conditions.append(rc(eq, 'pdk', 'name', name))
 
         # followed by an optional () containing 1 or more version relations
         token_type, dummy = lex.peek()
@@ -337,7 +337,7 @@ class DebishParser(object):
                     self.assert_type(lex, '!')
                 arch = self.assert_type(lex, 'word')
                 domain = self.package_type.type_string
-                or_conditions.append(fmc(domain, 'arch', arch))
+                or_conditions.append(rc(eq, domain, 'arch', arch))
                 token_type, dummy = lex.peek()
                 if token_type == ']':
                     self.assert_type(lex, ']')

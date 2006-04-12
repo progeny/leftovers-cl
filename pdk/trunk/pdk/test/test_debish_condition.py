@@ -19,7 +19,7 @@
 from pdk.test.utest_util import Test
 
 from pdk.exceptions import InputError
-from pdk.rules import fmc, ac, oc, rc, relrc, starc, star2c, notc
+from pdk.rules import ac, oc, rc, relrc, starc, star2c, notc
 from pdk.debish_condition import compile_debish, DebishLex, \
      PeekableIterator
 from pdk.package import deb, DebianVersion, src
@@ -82,99 +82,99 @@ Expected end, got ) at character 7'''
 
     def test_name_only(self):
         actual = compile_debish('apache', None, None)
-        expected = ac([fmc('pdk', 'name', 'apache')])
+        expected = ac([rc(eq, 'pdk', 'name', 'apache')])
         self.assert_equals(expected, actual)
 
     def test_name_version(self):
         actual = compile_debish('apache (=2.0-1)', deb, None)
-        expected = ac([fmc('pdk', 'name', 'apache'),
+        expected = ac([rc(eq, 'pdk', 'name', 'apache'),
                        rc(eq, 'pdk', 'version', DebianVersion('2.0-1'))])
         wrapper = ac([expected,
-                      fmc('pdk', 'type', 'deb')])
+                      rc(eq, 'pdk', 'type', 'deb')])
         self.assert_equals(wrapper, actual)
 
     def test_untyped_version(self):
         actual = compile_debish('apache (=2.0-1)', None, None)
-        expected = ac([fmc('pdk', 'name', 'apache'),
+        expected = ac([rc(eq, 'pdk', 'name', 'apache'),
                        rc(eq, 'pdk', 'version', '2.0-1')])
         self.assert_equals(expected, actual)
 
     def test_name_arch(self):
         actual = compile_debish('apache [i386 amd64]', deb, None)
-        expected = ac([fmc('pdk', 'name', 'apache'),
-                       oc([fmc('deb', 'arch', 'i386'),
-                           fmc('deb', 'arch', 'amd64')])])
+        expected = ac([rc(eq, 'pdk', 'name', 'apache'),
+                       oc([rc(eq, 'deb', 'arch', 'i386'),
+                           rc(eq, 'deb', 'arch', 'amd64')])])
         wrapper = ac([expected,
-                      fmc('pdk', 'type', 'deb')])
+                      rc(eq, 'pdk', 'type', 'deb')])
         self.assert_equals(wrapper, actual)
 
     def test_name_other(self):
         actual = compile_debish('apache {a:b = c dd:ee>=fgh i=j}', deb,
                                 None)
-        expected = ac([fmc('pdk', 'name', 'apache'),
+        expected = ac([rc(eq, 'pdk', 'name', 'apache'),
                        ac([rc(eq, 'a', 'b', 'c'),
                            rc(ge, 'dd', 'ee', 'fgh'),
                            rc(eq, 'pdk', 'i', 'j')])])
         wrapper = ac([expected,
-                      fmc('pdk', 'type', 'deb')])
+                      rc(eq, 'pdk', 'type', 'deb')])
         self.assert_equals(wrapper, actual)
 
     def test_relaxed_relation(self):
         actual = compile_debish('apache {a:b %= c}', None, None)
-        expected = ac([fmc('pdk', 'name', 'apache'),
+        expected = ac([rc(eq, 'pdk', 'name', 'apache'),
                        ac([relrc(eq, 'a', 'b', 'c')])])
         self.assert_equals(expected, actual)
 
     def test_or(self):
         actual = compile_debish('apache | apache2', None, None)
-        expected = oc([ac([fmc('pdk', 'name', 'apache')]),
-                       ac([fmc('pdk', 'name', 'apache2')])])
+        expected = oc([ac([rc(eq, 'pdk', 'name', 'apache')]),
+                       ac([rc(eq, 'pdk', 'name', 'apache2')])])
         self.assert_equals(expected, actual)
 
     def test_version_range(self):
         actual = compile_debish('apache (>=2.0-1 << 3)', deb, None)
-        expected = ac([fmc('pdk', 'name', 'apache'),
+        expected = ac([rc(eq, 'pdk', 'name', 'apache'),
                        rc(ge, 'pdk', 'version', DebianVersion('2.0-1')),
                        rc(lt, 'pdk', 'version', DebianVersion('3'))])
         wrapper = ac([expected,
-                      fmc('pdk', 'type', 'deb')])
+                      rc(eq, 'pdk', 'type', 'deb')])
         self.assert_equals(wrapper, actual)
 
     def test_star(self):
         actual = compile_debish('* apache | apache2', None, None)
-        expected = starc(oc([ac([fmc('pdk', 'name', 'apache')]),
-                             ac([fmc('pdk', 'name', 'apache2')])]))
+        expected = starc(oc([ac([rc(eq, 'pdk', 'name', 'apache')]),
+                             ac([rc(eq, 'pdk', 'name', 'apache2')])]))
         self.assert_equals(expected, actual)
 
     def test_star2(self):
         actual = compile_debish('** apache | apache2', None, None)
-        expected = star2c(oc([ac([fmc('pdk', 'name', 'apache')]),
-                             ac([fmc('pdk', 'name', 'apache2')])]))
+        expected = star2c(oc([ac([rc(eq, 'pdk', 'name', 'apache')]),
+                             ac([rc(eq, 'pdk', 'name', 'apache2')])]))
         self.assert_equals(expected, actual)
 
 
     def test_not_arch(self):
         actual = compile_debish('apache [!i386 !amd64]', deb, None)
-        expected = ac([fmc('pdk', 'name', 'apache'),
-                       notc(oc([fmc('deb', 'arch', 'i386'),
-                                fmc('deb', 'arch', 'amd64')]))])
+        expected = ac([rc(eq, 'pdk', 'name', 'apache'),
+                       notc(oc([rc(eq, 'deb', 'arch', 'i386'),
+                                rc(eq, 'deb', 'arch', 'amd64')]))])
         wrapper = ac([expected,
-                      fmc('pdk', 'type', 'deb')])
+                      rc(eq, 'pdk', 'type', 'deb')])
         self.assert_equals(wrapper, actual)
 
     def test_term_with_blob_id(self):
         actual = compile_debish('apache (=2.0-1)', deb, 'sha-1:aaa')
-        expected = ac([fmc('pdk', 'name', 'apache'),
+        expected = ac([rc(eq, 'pdk', 'name', 'apache'),
                        rc(eq, 'pdk', 'version', DebianVersion('2.0-1'))])
-        wrapper = ac([fmc('pdk', 'blob-id', 'sha-1:aaa'),
+        wrapper = ac([rc(eq, 'pdk', 'blob-id', 'sha-1:aaa'),
                       expected,
-                      fmc('pdk', 'type', 'deb')])
+                      rc(eq, 'pdk', 'type', 'deb')])
         self.assert_equals(wrapper, actual)
 
     def test_build_general_debish_ref(self):
         actual = compile_debish('apache', src, None)
-        expected = ac([fmc('pdk', 'name', 'apache')])
+        expected = ac([rc(eq, 'pdk', 'name', 'apache')])
         wrapper = ac([expected,
-                      fmc('pdk', 'role', 'source')])
+                      rc(eq, 'pdk', 'role', 'source')])
         self.assert_equals(wrapper, actual)
 

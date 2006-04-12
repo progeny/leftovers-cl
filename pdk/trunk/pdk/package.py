@@ -26,7 +26,6 @@ packages.
 
 import re
 from pdk.exceptions import InputError
-from pdk.rules import AndCondition, FieldMatchCondition
 from pdk.meta import Entity
 
 # Obviously at least one of these two needs to work for PDK to be useful.
@@ -47,9 +46,6 @@ except ImportError:
 
 
 __revision__ = "$Progeny$"
-
-and_c = AndCondition
-f_c = FieldMatchCondition
 
 class DomainAttributeAdapter(object):
     '''Expose a particular domain of an entity as attributes of this object.

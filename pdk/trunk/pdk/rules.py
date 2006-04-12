@@ -53,50 +53,36 @@ def make_comparable(cls):
     cls.__cmp__ = __cmp__
     cls.__hash__ = __hash__
 
-class FieldMatchCondition(object):
-    '''Check that the provided object has a particular attribute and value.
+def match_field(candidate, domain, predicate, condition, target):
+    '''Evaluate a (domain, predicate) and target against a candidiate.
+
+    Returns -   True  - Match
+                False - Mismatch
+                None  - (domain, predicate) not present.
     '''
-    def __init__(self, domain, predicate, target):
-        self.domain = domain
-        self.predicate = predicate
-        self.target = target
+    key = (domain, predicate)
+    # Unfortunately components are special cases.
+    #
+    # At some point in the future they may inherit from the Entity
+    # class. Then we can rid ourselves of this oddball and
+    # unfortunate exception handler.
+    try:
+        if key in candidate:
+            return condition(candidate[key], target)
+    except TypeError, e:
+        if 'iterable' in str(e):
+            pass
+        else:
+            raise
 
-    def evaluate(self, candidate):
-        key = (self.domain, self.predicate)
+    # The pdk domain is special, we can evalute it against raw
+    # entity attributes.
+    #
+    # Maybe someday we can rid ourselves of this special case.
+    if domain == 'pdk' and hasattr(candidate, predicate):
+        return condition(getattr(candidate, predicate), target)
 
-        # Unfortunately components are special cases.
-        #
-        # At some point in the future they may inherit from the Entity
-        # class. Then we can rid ourselves of this oddball and
-        # unfortunate exception handler.
-        try:
-            if key in candidate:
-                return candidate[key] == self.target
-        except TypeError, e:
-            if 'iterable' in str(e):
-                pass
-            else:
-                raise
-
-        # The pdk domain is special, we can evalute it against raw
-        # entity attributes.
-        #
-        # Maybe someday we can rid ourselves of this special case.
-        if self.domain == 'pdk':
-            return hasattr(candidate, self.predicate) and \
-                   getattr(candidate, self.predicate) == self.target
-
-    def __str__(self):
-        tag = string_domain(self.domain, self.predicate)
-        return "[%s] is '%s'" % (tag, self.target)
-
-    __repr__ = __str__
-
-    def get_identity(self):
-        '''Return the comparable identity for this object.'''
-        return (self.domain, self.predicate, self.target)
-
-make_comparable(FieldMatchCondition)
+    return None
 
 class RelaxedRelationCondition(object):
     '''Like RelationCondition but only rejects if the predicate is defined.
@@ -118,20 +104,12 @@ class RelaxedRelationCondition(object):
         self.target = target
 
     def evaluate(self, candidate):
-        field = (self.domain, self.predicate)
-        if field in candidate:
-            return self.condition(candidate[field], self.target)
-        else:
-            # The pdk domain is special, we can evalute it against raw
-            # entity attributes.
-            #
-            # Maybe someday we can rid ourselves of this special case.
-            if self.domain == 'pdk':
-                if hasattr(candidate, self.predicate):
-                    return self.condition(getattr(candidate,
-                                                  self.predicate),
-                                          self.target)
+        match = match_field(candidate, self.domain, self.predicate,
+                            self.condition, self.target)
+        if match is None:
             return True
+        else:
+            return match
 
     def __str__(self):
         tag = string_domain(self.domain, self.predicate)
@@ -163,20 +141,12 @@ class RelationCondition(object):
         self.target = target
 
     def evaluate(self, candidate):
-        field = (self.domain, self.predicate)
-        if field in candidate:
-            return self.condition(candidate[field], self.target)
-        else:
-            # The pdk domain is special, we can evalute it against raw
-            # entity attributes.
-            #
-            # Maybe someday we can rid ourselves of this special case.
-            if self.domain == 'pdk':
-                if hasattr(candidate, self.predicate):
-                    return self.condition(getattr(candidate,
-                                                  self.predicate),
-                                          self.target)
+        match = match_field(candidate, self.domain, self.predicate,
+                            self.condition, self.target)
+        if match is None:
             return False
+        else:
+            return match
 
     def __str__(self):
         tag = string_domain(self.domain, self.predicate)
@@ -404,7 +374,6 @@ class CompositeAction(object):
 
 # some abbreviations.
 
-fmc = FieldMatchCondition
 rc = RelationCondition
 relrc = RelaxedRelationCondition
 ac = AndCondition
