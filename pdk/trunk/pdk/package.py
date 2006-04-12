@@ -34,7 +34,6 @@ try:
     import apt_inst
     import apt_pkg
     import smart.backends.deb.debver as debver
-    from GnuPGInterface import GnuPG as gpg
 except ImportError:
     pass
 
@@ -282,26 +281,37 @@ class _Dsc(object):
             package[(dom, key)] = value
         return package
 
+    def extract_signed_content(self, raw):
+        '''Yank the signed content out of a pgp signed plaintext.
+
+        No verfication of the signature is done.
+        '''
+        if re.search(r'(?m)^=', raw):
+            lines = iter(raw.splitlines(True))
+            for line in lines:
+                if re.match('^-', line):
+                    break
+
+            for line in lines:
+                if line.strip() == '':
+                    break
+
+            header_lines = []
+            for line in lines:
+                if line.strip() == '':
+                    break
+                header_lines.append(line)
+
+            return ''.join(header_lines)
+        else:
+            return raw
+
     def extract_header(self, filename):
         """Extract control file contents from a dsc file."""
         handle  = open(filename)
         full_text = handle.read()
-        if re.search(r'(?m)^=', full_text):
-            handle.seek(0)
-            extractor = gpg()
-            extractor.options.extra_args = ['--skip-verify']
-            null = open('/dev/null', 'w')
-            process = extractor.run(['--decrypt'],
-                                    create_fhs=['stdout'],
-                                    attach_fhs={'stdin': handle,
-                                                'stderr': null})
-            header = process.handles['stdout'].read()
-            process.wait()
-            handle.close()
-            null.close()
-        else:
-            header = full_text
         handle.close()
+        header = self.extract_signed_content(full_text)
         return sanitize_deb_header(header)
 
     def get_filename(self, package):

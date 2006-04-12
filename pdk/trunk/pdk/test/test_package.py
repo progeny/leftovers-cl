@@ -174,6 +174,45 @@ Files:
         self.assert_equals('zippy.dsc', package.pdk.raw_filename)
         self.assert_equals(267, package.size)
 
+    def test_extract_signed(self):
+        raw_header = """-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+Format: 1.0
+Source: ethereal
+Version: 0.9.4-1woody2
+Binary: ethereal-dev, tethereal, ethereal-common, ethereal
+Maintainer: Frederic Peters <fpeters@debian.org>
+Architecture: any
+Standards-Version: 3.5.6
+Build-Depends: libgtk1.2-dev, libpcap-dev, libsnmp-dev, flex, libz-dev, debhelper, libtool
+Files:
+ 42e999daa659820ee93aaaa39ea1e9ea 3278908 ethereal_0.9.4.orig.tar.gz
+ 9ba55fbe1973fa07eaea17ceddb0a47b 34257 ethereal_0.9.4-1woody2.diff.gz
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.7 (GNU/Linux)
+
+iD8DBQE9ZfM1W5ql+IAeqTIRAqagAJ9t9nEQuZQkIJ4Ov8EuKGK4aKrXWACff980
++4mimqemD98on69LeuGERvc=
+=3faj
+-----END PGP SIGNATURE-----
+"""
+        header = dsc.extract_signed_content(raw_header)
+        expected = """Format: 1.0
+Source: ethereal
+Version: 0.9.4-1woody2
+Binary: ethereal-dev, tethereal, ethereal-common, ethereal
+Maintainer: Frederic Peters <fpeters@debian.org>
+Architecture: any
+Standards-Version: 3.5.6
+Build-Depends: libgtk1.2-dev, libpcap-dev, libsnmp-dev, flex, libz-dev, debhelper, libtool
+Files:
+ 42e999daa659820ee93aaaa39ea1e9ea 3278908 ethereal_0.9.4.orig.tar.gz
+ 9ba55fbe1973fa07eaea17ceddb0a47b 34257 ethereal_0.9.4-1woody2.diff.gz
+"""
+        self.assert_equals_long(expected, header)
+
 class TestGetPackageType(Test):
     def test_get_package_type(self):
         self.assert_equal(deb, get_package_type(filename = 'a.deb'))

@@ -7,7 +7,7 @@ Standards-Version: 3.6.1
 
 Package: pdk
 Architecture: all
-Depends: ${shlibs:Depends}, git-core, python-apt, python-gnupginterface, python2.3, python2.3-celementtree, python2.3-pycurl, python2.3-xml, smartpm, python2.3-egenix-mxtexttools
+Depends: ${shlibs:Depends}, git-core, python-apt, python2.3, python2.3-celementtree, python2.3-pycurl, python2.3-xml, smartpm, python2.3-egenix-mxtexttools
 Conflicts: picax
 Replaces: picax
 Provides: picax
