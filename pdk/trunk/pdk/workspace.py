@@ -437,6 +437,7 @@ def repogen(args):
                          ws.reorient_filename(args.opts.output_dest))
     else:
         repo_dir = pjoin(ws.location, 'repo')
+    ws.download([ws.get_component_descriptor(product_file)])
     compile_product(product_file, ws.cache, repo_dir, get_desc)
 
 repogen = make_invokable(repogen, 'output-dest')
@@ -718,7 +719,9 @@ def dumpmeta(args):
     cache = workspace.cache
     component_refs = args.get_reoriented_files(workspace)
     for component_ref in component_refs:
-        comp = get_desc(component_ref).load(cache)
+        descriptor = get_desc(component_ref)
+        workspace.download([descriptor])
+        comp = descriptor.load(cache)
         for item in chain(comp.iter_packages(),
                           comp.iter_components(),
                           [comp]):
@@ -754,7 +757,9 @@ def dumplinks(args):
     cache = workspace.cache
     component_ref = args.get_one_reoriented_file(workspace)
 
-    component = get_desc(component_ref).load(cache)
+    descriptor = get_desc(component_ref)
+    workspace.download([descriptor])
+    component = descriptor.load(cache)
     for item in component.iter_contents():
         for ent_type, ent_id in item.links:
             print '|'.join((item.ent_type, item.ent_id, ent_type, ent_id))
@@ -842,19 +847,10 @@ def download(args):
     package indexes of configured channels.
     """
     workspace = current_workspace()
-    extended_cache = workspace.world.get_backed_cache(workspace.cache)
-    acquirer = workspace.get_acquirer()
-    get_desc = workspace.get_component_descriptor
     component_names = args.get_reoriented_files(workspace)
-    def run_download_pass(message):
-        '''Find and acquire all needed blob_ids.'''
-        for component_name in component_names:
-            descriptor = get_desc(component_name)
-            descriptor.note_download_info(acquirer, extended_cache)
-        acquirer.acquire(message, workspace.cache)
-    # Two passes are needed when pulling from remote workspaces.
-    run_download_pass('Download Packages Pass 1 of 2')
-    run_download_pass('Download Packages Pass 2 of 2')
+    descriptors = [ workspace.get_component_descriptor(n)
+                    for n in component_names ]
+    workspace.download(descriptors)
 
 download = make_invokable(download)
 
@@ -902,6 +898,19 @@ class _Workspace(object):
     def reorient_filename(self, filename):
         '''Return the given path relative to self.location.'''
         return relative_path(self.location, filename)
+
+    def download(self, descriptors):
+        '''Download packages for the named componenst.'''
+        extended_cache = self.world.get_backed_cache(self.cache)
+        acquirer = self.get_acquirer()
+        def run_download_pass(message):
+            '''Find and acquire all needed blob_ids.'''
+            for descriptor in descriptors:
+                descriptor.note_download_info(acquirer, extended_cache)
+            acquirer.acquire(message, self.cache)
+        # Two passes are needed when pulling from remote workspaces.
+        run_download_pass('Download Packages Pass 1 of 2')
+        run_download_pass('Download Packages Pass 2 of 2')
 
     def add(self, files):
         """

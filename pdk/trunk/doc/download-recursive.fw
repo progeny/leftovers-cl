@@ -52,7 +52,7 @@ change to a file, as nothing fancy is needed.
 @$@<Try Download and Repogen.@>==@{
 
 pushd download
-    rm -r etc/cache/md5 etc/cache/sha-1
+    rm -rf etc/cache/md5 etc/cache/sha-1
     cat >root.xml <<EOF
 <component>
   <contents>

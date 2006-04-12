@@ -55,7 +55,7 @@ set_up "Ill-formed command line - download" 2
 pdk download || status=$?
 tear_down
 
-set_up "Working with missing components is an error." 4
+set_up "Working with missing components is an error." 3
 cat >exists.xml <<EOF
 <?xml version="1.0"?>
 <component>

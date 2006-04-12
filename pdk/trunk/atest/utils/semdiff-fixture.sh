@@ -230,14 +230,6 @@ cat >ethereal2.xml <<EOF
 </component>
 EOF
 
-pdk download \
-    timex-13.xml \
-    timex-12.xml \
-    timex-12-nosrc.xml \
-    ethereal1.xml \
-    ethereal2.xml \
-    ethereal1-missing.xml
-
 popd
 
 }

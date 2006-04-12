@@ -107,6 +107,7 @@ Here we add and commit somes files for the initial pull.
 
 pushd source
     pdk add progeny.com/*.xml
+    pdk download progeny.com/*.xml
     pdk commit -m "git-production commit"
 popd
 

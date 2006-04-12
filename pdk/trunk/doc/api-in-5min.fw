@@ -202,6 +202,7 @@ raw_component_filename = sys.argv[1]
 ws = current_workspace()
 component_filename = ws.reorient_filename(raw_component_filename)
 descriptor = ws.get_component_descriptor(component_filename)
+ws.download([descriptor])
 cache = ws.cache
 component = descriptor.load(cache)
 

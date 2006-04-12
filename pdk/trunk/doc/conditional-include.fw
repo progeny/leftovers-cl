@@ -35,7 +35,7 @@ end up in the root component.
 @$@<Do Conditional Inclusion.@>==@{
 
 pushd include
-    rm -r etc/cache/md5 etc/cache/sha-1
+    rm -rf etc/cache/md5 etc/cache/sha-1
     cat >star.xml <<EOF
 <component>
   <contents>

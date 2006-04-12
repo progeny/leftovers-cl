@@ -160,12 +160,6 @@ EOF
         progeny.com/emacs.xml \
         progeny.com/python.xml \
         progeny.com/time.xml
-    pdk download \
-        progeny.com/apache.xml \
-        progeny.com/ida.xml \
-        progeny.com/emacs.xml \
-        progeny.com/python.xml \
-        progeny.com/time.xml
 
     popd
 }
