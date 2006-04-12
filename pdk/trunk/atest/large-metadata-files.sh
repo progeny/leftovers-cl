@@ -39,6 +39,7 @@ pushd large-meta
 EOF
 
     time pdk channel update
+    ls -lh etc/outside-world.cache
     mkdir progeny.com
     cat >progeny.com/hello.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
