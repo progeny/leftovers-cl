@@ -53,3 +53,8 @@ test "${status}" == "0" && bail "cmd shell should have returned non-zero?"
 echo "workspace create foo" |pdk
 verify_new_workspace foo
 rm -rf foo
+
+pdk workspace create exists
+pdk workspace create exists \
+    && fail "Shouldn't be able to create over an existing workspace."
+
