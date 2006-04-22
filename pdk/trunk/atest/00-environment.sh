@@ -229,13 +229,13 @@ SHA1(xsok_1.02.orig.tar.gz)= beac1309aeddff5f15148879de766289a68dd2f6
 EOF
 
 # test python modules
-for module in pycurl xml.sax.saxutils apt_pkg rpm apsw
+for module in pycurl xml.sax.saxutils apt_pkg rpm
 do
   python -c "import ${module}" || fail "could not import ${module}"
 done
 
 # test required programs
-for program in git cdbmake sqlite3
+for program in git
 do
   which ${program} || fail "could not find program ${program}"
 done
