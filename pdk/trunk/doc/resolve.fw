@@ -371,16 +371,11 @@ This next part is for setting up Apache.
 
 @$@<Apt Channel Test@>+=@{
 mkdir etc
-# set up apache.
-SERVER_PORT=$(unused_port 8103 8104 8105 8106 8107 13847)
-create_apache_conf $SERVER_PORT
-
-cat >$tmp_dir/etc/svn.apache2.conf <<EOF
-DocumentRoot $tmp_dir/dir-channel/repo/
+# set up http server
+create_lighttpd_conf <<EOF
+server.document-root = "$tmp_dir/dir-channel/repo/"
 EOF
-
-$apache2_bin -t -f etc/apache2/apache2.conf
-$apache2_bin -X -f etc/apache2/apache2.conf &
+start_lighttpd
 
 pdk workspace create apt-channel
 pushd apt-channel
@@ -390,7 +385,7 @@ cat >etc/channels.xml <<EOF
 <channels>
   <local>
     <type>apt-deb</type>
-    <path>http://localhost:$SERVER_PORT/</path>
+    <path>http://localhost:$HTTP_PORT/</path>
     <archs>arm i386 ia64 source</archs>
     <dist>apache</dist>
     <components>main</components>

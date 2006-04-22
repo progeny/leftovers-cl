@@ -25,17 +25,13 @@
 
 . atest/test_lib.sh
 
-SERVER_PORT=$(unused_port 8103 8104 8105 8106 8107 13847)
-create_apache_conf $SERVER_PORT
-
-cat >etc/remote.apache2.conf <<EOF
-DocumentRoot $tmp_dir
-Alias /repo/ $tmp_dir/test-repogen/repo/
-Alias /repo-nodists/ $tmp_dir/repo-nodists/
+create_lighttpd_conf <<EOF
+server.document-root = "$tmp_dir"
+alias.url = ( "/repo/" => "$tmp_dir/test-repogen/repo/",
+              "/repo-nodists/" => "$tmp_dir/repo-nodists/" )
 EOF
 
-$apache2_bin -t -f etc/apache2/apache2.conf
-$apache2_bin -X -f etc/apache2/apache2.conf &
+start_lighttpd
 
 . atest/utils/repogen-fixture.sh
 
@@ -66,14 +62,14 @@ cat >etc/channels.xml <<EOF
   </local>
   <apt-deb>
     <type>apt-deb</type>
-    <path>http://localhost:$SERVER_PORT/repo/</path>
+    <path>http://localhost:$HTTP_PORT/repo/</path>
     <dist>stable</dist>
     <components>main</components>
     <archs>source i386</archs>
   </apt-deb>
   <nodists>
     <type>apt-deb</type>
-    <path>http://localhost:$SERVER_PORT/repo-nodists/</path>
+    <path>http://localhost:$HTTP_PORT/repo-nodists/</path>
     <dist>./</dist>
     <archs>source binary</archs>
   </nodists>
@@ -87,7 +83,7 @@ compare_files() {
     compare_timestamps $1 $2
 }
 
-prefix=http_localhost_${SERVER_PORT}_repo_dists
+prefix=http_localhost_${HTTP_PORT}_repo_dists
 compare_files \
     repo/dists/stable/main/binary-i386/Packages.gz \
     etc/channels/${prefix}_stable_main_binary-i386_Packages.gz
@@ -96,7 +92,7 @@ compare_files \
     repo/dists/stable/main/source/Sources.gz \
     etc/channels/${prefix}_stable_main_source_Sources.gz
 
-prefix=http_localhost_${SERVER_PORT}_repo-nodists_.
+prefix=http_localhost_${HTTP_PORT}_repo-nodists_.
 compare_files \
     $tmp_dir/repo-nodists/Packages.gz \
     etc/channels/${prefix}_Packages.gz
@@ -108,7 +104,7 @@ compare_files \
 # this tests the "already downloaded" code.
 pdk channel update
 
-prefix=http_localhost_${SERVER_PORT}_repo_dists
+prefix=http_localhost_${HTTP_PORT}_repo_dists
 compare_files \
     repo/dists/stable/main/binary-i386/Packages.gz \
     etc/channels/${prefix}_stable_main_binary-i386_Packages.gz
@@ -117,7 +113,7 @@ compare_files \
     repo/dists/stable/main/source/Sources.gz \
     etc/channels/${prefix}_stable_main_source_Sources.gz
 
-prefix=http_localhost_${SERVER_PORT}_repo-nodists_.
+prefix=http_localhost_${HTTP_PORT}_repo-nodists_.
 compare_files \
     $tmp_dir/repo-nodists/Packages.gz \
     etc/channels/${prefix}_Packages.gz

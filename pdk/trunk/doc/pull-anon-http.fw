@@ -52,22 +52,15 @@ pdk workspace create dest
 
 @B
 
-The apache setup is pretty minimal. We just set up a document root
+The http server setup is pretty minimal. We just set up a document root
 pointing directly at this sandbox. No cgi or anything special needed.
 
 @$@<Set up Apache.@>==@{
-
-mkdir etc
-
-SERVER_PORT=$(unused_port 8103 8104 8105 8106 8107 13847)
-create_apache_conf $SERVER_PORT
-
-cat >$tmp_dir/etc/svn.apache2.conf <<EOF
-DocumentRoot $tmp_dir
+# set up http server
+create_lighttpd_conf <<EOF
+server.document-root = "$tmp_dir"
 EOF
-
-$apache2_bin -t -f etc/apache2/apache2.conf
-$apache2_bin -X -f etc/apache2/apache2.conf &
+start_lighttpd
 
 @}
 
@@ -84,15 +77,15 @@ cat >etc/channels.xml <<EOF
 <channels>
   <product>
     <type>source</type>
-    <path>http://localhost:$SERVER_PORT/source</path>
+    <path>http://localhost:$HTTP_PORT/source</path>
   </product>
   <oops-404>
     <type>source</type>
-    <path>http://localhost:$SERVER_PORT/product-zzz</path>
+    <path>http://localhost:$HTTP_PORT/product-zzz</path>
   </oops-404>
   <oops-direct-git>
     <type>source</type>
-    <path>http://localhost:$SERVER_PORT/source/etc/git</path>
+    <path>http://localhost:$HTTP_PORT/source/etc/git</path>
   </oops-direct-git>
 </channels>
 EOF
