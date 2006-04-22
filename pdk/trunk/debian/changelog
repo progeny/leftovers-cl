@@ -1,3 +1,9 @@
+pdk (0.0.32) unstable; urgency=low
+
+  * Accomodate running and testing on CentOS.
+
+ -- Darrin Thompson <darrint@progeny.com>  Sat, 22 Apr 2006 15:16:46 -0400
+
 pdk (0.0.31) unstable; urgency=low
 
   * Make semdiff work "deep".
