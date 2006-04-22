@@ -50,7 +50,10 @@ import re
 from urlparse import urlsplit
 from gzip import GzipFile
 from md5 import md5
-import apt_pkg
+try:
+    import apt_pkg
+except ImportError:
+    pass
 from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError, SemanticError
 from pdk.util import cpath, gen_file_fragments, get_remote_file, \

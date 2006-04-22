@@ -417,6 +417,7 @@ ignore_message '^pdk.debish_condition:W0131:.*:DebishParser.parse_.*'
 ignore_message '^pdk.meta:E0201:.*:_ComponentMetaGroup'
 
 ignore_message '^pdk.version_control:W0704:.*:Git.iter_diff_files'
+ignore_message '^pdk.channels:W0704:.*: Except'
 
 ignore_message '^bin_utest:W0401'
 ignore_message '^bin_utest:W0611'
