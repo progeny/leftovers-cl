@@ -25,22 +25,6 @@
 
 set_up_repogen_fixture integration
 
-SERVER_PORT=$(unused_port 8110 8111 8112 8113 8114 8115 8116 8117 13847)
-
-create_apache_conf $SERVER_PORT
-
-pdk_bin=$(which pdk)
-cat >etc/svn.apache2.conf <<EOF
-ScriptAlias /telco/upload $pdk_bin
-Alias /telco/ $tmp_dir/production/
-PassEnv PATH PYTHONPATH
-# Tell the cgi where its cache is.
-SetEnv PDK_CACHE_PATH $tmp_dir/production/etc/cache
-EOF
-
-$apache2_bin -t -f etc/apache2/apache2.conf
-$apache2_bin -X -f etc/apache2/apache2.conf &
-
 # -----------------------------------------------------------
 # Bootstrap and do some "integration" work in the integration area.
 # -----------------------------------------------------------
