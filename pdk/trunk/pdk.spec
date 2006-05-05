@@ -1,6 +1,6 @@
 Summary: Componentized Linux Platform Development Kit (PDK)
 Name: pdk
-%define version 0.0.32
+%define version 0.0.33
 Version: %{version}
 Release: 1
 License: GPL
@@ -61,6 +61,10 @@ rm -rf %{buildroot} %{_builddir}/*
 
 
 %changelog
+* Fri May 5 2006 Darrin Thompson <darrint@progeny.com> - 0.0.33-1
+- Fix bugs affecting RPM distros.
+- Fix bug where entities weren't preserved when writing components.
+
 * Fri Apr 21 2006 Darrin Thompson <darrint@progeny.com> - 0.0.32-1
 - Initial rpm release.
 - Incorporate changes needed to run pdk and tests in CentOS 4

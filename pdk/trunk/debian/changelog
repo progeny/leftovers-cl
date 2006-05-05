@@ -1,3 +1,10 @@
+pdk (0.0.33) unstable; urgency=low
+
+  * Fix bugs affecting RPM distros.
+  * Fix bug where entities weren't preserved when writing components.
+
+ -- Darrin Thompson <darrint@progeny.com>  Fri,  5 May 2006 16:19:16 -0400
+
 pdk (0.0.32) unstable; urgency=low
 
   * Accomodate running and testing on CentOS.
