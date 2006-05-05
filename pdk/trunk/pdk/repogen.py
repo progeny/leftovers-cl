@@ -687,9 +687,9 @@ class Compiler:
         """Link all the packages in the product to the repository."""
         os.mkdir(repo_dir)
         for package in component.iter_packages():
-            os.link(self.cache.file_path(package.blob_id),
-                    os.path.join(repo_dir, package.filename)
-                    )
+            link_dest = os.path.join(repo_dir, package.filename)
+            if not os.path.exists(link_dest):
+                os.link(self.cache.file_path(package.blob_id), link_dest)
 
     def dump_report(self, component, contents, dummy):
         """Instead of building a repo, dump a report of component contents.

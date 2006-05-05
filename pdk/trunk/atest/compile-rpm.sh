@@ -26,7 +26,33 @@
 set_up_repogen_fixture test-repogen
 cd test-repogen
 
-pdk repogen progeny.com/time.xml
+# this component mentions the same rpm twice, to catch a regression.
+cat >time.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <srpm>
+      <name>adjtimex</name>
+      <rpm ref="md5:2c0376dce66844970269876d1e09fea9">
+        <name>adjtimex</name>
+        <version>1.13-13</version>
+        <arch>i386</arch>
+      </rpm>
+      <rpm ref="md5:2c0376dce66844970269876d1e09fea9">
+        <name>adjtimex</name>
+        <version>1.13-13</version>
+        <arch>i386</arch>
+      </rpm>
+      <srpm ref="md5:adf064bd5d34ee4522a01fd15176d9b6">
+        <name>adjtimex</name>
+        <version>1.13-13</version>
+      </srpm>
+    </srpm>
+  </contents>
+</component>
+EOF
+
+pdk repogen time.xml
 
 [ -d './repo' ] || fail "mising repo directory"
 

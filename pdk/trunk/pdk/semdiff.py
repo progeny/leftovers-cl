@@ -35,8 +35,8 @@ predicate_filter = Set([
     'Pre-Depends', 'Priority', 'Provides', 'Recommends', 'Replaces',
     'SHA1Sum', 'Section', 'Size', 'Source', 'Standards-Version', 'Status',
     'Suggests', 'Version', 'Uploaders', 'arch', 'name', 'extra-file',
-    'found-filename', 'raw-filename', 'size', 'source-rpm', 'sp-name',
-    'sp-version', 'version'])
+    'found-filename', 'nosrc', 'raw-filename', 'size', 'source-rpm',
+    'sp-name', 'sp-version', 'version'])
 
 full_predicate_filter = Set([
     ('deb', 'directory'), ('deb', 'Enhances')])

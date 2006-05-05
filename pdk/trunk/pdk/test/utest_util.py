@@ -25,7 +25,7 @@ import difflib
 import md5
 from pprint import pformat
 from unittest import TestCase
-from pdk.package import Package, DebianVersion
+from pdk.package import Package, DebianVersion, srpm
 
 __revision__ = '$Progeny$'
 
@@ -135,6 +135,8 @@ class MockPackage(Package):
             version = DebianVersion(raw_version)
         else:
             version = raw_version
+        if package_type == srpm:
+            self['pdk', 'nosrc'] = False
         domain = package_type.format_string
 
         self[('pdk', 'name')] = name

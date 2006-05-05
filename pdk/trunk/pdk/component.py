@@ -214,12 +214,19 @@ class ComponentDescriptor(object):
         if self.contents:
             contents_element = SubElement(root, 'contents')
 
-        # last, write the contents element
+        # next, write the contents element
         for reference in self.contents:
             if isinstance(reference, PackageStanza):
                 self.write_package_reference(contents_element, reference)
             elif isinstance(reference, ComponentReference):
                 self.write_component_reference(contents_element, reference)
+
+        # last, write the entities element
+        if self.entities:
+            entities_element = SubElement(root, 'entities')
+            self.write_entities(entities_element, self.entities)
+
+        # actually write the xml to a file
         dirname = os.path.dirname(self.filename) or "."
         if not os.path.exists(dirname):
             os.makedirs(dirname)
@@ -309,6 +316,22 @@ class ComponentDescriptor(object):
         for inner_ref in stanza.children:
             self.write_package_reference(ref_element, inner_ref)
 
+
+    def write_entities(self, component_element, entities):
+        '''Write out an entities element with all entities.'''
+        entity_order = self.entities.keys()
+        entity_order.sort()
+        for entity_key in entity_order:
+            ent_type, ent_id = entity_key
+            entity_element = SubElement(component_element, ent_type,
+                                        {'id': ent_id})
+            entity = entities[entity_key]
+            keys = entity.keys()
+            keys.sort()
+            for key in keys:
+                key_name = string_domain(*key)
+                key_element = SubElement(entity_element, key_name)
+                key_element.text = entity[key]
 
     def _assert_resolved(self):
         """

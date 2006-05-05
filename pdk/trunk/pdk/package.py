@@ -494,6 +494,12 @@ class _Rpm(object):
         package[('pdk', 'version')] = RPMVersion(header)
         package[('rpm', 'arch')] = header[rpm_api.RPMTAG_ARCH]
         package[('pdk', 'source-rpm')] = source_rpm
+
+        # note the nosource and/or nopatch attributes
+        keys = header.keys()
+        nosrc = (1051 in keys or 1052 in keys)
+        package['pdk', 'nosrc'] = nosrc
+
         return package
 
     def extract_header(self, filename):
@@ -518,7 +524,12 @@ class _SRpm(_Rpm):
     def get_filename(self, package):
         """Return a reasonable srpm package filename."""
         version_string = package.pdk.version.string_without_epoch
-        return '%s-%s.src.rpm' % (package.pdk.name, version_string)
+        if package.pdk.nosrc:
+            src_part = 'nosrc'
+        else:
+            src_part = 'src'
+        return '%s-%s.%s.rpm' % (package.pdk.name, version_string, \
+                                 src_part)
 
 srpm = _SRpm()
 
@@ -548,7 +559,8 @@ def get_package_type(filename = '', format = ''):
         return udeb
     elif filename.endswith('.dsc') or format == 'dsc':
         return dsc
-    elif filename.endswith('.src.rpm') or format == 'srpm':
+    elif filename.endswith('.nosrc.rpm') or \
+            filename.endswith('.src.rpm') or format == 'srpm':
         return srpm
     elif filename.endswith('.rpm') or format == 'rpm':
         return rpm

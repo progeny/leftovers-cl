@@ -634,6 +634,69 @@ EOF
 '''
         self.assert_equals_long(expected, open('test.xml').read())
 
+    def test_dont_lose_entities(self):
+        """Make sure the write method handles entities."""
+        open('test.xml', 'w').write('''<?xml version="1.0"?>
+<component>
+  <meta>
+    <predicate>object</predicate>
+  </meta>
+  <contents>
+    <dsc>
+      <name>a</name>
+      <meta>
+        <c>d</c>
+      </meta>
+    </dsc>
+    <deb ref="sha-1:aaa">
+      <meta>
+        <necessity>mandatory</necessity>
+      </meta>
+    </deb>
+  </contents>
+  <entities>
+    <test id="1">
+      <a>b</a>
+      <c>d</c>
+      <e>f</e>
+    </test>
+  </entities>
+</component>
+''')
+        desc = ComponentDescriptor('test.xml')
+        cache = ShamCache()
+        cache.add(MockPackage('a', '1', deb, 'sha-1:aaa'))
+        desc.load(cache)
+        desc.write()
+        expected = '''<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <meta>
+    <predicate>object</predicate>
+  </meta>
+  <contents>
+    <dsc>
+      <name>a</name>
+      <meta>
+        <c>d</c>
+      </meta>
+    </dsc>
+    <deb ref="sha-1:aaa">
+      <meta>
+        <necessity>mandatory</necessity>
+      </meta>
+    </deb>
+  </contents>
+  <entities>
+    <test id="1">
+      <a>b</a>
+      <c>d</c>
+      <e>f</e>
+    </test>
+  </entities>
+</component>
+'''
+        self.assert_equals_long(expected, open('test.xml').read())
+
     def test_dont_mutate_meta(self):
         """Make sure the load method does not mutate the meta info
         in the descriptor.

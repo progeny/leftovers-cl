@@ -108,6 +108,14 @@ cat >apache.xml <<EOF
       </dsc>
     </deb>
   </contents>
+  <!-- entities should survive the resolve. -->
+  <entities>
+    <test id="1">
+      <a>b</a>
+      <c>d</c>
+      <e>f</e>
+    </test>
+  </entities>
 </component>
 EOF
 
@@ -202,6 +210,13 @@ diff -u - apache.xml <<EOF || bail 'apache.xml differs'
       </dsc>
     </deb>
   </contents>
+  <entities>
+    <test id="1">
+      <a>b</a>
+      <c>d</c>
+      <e>f</e>
+    </test>
+  </entities>
 </component>
 EOF
 
