@@ -94,7 +94,7 @@ elif [ "$format" = rpm ]; then
     rpmbuild -ba $export_dir/pdk.spec
     rm -r $export_dir
     mv $rpms_dir/* $srpms_dir/* $dev_dir
-    sudo rpm -e pdk
+    sudo rpm -e pdk || true
     sudo rpm -Uvh pdk-$version-1.i386.rpm
 fi
 
