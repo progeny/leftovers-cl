@@ -788,7 +788,6 @@ def run_resolve(args, find_package, assert_resolved, abstract_constraint):
         world_index = workspace.world.get_limited_index(channel_names)
         descriptor.resolve(find_package, extended_cache, world_index,
                            abstract_constraint)
-        descriptor.setify_child_references()
 
         if assert_resolved:
             descriptor._assert_resolved()

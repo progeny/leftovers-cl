@@ -367,86 +367,6 @@ class ComponentDescriptor(object):
                     "No %s %s" % (pkgtype, condition)
                 )
 
-
-    def setify_child_references(self):
-        """Remove duplicate and sort child references from the component.
-
-        The same child ocurring three times under three different
-        parents is not considered a duplicate.
-        """
-
-        for parent_ref in self.iter_package_refs():
-            child_set = Set(parent_ref.children)
-            new_child_list = list(child_set)
-            new_child_list.sort()
-            parent_ref.children = new_child_list
-
-    def _get_parent_matches(self, find_package, cache, world_index,
-                            abstract_constraint):
-        '''Creates "match tuples" associating packages with matched refs.
-
-        tuple looks like: (package, ref)
-
-        Apply policy when the same ref matches more than one package.
-        Current policy is roughly the same as debian. Use the "newest"
-        package.
-
-        find_package - a function we can call to pick the right package
-                       out of a world_items iterator.
-        cache        - a workspace cache
-        world_index  - a world index we will use to search for candidate
-                       packages.
-        abstract_constraint -
-                       whether stanzas must be resolved or unresolved.
-        '''
-
-        match_information = []
-
-        # first run the packages through base level package references.
-        for ref in self.iter_package_refs(abstract_constraint):
-            if ref.name:
-                item_list = world_index.iter_candidates(('pdk', 'name'),
-                                                        ref.name)
-            else:
-                item_list = world_index.iter_all_candidates()
-                message = 'Using unoptimized package list. ' + \
-                          'This operation may take a long time.\n' + \
-                          ' condition = %r' % ref.rule.condition
-                logger = get_logger()
-                logger.warn(message)
-
-            found_package = find_package(cache, ref, item_list)
-            if found_package:
-                match_information.append((found_package, ref))
-
-        return match_information
-
-    def _get_child_conditions(self, world_index, parent_matches):
-        '''Apply policy when the same ref matches more than one package.
-
-        Current policy is roughly the same as debian. Use the "newest"
-        package.
-        '''
-        child_conditions = []
-        for ghost_package, ref in parent_matches:
-            child_condition, candidate_key_info = \
-                get_child_condition(ghost_package, ref)
-
-            if ref.name:
-                item_list = world_index.iter_candidates(('pdk', 'name'),
-                                                        ref.name)
-            else:
-                item_list = world_index.iter_all_candidates()
-            parent_candidates = item_list
-
-            key_domain, key_field, key_value = candidate_key_info
-            candidate_key = (key_domain, key_field)
-            child_candidates = world_index.iter_candidates(candidate_key,
-                                                           key_value)
-            candidates = chain(parent_candidates, child_candidates)
-            child_conditions.append((child_condition, ref, candidates))
-        return child_conditions
-
     def resolve(self, find_package, cache, world_index,
                 abstract_constraint):
         """Resolve abstract references by searching the given package list.
@@ -461,32 +381,8 @@ class ComponentDescriptor(object):
         """
         if ('pdk', 'no-resolve', '1') in self.meta:
             return
-        parent_matches = self._get_parent_matches(find_package, cache,
-                                                  world_index,
-                                                  abstract_constraint)
-        child_conditions = self._get_child_conditions(world_index,
-                                                      parent_matches)
-
-        # run through the new list of matched refs and clear the child
-        # lists.
-        for child_condition in child_conditions:
-            ref = child_condition[1]
-            ref.children = []
-
-        # run through all the packages again, this time using the
-        # child_conditions of new references.
-        for child_condition, ref, candidate_items in child_conditions:
-            for item in candidate_items:
-                ghost_package = item.package
-                if child_condition.evaluate(ghost_package):
-                    new_child_ref = \
-                        PackageStanza.from_package(ghost_package)
-                    expected_filename = ghost_package.filename
-                    found_filename = ghost_package.pdk.found_filename
-                    if expected_filename != found_filename:
-                        predicate = ('pdk', 'filename', found_filename)
-                        new_child_ref.predicates.append(predicate)
-                    ref.children.append(new_child_ref)
+        for stanza in self.iter_package_refs(abstract_constraint):
+            stanza.resolve(find_package, cache, world_index)
 
     def note_download_info(self, acquirer, extended_cache):
         '''Recursively traverse and note blob ids in the acquirer.'''
@@ -1093,6 +989,100 @@ class PackageStanza(object):
         action = CompositeAction(actions)
         return Rule(condition, action)
     rule = property(get_rule)
+
+    def _get_parent_match(self, find_package, cache, world_index):
+        '''Find a package which represents a match for this stanza.
+
+        The world index is searched. It is only efficient if this stanza
+        has a name condition.
+
+        find_package - a function we can call to pick the right package
+                       out of a world_items iterator.
+        cache        - a workspace cache
+        world_index  - a world index we will use to search for candidate
+                       packages.
+        abstract_constraint -
+                       whether stanzas must be resolved or unresolved.
+        '''
+
+        if self.name:
+            item_list = world_index.iter_candidates(('pdk', 'name'),
+                                                    self.name)
+        else:
+            item_list = world_index.iter_all_candidates()
+            message = 'Using unoptimized package list. ' + \
+                      'This operation may take a long time.\n' + \
+                      ' condition = %r' % self.rule.condition
+            logger = get_logger()
+            logger.warn(message)
+
+        found_package = find_package(cache, self, item_list)
+        if found_package:
+            return found_package
+        else:
+            return None
+
+    def _get_child_condition(self, world_index, parent_match):
+        '''Find a condition which represents parent and child packages.
+
+        Also returns an iterator over potential package matches. Some
+        optimization has been done to prevent this interator from covering
+        the whole world.
+        '''
+        child_condition, candidate_key_info = \
+            get_child_condition(parent_match, self)
+
+        if self.name:
+            item_list = world_index.iter_candidates(('pdk', 'name'),
+                                                    self.name)
+        else:
+            item_list = world_index.iter_all_candidates()
+        parent_candidates = item_list
+
+        key_domain, key_field, key_value = candidate_key_info
+        candidate_key = (key_domain, key_field)
+        child_candidates = world_index.iter_candidates(candidate_key,
+                                                       key_value)
+        candidates = chain(parent_candidates, child_candidates)
+        return (child_condition, candidates)
+
+    def resolve(self, find_package, cache, world_index):
+        """Resolve this stanza by searching the world_index.
+
+        find_package - a function we can call to pick the right package
+                       out of a world_items iterator.
+        cache        - a workspace cache
+        world_index  - a world index we will use to search for candidate
+                       packages.
+        """
+        parent_match = self._get_parent_match(find_package, cache,
+                                              world_index)
+        if not parent_match:
+            return
+        child_condition, candidate_items = \
+            self._get_child_condition(world_index, parent_match)
+
+        self.children = []
+
+        # run through all the packages again, this time using the
+        # child_conditions of new references.
+        for item in candidate_items:
+            ghost_package = item.package
+            if child_condition.evaluate(ghost_package):
+                new_child_ref = \
+                    PackageStanza.from_package(ghost_package)
+                expected_filename = ghost_package.filename
+                found_filename = ghost_package.pdk.found_filename
+                if expected_filename != found_filename:
+                    predicate = ('pdk', 'filename', found_filename)
+                    new_child_ref.predicates.append(predicate)
+                self.children.append(new_child_ref)
+
+        # Remove duplicates.
+        child_set = Set(self.children)
+        new_child_list = list(child_set)
+        new_child_list.sort()
+        self.children = new_child_list
 
     def __identity_tuple(self):
         '''Return a tuple to help cmp and hash handle this object.'''
