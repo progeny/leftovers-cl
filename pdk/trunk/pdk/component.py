@@ -381,7 +381,8 @@ class ComponentDescriptor(object):
             new_child_list.sort()
             parent_ref.children = new_child_list
 
-    def _get_parent_matches(self, world_index, abstract_constraint):
+    def _get_parent_matches(self, find_package, cache, world_index,
+                            abstract_constraint):
         '''Creates "match tuples" associating packages with matched refs.
 
         tuple looks like: (package, ref)
@@ -389,11 +390,15 @@ class ComponentDescriptor(object):
         Apply policy when the same ref matches more than one package.
         Current policy is roughly the same as debian. Use the "newest"
         package.
-        '''
 
-        def _cmp_packages(a, b):
-            '''Compare two packages.'''
-            return -cmp(a.version, b.version)
+        find_package - a function we can call to pick the right package
+                       out of a world_items iterator.
+        cache        - a workspace cache
+        world_index  - a world index we will use to search for candidate
+                       packages.
+        abstract_constraint -
+                       whether stanzas must be resolved or unresolved.
+        '''
 
         match_information = []
 
@@ -410,13 +415,9 @@ class ComponentDescriptor(object):
                 logger = get_logger()
                 logger.warn(message)
 
-            matching_packages = \
-                [ i.package for i in item_list
-                  if ref.evaluate_condition(i.package) ]
-            if matching_packages:
-                matching_packages.sort(_cmp_packages)
-                first_package = matching_packages[0]
-                match_information.append((first_package, ref))
+            found_package = find_package(cache, ref, item_list)
+            if found_package:
+                match_information.append((found_package, ref))
 
         return match_information
 
@@ -446,14 +447,22 @@ class ComponentDescriptor(object):
             child_conditions.append((child_condition, ref, candidates))
         return child_conditions
 
-    def resolve(self, world_index, abstract_constraint):
+    def resolve(self, find_package, cache, world_index,
+                abstract_constraint):
         """Resolve abstract references by searching the given package list.
 
-        abstract_constraint is passed to self.iter_package_refs().
+        find_package - a function we can call to pick the right package
+                       out of a world_items iterator.
+        cache        - a workspace cache
+        world_index  - a world index we will use to search for candidate
+                       packages.
+        abstract_constraint -
+                       whether stanzas must be resolved or unresolved.
         """
         if ('pdk', 'no-resolve', '1') in self.meta:
             return
-        parent_matches = self._get_parent_matches(world_index,
+        parent_matches = self._get_parent_matches(find_package, cache,
+                                                  world_index,
                                                   abstract_constraint)
         child_conditions = self._get_child_conditions(world_index,
                                                       parent_matches)

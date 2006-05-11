@@ -766,15 +766,19 @@ def dumplinks(args):
 
 dumplinks = make_invokable(dumplinks)
 
-def run_resolve(args, assert_resolved, abstract_constraint):
+def run_resolve(args, find_package, assert_resolved, abstract_constraint):
     '''Take care of details of running descriptor.resolve.
 
-    raw_args - passed from command handlers
-    do_assert - warn if any references are not resolved
-    show_report - show a human readable report of what was done
-    dry_run - do not save the component after we are finished
+    args         - passed from command handlers
+    find_package - a function we can call to pick the right package
+                   out of a world_items iterator.
+    assert_resolved -
+                   [boolean] warn if any references are not resolved
+    abstract_constraint -
+                   whether stanzas must be resolved or unresolved.
     '''
     workspace = current_workspace()
+    extended_cache = workspace.world.get_backed_cache(workspace.cache)
     get_desc = workspace.get_component_descriptor
     component_names = args.get_reoriented_files(workspace)
     os.chdir(workspace.location)
@@ -782,7 +786,8 @@ def run_resolve(args, assert_resolved, abstract_constraint):
         descriptor = get_desc(component_name)
         channel_names = args.opts.channels
         world_index = workspace.world.get_limited_index(channel_names)
-        descriptor.resolve(world_index, abstract_constraint)
+        descriptor.resolve(find_package, extended_cache, world_index,
+                           abstract_constraint)
         descriptor.setify_child_references()
 
         if assert_resolved:
@@ -800,6 +805,10 @@ def run_resolve(args, assert_resolved, abstract_constraint):
         if args.opts.save_component_changes:
             descriptor.write()
 
+def cmp_packages(a, b):
+    '''Compare two packages.'''
+    return -cmp(a.version, b.version)
+
 def resolve(args):
     """usage: pdk resolve COMPONENTS
 
@@ -814,7 +823,18 @@ def resolve(args):
 
     A warning is given if any unresolved references remain.
     """
-    run_resolve(args, True, True)
+    def find_newest(dummy, stanza, iter_world_items):
+        '''Find the newest (by version) package in iter_world_items'''
+        matching_packages = \
+            [ i.package for i in iter_world_items
+              if stanza.rule.condition.evaluate(i.package) ]
+        if matching_packages:
+            matching_packages.sort(cmp_packages)
+            first_package = matching_packages[0]
+            return first_package
+        return None
+
+    run_resolve(args, find_newest, True, True)
 
 resolve = make_invokable(resolve, 'machine-readable', 'no-report',
                          'dry-run', 'channels', 'show-unchanged')
@@ -834,7 +854,31 @@ def upgrade(args):
     If no channel names are given, resolve uses all channels to
     resolve references.
     """
-    run_resolve(args, False, False)
+    def find_upgrade(cache, stanza, iter_world_items):
+        '''Find the best stanza upgrade in iter_world_items.
+
+        The package must be newer (by version) than the currently already in
+        the stanza meeting its condition, and also the newest in
+        iter_world_items.
+        '''
+        parent_package = None
+        # Find the "parent" package in the stanza.
+        # Stanza is assumed to be resolved.
+        for package_ref in stanza.children:
+            package = package_ref.load(cache)
+            if stanza.evaluate_condition(package):
+                parent_package = package
+                break
+
+        candidate_packages = [ i.package for i in iter_world_items ]
+        candidate_packages.sort(cmp_packages)
+        for candidate in candidate_packages:
+            if stanza.evaluate_condition(candidate) and \
+                candidate.version > parent_package.version:
+                return candidate
+        return None
+
+    run_resolve(args, find_upgrade, False, False)
 
 upgrade = make_invokable(upgrade, 'machine-readable', 'no-report',
                          'dry-run', 'channels', 'show-unchanged')

@@ -25,6 +25,8 @@ In this test we run upgrade to demonstrate a basic upgrade.
 Our goal is to make sure that packages are upgraded as expected, and
 abstract references are left alone.
 
+Also, we test that upgrades don't let downgrades slip through.
+
 @t table_of_contents
 
 @B
@@ -101,7 +103,7 @@ EOF
 This is how the component should look like after upgrade. The versions
 of the packages are higher, and the abook reference is still abstract.
 
-@$@<Verify After Upgrade@>==@{
+@$@<Verify After Upgrade@>@M==@{
     diff -u - ethereal.xml <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <component>
@@ -269,6 +271,11 @@ upgrade|deb|tethereal|0.9.4-1woody5|0.9.4-1woody6|i386|ethereal.xml
 upgrade|deb|tethereal|0.9.4-1woody5|0.9.4-1woody6|ia64|ethereal.xml
 upgrade|dsc|ethereal|0.9.4-1woody5|0.9.4-1woody6|any|ethereal.xml
 EOF
+    # regression: this shouldn't change anything.
+    pdk upgrade ethereal.xml -c channel1
+
+@<Verify After Upgrade@>
+
 popd
 
 @}
