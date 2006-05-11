@@ -92,6 +92,19 @@ class ComponentDescriptor(object):
 
         self.build_component_descriptor(tree.getroot())
 
+    def create(filename):
+        '''Create an empty component descriptor from scratch.'''
+        # This is ugly black magic, but happens to work right now.
+        # Perhaps in the future we can make the constructor smarter yet.
+        desc = ComponentDescriptor(None)
+        desc.filename = filename
+        return desc
+    create = staticmethod(create)
+
+    def get_self_reference(self):
+        '''Return a ComponentReference referring to this descriptor.'''
+        return ComponentReference(self.filename)
+
     def load_raw(self, cache, package_condition):
         """Build up the raw component/package tree but don't fire any rules.
         """

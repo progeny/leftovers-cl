@@ -97,6 +97,29 @@ class TestActions(Test):
         self.assert_equals({('a', 'b'): 'c'}, actual)
 
 class TestCompDesc(TempDirTest):
+    def test_static_create(self):
+        desc = ComponentDescriptor.create('a.xml')
+        # As part of this test, make sure we call write, as the black magic
+        # might get fooled.
+        desc.write()
+        actual = open('a.xml').read()
+        expected = '''<?xml version="1.0" encoding="utf-8"?>
+<component>
+</component>
+'''
+        self.assert_equals_long(expected, actual)
+
+    def test_self_reference(self):
+        os.system('''
+cat >a.xml <<EOF
+<component/>
+''')
+
+        desc = ComponentDescriptor('a.xml')
+        ref = desc.get_self_reference()
+        self.assert_equal('a.xml', ref.filename)
+        self.assert_equal(rules.tc, ref.condition.__class__)
+
     def test_read_write_and_or(self):
         os.system('''
 cat >a.xml <<EOF
