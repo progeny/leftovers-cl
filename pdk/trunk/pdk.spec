@@ -1,6 +1,6 @@
 Summary: Componentized Linux Platform Development Kit (PDK)
 Name: pdk
-%define version 0.0.33
+%define version 0.0.34
 Version: %{version}
 Release: 1
 License: GPL
@@ -61,6 +61,10 @@ rm -rf %{buildroot} %{_builddir}/*
 
 
 %changelog
+* Thu, May 11 2006 Darrin Thompson <darrint@progeny.com> - 0.0.34-1
+- Some api changes to support Progney internal projects.
+- Fix upgrade bug, where sometimes downgrades happened.
+
 * Fri May 5 2006 Darrin Thompson <darrint@progeny.com> - 0.0.33-1
 - Fix bugs affecting RPM distros.
 - Fix bug where entities weren't preserved when writing components.
