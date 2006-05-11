@@ -317,6 +317,10 @@ class Rule(object):
         self.metacondition = metacondition
         self.success_count = 0
 
+    def evaluate_condition(self, candidate):
+        '''Wraper for evaluating a candidate versus the condition.'''
+        return self.condition.evaluate(candidate)
+
     def evaluate_metacondition(self):
         '''Evalute the metacondition with self.'''
         return self.metacondition.evaluate(self)

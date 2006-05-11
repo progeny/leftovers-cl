@@ -412,7 +412,7 @@ class ComponentDescriptor(object):
 
             matching_packages = \
                 [ i.package for i in item_list
-                  if ref.rule.condition.evaluate(i.package) ]
+                  if ref.evaluate_condition(i.package) ]
             if matching_packages:
                 matching_packages.sort(_cmp_packages)
                 first_package = matching_packages[0]
@@ -1002,6 +1002,10 @@ class PackageStanza(object):
         self.children = []
         self.links = []
         self.unlinks = []
+
+    def evaluate_condition(self, candidate):
+        '''Wraper for evaluating a candidate versus the condition.'''
+        return self.rule.evaluate_condition(candidate)
 
     def from_package(package):
         '''Instantiate a reference for the given package.'''
