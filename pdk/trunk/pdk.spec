@@ -61,7 +61,7 @@ rm -rf %{buildroot} %{_builddir}/*
 
 
 %changelog
-* Thu, May 11 2006 Darrin Thompson <darrint@progeny.com> - 0.0.34-1
+* Thu May 11 2006 Darrin Thompson <darrint@progeny.com> - 0.0.34-1
 - Some api changes to support Progney internal projects.
 - Fix upgrade bug, where sometimes downgrades happened.
 
