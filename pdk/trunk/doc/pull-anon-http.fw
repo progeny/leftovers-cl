@@ -79,6 +79,10 @@ cat >etc/channels.xml <<EOF
     <type>source</type>
     <path>http://localhost:$HTTP_PORT/source</path>
   </product>
+  <product-ssl>
+    <type>source</type>
+    <path>https://localhost:$HTTPS_PORT/source</path>
+  </product-ssl>
   <oops-404>
     <type>source</type>
     <path>http://localhost:$HTTP_PORT/product-zzz</path>
@@ -158,6 +162,19 @@ pushd dest
     pdk pull product 2>errors.txt\
         && fail "pdk pull should fail when workspace is dirty"
     grep -i uncommitted errors.txt
+popd
+
+@}
+
+@B
+
+Now pull via ssl.
+
+@$@<Pull SSL@>==@{
+
+pushd dest
+    pdk pull product-ssl
+popd
 
 @}
 
@@ -175,6 +192,7 @@ popd
 @<Pull and check.@>
 @<Set up source for subsequent pull.@>
 @<Pull and check.@>
+@<Pull SSL@>
 @<Pull Dirty@>
 @}
 

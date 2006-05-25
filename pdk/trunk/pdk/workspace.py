@@ -1277,7 +1277,7 @@ class Conveyor(object):
         self.upstream_name = upstream_name
 
         parts = urlsplit(self.full_path)
-        if parts[0] == 'http':
+        if parts[0] in ('http', 'https'):
             self.pull = self._anon_http_pull_strategy
             self.push = None
         else:

@@ -362,7 +362,7 @@ class RemoteWorkspaceSection(object):
 
         parts = urlsplit(self.full_path)
         make_factory = LoaderFactory.create
-        if parts[0] == 'http':
+        if parts[0] in ('http', 'https'):
             self.loader_factory = make_factory(URLCacheLoader)
         else:
             if parts[1]:

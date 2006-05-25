@@ -108,7 +108,18 @@ bail() {
 
 create_lighttpd_conf() {
     : ${HTTP_PORT:=8110}
+    : ${HTTPS_PORT:=8111}
     mkdir -p etc
+    cat <<EOF | openssl req -new -x509 -keyout etc/self.pem \
+        -out etc/self.pem -nodes
+.
+.
+.
+.
+.
+localhost
+.
+EOF
     cat >etc/lighttpd.conf <<EOF
 server.modules              = (
                                 "mod_access",
@@ -121,7 +132,14 @@ server.dir-listing          = "enable"
 
 server.port                 = $HTTP_PORT
 
+\$SERVER["socket"] == "localhost:$HTTPS_PORT" {
+    ssl.engine              = "enable"
+    ssl.pemfile             = "etc/self.pem"
+}
+
 EOF
+    PDK_SSL_NO_VERIFY=1
+    export PDK_SSL_NO_VERIFY
     cat >>etc/lighttpd.conf
 }
 

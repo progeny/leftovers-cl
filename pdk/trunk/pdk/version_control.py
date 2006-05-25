@@ -210,6 +210,8 @@ class Git(object):
             os.environ.update({ 'GIT_DIR': self.git_dir })
             if self.index_file:
                 os.environ.update({ 'GIT_INDEX_FILE': self.index_file })
+            if 'PDK_SSL_NO_VERIFY' in os.environ:
+                os.environ.update({ 'GIT_SSL_NO_VERIFY': '1' })
         return shell_command(command, set_up_child, pipes)
 
     def shell_to_string(self, command, pipes = True):

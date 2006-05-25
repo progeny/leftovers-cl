@@ -193,6 +193,11 @@ class LazyWriter(object):
         """Have we started writing to the file yet?"""
         return bool(self.__handle)
 
+def curl_set_ssl(curl_object):
+    '''Turn off SSL verification if the user requested so.'''
+    if 'PDK_SSL_NO_VERIFY' in os.environ:
+        curl_object.setopt(curl_object.SSL_VERIFYPEER, False)
+
 def get_remote_file(remote_url, local_filename, trust_timestamp = False,
                     progress = None):
     '''Obtain a remote file via url.
@@ -221,6 +226,7 @@ def get_remote_file(remote_url, local_filename, trust_timestamp = False,
         progress = ConsoleProgress(remote_url)
     adapter = CurlAdapter(progress)
     curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
+    curl_set_ssl(curl)
 
     progress.start()
     curl.perform()
@@ -244,6 +250,7 @@ def get_remote_file_as_string(remote_url, progress = None):
         progress = ConsoleProgress(remote_url)
     adapter = CurlAdapter(progress)
     curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
+    curl_set_ssl(curl)
 
     try:
         progress.start()
