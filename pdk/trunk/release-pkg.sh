@@ -24,18 +24,32 @@ set -e
 set -x
 
 format=deb
-export=1
 
-args=$(getopt -o rdE -- "$@")
+args=$(getopt -o rd -- "$@")
 eval set -- "$args"
 while true; do
     case "$1" in
         -r) shift; format=rpm;;
         -d) shift; format=deb;;
-        -E) shift; unset export;;
         --) shift; break;;
     esac
 done
+
+version="$1"
+if [ -z "$version" ]; then
+    echo >&2 "Version required"
+    exit 1
+fi
+shift
+
+tarball="$1"
+if [ -z "$tarball" ]; then
+    echo >&2 "Tarball required"
+    exit 1
+fi
+shift
+
+export_dir=pdk-$version
 
 clean() {
     if [ -n "$tmp_dir" ]; then
@@ -51,38 +65,19 @@ trap clean 0 1 2 3 15
 dev_dir=$(pwd)
 
 if [ "$format" = deb ]; then
-    expr='s/.*(\([^-]*\)\(-.*\)\?).*/\1/'
-    version=$(sed -e "$expr" -e '1 q' <debian/changelog)
-elif [ "$format" = rpm ]; then
-    version=$(rpm -q --qf "%{version}" --specfile pdk.spec)
-fi
-
-export_dir=$(pwd)/pdk-$version
-if [ -n "$export" ]; then
-    svn export . $export_dir
-else
-    mkdir $export_dir
-    tar --exclude=.svn --exclude=.git --exclude=ide \
-        --exclude=atest/packages --exclude=tags --exclude=pdk-$version \
-        --exclude=pdk_* --exclude=pdk-* \
-        -cv -O . | tar xC pdk-$version
-fi
-
-if [ "$format" = deb ]; then
+    tar zxvf $tarball
     cd $export_dir
-    sh clean.sh
     debuild -us -uc -I.svn
     debc
     sudo debi
-elif [ "$format" = rpm ]; then
     cd $dev_dir
-    sh clean.sh
-    tar zcvf $dev_dir/pdk_$version.tar.gz pdk-$version
-
+    rm -r $export_dir
+elif [ "$format" = rpm ]; then
     rpm_val() {
         rpm -q --specfile $export_dir/pdk.spec --qf "$(rpm -E %{$1})"
     }
 
+    tar zxvf $tarball $export_dir/pdk.spec
     rpm_source_dir="$(rpm_val _sourcedir)"
     rpms_dir="$(rpm_val _rpmdir)"
     srpms_dir="$(rpm_val _srcrpmdir)"
@@ -90,7 +85,7 @@ elif [ "$format" = rpm ]; then
     rpm_build_dir="$(rpm_val _builddir)"
     mkdir -p $rpm_source_dir $rpms_dir $srpms_dir $rpm_tmp_dir \
         $rpm_build_dir
-    cp $dev_dir/pdk_$version.tar.gz $rpm_source_dir
+    cp $dev_dir/$tarball $rpm_source_dir
     rpmbuild -ba $export_dir/pdk.spec
     rm -r $export_dir
     mv $rpms_dir/* $srpms_dir/* $dev_dir
@@ -99,7 +94,6 @@ elif [ "$format" = rpm ]; then
 fi
 
 tmp_dir=$(mktemp -dt release.XXXXXX)
-
 cd $tmp_dir
 if [ "$format" = deb ]; then
     tar zxvf /usr/share/doc/pdk/atest.tar.gz
@@ -109,5 +103,5 @@ fi
 ln -s $dev_dir/atest/packages atest/
 python utest.py
 sh run_atest -I
-cd -
+cd $dev_dir
 
