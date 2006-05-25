@@ -198,6 +198,10 @@ def curl_set_ssl(curl_object):
     if 'PDK_SSL_NO_VERIFY' in os.environ:
         curl_object.setopt(curl_object.SSL_VERIFYPEER, False)
 
+def curl_set_netrc(curl_object):
+    '''Make curl check .netrc when a server gives a 401.'''
+    curl_object.setopt(curl_object.NETRC, curl_object.NETRC_OPTIONAL)
+
 def get_remote_file(remote_url, local_filename, trust_timestamp = False,
                     progress = None):
     '''Obtain a remote file via url.
@@ -227,6 +231,7 @@ def get_remote_file(remote_url, local_filename, trust_timestamp = False,
     adapter = CurlAdapter(progress)
     curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
     curl_set_ssl(curl)
+    curl_set_netrc(curl)
 
     progress.start()
     curl.perform()
@@ -251,6 +256,7 @@ def get_remote_file_as_string(remote_url, progress = None):
     adapter = CurlAdapter(progress)
     curl.setopt(curl.PROGRESSFUNCTION, adapter.callback)
     curl_set_ssl(curl)
+    curl_set_netrc(curl)
 
     try:
         progress.start()
