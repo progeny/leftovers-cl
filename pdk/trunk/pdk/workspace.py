@@ -808,6 +808,17 @@ def cmp_packages(a, b):
     '''Compare two packages.'''
     return -cmp(a.version, b.version)
 
+def find_newest(dummy, stanza, iter_world_items):
+    '''Find the newest (by version) package in iter_world_items'''
+    matching_packages = \
+        [ i.package for i in iter_world_items
+          if stanza.rule.condition.evaluate(i.package) ]
+    if matching_packages:
+        matching_packages.sort(cmp_packages)
+        first_package = matching_packages[0]
+        return first_package
+    return None
+
 def resolve(args):
     """usage: pdk resolve COMPONENTS
 
@@ -822,21 +833,35 @@ def resolve(args):
 
     A warning is given if any unresolved references remain.
     """
-    def find_newest(dummy, stanza, iter_world_items):
-        '''Find the newest (by version) package in iter_world_items'''
-        matching_packages = \
-            [ i.package for i in iter_world_items
-              if stanza.rule.condition.evaluate(i.package) ]
-        if matching_packages:
-            matching_packages.sort(cmp_packages)
-            first_package = matching_packages[0]
-            return first_package
-        return None
 
     run_resolve(args, find_newest, True, True)
 
 resolve = make_invokable(resolve, 'machine-readable', 'no-report',
                          'dry-run', 'channels', 'show-unchanged')
+
+def find_upgrade(cache, stanza, iter_world_items):
+    '''Find the best stanza upgrade in iter_world_items.
+
+    The package must be newer (by version) than the currently already in
+    the stanza meeting its condition, and also the newest in
+    iter_world_items.
+    '''
+    parent_package = None
+    # Find the "parent" package in the stanza.
+    # Stanza is assumed to be resolved.
+    for package_ref in stanza.children:
+        package = package_ref.load(cache)
+        if stanza.evaluate_condition(package):
+            parent_package = package
+            break
+
+    candidate_packages = [ i.package for i in iter_world_items ]
+    candidate_packages.sort(cmp_packages)
+    for candidate in candidate_packages:
+        if stanza.evaluate_condition(candidate) and \
+            candidate.version > parent_package.version:
+            return candidate
+    return None
 
 def upgrade(args):
     """usage: pdk upgrade COMPONENTS
@@ -853,29 +878,6 @@ def upgrade(args):
     If no channel names are given, resolve uses all channels to
     resolve references.
     """
-    def find_upgrade(cache, stanza, iter_world_items):
-        '''Find the best stanza upgrade in iter_world_items.
-
-        The package must be newer (by version) than the currently already in
-        the stanza meeting its condition, and also the newest in
-        iter_world_items.
-        '''
-        parent_package = None
-        # Find the "parent" package in the stanza.
-        # Stanza is assumed to be resolved.
-        for package_ref in stanza.children:
-            package = package_ref.load(cache)
-            if stanza.evaluate_condition(package):
-                parent_package = package
-                break
-
-        candidate_packages = [ i.package for i in iter_world_items ]
-        candidate_packages.sort(cmp_packages)
-        for candidate in candidate_packages:
-            if stanza.evaluate_condition(candidate) and \
-                candidate.version > parent_package.version:
-                return candidate
-        return None
 
     run_resolve(args, find_upgrade, False, False)
 
