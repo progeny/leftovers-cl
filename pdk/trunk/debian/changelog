@@ -1,3 +1,9 @@
+pdk (0.0.36) unstable; urgency=low
+
+  * Make receiving a push more reliable.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu,  8 Jun 2006 12:21:33 -0400
+
 pdk (0.0.35) unstable; urgency=low
 
   * Make pdk work over https and Basic Auth.

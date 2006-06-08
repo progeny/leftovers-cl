@@ -1,6 +1,6 @@
 Summary: Componentized Linux Platform Development Kit (PDK)
 Name: pdk
-%define version 0.0.35
+%define version 0.0.36
 Version: %{version}
 Release: 1
 License: GPL
@@ -61,6 +61,9 @@ rm -rf %{buildroot} %{_builddir}/*
 
 
 %changelog
+* Thu, Jun 8 2006 Darrin Thompson <darrint@progeny.com> - 0.0.36-1
+- Make receiving a push more reliable.
+
 * Wed May 25 2006 Darrin Thompson <darrint@progeny.com> - 0.0.35-1
 - Make pdk work over https and Basic Auth.
 - Expose find_upgrade and find_newest to api.
