@@ -1116,7 +1116,7 @@ class Net(object):
 
         self.ws.vc.import_pack_via_framer(self.framer)
         if self.ws.vc.is_valid_new_head(head_id):
-            self.ws.vc.merge(head_id, True)
+            self.ws.vc.note_ref('HEAD', head_id)
             self.framer.write_stream(['status', 'ok'])
         else:
             self.framer.write_stream(['status', 'out-of-date'])
