@@ -61,7 +61,7 @@ rm -rf %{buildroot} %{_builddir}/*
 
 
 %changelog
-* Thu, Jun 8 2006 Darrin Thompson <darrint@progeny.com> - 0.0.36-1
+* Thu Jun 8 2006 Darrin Thompson <darrint@progeny.com> - 0.0.36-1
 - Make receiving a push more reliable.
 
 * Wed May 25 2006 Darrin Thompson <darrint@progeny.com> - 0.0.35-1
