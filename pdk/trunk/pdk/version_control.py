@@ -450,7 +450,10 @@ class Git(object):
                 handle = sys.stdin
             else:
                 handle = open(commit_message_file)
-            copyfileobj(handle, remote_in)
+            for commit_line in handle:
+                if commit_line[0] == '#':
+                    continue
+                remote_in.write(commit_line)
             if handle != sys.stdin:
                 handle.close()
         elif commit_message:
