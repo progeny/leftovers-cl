@@ -1057,7 +1057,7 @@ class Net(object):
     send_* methods correspond to handle_* methods on remote processes.
     (mostly)
     '''
-    protocol_version = '0'
+    protocol_version = '1'
 
     def __init__(self, framer, local_workspace):
         self.framer = framer
