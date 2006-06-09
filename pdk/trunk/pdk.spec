@@ -61,8 +61,10 @@ rm -rf %{buildroot} %{_builddir}/*
 
 
 %changelog
-* Thu Jun 8 2006 Darrin Thompson <darrint@progeny.com> - 0.0.36-1
+* Fri Jun 9 2006 Darrin Thompson <darrint@progeny.com> - 0.0.36-1
 - Make receiving a push more reliable.
+- Bump protocol version number to 1.
+- Try to filter # lines from commit messages.
 
 * Wed May 25 2006 Darrin Thompson <darrint@progeny.com> - 0.0.35-1
 - Make pdk work over https and Basic Auth.
