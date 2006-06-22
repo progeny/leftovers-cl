@@ -26,7 +26,6 @@ __revision__ = '$Progeny$'
 import os
 import sys
 import stat
-import optparse
 from urlparse import urlsplit
 from itertools import chain
 from pdk.version_control import VersionControl, CommitNotFound
@@ -44,6 +43,7 @@ from pdk.component import ComponentDescriptor
 from pdk.repogen import compile_product
 from pdk.progress import ConsoleMassProgress, NullMassProgress, \
      SizeCallbackAdapter
+from pdk.command_base import make_invokable
 
 # current schema level for this pdk build
 schema_target = 6
@@ -255,152 +255,6 @@ def create_workspace(workspace_root):
     os.symlink(pjoin('etc', 'git'), pjoin(ws.location, '.git'))
     open(pjoin(ws.config_dir, 'schema'), 'w').write('%d\n' % schema_target)
     return ws
-
-
-class command_args(object):
-    '''Represents common operations on results from optparse.'''
-    def __init__(self, opts, args):
-        self.opts = opts
-        self.args = args
-
-    def get_new_directory(self):
-        '''Get a new directory.
-
-        The directory must not already exist.
-        '''
-        new_dir = self.pop_arg('new directory')
-        if os.path.exists(new_dir):
-            raise SemanticError('Already exists: "%s"' % new_dir)
-        return new_dir
-
-    def get_one_reoriented_file(self, workspace):
-        '''Get exactly one filename, reoriented to the workspace. '''
-        if len(self.args) != 1:
-            raise CommandLineError('requires a single filename')
-        return workspace.reorient_filename(self.pop_arg('filename'))
-
-    def get_reoriented_files(self, workspace, minimum = 1):
-        '''Get a minimum number of filenames, reoriented to the workspace.
-        '''
-        if len(self.args) < minimum:
-            message = 'Must provide at least %d filename.' % minimum
-            raise CommandLineError(message)
-        return [ workspace.reorient_filename(f) for f in self.args ]
-
-    def pop_arg(self, description):
-        '''Remove an argument from self.args.
-
-        description is used to form more friendly error messages.
-        '''
-        if len(self.args) == 0:
-            raise CommandLineError('required argument: %s', description)
-        return self.args.pop(0)
-
-    def assert_no_args(self):
-        '''Assert that no arguments have been given.'''
-        if len(self.args) != 0:
-            raise CommandLineError('command takes no arguments')
-
-class command_args_spec(object):
-    '''Factory for creating command_args objects.
-
-    The spec is a series of strings. For details of which strings are
-    available read the source code to the create function.
-    '''
-    def __init__(self, usage, *spec):
-        self.usage = usage
-        self.spec = spec
-
-    def create(self, raw_args):
-        '''Create a new command_args object, processing raw_args.'''
-        parser = optparse.OptionParser(usage = self.usage)
-        op = parser.add_option
-        for item in self.spec:
-            if item == 'commit-msg':
-                op('-f', '--commit-msg-file',
-                   dest = 'commit_msg_file',
-                   help = 'File containing a prewritten commit message.',
-                   metavar = 'FILE')
-
-                op("-m", "--commit-msg",
-                   dest = "commit_msg",
-                   help = "Commit message to use",
-                   metavar = 'MESSAGE')
-
-            elif item == 'channels':
-                op("-c", "--channel",
-                   action = "append",
-                   dest = "channels",
-                   type = "string",
-                   help = "A channel name.")
-
-            elif item == 'machine-readable':
-                op("-m", "--machine-readable",
-                   action = "store_true",
-                   dest = "machine_readable",
-                   default = False,
-                   help = "Make the output machine readable.")
-
-            elif item == 'no-report':
-                op("-R", "--no-report",
-                   action = "store_false",
-                   dest = "show_report",
-                   default = True,
-                   help = "Don't bother showing the report.")
-
-            elif item == 'dry-run':
-                op("-n", "--dry-run",
-                   action = "store_false",
-                   dest = "save_component_changes",
-                   default = True,
-                   help = "Don't save changes after processing.")
-
-            elif item == 'output-dest':
-                op('-o', '--out-file', '--out-dest',
-                   dest = 'output_dest',
-                   help = "Destination for output.",
-                   metavar = "DEST")
-
-            elif item == 'show-unchanged':
-                op('--show-unchanged',
-                   action = "store_true",
-                   dest = 'show_unchanged',
-                   default = False,
-                   help = "Show unchanged items in report.")
-
-            elif item == 'force':
-                op('-f', '--force',
-                   action = "store_true",
-                   dest = 'force',
-                   default = False,
-                   help = "Force the operation.")
-
-
-            elif item == 'revision':
-                op('-r', '--rev', '--revision',
-                   dest = 'revision',
-                   metavar = 'REV')
-            else:
-                assert False, "Unknown command line specification. '%s'" \
-                       % item
-
-        opts, args = parser.parse_args(args = raw_args)
-        return command_args(opts, args)
-
-def make_invokable(fn, *spec):
-    '''Make the given function an "invokable".
-
-    Spec strings are optional and may directly follow the function argument.
-
-    Invokables are special because their --help options work properly
-    based on the command spec and function doc string.
-    '''
-    def _invoke(raw_args):
-        '''Actually invoke the function.'''
-        doc_string = fn.__doc__.strip()
-        args = command_args_spec(doc_string, *spec).create(raw_args)
-        fn(args)
-    return _invoke
 
 # For external linkage
 def create(args):

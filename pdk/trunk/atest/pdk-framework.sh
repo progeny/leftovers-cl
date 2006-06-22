@@ -23,29 +23,11 @@
 #None of these help calls should result in a crash
 #(meaningful help is another question altogether)
 pdk help
-echo "help" |pdk
 pdk help commit
-echo "help commit" |pdk
 pdk help commit foo
-echo "help commit foo" |pdk
 pdk help workspace
-echo "help workspace" |pdk
 pdk help workspace foo
-echo "help workspace foo" |pdk
 pdk help workspace foo fighters
-echo "help workspace foo fighters" |pdk
 pdk help workspace create
-echo "help workspace create" |pdk
 pdk help workspace create foo
-echo "help workspace create foo" |pdk
 
-#make sure errors that occur while in the command shell
-#don't cause the command shell to exit
-pdk >pdk-framework.out 2>pdk-framework.err<<EOF
-resolve
-!echo marker
-EOF
-grep -q marker pdk-framework.out \
-    || fail 'marker did not show up on stdout.'
-grep -qi "not currently a workspace" pdk-framework.err \
-    || fail 'did not receive expected error'

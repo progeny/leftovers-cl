@@ -25,14 +25,15 @@
 # (native to util.py)
 #########################################
 #   setup:
-cat > .pdk_plugins <<EOF
-pdk.util moo moo
+cat > localfile.py <<EOF
+import pdk.util
+from pdk.pdk_commands import commands
+
+commands.map_direct(['moo'], pdk.util.moo)
 EOF
-# pdk shell
-#   execute:
-echo moo | pdk > cowstuff.txt
-#   evaluation:
-grep -q batcow cowstuff.txt && cat cowstuff.txt
+cat > .pdk_plugins <<EOF
+localfile
+EOF
 
 # command line
 #   execute:
@@ -40,7 +41,9 @@ pdk moo > cowstuff.txt
 #   evaluation:
 grep -q batcow cowstuff.txt && cat cowstuff.txt
 #   cleanup:
-rm .pdk_plugins cowstuff.txt
+pdk help moo >cowhelp.txt
+grep -q easter cowhelp.txt || fail "Plugin help broken."
+rm .pdk_plugins cowstuff.txt cowhelp.txt
 
 #########################################
 # Ensure that plugins work with comments
@@ -55,7 +58,7 @@ cat > .pdk_plugins <<EOF
 #    name of function to call (module.fn)
 #    desired command name
 #------------------------------------
-pdk.util moo moo # This makes us moo
+localfile
 # -----------------------------------
 # I am the cow that moos in the night.
 # I am batcow
@@ -67,19 +70,6 @@ pdk moo > cowstuff.txt
 #   evaluation:
 grep -q batcow cowstuff.txt && cat cowstuff.txt
 
-# pdk shell
-#   execute:
-echo "moo" | pdk > cowstuff.txt
-#   evaluation:
-grep -q batcow cowstuff.txt && cat cowstuff.txt
-
-# pdk shell with args
-#   execute:
-echo "moo testing" | pdk > cowstuff.txt
-#   evaluation:
-grep -q batcow cowstuff.txt && cat cowstuff.txt
-grep -q testing cowstuff.txt && cat cowstuff.txt
-
 # command line with args
 #   execute:
 pdk moo testing >cowstuff.txt
@@ -88,28 +78,5 @@ grep -q batcow cowstuff.txt && cat cowstuff.txt
 grep -q testing cowstuff.txt && cat cowstuff.txt
 #   cleanup:
 rm .pdk_plugins cowstuff.txt
-
-
-#########################################
-# Ensure that plugins work with comments
-# (created in a file on-the-fly)
-#########################################
-#   setup:
-cat > localfile.py <<EOF
-def moo(args):
-    print "I can moo like batcow, too"
-EOF
-cat > .pdk_plugins <<EOF
-#
-# Add batcow powers to our fun pdk toy
-localfile moo moo # This makes us moo
-# I am the cow that moos in the night.
-# I am batcow
-EOF
-#   execute:
-echo "moo" | pdk >cowstuff.txt
-#   evaluation:
-#   cleanup:
-rm .pdk_plugins localfile.py cowstuff.txt
 
 # vim:ai:et:sts=4:sw=4:tw=0:

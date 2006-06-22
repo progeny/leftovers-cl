@@ -35,6 +35,7 @@ from pdk.test.test_meta import *
 from pdk.test.test_index_file import *
 from pdk.test.test_debish_condition import *
 from pdk.test.test_media import *
+from pdk.test.test_commands import *
 
 if __name__ == "__main__":
     unittest.main()
