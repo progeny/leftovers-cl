@@ -1,3 +1,13 @@
+pdk (0.0.37) unstable; urgency=low
+
+  * Fill out pdk dependencies in pdk.spec.
+  * Groffify all built in documentation.
+  * Be more picky about excluding files in release-source.sh -E
+  * Heavily rework command framework for help system.
+  * Rip out the old comand shell.
+
+ -- Darrin Thompson <darrint@progeny.com>  Tue, 27 Jun 2006 14:22:12 -0400
+
 pdk (0.0.36) unstable; urgency=low
 
   * Make receiving a push more reliable.
