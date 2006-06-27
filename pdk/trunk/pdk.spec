@@ -8,7 +8,7 @@ Group: Development/Tools
 URL: http://componentizedlinux.org/index.php/Main_Page
 Source: http://archive.progeny.com/progeny/pdk/pool/main/p/pdk/pdk_%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python
+Requires: python, git-core, python-curl, smart, python-elementtree, python-mx-base, PyXML
 BuildRequires: python, python-devel, funnelweb
 
 %description
