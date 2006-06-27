@@ -56,7 +56,7 @@ else
     mkdir $export_dir
     tar --exclude=.svn --exclude=.git --exclude=ide \
         --exclude=atest/packages --exclude=tags --exclude=pdk-$version \
-        --exclude=pdk_* --exclude=pdk-* \
+        --exclude=./pdk_* --exclude=pdk-* \
         -cv -O . | tar xC pdk-$version
 fi
 
