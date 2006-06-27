@@ -109,7 +109,7 @@ class CommandSpec(object):
     '''
     def __init__(self, function, *spec):
         self.function = function
-        self.usage = function.__doc__
+        self.usage = function.__doc__.strip()
         self.spec = spec
 
         self.parser = optparse.OptionParser(usage = self.usage,
@@ -215,14 +215,16 @@ class CommandSpec(object):
 
     def format_help(self):
         '''Format a complete help message.'''
-        command_name = self.get_command_name()
-        return '.TH "%s" "1.%s"\n' \
-            % (self.format_command_name(), command_name[0]) \
-            + self.parser.format_help()
+        # optparse insists on putting an extra \n after the options.
+        return self.parser.format_help()[:-1]
 
     def print_help(self):
         '''Print the help message to standard out.'''
-        display_via_man(self.format_help())
+        command_name = self.get_command_name()
+        full_man = '.TH "%s" "1.%s"\n' \
+            % (self.format_command_name(), command_name[0]) \
+            + self.format_help()
+        display_via_man(full_man)
 
 add_cmpstr(CommandSpec, 'function', 'spec')
 
@@ -317,16 +319,24 @@ class HelpMultiInvoker(object):
         if self.fail:
             raise CommandLineError(self.fail)
 
+    def format_command_name(self):
+        '''Return a string representing the command name.'''
+        return ' '.join(self.command_name)
+
     def print_help(self):
         '''Return a help message listing my sub commands.'''
-        message = ''
-        message += 'Command "%s" contains subcommands:\n' \
-            % self.command_name
-        sub_commands = [ ' '.join(t[0]) for t in self.commands ]
+        lines = []
+        lines.append('.TH "%s" "1.%s"' \
+            % (self.format_command_name(), self.command_name[0]))
+        lines.append('.TP')
+        lines.append('Command %s contains subcommands:' \
+            % gbold(self.format_command_name()))
+        sub_commands = [ ' '.join(t[0][1:]) for t in self.commands ]
         sub_commands.sort()
         for sub_command in sub_commands:
-            message += '    %s\n' % sub_command
-        print message
+            lines.append(gbold(sub_command))
+            lines.append('.br')
+        display_via_man(''.join([ l + '\n' for l in lines ]))
 
 add_cmpstr(HelpMultiInvoker, 'command_name', 'commands')
 
@@ -541,11 +551,11 @@ class ManHelpFormatter(optparse.IndentedHelpFormatter):
 
     def format_heading(self, heading):
         '''Handle the "option" string. Bolds it.'''
-        return '.B "%s"\n' % gescape(heading)
+        return '.PP\n.B "%s"\n' % gescape(heading)
 
-    def format_description(self, description):
-        '''Handle the description. Passes it straight through.'''
-        return description
+    def format_usage(self, usage):
+        '''Prepends "usage :" and passes through.'''
+        return 'usage: ' + usage
 
     def format_option(self, option):
         '''Put the option and help into a tagged paragraph.'''

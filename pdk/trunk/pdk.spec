@@ -38,7 +38,7 @@ distro-specific patches and managing the changes over time.
 
 %build
 python setup.py build_ext
-
+python makeman.py >pdk.1
 
 %install
 rm -rf %{buildroot}
@@ -46,7 +46,8 @@ python setup.py install --root=%{buildroot}
 sh run_atest -d
 tar c --exclude=atest/packages --exclude=.svn atest \
     run_atest utest.py doc/*.fw >atest.tar
-
+mkdir -p %{buildroot}/usr/share/man/man1/pdk.1pdk
+cp pdk.1 %{buildroot}/usr/share/man/man1/pdk.1pdk
 %clean
 rm -rf %{buildroot} %{_builddir}/*
 
@@ -58,6 +59,7 @@ rm -rf %{buildroot} %{_builddir}/*
 %{_libdir}/python?.?/site-packages/pdk
 %{_libdir}/python?.?/site-packages/picax
 %{_libdir}/python?.?/site-packages/hashfile.py*
+%{_mandir}/man1/*
 
 
 %changelog

@@ -144,9 +144,14 @@ You can safely delete the file after reviewing it.
     handle.close()
 
 def migrate(dummy):
-    """Migrate the current workspace to a form supported by this software.
-
-    Only use this command from the base of the workspace.
+    """\\fB%prog\\fP
+.PP
+Migrate the current workspace
+to a form supported
+by this software.
+.PP
+Only use this command
+from the base of the workspace.
     """
     while 1:
         directory, schema_number = find_workspace_base()
@@ -258,13 +263,12 @@ def create_workspace(workspace_root):
     open(pjoin(ws.config_dir, 'schema'), 'w').write('%d\n' % schema_target)
     return ws
 
-# For external linkage
 def create(args):
-    """usage: pdk workspace create DIRECTORY
-
-    Creates a new workspace for pdk.
-
-    The directory should not exist.
+    """\\fB%prog\\fP \\fIDIRECTORY\\fP
+.PP
+Creates a new workspace for pdk.
+.PP
+The directory should not already exist.
     """
     # Friends don't let friends nest workspaces.
     if currently_in_a_workspace():
@@ -281,9 +285,10 @@ def create(args):
 create = make_invokable(create)
 
 def repogen(args):
-    """usage: pdk repogen COMPONENT
-
-    Generate a file-system repository for a linux product.
+    """\\fB%prog\\fP [\\fIOPTIONS\\fP] \\fICOMPONENT\\fP
+.PP
+Generate a file-system repository
+for a linux product.
     """
     ws = current_workspace()
     product_file = args.get_one_reoriented_file(ws)
@@ -299,9 +304,9 @@ def repogen(args):
 repogen = make_invokable(repogen, 'output-dest')
 
 def mediagen(args):
-    """usage: pdk mediagen COMPONENT
-
-    Generate media for a linux product.
+    """\\fB%prog\\fP \\fICOMPONENT\\fP
+.PP
+Generate media for a linux product.
     """
 
     import picax.config
@@ -340,10 +345,12 @@ def mediagen(args):
 mediagen = make_invokable(mediagen)
 
 def add(args):
-    """usage: pdk add FILES
-
-    Put files under version control, scheduling it for addition to the
-    repository.  It will be added on the next commit.
+    """\\fB%prog\\fP \\fIFILES\\fP
+.PP
+Put files under version control,
+scheduling them for addition to the
+repository.
+It will be added on the next commit.
     """
     ws = current_workspace()
     files = args.get_reoriented_files(ws, 0)
@@ -352,13 +359,16 @@ def add(args):
 add = make_invokable(add)
 
 def remove(args):
-    """usage: pdk remove FILES
-
-    Remove files from version control. The removal is essentially
-    noted in the changeset of the next commit.
-
-    Use of the force option also unlinks the file. Without it, the file
-    must have already been unlinked or the command will fail.
+    """\\fB%prog\\fP [\\fIOPTIONS\\fP] \\fIFILES\\fP
+.PP
+Remove files from version control.
+The removal is essentially noted
+in the changeset of the next commit.
+.PP
+Use of the force option also unlinks the file.
+Without it, the file
+must have already been unlinked
+or the command will fail.
     """
     ws = current_workspace()
     files = args.get_reoriented_files(ws, 0)
@@ -367,10 +377,10 @@ def remove(args):
 remove = make_invokable(remove, 'force')
 
 def cat(args):
-    """usage: pdk cat FILE
-
-    Output the content of specified file from the HEAD commit in
-    version control.
+    """\\fB%prog\\fI \\fIFILE\\fP
+.PP
+Output the content of specified file
+from the HEAD commit in version control.
     """
     ws = current_workspace()
     name = args.get_one_reoriented_file(ws)
@@ -381,10 +391,11 @@ def cat(args):
 cat = make_invokable(cat)
 
 def revert(args):
-    """usage: pdk revert FILES
-
-    Restore pristine copies of files from the HEAD commit in version
-    control.
+    """\\fB%prog\\fP \\fIFILES\\fP
+.PP
+Restore pristine copies
+of files from the HEAD commit
+in version control.
     """
     ws = current_workspace()
     files = args.get_reoriented_files(ws, 1)
@@ -393,18 +404,20 @@ def revert(args):
 revert = make_invokable(revert)
 
 def commit(args):
-    """usage: pdk commit [options] FILES
-
-    Commit changes to files in the work area.
-
-    If FILES are present, the scope of the commit is limited to these
-    files. If it is empty, all commit-worthy files are committed.
-
-    Naming files which have not been added will work and can be
-    considered a shortcut around the pdk add command.
-
-    If no commit message is provided through options, $EDITOR will be
-    invoked to obtain a commit message.
+    """\\fB%prog\\fP [\\fIOPTIONS\\fP] \\fIFILES\\fP
+.PP
+Commit changes to files in the work area.
+.PP
+If \\fIFILES\\fP are present,
+the scope of the commit is limited to these files.
+If it is empty, all commit-worthy files are committed.
+.PP
+Naming files which have not been added will work
+and can be considered a shortcut
+around the pdk add command.
+.PP
+If no commit message is provided through options,
+$EDITOR will be invoked to obtain a commit message.
     """
     ws = current_workspace()
     files = args.get_reoriented_files(ws, 0)
@@ -413,14 +426,11 @@ def commit(args):
 commit = make_invokable(commit, 'commit-msg')
 
 def update(ignore):
-    """
-    update: Bring changes from the repository into the working copy.
-    usage: update
-
-    Synchronize working copy to HEAD in repository.
-
-    Valid options:
-    none
+    """\\fB%prog\\fP
+.PP
+DEPRECATED
+.PP
+Synchronize working copy to HEAD in repository.
     """
     ws = current_workspace()
     ws.update()
@@ -429,9 +439,10 @@ def update(ignore):
 update = make_invokable(update)
 
 def status(dummy):
-    """
-    status: Show the current version control status of files in this
-    work area.
+    """\\fB%prog\\fP
+.PP
+Show the current version control status
+of files in this work area.
     """
     ws = current_workspace()
     ws.status()
@@ -439,8 +450,9 @@ def status(dummy):
 status = make_invokable(status)
 
 def log(args):
-    """
-    log: Show version control history.
+    """\\fB%prog\\fP
+.PP
+Show version control history.
     """
     ws = current_workspace()
     ws.log(args.args)
@@ -448,14 +460,17 @@ def log(args):
 log = make_invokable(log)
 
 def pull(args):
-    """usage: pdk pull REMOTE_NAME
-
-    Bring version control info from a remote workspace into this
-    workspace. Bring working copy up-to-date with remote HEAD
-    revision.
-
-    The remote name should be configured as a channel of type
-    'source' in the workspace channels file.
+    """\\fB%prog\\fP \\fIREMOTE_NAME\\fP
+.PP
+Bring version control info
+from a remote workspace
+into this workspace.
+Bring working copy up-to-date
+with remote HEAD revision.
+.PP
+The remote name should be configured
+as a channel of type 'source'
+in the workspace channels file.
     """
     remote_path = args.pop_arg('remote workspace name')
     local = current_workspace()
@@ -465,9 +480,9 @@ pull = make_invokable(pull)
 
 # Externally-exposed function -- pdk channel update
 def world_update(args):
-    '''usage: pdk channel update
-
-    Reads channel configuration and downloads all metadata.
+    '''\\fB%prog\\fP
+.PP
+Reads channel configuration and downloads all metadata.
     '''
     args.assert_no_args()
     workspace = current_workspace()
@@ -476,16 +491,19 @@ def world_update(args):
 world_update = make_invokable(world_update)
 
 def push(args):
-    """usage: pdk push REMOTE_NAME
-
-    Publish the HEAD of this workspace to another workspace.
-
-    This command also pushes the cache. The remote HEAD must appear in
-    the history of this HEAD or the remote workspace will reject the
-    push.
-
-    The remote name should be configured as a channel of type
-    'source' in the workspace channels file.
+    """\\fB%prog\\fP \\fIREMOTE_NAME\\fP
+.PP
+Publish the HEAD of this workspace
+to another workspace.
+.PP
+This command also pushes the cache.
+The remote HEAD must appear
+in the history of this HEAD
+or the remote workspace will reject the push.
+.PP
+The remote name should be configured
+as a channel of type 'source'
+in the workspace channels file.
     """
     remote_path = args.pop_arg('remote workspace name')
     local = current_workspace()
@@ -494,16 +512,14 @@ def push(args):
 push = make_invokable(push)
 
 def semdiff(args):
-    """usage: pdk semdiff [options] COMPONENT [COMPONENT]
-
-    Return a report containing meaningful component changes.
-
-    Works against version control, two arbitrary components, or a
-    component and a set of channels.
-
-    Caveat: When comparing against version control, only the named
-    component is retrieved from version control. Sub components are
-    found in the work area. This could affect metadata differences.
+    """\\fB%prog\\fP [\\fIOPTIONS\\fP] \\fICOMPONENT\\fP [\\fICOMPONENT\\fP]
+.PP
+Return a report containing
+meaningful component changes.
+.PP
+Works against version control,
+two arbitrary components,
+or a component and a set of channels.
     """
     workspace = current_workspace()
     cache = workspace.world.get_backed_cache(workspace.cache)
@@ -572,9 +588,9 @@ semdiff = make_invokable(semdiff, 'machine-readable', 'channels',
                          'show-unchanged', 'revision')
 
 def dumpmeta(args):
-    """usgage: pdk dumpmeta COMPONENTS
-
-    Prints all component metadata to standard out.
+    """\\fB%prog\\fP \\fICOMPONENTS\\fP
+.PP
+Prints all component metadata to standard out.
     """
     workspace = current_workspace()
     get_desc = workspace.get_component_descriptor
@@ -609,9 +625,9 @@ def dumpmeta(args):
 dumpmeta = make_invokable(dumpmeta)
 
 def dumplinks(args):
-    """usage: pdk link-report COMPONENT
-
-    Prints a list of entity links to standard out.
+    """\\fB%prog\\fP \\fICOMPONENT\\fP
+.PP
+Prints a list of entity links to standard out.
     """
 
     workspace = current_workspace()
@@ -682,18 +698,21 @@ def find_newest(dummy, stanza, iter_world_items):
     return None
 
 def resolve(args):
-    """usage: pdk resolve COMPONENTS
-
-    Resolves abstract package references.
-
-    If the command succeeds, the component will be modified in
-    place. Abstract package references will be populated with concrete
-    references.
-
-    If no channel names are given, resolve uses all channels to
-    resolve references.
-
-    A warning is given if any unresolved references remain.
+    """\\fB%prog\\fP [\\fIOPTIONS\\fP] \\fICOMPONENTS\\fP
+.PP
+Resolves abstract package references.
+.PP
+If the command succeeds,
+the component will be modified in place.
+Abstract package references
+will be populated with concrete references.
+.PP
+If no channel names are given,
+resolve uses all channels
+to resolve references.
+.PP
+A warning is given
+if any unresolved references remain.
     """
 
     run_resolve(args, find_newest, True, True)
@@ -726,19 +745,26 @@ def find_upgrade(cache, stanza, iter_world_items):
     return None
 
 def upgrade(args):
-    """usage: pdk upgrade COMPONENTS
-
-    Upgrades concrete package references by package version.
-
-    If the command succeeds, the component will be modified in
-    place. Package references with concrete children will be examined
-    to see if channels can provide newer packages. If this is the
-    case, all concrete refrences which are grouped by an abstract
-    reference are removed and replaced with references to newer
-    pacakges.
-
-    If no channel names are given, resolve uses all channels to
-    resolve references.
+    """\\fB%prog\\fP [\\fIOPTIONS\\fP] \\fICOMPONENTS\\fP
+.PP
+Upgrades concrete package references
+by package version.
+.PP
+If the command succeeds,
+the component will be modified in place.
+Package references with concrete children
+will be examined to see
+if channels can provide newer packages.
+If this is the case,
+all concrete refrences
+which are grouped
+by an abstract reference
+are removed and replaced
+with references to newer pacakges.
+.PP
+If no channel names are given,
+resolve uses all channels
+to resolve references.
     """
 
     run_resolve(args, find_upgrade, False, False)
@@ -747,11 +773,12 @@ upgrade = make_invokable(upgrade, 'machine-readable', 'no-report',
                          'dry-run', 'channels', 'show-unchanged')
 
 def download(args):
-    """usage: pdk download FILES
-
-    Acquire copies of the package files needed by the descriptor
-    FILES. The needed package files will be located based on the
-    package indexes of configured channels.
+    """\\fB%prog\\fP \\fIFILES\\fP
+.PP
+Acquire copies of the package files needed
+by the component descriptor \\fIFILES\\fP.
+The needed package files will be located based
+on the package indexes of configured channels.
     """
     workspace = current_workspace()
     component_names = args.get_reoriented_files(workspace)
@@ -1102,9 +1129,12 @@ class Net(object):
             handler_map[first]()
 
 def listen(args):
-    '''Start an event loop for handling requests via standard in and out.
-
-    Not intended to be invoked by users.
+    '''\\fB%prog\\fP
+.PP
+Start an event loop for handling requests
+via standard in and out.
+.PP
+Not intended to be invoked by users.
     '''
     if len(args.args) != 1:
         raise CommandLineError('requires a workspace path')

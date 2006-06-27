@@ -52,7 +52,6 @@ def load_addins(config_files):
 commands = Commands('pdk')
 ws = 'pdk.workspace'
 commands.easy_map('audit', 'pdk.audit','audit')
-commands.easy_map('init', 'pdk.services', 'init')
 commands.easy_map('push', ws, 'push')
 commands.easy_map('pull', ws, 'pull')
 commands.easy_map('status', ws, 'status')

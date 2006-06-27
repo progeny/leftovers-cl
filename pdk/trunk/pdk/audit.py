@@ -36,8 +36,10 @@ audit_logger = log.get_logger()
 
 
 def audit(args):
-    """ Load the component, and verify that it and it's parts are well-
-    formed.
+    """\\fB%prog\\fP
+.PP
+Load the component,
+and verify that it and it's parts are well-formed.
     """
     ##specialization code starts here
 
