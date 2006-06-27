@@ -29,20 +29,16 @@ import sha
 import md5
 import pdk.workspace as workspace
 from pdk.component import ComponentDescriptor
-import optparse
+from pdk.command_base import make_invokable
 import pdk.log as log
 from pdk.exceptions import IntegrityFault
 audit_logger = log.get_logger()
 
 
-def audit(argv):
+def audit(args):
     """ Load the component, and verify that it and it's parts are well-
     formed.
     """
-    my_parser = optparse.OptionParser()
-    opts, args = my_parser.parse_args(args=argv)
-    audit_logger.info(str(opts), str(args))
-
     ##specialization code starts here
 
     def note_problem(fact, prediction, prediction_basis,
@@ -64,7 +60,7 @@ def audit(argv):
     my_cache = workspace.current_workspace().cache
     arbiter = Arbiter(note_problem)
 
-    for component_name in args:
+    for component_name in args.args:
         def _note_blob_id(blob_id):
             """Make common predictions and warrants for blob_id.
 
@@ -162,6 +158,8 @@ def audit(argv):
 
     if note_problem.called:
         raise IntegrityFault, "Audit detected fault(s)"
+
+audit = make_invokable(audit)
 
 def string_together(fields, separator):
     """Stringify fields and join them with separator.

@@ -148,78 +148,80 @@ def migrate(dummy):
 
     Only use this command from the base of the workspace.
     """
-    directory, schema_number = find_workspace_base()
-    if schema_number > schema_target:
-        message = 'Cannot migrate. Workspace schema newer than pdk'
-        raise ConfigurationError(message)
+    while 1:
+        directory, schema_number = find_workspace_base()
+        if schema_number > schema_target:
+            message = 'Cannot migrate. Workspace schema newer than pdk'
+            raise ConfigurationError(message)
 
-    if directory != os.getcwd():
-        message = 'Cannot migrate. Change directory to workspace base.\n' \
-                  'cd %s; pdk migrate' % directory
-        raise ConfigurationError(message)
+        if directory != os.getcwd():
+            message = \
+                'Cannot migrate. Change directory to workspace base.\n' \
+                'cd %s; pdk migrate' % directory
+            raise ConfigurationError(message)
 
-    if schema_number == 1:
-        os.makedirs('etc')
-        os.rename(pjoin('work','.git'), pjoin('etc', 'git'))
-        for item in os.listdir('work'):
-            os.rename(pjoin('work', item), item)
-        os.rmdir('work')
-        os.rename('cache', pjoin('etc', 'cache'))
-        os.rename('channels.xml', pjoin('etc', 'channels.xml'))
-        if os.path.exists('sources'):
-            os.remove('sources')
-        os.symlink(pjoin('etc', 'git'), '.git')
-        os.symlink(pjoin('git', 'remotes'), pjoin('etc', 'sources'))
-        open(pjoin('etc', 'schema'), 'w').write('2\n')
-        migrate(None)
-        return
+        if schema_number == 1:
+            os.makedirs('etc')
+            os.rename(pjoin('work','.git'), pjoin('etc', 'git'))
+            for item in os.listdir('work'):
+                os.rename(pjoin('work', item), item)
+            os.rmdir('work')
+            os.rename('cache', pjoin('etc', 'cache'))
+            os.rename('channels.xml', pjoin('etc', 'channels.xml'))
+            if os.path.exists('sources'):
+                os.remove('sources')
+            os.symlink(pjoin('etc', 'git'), '.git')
+            os.symlink(pjoin('git', 'remotes'), pjoin('etc', 'sources'))
+            open(pjoin('etc', 'schema'), 'w').write('2\n')
+            continue
 
-    if schema_number == 2:
-        os.makedirs(pjoin('etc', 'channels'))
-        channels_pickle = pjoin('etc', 'outside_world.cache')
-        if os.path.exists(channels_pickle):
-            os.remove(channels_pickle)
-        open(pjoin('etc', 'schema'), 'w').write('3\n')
-        migrate(None)
-        return
+        if schema_number == 2:
+            os.makedirs(pjoin('etc', 'channels'))
+            channels_pickle = pjoin('etc', 'outside_world.cache')
+            if os.path.exists(channels_pickle):
+                os.remove(channels_pickle)
+            open(pjoin('etc', 'schema'), 'w').write('3\n')
+            continue
 
-    if schema_number == 3:
-        sources_dir = pjoin('etc', 'sources')
-        if os.path.exists(sources_dir):
-            os.remove(sources_dir)
-        open(pjoin('etc', 'schema'), 'w').write('4\n')
-        migrate(None)
-        return
+        if schema_number == 3:
+            sources_dir = pjoin('etc', 'sources')
+            if os.path.exists(sources_dir):
+                os.remove(sources_dir)
+            open(pjoin('etc', 'schema'), 'w').write('4\n')
+            continue
 
-    if schema_number == 4:
-        cache = Cache(pjoin('etc', 'cache'))
-        cache.write_index()
-        open(pjoin('etc', 'schema'), 'w').write('5\n')
-        migrate(None)
-        return
+        if schema_number == 4:
+            cache = Cache(pjoin('etc', 'cache'))
+            cache.write_index()
+            open(pjoin('etc', 'schema'), 'w').write('5\n')
+            continue
 
-    if schema_number == 5:
-        os.makedirs(pjoin('etc', 'git', 'pdk'))
-        exclude_dir = pjoin('etc', 'git', 'info')
-        exclude_file = pjoin(exclude_dir, 'exclude')
-        exclude_needs_written = True
-        if os.path.exists(exclude_file):
-            contents = open(exclude_file).read()
-            if 'etc/' in contents:
-                exclude_needs_written = False
-        if exclude_needs_written:
-            if not os.path.exists(exclude_dir):
-                os.makedirs(exclude_dir)
-            open(exclude_file, 'a').write('etc/*\n')
-        notes = '''
-If you have added or removed any files since your last commit, or if
-you have added files but have never committed, you will need to run
-pdk add or remove on the affected files again.
-'''
-        write_migration_notes(pjoin('etc', 'MIGRATION_NOTES.txt'), notes)
-        open(pjoin('etc', 'schema'), 'w').write('6\n')
-        migrate(None)
-        return
+        if schema_number == 5:
+            os.makedirs(pjoin('etc', 'git', 'pdk'))
+            exclude_dir = pjoin('etc', 'git', 'info')
+            exclude_file = pjoin(exclude_dir, 'exclude')
+            exclude_needs_written = True
+            if os.path.exists(exclude_file):
+                contents = open(exclude_file).read()
+                if 'etc/' in contents:
+                    exclude_needs_written = False
+            if exclude_needs_written:
+                if not os.path.exists(exclude_dir):
+                    os.makedirs(exclude_dir)
+                open(exclude_file, 'a').write('etc/*\n')
+            notes = '''
+    If you have added or removed any files since your last commit, or if
+    you have added files but have never committed, you will need to run
+    pdk add or remove on the affected files again.
+    '''
+            write_migration_notes(pjoin('etc', 'MIGRATION_NOTES.txt'),
+                                  notes)
+            open(pjoin('etc', 'schema'), 'w').write('6\n')
+            continue
+
+        break
+
+migrate = make_invokable(migrate)
 
 def info(ignore):
     """Report information about the local workspace"""
@@ -424,6 +426,8 @@ def update(ignore):
     ws.update()
     return ignore
 
+update = make_invokable(update)
+
 def status(dummy):
     """
     status: Show the current version control status of files in this
@@ -432,12 +436,16 @@ def status(dummy):
     ws = current_workspace()
     ws.status()
 
+status = make_invokable(status)
+
 def log(args):
     """
     log: Show version control history.
     """
     ws = current_workspace()
-    ws.log(args)
+    ws.log(args.args)
+
+log = make_invokable(log)
 
 def pull(args):
     """usage: pdk pull REMOTE_NAME
@@ -1098,16 +1106,18 @@ def listen(args):
 
     Not intended to be invoked by users.
     '''
-    if len(args) != 1:
+    if len(args.args) != 1:
         raise CommandLineError('requires a workspace path')
     framer = make_self_framer()
     try:
-        local_workspace = current_workspace(args[0])
+        local_workspace = current_workspace(args.args[0])
     except NotAWorkspaceError, e:
         framer.write_stream(['error', str(e)])
         return
     net = Net(framer, local_workspace)
     net.listen_loop()
+
+listen = make_invokable(listen)
 
 class Conveyor(object):
     '''Adapter for dealing with widely divergent pull/push strategies.

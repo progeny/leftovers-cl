@@ -22,7 +22,7 @@
 
 . atest/test_lib.sh
 
-pdk workspace
+pdk workspace && fail 'Should have failed.'
 
 verify_new_workspace() {
     dir="$1"

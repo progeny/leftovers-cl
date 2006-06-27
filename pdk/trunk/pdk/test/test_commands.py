@@ -19,43 +19,57 @@
 from pdk.test.utest_util import Test
 
 from pdk.exceptions import InputError
-from pdk.command_base import Commands, Command, RunnableCommand, \
-     HelpCommand, HelpCommands, DirectCommand
+from pdk.command_base import Commands, CommandInvoker, HelpInvoker, \
+     CommandArgs, HelpMultiInvoker, DirectCommand, gescape, gbold, \
+     gitalic, make_invokable
 
 __revision__ = "$Progeny$"
 
-def dummy_function():
-    '''test doc'''
+def dummy_function1():
+    '''test doc 1'''
     pass
+
+dummy_function1 = make_invokable(dummy_function1)
+
+def dummy_function2():
+    '''test doc 2'''
+    pass
+
+dummy_function2 = make_invokable(dummy_function2)
+
+def dummy_function3():
+    '''test doc 3'''
+    pass
+
+dummy_function3 = make_invokable(dummy_function3)
+
+local_module = __name__
 
 class TestCommands(Test):
     def test_find(self):
         com = Commands('aaa')
-        com.easy_map('a', 'b', 'c')
-        com.map_direct(['d'], dummy_function)
-        com.map(['g', 'h'], Command('i', 'j'))
+        com.easy_map('a', local_module, 'dummy_function1')
+        com.map_direct(['d'], dummy_function2)
+        com.map(['g', 'h'], DirectCommand(dummy_function3))
 
-        def rc(module, function, args):
-            return RunnableCommand(Command(module, function), args)
-        def rcd(function, args):
-            return RunnableCommand(DirectCommand(function), args)
-        def hc(module, function):
-            return HelpCommand(Command(module, function))
-        hcs = HelpCommands
+        def ci(function, args):
+            return CommandInvoker('aaa', function, CommandArgs(None, args))
+        hi = HelpInvoker
+        hmi = HelpMultiInvoker
 
-        self.assert_equal(rc('b', 'c', ['1', '2', '3']),
+        self.assert_equal(ci(dummy_function1, ['1', '2', '3']),
                           com.find(['a', '1', '2', '3']))
-        self.assert_equal(rc('i', 'j', ['1', '2', '3']),
+        self.assert_equal(ci(dummy_function3, ['1', '2', '3']),
                           com.find(['g', 'h', '1', '2', '3']))
-        self.assert_equal(hc('b', 'c'),
+        self.assert_equal(hi(['aaa', 'a'], dummy_function1),
                           com.find(['help', 'a', '1', '2', '3']))
-        self.assert_equal(hc('i', 'j'),
+        self.assert_equal(hi(['aaa', 'g', 'h'], dummy_function3),
                           com.find(['g', 'help', 'h', '1', '2', '3']))
-        self.assert_equal(hcs(['aaa', 'g'], com.commands['g'], 0),
+        self.assert_equal(hmi(['aaa', 'g'], com.commands['g']),
                           com.find(['help', 'g', '1', '2', '3']))
-        self.assert_equal(hcs(['aaa', 'g'], com.commands['g'], 1),
+        self.assert_equal(hmi(['aaa', 'g'], com.commands['g']),
                           com.find(['g']))
-        self.assert_equal(rcd(dummy_function, ['1', '2', '3']),
+        self.assert_equal(ci(dummy_function2, ['1', '2', '3']),
                           com.find(['d', '1', '2', '3']))
 
         try:
@@ -63,16 +77,25 @@ class TestCommands(Test):
         except InputError:
             pass
         else:
-            self.fail('Should have thrown InputException!')
+            self.fail('Should have thrown InputError!')
 
-    def test_runnable_command(self):
-        def rc(args):
-            return RunnableCommand(Command('pdk.test.test_commands',
-                                           'dummy_function'), args)
-        com = rc([])
-        self.assert_equal(dummy_function, com.load_function())
+    def test_iterate(self):
+        commands = Commands('base')
+        command = DirectCommand(dummy_function2)
+        commands.map(['a'], command)
+        commands.map(['b', 'c'], command)
+        commands.map(['d'], command)
+        commands.map(['e', 'f', 'g'], command)
 
+        expected = [
+            (('base', 'a'), DirectCommand(dummy_function2)),
+            (('base', 'b', 'c'), DirectCommand(dummy_function2)),
+            (('base', 'd'), DirectCommand(dummy_function2)),
+            (('base', 'e', 'f', 'g'), DirectCommand(dummy_function2)) ]
 
-    def test_command(self):
-        com = Command('pdk.test.test_commands', 'dummy_function')
-        self.assert_equal('test doc', com.get_help())
+        self.assert_equals_long(expected, list(commands))
+
+    def test_groff(self):
+        self.assert_equals(r'\"hello.\\.\-\-', gescape(r'"hello.\\.--'))
+        self.assert_equals(r'\fBhello \-\fP', gbold('hello -'))
+        self.assert_equals(r'\fIhello \-\fP', gitalic('hello -'))

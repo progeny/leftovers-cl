@@ -22,12 +22,16 @@
 
 #None of these help calls should result in a crash
 #(meaningful help is another question altogether)
+pdk commit --help
+pdk workspace create --help
 pdk help
 pdk help commit
 pdk help commit foo
 pdk help workspace
-pdk help workspace foo
-pdk help workspace foo fighters
+pdk help workspace foo && fail 'Should have failed.'
+pdk help workspace foo fighters && fail 'Should have failed'
 pdk help workspace create
 pdk help workspace create foo
 
+pdk workspace && fail 'Should have failed.'
+pdk workspace zippo && fail 'Should have failed.'

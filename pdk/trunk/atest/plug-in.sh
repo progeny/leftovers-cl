@@ -27,9 +27,16 @@
 #   setup:
 cat > localfile.py <<EOF
 import pdk.util
+from pdk.command_base import make_invokable
 from pdk.pdk_commands import commands
 
-commands.map_direct(['moo'], pdk.util.moo)
+def moo(args):
+    pdk.util.moo(args.args)
+
+moo.__doc__ = pdk.util.moo.__doc__
+moo = make_invokable(moo)
+
+commands.map_direct(['moo'], moo)
 EOF
 cat > .pdk_plugins <<EOF
 localfile
