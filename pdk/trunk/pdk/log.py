@@ -21,35 +21,28 @@
 """
 
 import logging
-import threading
 import os
 
 __revision__ = "$Progeny$"
 
 
-lock = threading.Lock()
+import sys
+logger = logging.getLogger('pdk')
+hdlr = logging.StreamHandler(sys.stderr)
+formatter = logging.Formatter(
+    'pdk %(levelname)s: %(message)s'
+    )
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+if os.environ.has_key("PDKDEBUG"):
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
+
 def get_logger():
     """
     Return the default python logging channel.
     """
-    lock.acquire()
-    try:
-        if not get_logger.logger:
-            import sys
-            logger = get_logger.logger = logging.getLogger('pdk')
-            hdlr = logging.StreamHandler(sys.stderr)
-            formatter = logging.Formatter(
-                '%(asctime)s %(levelname)s %(message)s'
-                )
-            hdlr.setFormatter(formatter)
-            logger.addHandler(hdlr)
-            if os.environ.has_key("PDKDEBUG"):
-                logger.setLevel(logging.DEBUG)
-            else:
-                logger.setLevel(logging.WARNING)
-    finally:
-        lock.release()
-    return get_logger.logger
-get_logger.logger = None
+    return logger
 
 # vim:ai:et:sts=4:sw=4:tw=0:
