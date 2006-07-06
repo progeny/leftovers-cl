@@ -376,6 +376,39 @@ or the command will fail.
 
 remove = make_invokable(remove, 'force')
 
+def mv(args):
+    '''\\fB%prog\\fP \\fIFILE\\fP \\fIFILE\\fP
+.PP
+Wrap up the operation
+of version control remove and add
+into a single convenience command.
+.PP
+This command won't work on directories
+or remove an existing file.
+    '''
+    ws = current_workspace()
+    files = args.get_reoriented_files(ws, 0)
+    if len(files) != 2:
+        message = 'Must provide exactly two filenames'
+        raise CommandLineError(message)
+
+    def abspath(filename):
+        '''Get the absolute path to a reoriented file.'''
+        return pjoin(ws.location, filename)
+
+    for absfile in [ abspath(f) for f in files ]:
+        if os.path.isdir(absfile):
+            raise InputError('Rename does not work on a directory.')
+
+    if os.path.exists(abspath(files[1])):
+        raise InputError('Cannot rename over and existing file')
+
+    os.rename(abspath(files[0]), abspath(files[1]))
+    ws.remove([files[0]], False)
+    ws.add([files[1]])
+
+mv = make_invokable(mv)
+
 def cat(args):
     """\\fB%prog\\fI \\fIFILE\\fP
 .PP

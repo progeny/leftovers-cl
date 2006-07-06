@@ -71,6 +71,7 @@ commands.easy_map('upgrade', ws, 'upgrade')
 commands.easy_map('download', ws, 'download')
 commands.easy_map('dumplinks', ws, 'dumplinks')
 commands.easy_map('migrate', ws, 'migrate')
+commands.easy_map('mv', ws, 'mv')
 
 commands.map(('workspace', 'create'), Command(ws, 'create'))
 commands.map(('channel', 'update'), Command(ws, 'world_update'))

@@ -675,10 +675,41 @@ popd
 
 @B
 
+pdk mv is a convenience command which takes care of the add and remove of a
+file simultaneously.
+
+For now we don't allow invoking mv on directories.
+
+@$@<Mv@>==@{
+pdk workspace create mv-command
+mkdir mv-command/subdir
+pushd mv-command/subdir
+    echo 1 > file-a
+    pdk commit -m 'initial' file-a
+    pdk mv file-a file-b
+    pdk status >../../status.txt
+    diff -u - ../../status.txt <<EOF
+R100@^H(09)subdir/file-a@^H(09)subdir/file-b
+EOF
+    pdk commit -m 'after mv'
+    mkdir somedir
+    echo 2 > somedir/file-c
+    pdk commit -m 'add with dir' somedir/file-c
+    pdk mv somedir anotherdir 2>../../errors.txt \
+        && fail 'Command should have failed'
+    grep -q 'directory' ../../errors.txt
+    pdk mv somedir/file-c file-b 2>../../errors.txt \
+        && fail 'Command should have failed'
+    grep -q 'exist' ../../errors.txt
+popd
+@}
+@B
+
 Here's the whole test.
 
 @O@<atest/local-vc.fw.sh@>==@{
 @<Test Setup@>
+@<Mv@>
 @<Commit Regression: In Subdir@>
 @<Commit Ordering In Log@>
 @<New Repositories@>
