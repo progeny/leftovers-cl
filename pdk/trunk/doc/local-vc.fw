@@ -295,7 +295,7 @@ popd
 @B
 
 This test of remove functionality tries to verify a lot of corner
-cases.
+cases. It also uses the rm alias sometimes.
 
 @$@<Remove@>==@{
 pdk workspace create remove
@@ -323,7 +323,7 @@ EOF
     echo info >>file-a
     pdk commit -m 'add it back' file-a
     rm file-a
-    pdk remove file-a
+    pdk rm file-a
     pdk status >../output.txt
     diff -u - ../output.txt <<EOF
 D@^H(09)file-a

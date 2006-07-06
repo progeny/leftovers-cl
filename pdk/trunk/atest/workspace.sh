@@ -47,6 +47,11 @@ pdk workspace create foo
 verify_new_workspace foo
 rm -rf foo
 
+# make sure the alias works too
+pdk create workspace foo
+verify_new_workspace foo
+rm -rf foo
+
 pdk workspace create exists
 pdk workspace create exists \
     && fail "Shouldn't be able to create over an existing workspace."

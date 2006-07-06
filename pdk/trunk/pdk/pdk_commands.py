@@ -73,6 +73,9 @@ commands.easy_map('dumplinks', ws, 'dumplinks')
 commands.easy_map('migrate', ws, 'migrate')
 commands.easy_map('mv', ws, 'mv')
 
+commands.alias(['rm'], ['remove'])
+commands.alias(['create', 'workspace'], ['workspace', 'create'])
+
 commands.map(('workspace', 'create'), Command(ws, 'create'))
 commands.map(('channel', 'update'), Command(ws, 'world_update'))
 commands.map(('remote', 'listen'), Command(ws, 'listen'))

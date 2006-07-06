@@ -45,6 +45,7 @@ import sys
 import re
 import optparse
 import traceback
+from itertools import chain
 import pdk.log as log
 from pdk.exceptions import CommandLineError, InputError, \
                     SemanticError, ConfigurationError, \
@@ -378,6 +379,34 @@ class DirectCommand(object):
 
 add_cmpstr(DirectCommand, 'spec')
 
+class CommandAlias(object):
+    '''Represents a command alias.'''
+    def __init__(self, commands, segments):
+        self.commands = commands
+        self.segments = segments
+        self.command_name = self.segments[:]
+
+    def create_invoker(self, dummy, args):
+        '''Find the intended invoker for this alias.'''
+        return self.commands.find(list(chain(self.segments, args)))
+
+    def get_spec(self):
+        '''Return self and pretend to be a spec for help purposes.'''
+        return self
+
+    def set_command_name(self, command_name):
+        '''Just set the internal variable.'''
+        self.command_name = command_name
+
+    def format_help(self):
+        '''Minimal alias pointer for the man page.'''
+        message = 'alias for %s' % \
+            gbold('%s %s' % (self.commands.command_name,
+                             ' '.join(self.segments)))
+        return message
+
+add_cmpstr(CommandAlias, 'commands', 'segments')
+
 class Commands(object):
     '''Hold references to multiple command objects.
 
@@ -417,6 +446,11 @@ class Commands(object):
             sub_command.map(tail, command)
         else:
             self.commands[key] = command
+
+    def alias(self, segments, command_segments):
+        '''Make the first multi word command an alias for the second one.
+        '''
+        self.map(segments, CommandAlias(self, command_segments))
 
     def find_help(self, args, previous = None):
         '''Find a help command for the given args.

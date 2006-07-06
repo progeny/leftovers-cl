@@ -21,7 +21,7 @@ from pdk.test.utest_util import Test
 from pdk.exceptions import InputError
 from pdk.command_base import Commands, CommandInvoker, HelpInvoker, \
      CommandArgs, HelpMultiInvoker, DirectCommand, gescape, gbold, \
-     gitalic, make_invokable
+     gitalic, make_invokable, CommandAlias
 
 __revision__ = "$Progeny$"
 
@@ -51,6 +51,7 @@ class TestCommands(Test):
         com.easy_map('a', local_module, 'dummy_function1')
         com.map_direct(['d'], dummy_function2)
         com.map(['g', 'h'], DirectCommand(dummy_function3))
+        com.alias(['z', 'y'], ['g', 'h'])
 
         def ci(function, args):
             return CommandInvoker('aaa', function, CommandArgs(None, args))
@@ -61,6 +62,8 @@ class TestCommands(Test):
                           com.find(['a', '1', '2', '3']))
         self.assert_equal(ci(dummy_function3, ['1', '2', '3']),
                           com.find(['g', 'h', '1', '2', '3']))
+        self.assert_equal(ci(dummy_function3, ['1', '2', '3']),
+                          com.find(['z', 'y', '1', '2', '3']))
         self.assert_equal(hi(['aaa', 'a'], dummy_function1),
                           com.find(['help', 'a', '1', '2', '3']))
         self.assert_equal(hi(['aaa', 'g', 'h'], dummy_function3),
@@ -86,12 +89,14 @@ class TestCommands(Test):
         commands.map(['b', 'c'], command)
         commands.map(['d'], command)
         commands.map(['e', 'f', 'g'], command)
+        commands.alias(['zz', 'yy'], ['a'])
 
         expected = [
             (('base', 'a'), DirectCommand(dummy_function2)),
             (('base', 'b', 'c'), DirectCommand(dummy_function2)),
             (('base', 'd'), DirectCommand(dummy_function2)),
-            (('base', 'e', 'f', 'g'), DirectCommand(dummy_function2)) ]
+            (('base', 'e', 'f', 'g'), DirectCommand(dummy_function2)),
+            (('base', 'zz', 'yy'), CommandAlias(commands, ['a'])) ]
 
         self.assert_equals_long(expected, list(commands))
 
