@@ -42,7 +42,6 @@ files needed by dsc packages.
 
 """
 
-import sys
 import os
 import stat
 pjoin = os.path.join
@@ -63,6 +62,9 @@ from pdk.package import deb, udeb, dsc, get_package_type, \
      UnknownPackageTypeError
 from pdk.progress import ConsoleMassProgress
 from pdk.index_file import IndexWriter, IndexFile, IndexFileMissingError
+from pdk.log import get_logger
+
+logger = get_logger()
 
 def quote(raw):
     '''Create a valid filename which roughly resembles the raw string.'''
@@ -580,9 +582,9 @@ class OutsideWorld(object):
 
     def index_world_data(self):
         '''Build the world_data index from channel data.'''
-        print >> sys.stderr, 'Building channel index...',
+        logger.info('Building channel index...')
         IndexedWorldData.build(self.iter_sections(), self.store_file)
-        print >> sys.stderr, 'done.'
+        logger.info('Finished building channel index.')
 
     def __create_index(self):
         '''Get the IndexedWorldData object associated with this world.'''
