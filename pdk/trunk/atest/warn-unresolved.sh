@@ -61,12 +61,12 @@ cat >apache.xml <<EOF
 </component>
 EOF
 
-pdk resolve -R apache.xml 2>&1 | cut -d ' ' -f 3- >errors
+pdk resolve -R apache.xml 2>errors
 diff -u - errors <<EOF
-WARNING Unresolved references remain in apache.xml
-WARNING No dsc where ( [name] is eq 'ida' AND [type] is eq 'dsc' ) action: []
-WARNING No deb where ( [name] is eq 'snorklewink2' AND [type] is eq 'deb' ) action: []
-WARNING No deb where ( [name] is eq 'snorklewink3' AND [type] is eq 'deb' ) action: [set meta ('pdk', 'test', 'data')]
+pdk WARNING: Unresolved references remain in apache.xml
+pdk WARNING: No dsc where ( [name] is eq 'ida' AND [type] is eq 'dsc' ) action: []
+pdk WARNING: No deb where ( [name] is eq 'snorklewink2' AND [type] is eq 'deb' ) action: []
+pdk WARNING: No deb where ( [name] is eq 'snorklewink3' AND [type] is eq 'deb' ) action: [set meta ('pdk', 'test', 'data')]
 EOF
 
 # try again with all references resolvable.
@@ -81,4 +81,4 @@ cat >apache.xml <<EOF
 EOF
 
 pdk resolve -R apache.xml 2>errors
-egrep "WARNING.*unresolved" errors && bail 'no warning expected'
+egrep "pdk WARNING:.*unresolved" errors && bail 'no warning expected'
