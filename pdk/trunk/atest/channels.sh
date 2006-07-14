@@ -27,7 +27,8 @@
 
 create_lighttpd_conf <<EOF
 server.document-root = "$tmp_dir"
-alias.url = ( "/repo/" => "$tmp_dir/test-repogen/repo/",
+alias.url = ( "/rpm-md/" => "$tmp_dir/test-repogen/rpm-md/",
+              "/repo/" => "$tmp_dir/test-repogen/repo/",
               "/repo-nodists/" => "$tmp_dir/repo-nodists/" )
 EOF
 
@@ -52,6 +53,10 @@ cd test-repogen
 
 pdk repogen product.xml
 
+mkdir rpm-md
+cp $PACKAGES/adjtimex-1.13-12.*.rpm rpm-md
+createrepo rpm-md
+
 cat >etc/channels.xml <<EOF
 <?xml version="1.0"?>
 <channels>
@@ -73,6 +78,10 @@ cat >etc/channels.xml <<EOF
     <dist>./</dist>
     <archs>source binary</archs>
   </nodists>
+  <rpm-md-small>
+    <type>rpm-md</type>
+    <path>http://localhost:$HTTP_PORT/rpm-md/</path>
+  </rpm-md-small>
 </channels>
 EOF
 
@@ -101,6 +110,14 @@ compare_files \
     $tmp_dir/repo-nodists/Sources.gz \
     etc/channels/${prefix}_Sources.gz
 
+compare_files \
+    $tmp_dir/test-repogen/rpm-md/repodata/repomd.xml \
+    etc/channels/http_localhost_8110_rpm-md_repodata_repomd.xml
+
+compare_files \
+    $tmp_dir/test-repogen/rpm-md/repodata/primary.xml.gz \
+    etc/channels/http_localhost_8110_rpm-md_repodata_primary.xml.gz
+
 # this tests the "already downloaded" code.
 pdk channel update
 
@@ -121,3 +138,12 @@ compare_files \
 compare_files \
     $tmp_dir/repo-nodists/Sources.gz \
     etc/channels/${prefix}_Sources.gz
+
+compare_files \
+    $tmp_dir/test-repogen/rpm-md/repodata/repomd.xml \
+    etc/channels/http_localhost_8110_rpm-md_repodata_repomd.xml
+
+compare_files \
+    $tmp_dir/test-repogen/rpm-md/repodata/primary.xml.gz \
+    etc/channels/http_localhost_8110_rpm-md_repodata_primary.xml.gz
+

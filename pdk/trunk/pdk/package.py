@@ -422,6 +422,126 @@ def get_rpm_header(handle):
     handle.close()
     return header
 
+def parse_rpm_header(raw_header, blob_id = None, package_type = None):
+    '''Parse the header and return and rpm or srpm package object.
+
+    This method works on every type of rpm header representation known
+    to pdk, including a real rpm api header object, a dict (channel data),
+    and the xml representation in rpm-md repositories.
+
+    Parsing from a dict or rpm header requires that you set the blob_id and
+    package_type parameters.
+    '''
+
+    if isinstance(raw_header, dict):
+        assert blob_id is not None
+        assert package_type is not None
+        package = Package(package_type, blob_id)
+        package.update(raw_header)
+        return package
+
+    elif hasattr(raw_header, 'attrib'): # elementtree element
+        package_element = raw_header
+        common_prefix = 'http://linux.duke.edu/metadata/common'
+        rpm_prefix = 'http://linux.duke.edu/metadata/rpm'
+        prefii = { 'common': common_prefix, 'rpm': rpm_prefix }
+        srpm_path = '{%(common)s}format/{%(rpm)s}sourcerpm' % prefii
+        def get_element(tag):
+            '''Try to find an element
+
+            Uses the common namespace only if the namespace is
+            unspecified.
+
+            Raises KeyError if the element is not found.
+            '''
+            if tag.startswith('{'):
+                namespaced_tag = tag
+                sub_element = package_element.find(tag)
+            else:
+
+                namespaced_tag = '{%s}%s' % (common_prefix, tag)
+                sub_element = package_element.find(namespaced_tag)
+
+            if sub_element is None:
+                raise KeyError, namespaced_tag
+
+            return sub_element
+
+        def get_atts(tag):
+            '''Gets the attributes associcated with the named tag.
+
+            Inherits the namespace handling from get_element.
+            '''
+            sub_element = get_element(tag)
+            return sub_element.attrib
+
+        def get_text(tag):
+            '''Gets the text associcated with the named tag.
+
+            Inherits the namespace handling from get_element.
+            '''
+            sub_element = get_element(tag)
+            return sub_element.text
+
+        pdk_dict = {}
+        pdk_dict['pdk', 'name'] = get_text('name')
+        version_info = get_atts('version')
+        pdk_dict['rpm', 'arch'] = get_text('arch')
+
+        source_rpm_element = package_element.find(srpm_path)
+        if source_rpm_element is None:
+            raise KeyError, srpm_path
+        source_rpm = source_rpm_element.text
+        if not source_rpm:
+            package_type = srpm
+            source_rpm = None
+        else:
+            package_type = rpm
+        pdk_dict['pdk', 'source-rpm'] = source_rpm
+
+        version_string = '%(epoch)s-%(ver)s-%(rel)s' % version_info
+        pdk_dict['pdk', 'version'] = \
+            package_type.version_class(version_string = version_string)
+        location = get_atts('location')['href']
+        pdk_dict['pdk', 'location'] = location
+        pdk_dict['pdk', 'nosrc'] = location.endswith('nosrc.rpm')
+        size = get_atts('size')['archive']
+        pdk_dict['pdk', 'size'] = size
+
+        blob_prefix = get_atts('checksum')['type']
+        if blob_prefix == 'sha':
+            blob_prefix = 'sha-1'
+        blob_body = get_text('checksum')
+        blob_id = '%s:%s' % (blob_prefix, blob_body)
+        package = Package(package_type, blob_id)
+        package.update(pdk_dict)
+        return package
+
+    else: # rpm_api Header object
+        assert blob_id is not None
+        assert package_type is not None
+        header = rpm_api.headerLoad(raw_header)
+        source_rpm = header[rpm_api.RPMTAG_SOURCERPM]
+
+        # work around rpm oddity
+        if source_rpm == []:
+            source_rpm = None
+
+        package = Package(package_type, blob_id)
+
+        package[('pdk', 'name')] = header[rpm_api.RPMTAG_NAME]
+        package[('pdk', 'version')] = RPMVersion(header)
+        package[('rpm', 'arch')] = header[rpm_api.RPMTAG_ARCH]
+        package[('pdk', 'source-rpm')] = source_rpm
+
+        # note the nosource and/or nopatch attributes
+        keys = header.keys()
+        nosrc = (1051 in keys or 1052 in keys)
+        package['pdk', 'nosrc'] = nosrc
+
+        return package
+
+
 class RPMVersion(object):
     """A comparable RPM package version."""
     __slots__ = ('epoch', 'version', 'release', 'string_without_epoch',
@@ -481,26 +601,7 @@ class _Rpm(object):
 
     def parse(self, raw_header, blob_id):
         """Parse an rpm header. Returns a package object."""
-        header = rpm_api.headerLoad(raw_header)
-        source_rpm = header[rpm_api.RPMTAG_SOURCERPM]
-
-        # work around rpm oddity
-        if source_rpm == []:
-            source_rpm = None
-
-        package = Package(self, blob_id)
-
-        package[('pdk', 'name')] = header[rpm_api.RPMTAG_NAME]
-        package[('pdk', 'version')] = RPMVersion(header)
-        package[('rpm', 'arch')] = header[rpm_api.RPMTAG_ARCH]
-        package[('pdk', 'source-rpm')] = source_rpm
-
-        # note the nosource and/or nopatch attributes
-        keys = header.keys()
-        nosrc = (1051 in keys or 1052 in keys)
-        package['pdk', 'nosrc'] = nosrc
-
-        return package
+        return parse_rpm_header(raw_header, blob_id, self)
 
     def extract_header(self, filename):
         """Extract an rpm header from an rpm package file."""

@@ -609,12 +609,97 @@ popd
 
 @}
 
+@B
+
+Rpm-md channels work in a similar manner to the others, so we won't be as
+thorough in testing them. We will go ahead and run then through the basics
+though.
+
+First we manually create a repository.
+
+@$@<Rpm-md Channels@>+=@{
+
+pdk workspace create rpm-md
+pushd rpm-md
+    mkdir md-repo
+    cp $PACKAGES/adjtimex-1.13-12.*.rpm md-repo
+    mkdir md-repo/deeper-subdir
+    cp $PACKAGES/nosrc-test-*.rpm md-repo/deeper-subdir
+    createrepo md-repo
+@}
+
+Next we set up an rpm-md channel.
+
+@$@<Rpm-md Channels@>+=@{
+
+    cat >etc/channels.xml <<EOF
+<channels>
+  <rpms>
+    <type>rpm-md</type>
+    <path>file://$tmp_dir/rpm-md/md-repo/</path>
+  </rpms>
+</channels>
+EOF
+
+    pdk channel update
+
+@}
+
+No we can set up an resolve a component.
+
+@$@<Rpm-md Channels@>+=@{
+    cat >rpm-resolve.xml <<EOF
+<component>
+  <contents>
+    <srpm>adjtimex</srpm>
+    <srpm>nosrc-test</srpm>
+  </contents>
+</component>
+EOF
+    pdk resolve rpm-resolve.xml
+
+    diff -u - rpm-resolve.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <contents>
+    <srpm>
+      <name>adjtimex</name>
+      <rpm ref="sha-1:02ac15163b67c7af4b1b188b5015e6fdef2ca871">
+        <name>adjtimex</name>
+        <version>0-1.13-12</version>
+        <arch>i386</arch>
+      </rpm>
+      <srpm ref="sha-1:42013a0008921e9b344cc07823392fbbc4ec080d">
+        <name>adjtimex</name>
+        <version>0-1.13-12</version>
+      </srpm>
+    </srpm>
+    <srpm>
+      <name>nosrc-test</name>
+      <rpm ref="sha-1:a8580963983466c18fb19c36be7ffca2e00cfa25">
+        <name>nosrc-test</name>
+        <version>0-1-1</version>
+        <arch>i386</arch>
+      </rpm>
+      <srpm ref="sha-1:f5eb0e1eac97cb1c6178fd759c4d17efaf224183">
+        <name>nosrc-test</name>
+        <version>0-1-1</version>
+      </srpm>
+    </srpm>
+  </contents>
+</component>
+EOF
+popd
+
+@}
+
 @B@<Test Outline@>
 
 This is the macro wrapper for the test.
 
 @O@<atest/resolve.fw.sh@>==@{
 @<Prep work@>
+@<Rpm-md Channels@>
 @<Resolveproof Components@>
 @<Nameless Reference@>
 @<Dir Channel Test@>

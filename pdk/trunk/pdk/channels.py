@@ -56,10 +56,10 @@ except ImportError:
 from xml.parsers.expat import ExpatError
 from pdk.exceptions import InputError, SemanticError
 from pdk.util import cpath, gen_file_fragments, get_remote_file, \
-     shell_command, Framer, cached_property
+     shell_command, Framer, cached_property, parse_xml
 from pdk.yaxml import parse_yaxml_file
-from pdk.package import deb, udeb, dsc, get_package_type, \
-     UnknownPackageTypeError
+from pdk.package import parse_rpm_header, deb, udeb, dsc, \
+     get_package_type, UnknownPackageTypeError
 from pdk.progress import ConsoleMassProgress
 from pdk.index_file import IndexWriter, IndexFile, IndexFileMissingError
 from pdk.log import get_logger
@@ -203,6 +203,71 @@ def make_comparable(cls, id_fields = None):
     cls.__hash__ = __hash__
     cls.__repr__ = __repr__
     cls.__str__ = __repr__
+
+class RpmMdSection(object):
+    '''Section for managing one rpm metadata repository.'''
+
+    def __init__(self, section_name, path, get_channel_file):
+        self.section_name = section_name
+        self.path = path
+        self.get_channel_file = get_channel_file
+
+        self.repomd_path = '/'.join([self.path, 'repodata', 'repomd.xml'])
+        self.repomd_data = self.get_channel_file(self.repomd_path)
+
+    def update(self):
+        '''Grab the remote file and store it locally.'''
+        get_remote_file(self.repomd_path, self.repomd_data, True)
+        primary_path, primary_data = self.get_primary_data()
+        get_remote_file(primary_path, primary_data, True)
+
+    def get_primary_data(self):
+        '''Look up the url and channel file for the primary.xml document.
+        '''
+        tree = parse_xml(open(self.repomd_data))
+        root = tree.getroot()
+        repo_prefix = 'http://linux.duke.edu/metadata/repo'
+        data_pattern = '{%s}data' % repo_prefix
+        data_elements = [ d for d in root.findall(data_pattern)
+                          if d.attrib['type'] == 'primary' ]
+        if len(data_elements) != 1:
+            message = 'Found %d "primary" entries in %s' \
+                % (len(data_elements), self.repomd_data)
+            raise InputError, message
+
+        data_element = data_elements[0]
+        location_pattern = '{%s}location' % repo_prefix
+        location_element = data_element.find(location_pattern)
+        if location_element is None:
+            raise InputError, 'Found no primary "location" in %s' \
+                % self.repomd_data
+        location = location_element.attrib['href']
+        primary_url = '/'.join([self.path, location])
+        return primary_url, self.get_channel_file(primary_url)
+
+    def iter_package_info(self):
+        '''Iterate over ghost_package, blob_id, locator for this section.'''
+        dummy, primary_data = self.get_primary_data()
+        handle = os.popen('gunzip <%s' % primary_data)
+        tree = parse_xml(handle)
+        handle.close()
+        common_prefix = 'http://linux.duke.edu/metadata/common'
+        for package_element in tree.getroot():
+            package_tag = '{%s}%s' % (common_prefix, u'package')
+            if package_element.tag != package_tag:
+                message = u'Unexpected element "%s" in %s' \
+                    % (package_element.tag, primary_data)
+                logger.warn(message)
+                continue
+
+            package = parse_rpm_header(package_element)
+            location = package['pdk', 'location']
+            locator = FileLocator(self.path, location, package.blob_id,
+                                  package.size, URLCacheLoader)
+
+            yield package, dict(package), package.blob_id, locator
+
+make_comparable(RpmMdSection, ('path',))
 
 class AptDebSection(object):
     '''Section for managing a single Packages or Sources file.
@@ -531,6 +596,9 @@ class OutsideWorldFactory(object):
             elif type_value == 'source':
                 yield RemoteWorkspaceSection(path,
                                              self.get_channel_file(path))
+            elif type_value == 'rpm-md':
+                yield RpmMdSection(channel_name, path,
+                                   self.get_channel_file)
             else:
                 raise InputError('channel %s has unrecognized type %s'
                                  % (channel_name, type_value))
