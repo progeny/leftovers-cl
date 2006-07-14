@@ -8,7 +8,7 @@ Group: Development/Tools
 URL: http://componentizedlinux.org/index.php/Main_Page
 Source: http://archive.progeny.com/progeny/pdk/pool/main/p/pdk/pdk_%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: python, git-core, python-curl, smart, python-elementtree, python-mx-base, PyXML
+Requires: python, git-core, python-curl, smart, python-elementtree, egenix-mx-base, PyXML
 BuildRequires: python, python-devel, funnelweb
 
 %description
@@ -64,6 +64,7 @@ rm -rf %{buildroot} %{_builddir}/*
 
 %changelog
 * Fri Jul 14 2006 Darrin Thompson <darrint@progeny.com> - 0.9.0-1
+- Change dep from python-mx-base to egenix-mx-base.
 - Bump version to 0.9.0, since we are _way_ past 0.0.x.
 - Add mv command.
 - Add aliases create workspace and rm.
