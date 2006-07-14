@@ -1,6 +1,6 @@
 Summary: Componentized Linux Platform Development Kit (PDK)
 Name: pdk
-%define version 0.0.37
+%define version 0.9.0
 Version: %{version}
 Release: 1
 License: GPL
@@ -63,6 +63,13 @@ rm -rf %{buildroot} %{_builddir}/*
 
 
 %changelog
+* Fri Jul 14 2006 Darrin Thompson <darrint@progeny.com> - 0.9.0-1
+- Bump version to 0.9.0, since we are _way_ past 0.0.x.
+- Add mv command.
+- Add aliases create workspace and rm.
+- Clean up diagnostics.
+- Add rpm-md channels.
+
 * Tue Jun 27 2006 Darrin Thompson <darrint@progeny.com> - 0.0.37-1
 - Fill out pdk dependencies in pdk.spec.
 - Groffify all built in documentation.
