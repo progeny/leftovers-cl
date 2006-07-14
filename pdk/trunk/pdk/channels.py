@@ -207,6 +207,8 @@ def make_comparable(cls, id_fields = None):
 class RpmMdSection(object):
     '''Section for managing one rpm metadata repository.'''
 
+    loader_factory = LoaderFactory.create(URLCacheLoader)
+
     def __init__(self, section_name, path, get_channel_file):
         self.section_name = section_name
         self.path = path
@@ -261,9 +263,15 @@ class RpmMdSection(object):
                 continue
 
             package = parse_rpm_header(package_element)
-            location = package['pdk', 'location']
+            location_element = \
+                package_element.find('{%s}location' % common_prefix)
+            if location_element is None:
+                message = "Can't find location for package %s." \
+                    % package.name
+                raise InputError, message
+            location = location_element.attrib['href']
             locator = FileLocator(self.path, location, package.blob_id,
-                                  package.size, URLCacheLoader)
+                                  package.size, self.loader_factory)
 
             yield package, dict(package), package.blob_id, locator
 

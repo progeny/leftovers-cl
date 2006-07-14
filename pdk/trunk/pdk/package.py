@@ -503,7 +503,6 @@ def parse_rpm_header(raw_header, blob_id = None, package_type = None):
         pdk_dict['pdk', 'version'] = \
             package_type.version_class(version_string = version_string)
         location = get_atts('location')['href']
-        pdk_dict['pdk', 'location'] = location
         pdk_dict['pdk', 'nosrc'] = location.endswith('nosrc.rpm')
         size = get_atts('size')['archive']
         pdk_dict['pdk', 'size'] = size
@@ -570,7 +569,10 @@ class RPMVersion(object):
                 raise InputError('Invalid rpm version string: "%s"'
                                  % version_string)
 
-        self.tuple = (self.epoch or '',  self.version, self.release)
+        # Due to a "bug" in createrepo, we have to consider missing epochs
+        # as equal to zero epochs. As far as I know this shouldn't hurt any
+        # of our users. /me hopes. -dt
+        self.tuple = (self.epoch or '0',  self.version, self.release)
         self.string_without_epoch = '-'.join([self.version, self.release])
         if self.epoch:
             self.full_version = '-'.join(self.tuple)

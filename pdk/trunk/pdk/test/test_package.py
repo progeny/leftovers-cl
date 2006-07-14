@@ -301,7 +301,7 @@ class TestPackageVersion(Test):
 
         self.assert_equal('2-0', ver.full_version)
         self.assert_equal('2-0', ver.string_without_epoch)
-        self.assert_equal(('', '2', '0'), ver.tuple)
+        self.assert_equal(('0', '2', '0'), ver.tuple)
 
         full = RPMVersion(version_string = '1-2-3')
         self.assert_equal('1', full.epoch)
@@ -319,7 +319,7 @@ class TestPackageVersion(Test):
 
         self.assert_equal('1-2', complete.full_version)
         self.assert_equal('1-2', complete.string_without_epoch)
-        self.assert_equal(('', '1', '2'), complete.tuple)
+        self.assert_equal(('0', '1', '2'), complete.tuple)
 
         same_as_complete = RPMVersion(version_string = '1-2')
 

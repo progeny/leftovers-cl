@@ -689,6 +689,15 @@ EOF
   </contents>
 </component>
 EOF
+    pdk repogen rpm-resolve.xml
+    find repo | LANG=C sort >filelist.txt
+    diff -u - filelist.txt <<EOF
+repo
+repo/adjtimex-1.13-12.i386.rpm
+repo/adjtimex-1.13-12.src.rpm
+repo/nosrc-test-1-1.i386.rpm
+repo/nosrc-test-1-1.nosrc.rpm
+EOF
 popd
 
 @}
