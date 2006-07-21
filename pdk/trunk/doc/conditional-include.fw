@@ -20,7 +20,7 @@
 
 @A@<Conditional Include@>
 
-In this test we narrow and mask includes to verify that we can include only
+In this test we apply conditions to includes to verify that we can include
 partial components.
 
 @t table_of_contents
@@ -53,9 +53,9 @@ EOF
   <contents>
     <component>
       <file>star.xml</file>
-      <narrow> { format = deb } </narrow>
-      <narrow> { lang %= en } </narrow>
-      <mask> ** emacs-defaults { role = source } </mask>
+      <limit> { format = deb } </limit>
+      <limit> { lang %= en } </limit>
+      <exclude> ** emacs-defaults { role = source } </exclude>
     </component>
     <dsc>
       <cond><![CDATA[ ** ida ]]></cond>

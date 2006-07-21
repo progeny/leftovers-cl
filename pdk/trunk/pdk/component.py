@@ -255,10 +255,10 @@ class ComponentDescriptor(object):
             file_element.text = reference.filename
             for ref_condition in reference.condition.conditions:
                 if isinstance(ref_condition, rules.notc):
-                    tag_name = 'mask'
+                    tag_name = 'exclude'
                     condition = ref_condition.condition
                 else:
-                    tag_name = 'narrow'
+                    tag_name = 'limit'
                     condition = ref_condition
                 cond_element = SubElement(component_element, tag_name)
                 cond_element.text = condition.debish
@@ -623,11 +623,12 @@ class ComponentDescriptor(object):
         else:
             conditions = []
             ref_file = None
+            # narrow and mask are deprecated, but still work.
             for element in component_ref_element:
-                if element.tag == 'narrow':
+                if element.tag in ('limit', 'narrow'):
                     condition = compile_debish(element.text, None, None)
                     conditions.append(condition)
-                elif element.tag == 'mask':
+                elif element.tag in ('exclude', 'mask'):
                     n_condition = compile_debish(element.text, None, None)
                     condition = rules.notc(n_condition)
                     conditions.append(condition)

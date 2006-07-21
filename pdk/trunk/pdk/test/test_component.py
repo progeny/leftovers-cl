@@ -913,8 +913,8 @@ cat >a.xml <<EOF
   <contents>
     <component>
       <file>b.xml</file>
-      <narrow>apache</narrow>
-      <mask>ls</mask>
+      <limit>apache</limit>
+      <exclude>ls</exclude>
     </component>
   </contents>
 </component>
@@ -946,7 +946,7 @@ cat >a.xml <<EOF
 <component>
   <contents>
     <component>
-      <narrow><![CDATA[ apache ]]></narrow>
+      <limit><![CDATA[ apache ]]></limit>
     </component>
   </contents>
 </component>
@@ -965,7 +965,7 @@ cat >a.xml <<EOF
   <contents>
     <component>
       <zzz></zzz>
-      <narrow><![CDATA[ apache ]]></narrow>
+      <limit><![CDATA[ apache ]]></limit>
     </component>
   </contents>
 </component>
