@@ -23,41 +23,13 @@
 set -e
 set -x
 
-export=1
+tag="$1"
+version=$(echo $tag | awk -v FS=- '{print $2}')
 
-args=$(getopt -o E -- "$@")
-eval set -- "$args"
-while true; do
-    case "$1" in
-        -E) shift; unset export;;
-        --) shift; break;;
-    esac
-done
-
-version="$1"
 if [ -z "$version" ]; then
-    echo >&2 "Version required"
+    echo >&2 "Can't parse version from tag."
     exit 1
 fi
 
-clean() {
-    if [ -n "$export_dir" -a -d "$export_dir" ]; then
-        rm -r $export_dir
-    fi
-}
-
-trap clean 0 1 2 3 15
-
-export_dir=$(pwd)/pdk-$version
-if [ -n "$export" ]; then
-    svn export . $export_dir
-else
-    sh clean.sh
-    mkdir $export_dir
-    tar --exclude=.svn --exclude=.git --exclude=ide \
-        --exclude=atest/packages --exclude=tags --exclude=pdk-$version \
-        --exclude=./pdk_* --exclude=pdk-* \
-        -cv -O . | tar xC pdk-$version
-fi
-
-tar zcvf pdk_$version.tar.gz pdk-$version
+export_base=$tag
+git tar-tree $tag $export_base | gzip > pdk_$version.tar.gz
