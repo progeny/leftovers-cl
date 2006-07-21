@@ -1,3 +1,9 @@
+pdk (0.9.1) unstable; urgency=low
+
+  * In conditional includes, s/narrow/limit/, s/mask/exclude/.
+
+ -- Darrin Thompson <darrint@progeny.com>  Fri, 21 Jul 2006 09:46:32 -0400
+
 pdk (0.9.0) unstable; urgency=low
 
   * Bump version to 0.9.0, since we are _way_ past 0.0.x.

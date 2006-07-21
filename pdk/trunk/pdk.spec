@@ -1,6 +1,6 @@
 Summary: Componentized Linux Platform Development Kit (PDK)
 Name: pdk
-%define version 0.9.0
+%define version 0.9.1
 Version: %{version}
 Release: 1
 License: GPL
@@ -63,6 +63,9 @@ rm -rf %{buildroot} %{_builddir}/*
 
 
 %changelog
+* Fri Jul 21 2006 Darrin Thompson <darrint@progeny.com> - 0.9.1-1
+- In conditional includes, s/narrow/limit/, s/mask/exclude/.
+
 * Fri Jul 14 2006 Darrin Thompson <darrint@progeny.com> - 0.9.0-1
 - Change dep from python-mx-base to egenix-mx-base.
 - Bump version to 0.9.0, since we are _way_ past 0.0.x.
