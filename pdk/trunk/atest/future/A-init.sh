@@ -26,9 +26,9 @@
 ##   3. selects and "downloads" a product
 ##
 ##As a result, the client machine contains:
-##	- the pdk toolkit
-##	- a pdk file cache
-##	- the descriptor files that comprise the selected product
+##      - the pdk toolkit
+##      - a pdk file cache
+##      - the descriptor files that comprise the selected product
 
 
 # get Utility functions
