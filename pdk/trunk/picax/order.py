@@ -1,4 +1,6 @@
-# picax.order - set the proper order to pack packages
+# $Progeny$
+#
+# Set the proper order to pack packages.
 #
 # Copyright 2005 Progeny Linux Systems.
 #

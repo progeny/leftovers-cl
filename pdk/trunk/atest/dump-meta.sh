@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,9 +18,6 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# dump-meta.sh
-# $Progeny$
-#
 # pdk repogen with dumpmeta comp should dump the metadata found in the
 # component.
 
@@ -28,8 +27,6 @@ set_up_repogen_fixture test-repogen
 cd test-repogen
 
 pdk dumpmeta progeny.com/python.xml | diff -u /dev/null -
-
-
 
 # rewrite component descriptor but with metadata.
 cat >includemeta.xml <<EOF

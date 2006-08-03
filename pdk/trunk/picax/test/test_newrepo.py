@@ -1,4 +1,6 @@
-# test_newrepo.py - test picax.newrepo
+# $Progeny$
+#
+# Test picax.newrepo.
 #
 # Copyright 2005 Progeny Linux Systems.
 #

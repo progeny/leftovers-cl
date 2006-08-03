@@ -1,4 +1,6 @@
-# picax.newrepo - generate new repositories from collections of packages
+# $Progeny$
+#
+# Generate new repositories from collections of packages.
 #
 # Copyright 2003, 2004, 2005 Progeny Linux Systems.
 #

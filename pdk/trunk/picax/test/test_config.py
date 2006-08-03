@@ -1,4 +1,6 @@
-# test_config.py - test picax.config
+# $Progeny$
+#
+# Test picax.config.
 #
 # Copyright 2005 Progeny Linux Systems.
 #

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# $Progeny$
+
 """This module is an add-on to picax that provides support for CD-style
 media."""
 

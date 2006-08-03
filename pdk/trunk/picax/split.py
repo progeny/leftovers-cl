@@ -1,4 +1,6 @@
-# picax.split - Split the aggregated repositories
+# $Progeny$
+#
+# Split the aggregated repositories.
 #
 # Copyright 2005 Progeny Linux Systems.
 #

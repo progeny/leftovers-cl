@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,9 +18,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# pdk-framework.sh
-#
-# Check the general soundness of the pdk command framework
+# Check the general soundness of the pdk command framework.
 
 #None of these help calls should result in a crash
 #(meaningful help is another question altogether)

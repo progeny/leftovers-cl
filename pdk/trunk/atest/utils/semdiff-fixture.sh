@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -15,7 +17,6 @@
 #   You should have received a copy of the GNU General Public License
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
-
 
 # This fixture creates a workspace with empty version control and 6
 # component desctiptors. Three descriptors contain rpms, three contain

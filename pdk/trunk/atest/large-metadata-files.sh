@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,8 +18,6 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# $Progeny$
-#
 # Test that pdk can operate on large metadata files in resonable time.
 # This isn't asserted in any particular way, but a long run should annoy
 # us into keeping the test reasonably fast.

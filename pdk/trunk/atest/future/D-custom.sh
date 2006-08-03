@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,16 +18,12 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# grs-A-init.sh
-# $Progeny$
-#
 ##D) Creating a "Custom" Product
 ##   The developer
 ##   1. performs items "A" and "B"
 ##   2. modifies to the descriptor hierarchy
 ##   3. verifies "correctness" of changes (or corrects)
 ##   4. generates a repo
-
 
 # get Utility functions
 . atest/test_lib.sh

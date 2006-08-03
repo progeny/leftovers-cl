@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# $Progeny$
+
 """This module acts as a helper for building runtime systems for
 installers."""
 

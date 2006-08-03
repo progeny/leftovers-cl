@@ -1,3 +1,5 @@
+# $Progeny$
+
 """This module provides an interface to apt's package dependency
 resolver."""
 

@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,9 +18,6 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# compile.sh
-# $Progeny$
-#
 # repogen works. Make sure the resulting repo looks sane. Packages
 # in the repo should be hard linked to the cache.
 
@@ -34,7 +33,6 @@ pdk repogen ../product.xml
 cd -
 
 [ -d './repo' ] || fail "mising repo directory"
-
 
 # Check that the cache contains the files (pre-calculated sha1)
 check_file "b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b" \

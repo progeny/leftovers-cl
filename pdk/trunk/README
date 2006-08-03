@@ -1,4 +1,7 @@
-This is the Componentized Linux Platform Development Kit (PDK)
+$Progeny$
+
+This is the Componentized Linux Platform Development Kit (PDK).
+
     Copyright 2005 Progeny Linux Systems, Inc.
 
     PDK is free software; you can redistribute it and/or modify it
@@ -20,3 +23,5 @@ documentation.
 
 To install:
 python setup.py install
+
+vim:set ai et sw=4 ts=4 tw=75:

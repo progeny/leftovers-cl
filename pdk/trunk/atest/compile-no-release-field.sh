@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,9 +18,6 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# compile-no-release-field.sh
-# $Progeny$
-#
 # Make sure that repogen doesn't barf when given a package with no
 # release field.
 
@@ -45,7 +44,6 @@ EOF
 pdk repogen product.xml
 
 [ -d './repo' ] || fail "mising repo directory"
-
 
 # Watch for regression where version contains "-None"
 check_file "95155bda2cb225f94401e6f82ec3261f094111f0" \

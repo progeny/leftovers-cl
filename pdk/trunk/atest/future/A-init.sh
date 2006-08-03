@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,9 +18,6 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# grs-A-init.sh
-# $Progeny$
-#
 ##A) Initializing the Client Installation
 ##   The Developer:
 ##   1. acquires a Platform/PDK Bundle from Progeny (includes sample distro)
@@ -29,7 +28,6 @@
 ##      - the pdk toolkit
 ##      - a pdk file cache
 ##      - the descriptor files that comprise the selected product
-
 
 # get Utility functions
 . atest/test_lib.sh

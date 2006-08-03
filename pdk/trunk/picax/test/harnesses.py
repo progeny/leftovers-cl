@@ -1,4 +1,6 @@
-# harnesses.py - shared test harnesses
+# $Progeny$
+#
+# Shared test harnesses.
 #
 # Copyright 2005 Progeny Linux Systems.
 #

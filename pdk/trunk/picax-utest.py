@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# utest.py - run tests
+# $Progeny$
+#
+# Run tests.
 #
 # Copyright 2005 Progeny Linux Systems.
 #

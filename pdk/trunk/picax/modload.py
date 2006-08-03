@@ -1,4 +1,6 @@
-# picax.modload - code for loading modules
+# $Progeny$
+#
+# Code for loading modules.
 #
 # Copyright 2003, 2004, 2005 Progeny Linux Systems.
 #

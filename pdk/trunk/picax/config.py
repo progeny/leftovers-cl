@@ -1,4 +1,6 @@
-# picax.config - load and manage configuration settings
+# $Progeny$
+#
+# Load and manage configuration settings.
 #
 # Copyright 2003, 2004, 2005 Progeny Linux Systems.
 #

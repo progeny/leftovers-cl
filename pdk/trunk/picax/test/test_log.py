@@ -1,4 +1,6 @@
-# test_log.py - test picax.log
+# $Progeny$
+#
+# Test picax.log.
 #
 # Copyright 2005 Progeny Linux Systems.
 #

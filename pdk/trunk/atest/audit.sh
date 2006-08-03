@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,21 +18,16 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# audit.sh
-# $Progeny$
-#
 # Make sure that pdk audit catches problems.
 
 # get Utility functions
 . atest/test_lib.sh
 . atest/utils/test_channel.sh
 
-
 packages=$(pwd)/packages
 test_root=$(pwd)
 work_root=$(pwd)/audit
 cache_base=${work_root}/etc/cache
-
 
 pdk workspace create audit
 

@@ -1,3 +1,4 @@
+# $Progeny$
 Summary: Componentized Linux Platform Development Kit (PDK)
 Name: pdk
 %define version 0.9.1

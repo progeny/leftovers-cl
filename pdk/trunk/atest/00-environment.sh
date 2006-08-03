@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,11 +18,8 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# 00-environment.sh
-# $Progeny$
-#
-# check that the available test data is up to date.
-# also check that the required software is available.
+# Check that the available test data is up to date.  Also check that the
+# required software is available.
 
 (cd packages && find * -type f | xargs openssl sha1) \
     | LANG=C sort >catalog.txt

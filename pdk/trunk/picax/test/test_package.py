@@ -1,4 +1,6 @@
-# test_package.py - test picax.package
+# $Progeny$
+#
+# Test picax.package.
 #
 # Copyright 2005 Progeny Linux Systems.
 #

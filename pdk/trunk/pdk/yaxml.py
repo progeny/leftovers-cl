@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,13 +18,13 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-'''yaxml.py
-
+'''
 This module is meant to be a temporary stop-gap measure to provide
 basic yaxml parsing to modules which still use it.
 
 This functionality is deprecated though.
 '''
+
 from pdk.util import parse_xml
 
 def parse_yaxml_file(filename):

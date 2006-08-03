@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,10 +18,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# compile-rpm.sh
-# $Progeny$
-#
-# check that we can import and then do a basic compile using rpms.
+# Check that we can import and then do a basic compile using RPMs.
 
 . atest/utils/repogen-fixture.sh
 

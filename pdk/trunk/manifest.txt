@@ -1,3 +1,5 @@
+$Progeny$
+
 This is just a rough attempt to document the contents
 of this workspace.  Any help that is volunteered toward
 this end is appreciated.
@@ -25,4 +27,3 @@ Stuff to be installed as executable scripts.
 
 ~ utest.py
 master unittest invocation, soon to be displaced by a proper test framework
-

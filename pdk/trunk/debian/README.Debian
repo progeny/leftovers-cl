@@ -1,3 +1,5 @@
+$Progeny$
+
 To run the acceptance tests, install all the packages named under the pdk
 package suggests field. Then untar the atest.tar.gz file.
 

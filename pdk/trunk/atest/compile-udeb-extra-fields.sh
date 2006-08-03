@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,11 +18,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# resolve-compile-udeb.sh
-# $Progeny$
-#
 # pdk can handle udebs.
-
 
 pdk workspace create test-with-dir-channel
 pushd test-with-dir-channel

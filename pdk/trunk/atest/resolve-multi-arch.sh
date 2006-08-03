@@ -1,3 +1,5 @@
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
@@ -16,9 +18,6 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# resolve-multi-arch.sh
-# $Progeny$
-#
 # The resolve command should work when binaries from multiple architectures
 # are spread across channels. When packages are duplicated between the
 # channels, they should only show up once in the component descriptor.

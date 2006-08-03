@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# $Progeny$
+#
 #   Copyright 2005 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.

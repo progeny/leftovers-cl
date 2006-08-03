@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-# hashfile.py - provide a file wrapper object for calculating hashes.
+# $Progeny$
+#
+# Provide a file wrapper object for calculating hashes.
 #
 # Copyright 2003 Progeny Linux Systems.
 #

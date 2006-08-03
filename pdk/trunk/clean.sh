@@ -1,3 +1,5 @@
+# $Progeny$
+
 find . -name "*.pyc" -o -name "*.pyo" -o -name "*~" \
     -o -name "*.snap.tar.gz" -o -name "*.html" -o -name "*.fw.sh" \
     -o -name "*.lis" | xargs -r rm -f

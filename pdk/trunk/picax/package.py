@@ -1,4 +1,6 @@
-# picax.package - classes for managing package information
+# $Progeny$
+#
+# Classes for managing package information.
 #
 # Copyright 2003, 2004, 2005 Progeny Linux Systems.
 #

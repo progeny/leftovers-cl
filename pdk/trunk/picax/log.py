@@ -1,4 +1,6 @@
-# picax.log - logging hooks
+# $Progeny$
+#
+# Logging hooks.
 #
 # Copyright 2005 Progeny Linux Systems.
 #
