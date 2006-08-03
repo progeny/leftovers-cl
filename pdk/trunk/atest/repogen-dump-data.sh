@@ -74,9 +74,9 @@ pdk repogen report.xml >report.txt
 
 cat >control.txt <<EOF
 adjtimex  1.13 13 adjtimex-1.13-13.i386.rpm $tmp_dir/test-repogen/etc/cache/md5/2c/md5:2c0376dce66844970269876d1e09fea9 md5:2c0376dce66844970269876d1e09fea9  very-much-should
-adjtimex  1.13 13 adjtimex-1.13-13.src.rpm $tmp_dir/test-repogen/etc/cache/md5/ad/md5:adf064bd5d34ee4522a01fd15176d9b6 md5:adf064bd5d34ee4522a01fd15176d9b6  
-apache2  2.0.53 5 apache2_2.0.53-5.dsc $tmp_dir/test-repogen/etc/cache/md5/d9/md5:d94c995bde2f13e04cdd0c21417a7ca5 md5:d94c995bde2f13e04cdd0c21417a7ca5  
-apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/test-repogen/etc/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 42 
+adjtimex  1.13 13 adjtimex-1.13-13.src.rpm $tmp_dir/test-repogen/etc/cache/md5/ad/md5:adf064bd5d34ee4522a01fd15176d9b6 md5:adf064bd5d34ee4522a01fd15176d9b6
+apache2  2.0.53 5 apache2_2.0.53-5.dsc $tmp_dir/test-repogen/etc/cache/md5/d9/md5:d94c995bde2f13e04cdd0c21417a7ca5 md5:d94c995bde2f13e04cdd0c21417a7ca5
+apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/test-repogen/etc/cache/md5/5a/md5:5acd04d4cc6e9d1530aad04accdc8eb5 md5:5acd04d4cc6e9d1530aad04accdc8eb5 42
 
 EOF
 

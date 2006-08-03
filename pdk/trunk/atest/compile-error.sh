@@ -16,7 +16,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# compile-error.sh 
+# compile-error.sh
 # $Progeny$
 #
 # Make sure that an error is raised if the user tries to put a package

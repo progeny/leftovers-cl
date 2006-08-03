@@ -50,7 +50,7 @@ cd -
 # Set up the dir structures
 cd $tmp_dir
 NEWROOT=$tmp_dir/apt-setup
-mkdir -p ${NEWROOT}/etc/apt 
+mkdir -p ${NEWROOT}/etc/apt
 mkdir -p ${NEWROOT}/cachedir/archives/partial
 mkdir -p ${NEWROOT}/statedir/lists/partial
 
@@ -78,15 +78,15 @@ cat $SOURCESLIST
 
 # Try to use apt on the current repository
 
-apt-get -c ${OVERRIDE} update || 
+apt-get -c ${OVERRIDE} update ||
     bail "apt-get has fallen and it can't get update"
 
-apt-cache -c ${OVERRIDE} search apache | 
-    grep apache || 
+apt-cache -c ${OVERRIDE} search apache |
+    grep apache ||
         bail "can't find apache in repo"
 
 apt-cache -c ${OVERRIDE} search xsok |
-    grep xsok || 
+    grep xsok ||
         bail "Can't find xsok in repo"
 
 apt-get -c ${OVERRIDE} --dry-run source apache2-common ||

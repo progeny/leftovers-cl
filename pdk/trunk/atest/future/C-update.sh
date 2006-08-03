@@ -25,7 +25,7 @@
 ##   2. interrogates pdk for updates available on some scope
 ##      (Entire "system"? Product? Directory of components?)
 ##   3a. fully applies updates to some scope.  *or*
-##   3b. uses a step-wise process to allow component-by-component 
+##   3b. uses a step-wise process to allow component-by-component
 ##       manual review of changes prior to appication.
 ##   4. generates a repo
 

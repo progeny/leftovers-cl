@@ -24,7 +24,7 @@
 ##   1. acquires a Platform/PDK Bundle from Progeny (includes sample distro)
 ##   2. registers PDK as an evaluation copy (executes trial subscription and development license)
 ##   3. selects and "downloads" a product
-##   
+##
 ##As a result, the client machine contains:
 ##	- the pdk toolkit
 ##	- a pdk file cache

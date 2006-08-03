@@ -17,7 +17,7 @@
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 """
-repogen.py 
+repogen.py
 
 Generate a repository from component & cache
 """
@@ -453,7 +453,7 @@ class DebianPoolRepo(object):
                 handle = LazyWriter(release_path)
                 writer.write(handle, section, arch)
         release_path = pjoin(self.repo_dir, self.dist, 'Release')
-        writer.write_outer(LazyWriter(release_path)) 
+        writer.write_outer(LazyWriter(release_path))
 
 
 class DebianDirectPoolRepo(DebianPoolRepo):

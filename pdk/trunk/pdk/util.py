@@ -268,10 +268,10 @@ def get_remote_file_as_string(remote_url, progress = None):
     return result.getvalue()
 
 def make_path_to(file_path):
-    """Given a file path, create the directory up to the 
+    """Given a file path, create the directory up to the
     file location.
     """
-    # Candidate for pdk.util? 
+    # Candidate for pdk.util?
     file_path = os.path.abspath(file_path)
     assert file_path.find('bin/cache') == -1
     #print('make_path_to', file_path, 'from', caller())
@@ -454,7 +454,7 @@ def relative_path(base_dir, file_path):
 
     if len(base_parts) > len(file_parts):
         raise ValueError("%s not within %s" % (file_path, base_dir))
-    
+
     # Bite off bits from the left, ensuring they're the same.
     while base_parts:
         base_bit = base_parts.pop(0)
@@ -467,7 +467,7 @@ def relative_path(base_dir, file_path):
     else:
         result = '.'
 
-    # git commands require trailing slashes on directories. 
+    # git commands require trailing slashes on directories.
     if os.path.isdir(result):
         result += "/"
     return result

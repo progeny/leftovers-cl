@@ -233,7 +233,7 @@ def info(ignore):
     ignore.pop() # stop pylint complaining about unused arg
     try:
         ws = current_workspace()
-        print 'Base Path: %s' % ws.location 
+        print 'Base Path: %s' % ws.location
         print 'Cache is: %s' % os.path.join(ws.location,'cache')
     except ConfigurationError, message:
         print message

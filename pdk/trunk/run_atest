@@ -30,7 +30,7 @@
 #   off in cleanup.
 # * set $snapshot if you want a tar file created, otherwise unset it.
 # * The $log is critical, it's how we tally success/failure among the
-#   tests. 
+#   tests.
 
 #Set up colors
 pass="$(tput setaf 7; tput setab 2; tput bold)"
@@ -98,7 +98,7 @@ cleanup() {
     fi
 
     if [ -n "${result}" ]; then
-        echo -e "${test_name}\t${result}\t${message}" >>${log} 
+        echo -e "${test_name}\t${result}\t${message}" >>${log}
     fi
 
     # Colorized results are nice as work scrolls past.
@@ -108,7 +108,7 @@ cleanup() {
         else
             echo -e "${fail}${test_name}${reset} ${result} ${message} " >&2
         fi
-        echo 
+        echo
     fi
 
     exit
@@ -199,8 +199,8 @@ if [ -z "$*" ]; then
     fi
     ls atest/future/*.sh >/dev/null 2>&1 && {
         future_tests=$(ls atest/future/*.sh)
-    } 
-    report_colorized_results="colorize" 
+    }
+    report_colorized_results="colorize"
 else
     tests="$@"
     report_colorized_results=""
@@ -302,7 +302,7 @@ fail_count="$(wc -l <${fail_file})"
 
 # Run future tests
 if [ -n "${future_tests}" ]; then
-    log=${dev_dir}/future.log 
+    log=${dev_dir}/future.log
     test -f ${log} && rm ${log}
     unset report_colorized_results
     if [ -n "${no_parallel}" ]; then
@@ -335,5 +335,5 @@ if [ -n "${future_tests}" ] ; then
     column -t ${log}
 fi
 
-$DONE_ACTION 
+$DONE_ACTION
 exit $status

@@ -32,4 +32,4 @@ class TestEntity(Test):
         actual = Set(entity.iter_by_domains(('deb', 'ldap', 'notfound')))
         expected = Set([ ('a', 1), ('c', 3), ('d', 4) ])
         self.assert_equals(expected, actual)
- 
+

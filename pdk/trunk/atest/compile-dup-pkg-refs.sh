@@ -16,7 +16,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# compile-dup-pkg-refs.sh 
+# compile-dup-pkg-refs.sh
 # $
 #
 # Watch for regression. prc bombed when repo-eval resulted in the same

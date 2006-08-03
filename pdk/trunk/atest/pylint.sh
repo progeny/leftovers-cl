@@ -136,7 +136,7 @@ no-docstring-rgx=__.*__
 # Minimal length for module / class / function / method / argument / variable
 # names
 #min-name-length=3
-min-name-length=1  
+min-name-length=1
 
 # Regular expression which should only match correct module names
 #module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$

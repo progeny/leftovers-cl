@@ -22,7 +22,7 @@ cache.py
 Manage a cache of packages and other files, all for use
 when referenced by component descriptors.
 
-Cache is indexed by 'blob', which is currently an sha1 
+Cache is indexed by 'blob', which is currently an sha1
 checksum.
 
 Cache contains .header files.
@@ -52,7 +52,7 @@ import pdk.log
 log = pdk.log.get_logger()
 
 def calculate_checksums(file_path):
-    """Calculate both sha-1 and md5 checksums for a file, returned 
+    """Calculate both sha-1 and md5 checksums for a file, returned
     as blob_ids
     """
     readsize = (1024 * 16)
@@ -236,7 +236,7 @@ class SimpleCache(object):
         os.chmod(filename, new_mode)
 
     def make_download_filename(self):
-        """Create a pathname convenient for creating files for 
+        """Create a pathname convenient for creating files for
         later linkage into the cache.
         """
 
@@ -251,7 +251,7 @@ class SimpleCache(object):
         return temp_fname
 
     def incorporate_file(self, filepath, blob_id):
-        """Places a temp file in its final cache location, 
+        """Places a temp file in its final cache location,
         by md5 and sha1, and unlinks the original filepath.
         """
         # Link it according to the given blob ids - note: does

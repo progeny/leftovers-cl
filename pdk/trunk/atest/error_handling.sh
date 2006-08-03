@@ -144,7 +144,7 @@ cat > ethereal.xml << EOF
       <name>ethereal</name>
       <version>0.9.13-1.0progeny2</version>
     </dsc>
-  
+
 </component>
 EOF
 pdk semdiff ethereal.xml ethereal.xml || status=$?

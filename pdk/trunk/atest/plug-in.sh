@@ -58,7 +58,7 @@ rm .pdk_plugins cowstuff.txt cowhelp.txt
 #########################################
 #   setup:
 cat > .pdk_plugins <<EOF
-# Add batcow powers to pdk 
+# Add batcow powers to pdk
 #
 # Record is:
 #    module to import

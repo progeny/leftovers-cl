@@ -16,7 +16,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# compile-no-release-field.sh 
+# compile-no-release-field.sh
 # $Progeny$
 #
 # Make sure that repogen doesn't barf when given a package with no

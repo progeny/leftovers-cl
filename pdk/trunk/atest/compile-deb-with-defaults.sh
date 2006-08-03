@@ -16,7 +16,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# compile.sh 
+# compile.sh
 # $Progeny$
 #
 # Make sure that the "default" deb repo layout works ok.
@@ -54,7 +54,7 @@ assert_exists repo/dists/apache/main/source/Sources.gz
 repo_path=repo/pool/main/a/apache2
 
 # Check all the binary files (heh, all one of them -- for now)
-pkgname=apache2-common_2.0.53-5_i386.deb 
+pkgname=apache2-common_2.0.53-5_i386.deb
 grep ${pkgname} repo/dists/apache/main/binary-i386/Packages
 assert_exists ${repo_path}/${pkgname}
 

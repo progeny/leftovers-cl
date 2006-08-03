@@ -19,7 +19,7 @@
 # resolve-compile-hard-packages.sh
 # $Progeny$
 #
-# The ethereal/tethereal packages have had trouble matching sources 
+# The ethereal/tethereal packages have had trouble matching sources
 # to binaries.
 #
 # The xsok packages are also hard. Why?

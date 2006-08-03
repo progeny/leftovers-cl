@@ -38,7 +38,7 @@ inode_of() {
     stat --format='%i' $1
 }
 
-# This is the only place we should have to maintain the 
+# This is the only place we should have to maintain the
 # algorithm for cache placement outside of PDK proper.
 # Use only this method to find files in cache
 cachepath() {

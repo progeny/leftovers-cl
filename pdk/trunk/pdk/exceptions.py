@@ -30,7 +30,7 @@ class PdkException(Exception):
     pass
 
 class CommandLineError(PdkException):
-    """Type of exception to be raised (and caught by PDK) when 
+    """Type of exception to be raised (and caught by PDK) when
     a command-line is ill-formed (parse error).
     """
     pass
@@ -50,13 +50,13 @@ class SemanticError(PdkException):
     """
 
 class ConfigurationError(PdkException):
-    """The exception type to be raised (and caught by PDK) when the 
-    local system is not correctly configured, even though the the 
+    """The exception type to be raised (and caught by PDK) when the
+    local system is not correctly configured, even though the the
     command was syntactically correct (and may have been semantically
     correct.
     """
 
 class IntegrityFault(PdkException):
-    """The exception type to be raised when the workspace is not 
+    """The exception type to be raised when the workspace is not
     in a consistent state
     """

@@ -351,8 +351,8 @@ class ComponentDescriptor(object):
         Assert that the descriptor has no abstract references.
         """
         logger = get_logger()
-        unresolved = [r for r in self.contents 
-                       if isinstance(r,PackageStanza) 
+        unresolved = [r for r in self.contents
+                       if isinstance(r,PackageStanza)
                          and r.is_abstract()
                       ]
         if unresolved:
@@ -688,7 +688,7 @@ class Component(object):
     """Represents a logical PDK component.
 
     Do not mutate the fields of Component objects. They are meant to
-    be used as hash 
+    be used as hash
     """
     __slots__ = ('ref', 'cache', 'package_condition', 'type', 'links',
                  'id', 'name', 'description', 'requires', 'provides',

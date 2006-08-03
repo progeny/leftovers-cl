@@ -48,8 +48,8 @@ and verify that it and it's parts are well-formed.
         """A mismatch handler for Arbiter
 
         Handle the case of a prediction that doesn't pan out
-        by reporting the mismatch to stdout, in a format 
-        suitable for: cut -d'|' 
+        by reporting the mismatch to stdout, in a format
+        suitable for: cut -d'|'
         """
         note_problem.called = True
         fields = fact.get_problem_description(prediction, prediction_basis,
@@ -111,7 +111,7 @@ and verify that it and it's parts are well-formed.
         entry = found_by_inode.setdefault(inode, Set([]))
         entry.add(blob_id)
 
-        # ? Won't this create repeated predictions? 
+        # ? Won't this create repeated predictions?
         for blob_id in found_by_inode[inode]:
             arbiter.predict(ChecksumMatches(blob_id), blob_id, 'cache')
 

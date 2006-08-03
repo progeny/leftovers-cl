@@ -19,7 +19,7 @@
 # grs-A-init.sh
 # $Progeny$
 #
-##D) Creating a "Custom" Product   
+##D) Creating a "Custom" Product
 ##   The developer
 ##   1. performs items "A" and "B"
 ##   2. modifies to the descriptor hierarchy

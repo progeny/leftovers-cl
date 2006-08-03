@@ -61,7 +61,7 @@ cat >xsok.xml <<EOF
 </component>
 EOF
 
-pdk channel update 
+pdk channel update
 pdk resolve xsok.xml -c channel-1 -c channel-2
 
 cat >expected <<EOF

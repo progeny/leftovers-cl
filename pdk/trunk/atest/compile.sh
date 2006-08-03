@@ -16,7 +16,7 @@
 #   along with PDK; if not, write to the Free Software Foundation,
 #   Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
-# compile.sh 
+# compile.sh
 # $Progeny$
 #
 # repogen works. Make sure the resulting repo looks sane. Packages
@@ -82,7 +82,7 @@ assert_gzipped_matches repo/dists/stable/contrib/source/Sources
 repo_path=repo/pool/main/a/apache2
 
 # Check all the apache binary files
-pkgname=apache2-common_2.0.53-5_i386.deb 
+pkgname=apache2-common_2.0.53-5_i386.deb
 grep ${pkgname} repo/dists/stable/main/binary-i386/Packages
 assert_exists ${repo_path}/${pkgname}
 

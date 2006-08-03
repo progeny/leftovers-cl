@@ -119,7 +119,7 @@ class TestCache(TempDirTest):
                         'md5:5d41402abc4b2a76b9719d911017c592')
         inodes = Set([ cache.get_inode(i) for i in expected_ids ])
         self.assert_equals(1, len(inodes))
- 
+
     def test_get_header_filename(self):
         """header filename is blob_id + .header"""
         cache = pdk.cache.Cache(os.path.join(self.work_dir, 'cache'))

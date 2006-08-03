@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 # picax - split a repository into parts
-# 
+#
 # Copyright 2003, 2004, 2005 Progeny Linux Systems.
-# 
+#
 # This script splits a repository into N parts, each approximately the
 # same size, such that adding each part to an apt sources.list is the
 # same as adding the original whole.  Options exist for adding an apt

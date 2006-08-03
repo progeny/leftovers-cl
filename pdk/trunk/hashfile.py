@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 # hashfile.py - provide a file wrapper object for calculating hashes.
-# 
+#
 # Copyright 2003 Progeny Linux Systems.
-# 
+#
 # This module provides a way to auto-update one or more Python hash
 # calculators as I/O is performed on a file object.  Hash objects that
 # conform to the standard interface for hash objects as implemented by
