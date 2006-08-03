@@ -24,8 +24,6 @@ set_up_repogen_fixture compile
 
 pushd compile
 
-
-
     pdk repogen -o arbitrary product.xml
     [ -d ./repo ] && fail "repo dir should not exist"
     [ -d ./arbitrary ] || fail "dir 'arbitrary' should exist."
@@ -45,5 +43,4 @@ pushd compile
 
 popd
 
-
-# vim:ai:et:sts=4:sw=4:tw=0:
+# vim:set ai et sw=4 ts=4 tw=75:

@@ -745,4 +745,4 @@ class overlay_getitem(object):
         except KeyError:
             return self.default
 
-# vim:ai:et:sts=4:sw=4:tw=0:
+# vim:set ai et sw=4 ts=4 tw=75:

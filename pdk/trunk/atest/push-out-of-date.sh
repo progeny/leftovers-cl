@@ -100,4 +100,4 @@ pushd bob
         || fail 'expected an error about workspace being out of date.'
 popd
 
-# vim:ai:et:sts=4:sw=4:tw=0:
+# vim:set ai et sw=4 ts=4 tw=75:

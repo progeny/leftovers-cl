@@ -628,4 +628,4 @@ def display_via_man(string):
     handle.write(string)
     handle.close()
 
-# vim:ai:et:sts=4:sw=4:tw=0:
+# vim:set ai et sw=4 ts=4 tw=75:

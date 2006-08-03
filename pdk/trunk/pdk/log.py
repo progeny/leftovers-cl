@@ -45,4 +45,4 @@ def get_logger():
     """
     return logger
 
-# vim:ai:et:sts=4:sw=4:tw=0:
+# vim:set ai et sw=4 ts=4 tw=75:

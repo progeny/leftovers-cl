@@ -128,4 +128,4 @@ pushd customer-work-area
     grep GARBAGE progeny.com/apache.xml
 popd
 
-# vim:ai:et:sts=4:sw=4:tw=0:
+# vim:set ai et sw=4 ts=4 tw=75:

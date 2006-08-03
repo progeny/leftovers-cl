@@ -86,4 +86,4 @@ grep -q testing cowstuff.txt && cat cowstuff.txt
 #   cleanup:
 rm .pdk_plugins cowstuff.txt
 
-# vim:ai:et:sts=4:sw=4:tw=0:
+# vim:set ai et sw=4 ts=4 tw=75:

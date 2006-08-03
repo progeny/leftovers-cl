@@ -308,4 +308,4 @@ class AlwaysFail(FactType):
         prediction, evidence_basis = args[0], args[3]
         return (evidence_basis, prediction, self.message)
 
-# vim:ai:et:sts=4:sw=4:tw=0:
+# vim:set ai et sw=4 ts=4 tw=75:
