@@ -497,4 +497,4 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
 
     return final
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

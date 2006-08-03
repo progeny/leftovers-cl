@@ -54,4 +54,4 @@ pdk semdiff perl.xml perl2.xml 2>error \
     || { status=$?; cat error; exit $status; }
 grep "^pdk WARNING: Child reference is abstract" error
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

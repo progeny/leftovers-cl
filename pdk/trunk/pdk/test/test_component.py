@@ -1122,4 +1122,4 @@ class TestPackageRef(Test):
         self.assert_equals(expected_rule, actual_rule)
         self.assert_equals(expected_key_info, actual_key_info)
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

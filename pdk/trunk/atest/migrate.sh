@@ -113,4 +113,4 @@ pushd schema5
     check_schema_target
 popd
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

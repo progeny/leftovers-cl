@@ -105,4 +105,4 @@ class TestCommands(Test):
         self.assert_equals(r'\fBhello \-\fP', gbold('hello -'))
         self.assert_equals(r'\fIhello \-\fP', gitalic('hello -'))
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

@@ -352,4 +352,4 @@ class TestSortPackages(Test):
         expected = [ deb_a1, deb_a2_arm, deb_a2, dsc_a1, dsc_a2 ]
         self.assert_equals_long(expected, package_list)
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

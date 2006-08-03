@@ -84,4 +84,4 @@ def create_image(index, boot_image_path):
                     label_options, boot_args, data_path)):
         raise RuntimeError, "CD image generation failed"
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

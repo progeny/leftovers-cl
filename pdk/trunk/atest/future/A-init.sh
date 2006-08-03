@@ -38,4 +38,4 @@
 pdk download
 ##need some examination to verify presence of the correct descriptors
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

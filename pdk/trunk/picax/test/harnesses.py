@@ -286,4 +286,4 @@ Architecture: %s
             if os.path.isdir(temp_path):
                 shutil.rmtree(temp_path)
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

@@ -80,4 +80,4 @@ commands.map(('workspace', 'create'), Command(ws, 'create'))
 commands.map(('channel', 'update'), Command(ws, 'world_update'))
 commands.map(('remote', 'listen'), Command(ws, 'listen'))
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

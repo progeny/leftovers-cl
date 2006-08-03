@@ -61,4 +61,4 @@ assert_exists repo/dists/stable/main/source/Release
 grep apache repo/dists/stable/main/binary-i386/Packages
 grep apache repo/dists/stable/main/source/Sources
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

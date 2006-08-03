@@ -211,4 +211,4 @@ class NullMassProgress(object):
         '''This method is a noop.'''
         return NullProgress()
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

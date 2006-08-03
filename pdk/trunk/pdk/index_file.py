@@ -169,4 +169,4 @@ class IndexFile(object):
         '''Get the object group count for the given key.'''
         return len(list(self.iter_addresses(key)))
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

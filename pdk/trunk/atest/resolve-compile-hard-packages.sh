@@ -181,4 +181,4 @@ plumb_files $file1 $file2 $file3 \
     packages/xsok_1.02-9woody2_i386.deb \
     packages/xsok_1.02-9woody2_ia64.deb
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

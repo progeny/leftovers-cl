@@ -115,4 +115,4 @@ def create_image(index, boot_image_path = None):
 
     return inst.create_image(index, boot_image_path)
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

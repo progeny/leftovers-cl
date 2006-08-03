@@ -57,4 +57,4 @@ check_file "48c0c56acbeb90f06be38da82f194c63d937b9a8" \
 check_file "000874ad1e2bbf975b5eb157e8d2e4dbe87cb006" \
     "./repo/pool/main/i/ida/ida_2.01.orig.tar.gz"
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

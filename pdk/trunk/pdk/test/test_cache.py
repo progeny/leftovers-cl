@@ -128,4 +128,4 @@ class TestCache(TempDirTest):
             os.path.abspath(cache.get_header_filename('sha-1:a'))
             )
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

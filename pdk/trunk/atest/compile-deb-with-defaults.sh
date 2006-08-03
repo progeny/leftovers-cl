@@ -66,4 +66,4 @@ for pkgname in apache2_2.0.53-5.diff.gz  \
     assert_exists ${repo_path}/${pkgname}
 done
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

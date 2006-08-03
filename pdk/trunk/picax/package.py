@@ -384,4 +384,4 @@ def get_all_distro_packages():
 
     return (binary_list, source_list)
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

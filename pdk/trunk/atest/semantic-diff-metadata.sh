@@ -128,4 +128,4 @@ downgrade|deb|ethereal|0.9.4-1woody3|0.9.4-1woody2|i386|ethereal.xml
 meta-add|deb|ethereal|i386|predicate|test-stage-1
 EOF
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

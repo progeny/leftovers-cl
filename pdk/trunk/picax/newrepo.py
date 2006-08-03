@@ -261,4 +261,4 @@ class NewRepository:
         self._compress_and_hash_indexes()
         self._write_toplevel_release()
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

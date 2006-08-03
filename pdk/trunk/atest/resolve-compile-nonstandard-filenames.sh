@@ -188,4 +188,4 @@ for file in $yes_exist; do
     [ -e $fullname ] || fail "$fullname should exist"
 done
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

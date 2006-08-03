@@ -63,4 +63,4 @@ if __name__ == "__main__":
     result = unittest.TextTestRunner().run(top_suite)
     sys.exit(not result.wasSuccessful())
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

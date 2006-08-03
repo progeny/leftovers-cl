@@ -64,4 +64,4 @@ EOF
 
 pdk repogen product.xml && fail 'repogen should have failed'
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

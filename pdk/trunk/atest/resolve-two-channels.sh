@@ -81,4 +81,4 @@ EOF
 
 diff -u expected xsok.xml  || bail "did not resolve as expected"
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

@@ -50,4 +50,4 @@ def load_module(name, module_dir = None):
 
     return inst
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

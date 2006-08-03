@@ -34,4 +34,4 @@ fi
 export_base=$tag
 git tar-tree $tag $export_base | gzip > pdk_$version.tar.gz
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

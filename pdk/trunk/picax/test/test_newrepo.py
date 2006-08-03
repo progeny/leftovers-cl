@@ -69,4 +69,4 @@ class TestNewRepositoryResults(PackageBaseHarness):
         self.failUnless(os.path.exists("temp2/dists/foo/Release"),
                         "no toplevel Release file found")
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

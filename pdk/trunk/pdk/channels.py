@@ -919,4 +919,4 @@ class MassAcquirer(object):
         for loader in self.get_cache_loaders(locators):
             loader.load(cache, mass_progress)
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

@@ -65,4 +65,4 @@ class TestAudit(Test):
                                 None, 'no warrant')]),
                           found)
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

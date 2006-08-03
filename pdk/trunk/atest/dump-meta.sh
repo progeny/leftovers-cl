@@ -57,4 +57,4 @@ md5:f390c2d3e8bc211a3d797b045c1ca4a0|deb|python|key|value
 includemeta.xml|component||other|value
 EOF
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

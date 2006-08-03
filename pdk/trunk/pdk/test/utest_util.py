@@ -147,4 +147,4 @@ class MockPackage(Package):
         for key, value in kw.iteritems():
             self[(domain, key)] = value
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

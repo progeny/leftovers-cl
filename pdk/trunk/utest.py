@@ -40,4 +40,4 @@ from pdk.test.test_commands import *
 if __name__ == "__main__":
     unittest.main()
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

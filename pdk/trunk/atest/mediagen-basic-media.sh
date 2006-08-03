@@ -79,4 +79,4 @@ diff -u - iso-list.txt <<EOF
 /pool/main/a/apache2/apache2_2.0.53.orig.tar.gz
 EOF
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

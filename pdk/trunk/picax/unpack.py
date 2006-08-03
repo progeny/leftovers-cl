@@ -365,4 +365,4 @@ def read_package_file(fn = None, f = None):
 
     return PackageDocument(xml.dom.minidom.parse(f))
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

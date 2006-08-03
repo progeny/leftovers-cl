@@ -91,4 +91,4 @@ class TestSplitter(Test):
         self.assert_equal([package1, package2, BREAK, package3, BREAK,
                            package4], volumes)
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

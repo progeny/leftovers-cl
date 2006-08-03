@@ -7,4 +7,4 @@ rm -rf atest.log.d
 rm -f atest.log future.log
 [ -e debian/files ] && fakeroot ./debian/rules clean || true
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

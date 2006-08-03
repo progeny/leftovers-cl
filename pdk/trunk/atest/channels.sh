@@ -147,4 +147,4 @@ compare_files \
     $tmp_dir/test-repogen/rpm-md/repodata/primary.xml.gz \
     etc/channels/http_localhost_8110_rpm-md_repodata_primary.xml.gz
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

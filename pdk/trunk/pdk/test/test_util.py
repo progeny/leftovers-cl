@@ -146,4 +146,4 @@ class TestXML(Test):
         write_pretty_xml(tree, output)
         self.assert_equals_long(expected_xml_output, output.getvalue())
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:

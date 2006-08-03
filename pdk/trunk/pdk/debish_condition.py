@@ -381,4 +381,4 @@ class DebishParser(object):
         op_str = self.assert_type(lex, 'op')
         return op_map[op_str]
 
-# vim:set ai et sw=4 ts=4 tw=80:
+# vim:set ai et sw=4 ts=4 tw=75:
