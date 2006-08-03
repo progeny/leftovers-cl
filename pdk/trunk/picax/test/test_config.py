@@ -2,7 +2,7 @@
 #
 # Test picax.config.
 #
-#   Copyright 2005 Progeny Linux Systems, Inc.
+#   Copyright 2005, 2006 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
 #

@@ -2,7 +2,7 @@
 #
 # Load and manage configuration settings.
 #
-#   Copyright 2003, 2004, 2005 Progeny Linux Systems, Inc.
+#   Copyright 2003, 2004, 2005, 2006 Progeny Linux Systems, Inc.
 #
 #   This file is part of PDK.
 #
