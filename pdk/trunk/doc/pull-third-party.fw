@@ -126,4 +126,4 @@ popd
 @<Set up sources for first pull.@>
 @<Pull and check.@>
 @}
-
+@! vim:set ai et sw=4 ts=4 tw=75:

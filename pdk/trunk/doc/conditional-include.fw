@@ -112,5 +112,4 @@ and destination sides of the pull.
 set_up_repogen_fixture include
 
 @}
-
-
+@! vim:set ai et sw=4 ts=4 tw=75:
