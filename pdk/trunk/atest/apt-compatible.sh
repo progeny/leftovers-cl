@@ -94,3 +94,5 @@ apt-get -c ${OVERRIDE} --dry-run source apache2-common ||
 
 apt-get -c ${OVERRIDE} --dry-run source xsok ||
     bail "can't find source for xsok"
+
+# vim:set ai et sw=4 ts=4 tw=80:

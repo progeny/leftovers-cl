@@ -98,3 +98,5 @@ diff -u - xsok.xml <<EOF || bail 'xsok.xml differs'
   </contents>
 </component>
 EOF
+
+# vim:set ai et sw=4 ts=4 tw=80:

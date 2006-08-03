@@ -33,3 +33,4 @@ class TestEntity(Test):
         expected = Set([ ('a', 1), ('c', 3), ('d', 4) ])
         self.assert_equals(expected, actual)
 
+# vim:set ai et sw=4 ts=4 tw=80:

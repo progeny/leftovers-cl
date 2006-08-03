@@ -155,3 +155,5 @@ class TestComponentTreeBuilder(Test):
         assert builder.is_package_ref(rpm_rule)
         assert builder.is_package_ref(srpm_rule)
         assert not builder.is_package_ref(component_rule)
+
+# vim:set ai et sw=4 ts=4 tw=80:

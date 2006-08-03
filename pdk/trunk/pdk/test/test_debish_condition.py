@@ -178,3 +178,4 @@ Expected end, got ) at character 7'''
                       rc(eq, 'pdk', 'role', 'source')])
         self.assert_equals(wrapper, actual)
 
+# vim:set ai et sw=4 ts=4 tw=80:

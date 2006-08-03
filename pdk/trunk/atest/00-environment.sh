@@ -241,3 +241,5 @@ for program in git
 do
   which ${program} || fail "could not find program ${program}"
 done
+
+# vim:set ai et sw=4 ts=4 tw=80:

@@ -138,3 +138,5 @@ def split(binary_order, binary_list, source_list, first_part_size = 0):
         part_lists.append(current_list)
 
     return part_lists
+
+# vim:set ai et sw=4 ts=4 tw=80:

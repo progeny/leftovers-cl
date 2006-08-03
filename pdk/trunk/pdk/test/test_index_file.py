@@ -73,3 +73,5 @@ class TestIndexFile(TempDirTest):
             self.fail('nonexsistent index should trigger error.')
         except IndexFileMissingError:
             pass
+
+# vim:set ai et sw=4 ts=4 tw=80:

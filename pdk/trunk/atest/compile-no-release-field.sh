@@ -68,3 +68,4 @@ for pkgname in emacs-defaults_1.1.dsc emacs-defaults_1.1.tar.gz; do
     assert_exists ${repo_path}/${pkgname}
 done
 
+# vim:set ai et sw=4 ts=4 tw=80:

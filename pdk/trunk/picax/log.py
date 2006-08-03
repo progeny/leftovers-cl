@@ -92,3 +92,5 @@ def get_logger():
         logger.addHandler(infh)
 
     return logger
+
+# vim:set ai et sw=4 ts=4 tw=80:

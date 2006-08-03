@@ -121,3 +121,5 @@ See the
 .URL "http://lists.progeny.com/listinfo/cl-workers" "CL Workers Mailing List"
 for more information.
 .ad b'''
+
+# vim:set ai et sw=4 ts=4 tw=80:

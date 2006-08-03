@@ -36,3 +36,5 @@ pdk download
 ##replace on of the acquired descriptors with a local copy that is slightly different, to represent an edit
 pdk apply
 pdk repogen
+
+# vim:set ai et sw=4 ts=4 tw=80:

@@ -83,3 +83,5 @@ def create_image(index, boot_image_path):
                  % (conf["dest_path"], index, mkisofs_std_args,
                     label_options, boot_args, data_path)):
         raise RuntimeError, "CD image generation failed"
+
+# vim:set ai et sw=4 ts=4 tw=80:

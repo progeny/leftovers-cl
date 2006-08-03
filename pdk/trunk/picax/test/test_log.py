@@ -37,3 +37,5 @@ class TestLog(unittest.TestCase):
         log2 = picax.log.get_logger()
 
         assert log1 is log2
+
+# vim:set ai et sw=4 ts=4 tw=80:

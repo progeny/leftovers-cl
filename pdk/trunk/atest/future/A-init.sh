@@ -37,3 +37,5 @@
 ## steps 1 and 2 are assumed done setting up our test environment
 pdk download
 ##need some examination to verify presence of the correct descriptors
+
+# vim:set ai et sw=4 ts=4 tw=80:

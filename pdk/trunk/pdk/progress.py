@@ -210,3 +210,5 @@ class NullMassProgress(object):
     def get_single_progress(self, *dummy):
         '''This method is a noop.'''
         return NullProgress()
+
+# vim:set ai et sw=4 ts=4 tw=80:

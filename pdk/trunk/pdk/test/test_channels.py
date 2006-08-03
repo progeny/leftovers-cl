@@ -74,3 +74,5 @@ class TestChannelFilenames(Test):
         quoted_path = 'http_localhost_dists_stable_Z.gz'
 
         self.assert_equals_long(quoted_path, quote(path))
+
+# vim:set ai et sw=4 ts=4 tw=80:

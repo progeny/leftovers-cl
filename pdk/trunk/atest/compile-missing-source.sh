@@ -60,4 +60,4 @@ assert_not_exists repo/dists/apache/main/source/Release
 
 grep apache repo/dists/apache/main/binary-i386/Packages
 
-
+# vim:set ai et sw=4 ts=4 tw=80:

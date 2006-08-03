@@ -454,3 +454,5 @@ cat pylint.txt
 if [ $(wc -l <pylint.txt) != "0" ]; then
     fail 'pylint found errors.'
 fi
+
+# vim:set ai et sw=4 ts=4 tw=80:

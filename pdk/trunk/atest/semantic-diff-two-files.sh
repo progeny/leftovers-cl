@@ -118,3 +118,5 @@ pdk semdiff --show-unchanged -m ethereal1-missing.xml ethereal1.xml \
 diff -u - semdiff.txt <<EOF
 add|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal1.xml
 EOF
+
+# vim:set ai et sw=4 ts=4 tw=80:

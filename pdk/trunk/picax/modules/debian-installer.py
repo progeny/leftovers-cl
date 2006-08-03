@@ -257,3 +257,5 @@ def post_install(cd_path):
     for link in ("frozen", "testing", "stable", "unstable"):
         if not os.path.exists(dist_path + link):
             os.symlink(distro, dist_path + link)
+
+# vim:set ai et sw=4 ts=4 tw=80:

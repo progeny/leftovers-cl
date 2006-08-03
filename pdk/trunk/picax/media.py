@@ -114,3 +114,5 @@ def create_image(index, boot_image_path = None):
         raise MediaError, "cannot create image for index %d" % (index,)
 
     return inst.create_image(index, boot_image_path)
+
+# vim:set ai et sw=4 ts=4 tw=80:

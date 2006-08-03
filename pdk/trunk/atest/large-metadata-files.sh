@@ -189,3 +189,5 @@ EOF
     time pdk upgrade many.xml
 
 popd
+
+# vim:set ai et sw=4 ts=4 tw=80:

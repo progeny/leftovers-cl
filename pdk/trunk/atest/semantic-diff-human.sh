@@ -98,3 +98,5 @@ semdiff_report timex-13.xml timex-12.xml
 semdiff_report timex-12.xml timex-12-nosrc.xml
 
 semdiff_report timex-12-nosrc.xml timex-12.xml
+
+# vim:set ai et sw=4 ts=4 tw=80:

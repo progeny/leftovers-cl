@@ -94,3 +94,4 @@ class TestDiff(Test):
         expected.sort()
         self.assert_equals_long(expected, diffs)
 
+# vim:set ai et sw=4 ts=4 tw=80:

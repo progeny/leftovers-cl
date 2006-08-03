@@ -65,3 +65,5 @@ pdk semdiff -m -c channel-2 ethereal.xml | LANG=C sort >semdiff.txt
 diff -u - semdiff.txt <<EOF
 upgrade|deb|ethereal|0.9.13-1.0progeny1|0.9.13-1.0progeny2|ia64|ethereal.xml
 EOF
+
+# vim:set ai et sw=4 ts=4 tw=80:

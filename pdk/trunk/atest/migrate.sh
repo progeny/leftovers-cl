@@ -112,3 +112,5 @@ pushd schema5
     grep etc/ etc/git/info/exclude
     check_schema_target
 popd
+
+# vim:set ai et sw=4 ts=4 tw=80:

@@ -195,3 +195,5 @@ EOF
 </component>
 EOF
 popd
+
+# vim:set ai et sw=4 ts=4 tw=80:

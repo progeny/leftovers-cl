@@ -49,3 +49,5 @@ def load_module(name, module_dir = None):
         raise ImportError, "cannot find modules for %s" % (name,)
 
     return inst
+
+# vim:set ai et sw=4 ts=4 tw=80:

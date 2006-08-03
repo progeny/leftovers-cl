@@ -74,3 +74,5 @@ class Entity(dict):
             domain = key[0]
             if domain in domains:
                 yield key[1], value
+
+# vim:set ai et sw=4 ts=4 tw=80:

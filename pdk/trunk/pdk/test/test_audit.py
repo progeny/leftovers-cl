@@ -64,3 +64,5 @@ class TestAudit(Test):
         self.assert_equal(Set([(('check_name2',), 'right', 'p_basis',
                                 None, 'no warrant')]),
                           found)
+
+# vim:set ai et sw=4 ts=4 tw=80:

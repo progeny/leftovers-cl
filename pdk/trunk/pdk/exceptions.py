@@ -60,3 +60,5 @@ class IntegrityFault(PdkException):
     """The exception type to be raised when the workspace is not
     in a consistent state
     """
+
+# vim:set ai et sw=4 ts=4 tw=80:

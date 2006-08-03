@@ -506,7 +506,7 @@ def get_config():
 def version(out):
     "Return the version of picax."
 
-    out.write("PICAX 2.0pre (svn revision: $Rev: 5505 $)\n")
+    out.write("PICAX 2.0pre (svn revision: $Rev: 5509 $)\n")
 
 def usage(out, options = None):
     "Print a usage statement to the given file."
@@ -647,3 +647,5 @@ def handle_args(arglist = None, component = None):
             if arch_re.search(arch_data):
                 config["arch"] = arch_id
                 break
+
+# vim:set ai et sw=4 ts=4 tw=80:

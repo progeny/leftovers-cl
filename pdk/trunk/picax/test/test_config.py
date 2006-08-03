@@ -368,3 +368,5 @@ class TestComponentDefaults(ConfigComponentBaseHarness):
         self.failUnless(conf["media_options"]["image_size"] == 650,
                         "wrong media size: %d"
                         % (conf["media_options"]["image_size"],))
+
+# vim:set ai et sw=4 ts=4 tw=80:

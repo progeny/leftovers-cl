@@ -82,3 +82,5 @@ EOF
 
 pdk resolve -R apache.xml 2>errors
 egrep "pdk WARNING:.*unresolved" errors && bail 'no warning expected'
+
+# vim:set ai et sw=4 ts=4 tw=80:

@@ -129,3 +129,5 @@ def order(packages):
     for order_func in default_order_funcs:
         pkg_order = order_func(packages, pkg_order)
     return pkg_order
+
+# vim:set ai et sw=4 ts=4 tw=80:

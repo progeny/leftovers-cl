@@ -134,3 +134,5 @@ add|deb|ethereal|0.9.13-1.0progeny1|ia64|ethereal.xml
 EOF
 
 pdk commit -m 'message'
+
+# vim:set ai et sw=4 ts=4 tw=80:

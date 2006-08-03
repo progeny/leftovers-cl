@@ -60,3 +60,5 @@ check_file "519da15c87652669b707ab49e2a6294d7aea1c1f" \
     "./repo/adjtimex-1.13-13.i386.rpm"
 check_file "5f5e2555c8294e68d06bf61aad10daa05dca2516" \
     "./repo/adjtimex-1.13-13.src.rpm"
+
+# vim:set ai et sw=4 ts=4 tw=80:

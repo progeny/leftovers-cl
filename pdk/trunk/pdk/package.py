@@ -688,3 +688,5 @@ def synthesize_version_string(epoch, version, release):
     if release:
         dpkg_version += '-' + release
     return dpkg_version
+
+# vim:set ai et sw=4 ts=4 tw=80:

@@ -29,3 +29,4 @@ setup(name="pdk",
       packages=["pdk", "picax", "picax.modules", "pdk.test", "picax.test"],
       py_modules=["hashfile"])
 
+# vim:set ai et sw=4 ts=4 tw=80:

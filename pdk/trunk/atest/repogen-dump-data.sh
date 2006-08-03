@@ -81,3 +81,5 @@ apache2-common  2.0.53 5 apache2-common_2.0.53-5_i386.deb $tmp_dir/test-repogen/
 EOF
 
 diff -u control.txt report.txt
+
+# vim:set ai et sw=4 ts=4 tw=80:

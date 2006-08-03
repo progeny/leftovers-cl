@@ -1121,3 +1121,5 @@ class TestPackageRef(Test):
                                                           apache_ref)
         self.assert_equals(expected_rule, actual_rule)
         self.assert_equals(expected_key_info, actual_key_info)
+
+# vim:set ai et sw=4 ts=4 tw=80:

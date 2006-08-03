@@ -56,3 +56,4 @@ pdk workspace create exists
 pdk workspace create exists \
     && fail "Shouldn't be able to create over an existing workspace."
 
+# vim:set ai et sw=4 ts=4 tw=80:

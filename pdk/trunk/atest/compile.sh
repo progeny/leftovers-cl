@@ -116,3 +116,5 @@ done
 
 [ -e repo/dists/stable/main/debian-installer ] \
     && fail 'debian-installer directory should not be created'
+
+# vim:set ai et sw=4 ts=4 tw=80:

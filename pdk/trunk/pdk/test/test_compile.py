@@ -268,3 +268,5 @@ SHA1:
 """
         actual_release = self.read_file(release_path)
         self.assert_equals_long(expected_release, actual_release)
+
+# vim:set ai et sw=4 ts=4 tw=80:

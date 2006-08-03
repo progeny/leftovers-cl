@@ -133,4 +133,4 @@ class TestConsoleProgress(Test):
         expected += '|' + (60 * '+') + '|\r'
         self.assert_equals_long(repr(expected), repr(output.getvalue()))
 
-
+# vim:set ai et sw=4 ts=4 tw=80:

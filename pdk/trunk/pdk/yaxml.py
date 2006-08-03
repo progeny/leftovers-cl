@@ -57,3 +57,5 @@ def build_tree(parent, element):
         parent.append(data)
     else:
         parent[element.tag] = data
+
+# vim:set ai et sw=4 ts=4 tw=80:
