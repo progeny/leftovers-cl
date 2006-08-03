@@ -1,5 +1,5 @@
 Source: pdk
-Section: dev
+Section: devel
 Priority: optional
 Maintainer: Darrin Thompson <darrint@progeny.com>
 Build-Depends: cdbs, python2.3-dev, funnelweb
