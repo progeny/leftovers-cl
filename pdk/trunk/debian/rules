@@ -14,3 +14,5 @@ install/pdk::
 	sh run_atest -d
 	tar c --exclude=atest/packages --exclude=.svn atest \
 		run_atest utest.py doc/*.fw >atest.tar
+
+# vim:set ai noet sw=8 ts=8 tw=75:
