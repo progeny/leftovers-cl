@@ -1029,6 +1029,7 @@ class Net(object):
             raise SemanticError('Out of date. Run pdk pull and try again.')
         else:
             assert False, 'Unknown status: %s' % op_status
+        self.framer.assert_end_of_stream()
 
     def handle_push_pack(self):
         '''Receive a pack.
