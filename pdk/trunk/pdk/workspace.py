@@ -1292,6 +1292,7 @@ class Conveyor(object):
         try:
             net.send_push_pack(head_id, remote_commit_ids,
                                self.upstream_name)
+            net.send_pull_blob_list(self.channel)
         finally:
             net.send_done()
         framer.close()
