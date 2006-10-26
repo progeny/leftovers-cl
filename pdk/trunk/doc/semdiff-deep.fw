@@ -76,11 +76,11 @@ cat >after/b.xml <<EOF
 EOF
 
 pdk resolve after/b.xml
-pdk semdiff -m before/a.xml after/a.xml >2file.diff
+pdk semdiff -m before/a.xml after/a.xml | LANG=C sort >2file.diff
 
 diff -u - 2file.diff <<EOF
-add|dsc|emacs-defaults|1.1|all|after/a.xml
 add|deb|emacs-defaults|1.1|all|after/a.xml
+add|dsc|emacs-defaults|1.1|all|after/a.xml
 EOF
 
 @}
@@ -119,11 +119,11 @@ cat >vc/b.xml <<EOF
 EOF
 
 pdk resolve vc/b.xml
-pdk semdiff -m vc/a.xml >2file.diff
+pdk semdiff -m vc/a.xml | LANG=C sort >2file.diff
 
 diff -u - 2file.diff <<EOF
-add|dsc|emacs-defaults|1.1|all|vc/a.xml
 add|deb|emacs-defaults|1.1|all|vc/a.xml
+add|dsc|emacs-defaults|1.1|all|vc/a.xml
 EOF
 
 @}
