@@ -598,8 +598,17 @@ class ManHelpFormatter(optparse.IndentedHelpFormatter):
 
     def format_option(self, option):
         '''Put the option and help into a tagged paragraph.'''
+
+        # Ick. This was probably a bug in python 2.3, fixed in 2.4.
+        if hasattr(option, 'option_strings'):
+            # The python 2.3 way
+            option_strings = option.option_strings
+        else:
+            # The python 2.4 way
+            option_strings = self.option_strings[option]
+
         return '.TP\n%s\n%s\n' \
-            % (option.option_strings, option.help)
+            % (option_strings, option.help)
 
     def format_one_option(self, option, separator, metavar):
         '''Bold the literals, italicize the metavariables.'''
