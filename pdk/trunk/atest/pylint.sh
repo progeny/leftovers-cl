@@ -359,9 +359,10 @@ EOF
 # awk program to ignore lines matching a pattern
 cat >ignore_pattern.awk <<"EOF"
 #!/usr/bin/awk
-
-$0 ~ pattern { next }
-              { print }
+BEGIN        { count = 0 }
+$0 ~ pattern { count = count + 1; next }
+             { print }
+END          { if (count == 0) print "unmatched pattern:", pattern }
 EOF
 
 mkdir pylint.d
