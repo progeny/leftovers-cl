@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # $Progeny$
 #
 #   Copyright 2003, 2004, 2005 Progeny Linux Systems, Inc.

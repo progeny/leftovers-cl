@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # $Progeny$
 #
 # Provide a file wrapper object for calculating hashes.
