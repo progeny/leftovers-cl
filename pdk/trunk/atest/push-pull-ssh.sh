@@ -75,6 +75,11 @@ EOF
 # -----------------------------------------------------------
 
     pdk push production
+    compare_timestamps \
+        etc/channels/file_localhost_*_production \
+        ../production/etc/cache/blob_list.gz
+    [ -e etc/git/production ] || \
+        fail "Missing production branch after push."
 
     # make sure we have the remote blob list for production
     ls etc/channels | grep _production$
