@@ -1011,7 +1011,7 @@ class Net(object):
         '''Indicate that we are done speaking with the remote process.'''
         self.framer.write_stream(['done'])
 
-    def send_push_pack(self, head_id, remote_commit_ids):
+    def send_push_pack(self, head_id, remote_commit_ids, upstream_name):
         '''Intitiate pushing of a pack file.
 
         head_id is where the pack starts.
@@ -1024,7 +1024,7 @@ class Net(object):
         self.framer.assert_frame('status')
         op_status = self.framer.read_frame()
         if op_status == 'ok':
-            pass
+            self.ws.vc.note_ref(upstream_name, head_id)
         elif op_status == 'out-of-date':
             raise SemanticError('Out of date. Run pdk pull and try again.')
         else:
@@ -1290,7 +1290,8 @@ class Conveyor(object):
         remote_blob_ids = index.get_blob_ids(self.upstream_name)
         net.send_push_blobs(remote_blob_ids)
         try:
-            net.send_push_pack(head_id, remote_commit_ids)
+            net.send_push_pack(head_id, remote_commit_ids,
+                               self.upstream_name)
         finally:
             net.send_done()
         framer.close()
