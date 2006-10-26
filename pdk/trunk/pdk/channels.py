@@ -668,7 +668,7 @@ class OutsideWorld(object):
     def index_world_data(self):
         '''Build the world_data index from channel data.'''
         logger.info('Building channel index...')
-        IndexedWorldData.build(self.iter_sections(), self.store_file)
+        self.index.build(self.iter_sections(), self.store_file)
         logger.info('Finished building channel index.')
 
     def __create_index(self):
@@ -804,7 +804,7 @@ class IndexedWorldData(object):
             yield item
     iter_world_items = staticmethod(iter_world_items)
 
-    def build(sections_iterator, index_file):
+    def build(self, sections_iterator, index_file):
         '''Build up IndexedWorldData from the data in the given sections.
         '''
         indexed_field_names = ('name', 'sp-name', 'source-rpm', 'filename')
@@ -839,14 +839,15 @@ class IndexedWorldData(object):
                                        addresses)
             index_writer.terminate()
             del index_writer
+            # Next time index_file is accessed, it will be reloaded,
+            # therefore actually reading the new file we just wrote!
+            del self.index_file
 
         except MissingChannelDataError:
             message = 'Missing cached data. ' + \
                       'Consider running pdk channel update. ' + \
                       '(%s)' % section_name
             raise SemanticError(message)
-
-    build = staticmethod(build)
 
 class LimitedWorldDataIndex(object):
     '''Essentially impersonate IndexedWorldData but filter outputs.
