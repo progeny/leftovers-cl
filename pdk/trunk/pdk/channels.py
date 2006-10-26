@@ -375,7 +375,10 @@ class AptDebSourceStrategy(object):
 
     def get_locator(self, package):
         """Return base, filename, blob_id for a package"""
-        base = self.base_path + package[('deb', 'directory')]
+        if ('deb', 'directory') in package:
+            base = self.base_path + package[('deb', 'directory')]
+        else:
+            base = self.base_path
         return FileLocator(base, package.pdk.raw_filename, package.blob_id,
                            package.size, self.loader_factory)
 
