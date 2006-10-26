@@ -1,3 +1,9 @@
+pdk (0.9.3) UNRELEASED; urgency=low
+
+  * Use newer Debian policy for building.
+
+ -- Darrin Thompson <darrint@progeny.com>  Thu,  5 Oct 2006 16:44:02 -0400
+
 pdk (0.9.2) UNRELEASED; urgency=low
 
   * Fix Debian control file to assign package to "devel" section, not "dev".
