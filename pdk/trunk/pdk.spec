@@ -1,7 +1,7 @@
 # $Progeny$
 Summary: Componentized Linux Platform Development Kit (PDK)
 Name: pdk
-%define version 0.9.1
+%define version 0.9.3
 Version: %{version}
 Release: 1
 License: GPL
@@ -62,6 +62,11 @@ rm -rf %{buildroot} %{_builddir}/*
 
 
 %changelog
+* Fri Oct 13 2006 Darrin Thompson <darrint@progeny.com> - 0.9.3-1
+- Use newer Debian policy for building.
+- Use versioned dep for git-core.
+- Update to use newer pylint.
+- Fix push command.
 * Fri Jul 21 2006 Darrin Thompson <darrint@progeny.com> - 0.9.1-1
 - In conditional includes, s/narrow/limit/, s/mask/exclude/.
 

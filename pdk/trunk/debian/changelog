@@ -1,6 +1,9 @@
 pdk (0.9.3) UNRELEASED; urgency=low
 
   * Use newer Debian policy for building.
+  * Use versioned dep for git-core.
+  * Update to use newer pylint.
+  * Fix push command.
 
  -- Darrin Thompson <darrint@progeny.com>  Thu,  5 Oct 2006 16:44:02 -0400
 
