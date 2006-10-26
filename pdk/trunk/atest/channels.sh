@@ -43,8 +43,10 @@ cp \
     $PACKAGES/apache2-common_2.0.53-5_i386.deb \
     repo-nodists
 pushd repo-nodists;
-    apt-ftparchive packages . >Packages.gz
-    apt-ftparchive sources . >Sources.gz
+    apt-ftparchive packages . >Packages
+    gzip <Packages >Packages.gz
+    apt-ftparchive sources . >Sources
+    gzip <Sources >Sources.gz
 popd
 
 set_up_repogen_fixture test-repogen
@@ -84,11 +86,22 @@ cat >etc/channels.xml <<EOF
 </channels>
 EOF
 
-pdk channel update
+pdk channel update || sh
+
+maybe_gunzip() {
+    local file="$1"
+    if file -b "$file" | grep -q ^gzip; then
+        gunzip <"$file"
+    else
+        cat "$file"
+    fi
+}
 
 compare_files() {
-    diff -u $1 $2
-    compare_timestamps $1 $2
+    maybe_gunzip "$1" >"$1.diff"
+    maybe_gunzip "$2" >"$2.diff"
+    diff -u -a "$1.diff" "$2.diff"
+    compare_timestamps "$1" "$2"
 }
 
 prefix=http_localhost_${HTTP_PORT}_repo_dists
