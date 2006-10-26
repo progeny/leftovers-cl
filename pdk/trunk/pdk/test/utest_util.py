@@ -67,7 +67,8 @@ class Test(TestCase, object):
         else:
             return pformat(raw).splitlines()
 
-    def assert_equals_long(self, raw_expected, raw_actual, user_message=''):
+    def assert_equals_long(self, raw_expected, raw_actual,
+                           user_message=''):
         if raw_expected != raw_actual:
             expected = self.break_long(raw_expected)
             actual = self.break_long(raw_actual)

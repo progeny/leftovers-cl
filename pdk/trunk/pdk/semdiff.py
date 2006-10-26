@@ -30,8 +30,8 @@ from pdk.util import string_domain
 predicate_filter = Set([
     'Architecture', 'Binary', 'Build-Conflicts', 'Build-Conflicts-Indep',
     'Build-Depends', 'Build-Depends-Indep', 'Conffiles', 'Conflicts',
-    'Depends', 'Description', 'Directory', 'Essential', 'Filename', 'Files',
-    'Format', 'Installed-Size', 'MD5Sum', 'Maintainer', 'Package',
+    'Depends', 'Description', 'Directory', 'Essential', 'Filename',
+    'Files', 'Format', 'Installed-Size', 'MD5Sum', 'Maintainer', 'Package',
     'Pre-Depends', 'Priority', 'Provides', 'Recommends', 'Replaces',
     'SHA1Sum', 'Section', 'Size', 'Source', 'Standards-Version', 'Status',
     'Suggests', 'Version', 'Uploaders', 'arch', 'name', 'extra-file',
@@ -75,8 +75,9 @@ def iter_diffs(old_package_list, new_package_list):
     For upgrade, downgrade, and unchanged, primary is the preexisting
     package, and secondary is the current package.
     """
+    anchor_fields = [ ('pdk', f) for f in ('name', 'arch', 'type') ]
     permutations = permute(old_package_list, new_package_list,
-                           [ ('pdk', f) for f in ('name', 'arch', 'type') ])
+                           anchor_fields)
     for old_package, new_package in permutations:
         if not old_package:
             yield 'add', new_package, None

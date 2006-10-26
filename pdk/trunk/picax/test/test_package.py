@@ -28,6 +28,8 @@ import picax.package
 
 from picax.test.harnesses import PackageBaseHarness
 
+package_factory = picax.package.PackageFactory
+
 class TestFactory(PackageBaseHarness):
     "Test that the factories are able to read the index files."
 
@@ -35,7 +37,7 @@ class TestFactory(PackageBaseHarness):
         "Test a binary package index."
 
         index = open("temp/dists/foo/main/binary-i386/Packages")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = package_factory(index, "temp", "foo", "main")
         packages = factory.get_packages()
         assert len(packages) > 0
         index.close()
@@ -44,7 +46,7 @@ class TestFactory(PackageBaseHarness):
         "Test a source package index."
 
         index = open("temp/dists/foo/main/source/Sources")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = package_factory(index, "temp", "foo", "main")
         packages = factory.get_packages()
         assert len(packages) > 0
         index.close()
@@ -55,7 +57,7 @@ class TestFactory(PackageBaseHarness):
         udeb_list = ["install-dcc"]
 
         index = open("temp/dists/foo/main/binary-i386/Packages")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = package_factory(index, "temp", "foo", "main")
 
         for pkg in factory:
             if pkg["Package"] in udeb_list:
@@ -65,7 +67,7 @@ class TestFactory(PackageBaseHarness):
 
         index.close()
         index = open("temp/dists/foo/main/source/Sources")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = package_factory(index, "temp", "foo", "main")
 
         for pkg in factory:
             assert isinstance(pkg, picax.package.SourcePackage)
@@ -93,7 +95,7 @@ class TestPackage(PackageBaseHarness):
                   " first stage.\n" ]
 
         index = open("temp/dists/foo/main/binary-i386/Packages")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = package_factory(index, "temp", "foo", "main")
         pkg = factory.get_next_package()
         index.close()
 
@@ -110,7 +112,8 @@ class TestPackage(PackageBaseHarness):
         "Test that calculated fields work properly."
 
         index = open("temp/dists/foo/main/binary-i386/Packages")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = package_factory(index, "temp", "foo",
+                                               "main")
         pkg = factory.get_next_package()
         index.close()
 
@@ -119,7 +122,8 @@ class TestPackage(PackageBaseHarness):
                         "wrong binary package size: %d" % (size,))
 
         index = open("temp/dists/foo/main/source/Sources")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = package_factory(index, "temp", "foo",
+                                               "main")
         pkg = factory.get_next_package()
         index.close()
 
@@ -131,7 +135,8 @@ class TestPackage(PackageBaseHarness):
         "Test that proper source information is returned."
 
         index = open("temp/dists/foo/main/binary-i386/Packages")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = package_factory(index, "temp", "foo",
+                  "main")
         pkg = factory.get_next_package()
         index.close()
 
@@ -144,7 +149,8 @@ class TestPackage(PackageBaseHarness):
         "Test that proper links are created when requested."
 
         index = open("temp/dists/foo/main/binary-i386/Packages")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = package_factory(index, "temp", "foo",
+                                               "main")
         pkg = factory.get_next_package()
         index.close()
 

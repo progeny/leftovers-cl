@@ -547,15 +547,6 @@ in the workspace channels file.
 push = make_invokable(push)
 
 def semdiff(args):
-    """\\fB%prog\\fP [\\fIOPTIONS\\fP] \\fICOMPONENT\\fP [\\fICOMPONENT\\fP]
-.PP
-Return a report containing
-meaningful component changes.
-.PP
-Works against version control,
-two arbitrary components,
-or a component and a set of channels.
-    """
     workspace = current_workspace()
     cache = workspace.world.get_backed_cache(workspace.cache)
     files = args.get_reoriented_files(workspace)
@@ -619,9 +610,19 @@ or a component and a set of channels.
     data = filter_data(chain(diffs, diffs_meta), args.opts.show_unchanged)
     printer(ref, data)
 
+semdiff.__doc__ = '\\fB%prog\\fP [\\fIOPTIONS\\fP] ' + \
+    '\\fICOMPONENT\\fP [\\fICOMPONENT\\fP]' + '''
+.PP
+Return a report containing
+meaningful component changes.
+.PP
+Works against version control,
+two arbitrary components,
+or a component and a set of channels.
+    '''
+
 semdiff = make_invokable(semdiff, 'machine-readable', 'channels',
                          'show-unchanged', 'revision')
-
 def dumpmeta(args):
     """\\fB%prog\\fP \\fICOMPONENTS\\fP
 .PP
@@ -953,7 +954,8 @@ class _Workspace(object):
         return MassAcquirer(self.world.index)
 
     def get_component_descriptor(self, oriented_name, handle = None):
-        '''Using oriented_name, create a new component descriptor object.'''
+        '''Using oriented_name, create a new component descriptor object.
+        '''
         if not handle:
             full_path = pjoin(self.location, oriented_name)
             if os.path.exists(full_path):

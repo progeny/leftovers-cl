@@ -150,7 +150,8 @@ class SshWorkspaceCacheLoader(object):
 
 class FileLocator(object):
     '''Represents a resource which can be imported into the cache.'''
-    def __init__(self, base_uri, filename, expected_blob_id, size, factory):
+    def __init__(self, base_uri, filename, expected_blob_id, size,
+                 factory):
         self.base_uri = base_uri
         self.filename = filename
         self.blob_id = expected_blob_id
@@ -250,7 +251,8 @@ class RpmMdSection(object):
         return primary_url, self.get_channel_file(primary_url)
 
     def iter_package_info(self):
-        '''Iterate over ghost_package, blob_id, locator for this section.'''
+        '''Iterate over ghost_package, blob_id, locator for this section.
+        '''
         dummy, primary_data = self.get_primary_data()
         handle = os.popen('gunzip <%s' % primary_data)
         tree = parse_xml(handle)
@@ -300,7 +302,8 @@ class AptDebSection(object):
         get_remote_file(self.full_path, self.channel_file, True)
 
     def iter_package_info(self):
-        '''Iterate over ghost_package, blob_id, locator for this section.'''
+        '''Iterate over ghost_package, blob_id, locator for this section.
+        '''
         if not os.path.exists(self.channel_file):
             raise MissingChannelDataError, self.channel_file
         tags_iterator = self.iter_apt_tags()
@@ -330,7 +333,8 @@ class AptDebSection(object):
         """
         for tags in tags_iterator:
             control = str(tags)
-            yield control, self.strategy.package_type.parse_tags(tags, None)
+            yield control, self.strategy.package_type.parse_tags(tags,
+                                                                 None)
 
 make_comparable(AptDebSection, ('full_path', 'base_path'))
 
@@ -670,10 +674,11 @@ class OutsideWorld(object):
     index = cached_property('index', __create_index)
 
     def get_limited_index(self, given_section_names):
-        '''Return IndexedWorldData like object but limited by channel names.
+        '''Return IndexedWorldData like object filtered by channel names.
         '''
         section_names = [ t[0]
-                          for t in self.iter_sections(given_section_names) ]
+                          for t in
+                          self.iter_sections(given_section_names) ]
         return LimitedWorldDataIndex(self.index, section_names)
 
     def iter_sections(self, section_names = None):
@@ -693,7 +698,7 @@ class PackageNotFoundError(SemanticError):
     pass
 
 class ChannelBackedCache(object):
-    '''Impersonate a cache but use both channels and cache to load packages.
+    '''Impersonate cache but use both channels and cache to load packages.
     '''
     def __init__(self, index, cache):
         self.index = index
@@ -782,7 +787,8 @@ class IndexedWorldData(object):
                 yield item
 
     def iter_world_items(records, section_name):
-        '''Get WorldItems for all the objects in the given (one) channel.'''
+        '''Get WorldItems for all the objects in the given (one) channel.
+        '''
         for type_string, header, blob_id, locator in records:
             if type_string and header:
                 package_type = get_package_type(format = type_string)
@@ -901,7 +907,8 @@ class MassAcquirer(object):
         '''
         by_factory = {}
         for locator in locators:
-            locator_list = by_factory.setdefault(locator.loader_factory, [])
+            locator_list = \
+                by_factory.setdefault(locator.loader_factory, [])
             locator_list.append(locator)
 
         cache_loaders = []

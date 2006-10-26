@@ -296,8 +296,9 @@ class TestBrokenConfigFile(ConfigFileBaseHarness):
         except picax.config.ConfigError:
             succeeded = False
 
-        self.failUnless(not succeeded, "(%s) %s" % (self.__class__.__name__,
-                                                    self.fail_msg))
+        self.failUnless(not succeeded,
+                        "(%s) %s" % (self.__class__.__name__,
+                        self.fail_msg))
 
 class TestRepoMissingInFile(TestBrokenConfigFile):
     "Test that configuration fails if no repository is specified."

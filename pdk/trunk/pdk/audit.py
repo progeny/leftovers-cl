@@ -140,7 +140,8 @@ and verify that it and it's parts are well-formed.
             if blob_id.startswith('sha-1'):
                 prefixes.append('sha-1')
                 arbiter.warrant(ChecksumMatches(blob_id),
-                                'sha-1:' + sha1_digest.hexdigest(), 'cache')
+                                'sha-1:' + sha1_digest.hexdigest(),
+                                'cache')
             elif blob_id.startswith('md5'):
                 prefixes.append('md5')
                 arbiter.warrant(ChecksumMatches(blob_id),
@@ -222,7 +223,8 @@ class Arbiter(object):
             self.warrant(fact, None, 'no warrant')
 
     def note_problem(self, subject, prediction, message):
-        """Directly note a problem; No prediction/warrant pair is needed."""
+        """Directly note a problem; No prediction/warrant pair is needed.
+        """
         fact = AlwaysFail(message)
 
         self.mismatch_handler(fact, prediction, None, None, subject)

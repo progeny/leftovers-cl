@@ -49,7 +49,7 @@ except ImportError:
 __revision__ = "$Progeny$"
 
 class DomainAttributeAdapter(object):
-    '''Expose a particular domain of an entity as attributes of this object.
+    '''Expose a domain of an entity as attributes of this object.
 
     domain - The domain to expose.
     entity - Resolve attributes against this particular entity.
@@ -259,7 +259,8 @@ class _Dsc(object):
                 extra_files = tuple(extra_files)
                 dom, key, value = 'pdk', 'extra-file', extra_files
             elif l_tag == 'version':
-                dom, key, value = 'pdk', 'version', DebianVersion(tags[tag])
+                dom, key, value = 'pdk', 'version', \
+                    DebianVersion(tags[tag])
             elif l_tag == 'architecture':
                 dom, key, value = 'deb', 'arch', tags[tag]
             elif l_tag == 'directory':

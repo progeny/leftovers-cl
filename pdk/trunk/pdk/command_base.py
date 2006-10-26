@@ -200,7 +200,8 @@ class CommandSpec(object):
         '''
 
         self.set_command_name(command_name)
-        command_args = CommandArgs(*self.parser.parse_args(args = raw_args))
+        command_args = \
+            CommandArgs(*self.parser.parse_args(args = raw_args))
         return CommandInvoker(command_name, self, command_args)
 
     def get_command_name(self):
@@ -367,7 +368,8 @@ class Command(object):
 add_cmpstr(Command, 'module_name', 'function_name')
 
 class DirectCommand(object):
-    '''Represents a user command as a direct reference to a command spec.'''
+    '''Represents a user command as a direct reference to a command spec.
+    '''
     def __init__(self, spec):
         self.spec = spec
 
@@ -426,7 +428,8 @@ class Commands(object):
         for sub_command_name, command in items:
             if isinstance(command, Commands):
                 for deeper_segments, deeper_command in command:
-                    deeper_segments = (self.command_name,) + deeper_segments
+                    deeper_segments = \
+                        (self.command_name,) + deeper_segments
                     yield deeper_segments, deeper_command
             else:
                 segments = (self.command_name, sub_command_name)

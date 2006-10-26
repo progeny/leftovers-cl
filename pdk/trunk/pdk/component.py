@@ -108,7 +108,7 @@ class ComponentDescriptor(object):
         return ComponentReference(self.filename)
 
     def load_raw(self, cache, package_condition):
-        """Build up the raw component/package tree but don't fire any rules.
+        """Build the raw component/package tree but don't fire any rules.
         """
         component = Component(self.filename, cache, package_condition)
         field_names = ('id', 'name', 'description', 'requires', 'provides')
@@ -128,8 +128,9 @@ class ComponentDescriptor(object):
                     for concrete_stanza in stanza.children:
                         if concrete_stanza.is_abstract():
                             condition = concrete_stanza.reference.condition
-                            message = 'Child reference is abstract: %s %s' \
-                                      % (self.filename, str(condition))
+                            message = \
+                                'Child reference is abstract: %s %s' \
+                                % (self.filename, str(condition))
                             logger = get_logger()
                             logger.warn(message)
                             continue
@@ -305,7 +306,8 @@ class ComponentDescriptor(object):
         name = stanza.reference.package_type.type_string
         ref_element = SubElement(parent, name, attributes)
 
-        self.write_condition_fields(ref_element, stanza.reference.condition)
+        self.write_condition_fields(ref_element,
+                                    stanza.reference.condition)
         predicates = stanza.predicates
         links = stanza.links
         unlinks = stanza.unlinks
@@ -557,7 +559,8 @@ class ComponentDescriptor(object):
         if debish_condition:
             condition = debish_condition
         else:
-            condition = PhantomConditionWrapper(xml_condition, package_type,
+            condition = PhantomConditionWrapper(xml_condition,
+                                                package_type,
                                                 blob_id)
 
         ref = PackageStanza(package_type, blob_id, condition, predicates)
@@ -673,7 +676,8 @@ class ComponentDescriptor(object):
 
         self.id = self.read_field(component_element, 'id')
         self.name = self.read_field(component_element, 'name')
-        self.description = self.read_field(component_element, 'description',
+        self.description = self.read_field(component_element,
+                                           'description',
                                            False)
         self.requires = self.read_multifield(component_element, 'requires')
         self.provides = self.read_multifield(component_element, 'provides')
@@ -745,8 +749,8 @@ class Component(object):
             else:
                 yield item
 
-    def iter_raw_ordered_contents(self, classes, recursive, entities = None,
-                                  system = None):
+    def iter_raw_ordered_contents(self, classes, recursive,
+                                  entities = None, system = None):
         '''Iterate over ordered_contents and load objects as needed.
 
         classes -       Only instantiate objects which would be instances
@@ -1092,7 +1096,8 @@ class PackageStanza(object):
         return self.reference.package_type.format_string, \
                self.reference.package_type.role_string, \
                self.reference.package_type.type_string, \
-               self.name, self.version, self.arch, self.reference.blob_id, \
+               self.name, self.version, self.arch, \
+               self.reference.blob_id, \
                self.reference.condition, tuple(self.predicates), \
                tuple(self.children)
 
@@ -1112,11 +1117,13 @@ class ComponentReference(object):
         self.condition = condition
 
     def load(self, get_desc):
-        '''Instantiate the ComponentDescriptor object for this reference.'''
+        '''Instantiate the ComponentDescriptor object for this reference.
+        '''
         return get_desc(self.filename)
 
 class ActionMetaSet(object):
-    '''A rule action which sets domain, predicate, target on the entity.'''
+    '''A rule action which sets domain, predicate, target on the entity.
+    '''
     def __init__(self, domain, predicate, target):
         self.domain = domain
         self.predicate = predicate
@@ -1127,7 +1134,8 @@ class ActionMetaSet(object):
         entity[(self.domain, self.predicate)] = self.target
 
     def __str__(self):
-        return 'set meta %r' % ((self.domain, self.predicate, self.target),)
+        return 'set meta %r' % ((self.domain, self.predicate,
+                                 self.target),)
 
     __repr__ = __str__
 

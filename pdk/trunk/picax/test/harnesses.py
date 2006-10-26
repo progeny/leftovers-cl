@@ -30,7 +30,7 @@ import unittest
 import picax.config
 
 class PackageBaseHarness(unittest.TestCase):
-    "Shared harness for setting up an environment for reading package info."
+    "Shared harness sets up an environment for reading package info."
 
     default_part_size = 650000000
 

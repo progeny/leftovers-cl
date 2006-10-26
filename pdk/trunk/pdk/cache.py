@@ -178,8 +178,8 @@ class SimpleCache(object):
         verified.
         '''
         local_filename = self.make_download_filename()
-        progress = mass_progress.get_single_progress(locator.blob_id,
-                                                     locator.get_full_url())
+        get_progress = mass_progress.get_single_progress
+        progress = get_progress(locator.blob_id, locator.get_full_url())
         try:
             full_url = locator.get_full_url()
             parts = urlparse(full_url)

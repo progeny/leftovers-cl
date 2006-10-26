@@ -120,7 +120,8 @@ def gen_file_fragments(filename, block_size = default_block_size):
     """Run gen_fragments on a whole file."""
     return gen_fragments(open(filename), None, block_size)
 
-def gen_fragments(handle, max_size = None, block_size = default_block_size):
+def gen_fragments(handle, max_size = None,
+                  block_size = default_block_size):
     """Generate a series of fragments of no more than block_size.
 
     Fragments are read from handle.
@@ -371,7 +372,8 @@ def write_pretty_xml_to_handle(tree, handle):
     writer.end_document()
 
 def write_pretty_xml(tree, destination):
-    '''Take an elementtree structure and write it as pretty indented xml.'''
+    '''Take an elementtree structure and write it as pretty indented xml.
+    '''
     if hasattr(destination, 'write'):
         write_pretty_xml_to_handle(tree, destination)
     else:
@@ -411,7 +413,7 @@ def parse_xml(source):
     tree.parse(source, pdk_parser)
     return tree
 
-def WithAccessLogging(instance, its_name):
+def with_access_logging(instance, its_name):
     """Debugging Aid
     Class wrapper to log access to attributes
     """
@@ -675,7 +677,8 @@ def make_fs_framer(workspace_path):
     return Framer(*shell_command(command, noop))
 
 def make_ssh_framer(host, remote_path):
-    '''Make a framer using ssh to run pdk remote listen on a remote host.'''
+    '''Make a framer using ssh to run pdk remote listen on a remote host.
+    '''
     command = "ssh %s pdk remote listen %s" % (host, remote_path)
     return Framer(*shell_command(command, noop))
 

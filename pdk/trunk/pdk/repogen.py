@@ -53,8 +53,8 @@ deb_binary_field_order = [
     "Size", "MD5Sum", "SHA1Sum", "Description" ]
 
 deb_source_field_order = [
-    "Package", "Source", 'name', "Binary", "Version", 'version', "Priority",
-    "Section", "Maintainer", "Build-Depends",
+    "Package", "Source", 'name', "Binary", "Version", 'version',
+    "Priority", "Section", "Maintainer", "Build-Depends",
     "Build-Depends-Indep", "Build-Conflicts",
     "Build-Conflicts-Indep", "Architecture", 'arch',
     "Standards-Version", "Format", "Directory", "Files" ]
@@ -69,7 +69,8 @@ def make_deb_field_comparator(field_order):
     def _comparator(field_a, field_b):
         """Field comparing closure."""
         try:
-            return cmp(field_order_dict[field_a], field_order_dict[field_b])
+            return cmp(field_order_dict[field_a],
+                       field_order_dict[field_b])
         except KeyError:
             a_in_dict = field_a in field_order_dict
             b_in_dict = field_b in field_order_dict
@@ -225,7 +226,8 @@ class DebianPoolInjector(object):
         return (size, digest)
 
     def get_source_file_line(self, blob_id, filename):
-        """Return a line appropriate for a single Sources 'Files:' entry."""
+        """Return a line appropriate for a single Sources 'Files:' entry.
+        """
         md5sum = re.match('md5:(.*)', blob_id).group(1)
         return ' %s %d %s' \
                % (md5sum, self.cache.get_size(blob_id), filename)
@@ -269,7 +271,8 @@ class DebianPoolInjector(object):
             extra_files = ['']
             blob_id = self.package.blob_id
             filename = self.package.filename
-            extra_files.append(self.get_source_file_line(blob_id, filename))
+            extra_files.append(self.get_source_file_line(blob_id,
+                                                         filename))
             for blob_id, dummy, filename in self.package.pdk.extra_file:
                 extra_files.append(self.get_source_file_line(blob_id,
                                                              filename))
@@ -622,7 +625,8 @@ class Compiler:
         return arches
 
 
-    def create_debian_pool_repo(self, product, provided_contents, repo_dir):
+    def create_debian_pool_repo(self, product, provided_contents,
+                                repo_dir):
         """Do the work of creating a pool repo given packages."""
 
         # some sane defaults for contents

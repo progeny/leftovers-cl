@@ -36,7 +36,7 @@ import picax.apt
 import picax.log
 
 class PackageDocument:
-    "Parse Packages files, and provide group operations for their packages."
+    "Parse Packages files. Provide group operations for their packages."
 
     def __init__(self, document):
         self.document = document
@@ -280,7 +280,8 @@ class Package:
             for child_node in node.childNodes:
                 if child_node.nodeType != xml.dom.Node.ELEMENT_NODE:
                     continue
-                child_check = self._check_path(path, child_node, total_path)
+                child_check = self._check_path(path, child_node,
+                                               total_path)
                 if child_check:
                     return child_check
             return node.tagName

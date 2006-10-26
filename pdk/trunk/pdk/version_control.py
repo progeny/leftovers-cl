@@ -26,8 +26,8 @@ Part of the PDK suite
 
 The primary interface is the VersionControl class. The methods of the
 class tend to correspond to actual pdk version control operations. The
-details of it's operation tend to be split between the AddRemoveData and Git
-classes.
+details of it's operation tend to be split between the AddRemoveData and
+Git classes.
 
 AddRemoveData is a fairly simple class that persistently stores a list
 of added and removed files.
@@ -61,7 +61,8 @@ from pdk.util import pjoin, shell_command, NullTerminated
 ## Version: 0.0.1
 
 class CommitNotFound(SemanticError):
-    '''Raised when a caller attempts to operate on a non-existent commit.'''
+    '''Raised when a caller attempts to operate on a non-existent commit.
+    '''
     pass
 
 class popen_wrap_handle(object):
@@ -731,7 +732,8 @@ class VersionControl(object):
         for mode, kind, blob_id, filename in iter_tree:
             if kind != 'blob':
                 continue
-            self.alt_git.run_update_index_cacheinfo(mode, blob_id, filename)
+            self.alt_git.run_update_index_cacheinfo(mode, blob_id,
+                                                    filename)
             self.alt_git.run_checkout_index([filename], force_flag = True)
 
     def verify_add_remove(self, add_remove):
@@ -744,7 +746,8 @@ class VersionControl(object):
         for filename in add_remove.get_removed_files():
             full_path = pjoin(self.work_dir, filename)
             if os.path.exists(full_path):
-                raise SemanticError, 'Delete removed file "%s".' % full_path
+                raise SemanticError, 'Delete removed file "%s".' \
+                    % full_path
 
         if not self.is_new():
             for item in self.git.iter_ls_tree('HEAD', []):

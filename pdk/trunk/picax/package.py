@@ -254,7 +254,8 @@ class PackageFactory:
 
         if self.package_parser.Section.has_key("Binary"):
             return SourcePackage(self.base_path, self.package_file.name,
-                                 self.last_pos, self.package_parser.Section,
+                                 self.last_pos,
+                                 self.package_parser.Section,
                                  self.distro, self.component)
         elif self.package_parser.Section["Filename"][-4:] == "udeb":
             return UBinaryPackage(self.base_path, self.package_file.name,
@@ -263,7 +264,8 @@ class PackageFactory:
                                   self.distro, self.component)
         else:
             return BinaryPackage(self.base_path, self.package_file.name,
-                                 self.last_pos, self.package_parser.Section,
+                                 self.last_pos,
+                                 self.package_parser.Section,
                                  self.distro, self.component)
 
     def get_packages(self):

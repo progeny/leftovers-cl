@@ -24,7 +24,7 @@
 # variable checking first, then miscellaneous, and later, basic.
 # See: enable-variable, enable-... below.
 
-PYLINT_OPTS="--disable-msg=W0142"
+PYLINT_OPTS="--disable-msg=W0142 --disable-msg=R0201"
 
 cat >pylintrc <<EOF
 # lint Python modules using external checkers.
@@ -132,34 +132,33 @@ required-attributes=
 # not require a docstring
 no-docstring-rgx=__.*__
 
-# Minimal length for module / class / function / method / argument / variable
-# names
-#min-name-length=3
-min-name-length=1
-
 # Regular expression which should only match correct module names
-#module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
-module-rgx=
+module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
+
+# Regular expression which should only match correct module level names
+const-rgx=[A-Za-z_][A-Za-z0-9_]{1,40}$
 
 # Regular expression which should only match correct class names
-#class-rgx=[A-Z_][a-zA-Z0-9]+$
-class-rgx=
+class-rgx=[a-zA-Z_][a-zA-Z0-9_]+$
 
 # Regular expression which should only match correct function names
-#function-rgx=[a-z_][a-z0-9_]*$
-function-rgx=
+function-rgx=[a-z_][A-Za-z0-9_]{1,40}$
 
 # Regular expression which should only match correct method names
-#method-rgx=[a-z_][a-z0-9_]*$
-method-rgx=
+method-rgx=[a-z_][A-Za-z0-9_]{1,40}$
+
+# Regular expression which should only match correct instance attribute names
+attr-rgx=[a-z_][A-Za-z0-9_]{1,40}$
 
 # Regular expression which should only match correct argument names
-#argument-rgx=[a-z_][a-z0-9_]*$
-argument-rgx=
+argument-rgx=[a-z_][A-Za-z0-9_]{,40}$
 
 # Regular expression which should only match correct variable names
-#variable-rgx=[a-z_][a-z0-9_]*$
-variable-rgx=
+variable-rgx=[a-z_][A-Za-z0-9_]{,40}$
+
+# Regular expression which should only match correct list comprehension /
+# generator expression variable names
+inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 
 # Good variable names which should always be accepted, separated by a comma
 good-names=i,j,k,ex,Run,_
@@ -388,33 +387,20 @@ ignore_message() {
 }
 
 ignore_message '^pdk.package:W0704:.*: Except doesn.t do anything'
-ignore_message '^pdk.package:W0232:.*:_Dsc:'
-ignore_message '^pdk.package:W0232:.*:_Deb:'
-ignore_message '^pdk.package:W0232:.*:_UDeb:'
-ignore_message '^pdk.package:W0232:.*:_SRpm:'
-ignore_message '^pdk.package:W0232:.*:_Rpm:'
-ignore_message '^pdk.package:W0232:.*:_Bin:'
-ignore_message '^pdk.package:W0232:.*:_Src:'
-ignore_message '^pdk.package:E0201:.*:Package.*'
-ignore_message '^pdk.package:E0601:.*:.*self.*'
 
-ignore_message '^pdk.workspace:W0302:.*'
-ignore_message '^pdk.component:W0302:.*'
+ignore_message '^pdk.workspace:C0111:.*:semdiff:'
+ignore_message '^pdk.workspace:W0302:'
+ignore_message '^pdk.component:W0302:'
+ignore_message '^pdk.component:E1101:.*:ComponentDescriptor.load'
+ignore_message '^pdk.cache:W0104:.*:SimpleCache.import_from_framer'
+ignore_message '^pdk.command_base:W0104:.*:add_cmpstr.__cmp__'
+ignore_message '^pdk.command_base:W0104:.*:add_cmpstr.__str__'
 
-ignore_message '^pdk.compare:W0613:.*realm'
-ignore_message '^pdk.compare:W0613:.*uri'
+ignore_message '^pdk.audit:E1101:.*:FactType.*__slots__'
+ignore_message '^pdk.rules:C0111:.*evaluate.*'
 
-ignore_message '^pdk.audit:E0201:.*:FactType.*__slots__'
-ignore_message '^pdk.audit:E0201:.*get_problem_fields'
-ignore_message '^pdk.audit:W0613:.*get_problem_fields'
-
-ignore_message '^pdk.repogen:E0101:.*:DebianReleaseWriter'
-ignore_message '^pdk.rules:W0131:.*evaluate.*'
-ignore_message '^pdk.rules:W0232:.*: Class has no __init__ method'
-
-ignore_message '^pdk.debish_condition:W0131:.*:DebishParser.parse_.*'
-
-ignore_message '^pdk.meta:E0201:.*:_ComponentMetaGroup'
+ignore_message '^pdk.debish_condition:C0111:.*:DebishParser.parse_.*'
+ignore_message '^pdk.debish_condition:W0631:.*:raw_debish_lex'
 
 ignore_message '^pdk.version_control:W0704:.*:Git.iter_diff_files'
 ignore_message '^pdk.channels:W0704:.*: Except'
@@ -422,33 +408,35 @@ ignore_message '^pdk.channels:W0704:.*: Except'
 ignore_message '^bin_utest:W0401'
 ignore_message '^bin_utest:W0611'
 
-ignore_message '^picax.*:W0131:.*:_'
-ignore_message '^picax.*:W0131:.*:.*\\._'
-
-ignore_message '^picax.installer:W0121'
-ignore_message '^picax.media:W0121'
-ignore_message '^picax.apt:W0121'
-ignore_message '^picax.config:W0121'
+ignore_message '^picax.*:C0111:.*:_'
+ignore_message '^picax.*:C0111:.*:.*\\._'
 
 ignore_message '^picax.unpack:W0122:.*:Package.run_script'
-ignore_message '^picax.log:W0121:.*:get_logger'
-ignore_message '^picax.newrepo:E0601:.*:NewRepository._compress_and_hash_indexes'
+ignore_message '^picax.*:W0603:'
+ignore_message '^picax.*:W0602:'
+ignore_message '^picax.modules.debian-installer:C0103:'
+ignore_message '^bin_picax-utest:C0103'
 ignore_message '^picax.modules.*:R0401'
-
-ignore_message '^pdk.version_control:W0704:.*:Git.iter_diff_files'
+ignore_message '^picax.apt:E1101:.*:_get_latest_version'
 
 # The picax script is temporary, so ignore its problems.
 
 ignore_message '^bin_picax:'
 
 # for unit tests only
-ignore_message '^pdk.test..*:E0201:.*assert_'
-ignore_message '^pdk.test..*:E0201:.*fail_'
+ignore_message '^pdk.test..*:E1101:.*fail_'
+ignore_message '^pdk.test..*:E1101:.*assert_'
 ignore_message '^pdk.test..*:W0201:'
 ignore_message '^pdk.test..*:W0704:'
-ignore_message '^pdk.test..*:W0232:'
-ignore_message '^pdk.test..*:W0131:'
+ignore_message '^pdk.test..*:C0103:'
+ignore_message '^pdk.test..*:C0111:'
 ignore_message '^pdk.test.test_component:W0302:.*'
+ignore_message "^pdk.test.test_debish_condition:E1101:\
+.*:TestDebishCondition.test_marked_condition:"
+ignore_message "^pdk.test.test_package:W0104:\
+.*:TestPackageClass.test_emulation_behaviors:"
+ignore_message "^pdk.test.test_package:E1101:\
+.*:TestPackageClass.test_emulation_behaviors:"
 
 cat pylint.txt
 if [ $(wc -l <pylint.txt) != "0" ]; then

@@ -153,7 +153,8 @@ class NewRepository:
             index_file.write("\n")
 
         for distro_key in index_files.keys():
-            [x.close() for x in index_files[distro_key]]
+            for x in index_files[distro_key]:
+                x.close()
             for index_fn in self.index_paths[distro_key]:
                 self.index_hashes[index_fn] = \
                     tuple([x.hexdigest() for x in hashes[index_fn]])
@@ -244,8 +245,8 @@ class NewRepository:
                 for component in components:
                     component_key = _gen_release_key(distro, component)
                     for fn in self.index_paths[component_key]:
-                        component_path = fn.replace("dists/%s/" % (distro,),
-                                                    "")
+                        component_path = \
+                            fn.replace("dists/%s/" % (distro,), "")
                         full_path = self.dest_path + "/" + fn
                         if os.path.exists(full_path):
                             size = os.stat(full_path).st_size

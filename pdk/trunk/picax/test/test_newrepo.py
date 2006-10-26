@@ -36,7 +36,8 @@ class TestNewRepositoryProcess(PackageBaseHarness):
         "Test a new repository."
 
         index = open("temp/dists/foo/main/binary-i386/Packages")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = picax.package.PackageFactory(index, "temp", "foo",
+                                               "main")
         packages = factory.get_packages()
         index.close()
 
@@ -59,7 +60,8 @@ class TestNewRepositoryResults(PackageBaseHarness):
         PackageBaseHarness.setUp(self)
 
         index = open("temp/dists/foo/main/binary-i386/Packages")
-        factory = picax.package.PackageFactory(index, "temp", "foo", "main")
+        factory = picax.package.PackageFactory(index, "temp", "foo",
+                                               "main")
         packages = factory.get_packages()
         index.close()
 

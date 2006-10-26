@@ -84,7 +84,8 @@ Dir "%s/"
     slist = open("%s/sources.list" % (base_dir,), "w")
     for (distro, components) in distro_list:
         for component in components:
-            slist.write("deb file://%s %s %s\n" % (path, distro, component))
+            slist.write("deb file://%s %s %s\n"
+                        % (path, distro, component))
     if global_conf.has_key("correction_apt_repo"):
         slist.write(global_conf["correction_apt_repo"] + "\n")
     slist.close()
@@ -142,7 +143,8 @@ def find_package_uri(pkg_name):
         base_paths.extend(["file://" + x
                            for x in global_conf["base_media"]])
         if global_conf.has_key("correction_apt_repo"):
-            base_paths.append(global_conf["correction_apt_repo"].split()[1])
+            path = global_conf["correction_apt_repo"].split()[1]
+            base_paths.append(path)
 
         for base_path in base_paths:
             if full_uri:
@@ -350,7 +352,8 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
                         # needed.
 
                         cluster_names = [x.ParentPkg.Name
-                                         for x in cluster + cluster_handled]
+                                         for x in
+                                         cluster + cluster_handled]
                         if dep_target.ParentPkg.Name in cluster_names:
                             cluster_candidate = dep_target
                             raise FoundPackage
@@ -450,7 +453,8 @@ def resolve_package_list(pkgs, pkgs_to_ignore, loose_deps = True):
                     cluster_changed = False
                     for candidate in [current] + rev_queue:
                         cluster_names = [x.ParentPkg.Name
-                                         for x in cluster + cluster_handled]
+                                         for x in
+                                         cluster + cluster_handled]
                         if not candidate.ParentPkg.Name in cluster_names:
                             cluster.append(candidate)
                             cluster_changed = True

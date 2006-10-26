@@ -113,7 +113,8 @@ class TestDebianPoolRepo(DebianPoolFixture):
                in all_dirs
         assert cpath('repo', 'dists', 'happy', 'main', 'binary-sparc') \
                in all_dirs
-        assert cpath('repo', 'dists', 'happy', 'main', 'source') in all_dirs
+        assert cpath('repo', 'dists', 'happy', 'main', 'source') \
+               in all_dirs
         assert cpath('repo', 'dists', 'happy', 'contrib', 'binary-i386') \
                in all_dirs
         assert cpath('repo', 'dists', 'happy', 'contrib', 'binary-sparc') \
@@ -166,18 +167,18 @@ class TestDebianPoolInjector(DebianPoolFixture):
 
         blob_id = 'sha-1:b7d31cf9a160c3aadaf5f1cd86cdc8762b3d4b1b'
         self.bin = self.cache.load_package(blob_id, 'deb')
-        self.bin_injector = DebianPoolInjector(self.cache, self.bin, 'main',
-                                               self.repo.repo_dir)
+        self.bin_injector = DebianPoolInjector(self.cache, self.bin,
+                                               'main', self.repo.repo_dir)
 
         blob_id = 'sha-1:9d26152e78ca33a3d435433c67644b52ae4c670c'
         self.src = self.cache.load_package(blob_id, 'dsc')
-        self.src_injector = DebianPoolInjector(self.cache, self.src, 'main',
-                                               self.repo.repo_dir)
+        self.src_injector = DebianPoolInjector(self.cache, self.src,
+                                               'main', self.repo.repo_dir)
 
     def test_pool_location(self):
         location = self.bin_injector.get_pool_location()
-        expected = pjoin(self.repo.repo_dir, 'pool', 'main', 'a', 'apache2',
-                         self.bin.filename)
+        expected = pjoin(self.repo.repo_dir, 'pool', 'main', 'a',
+                         'apache2', self.bin.filename)
         self.assert_equals_long(expected, location)
 
     def test_extra_pool_locations(self):

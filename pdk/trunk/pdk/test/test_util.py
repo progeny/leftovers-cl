@@ -100,7 +100,8 @@ class TestGenFragments(Test):
         self.assert_equal(['....'], list(gen_fragments(stringio(data), 4)))
 
         expected = [ default_block_size * '.', '..' ]
-        actual = list(gen_fragments(stringio(data), default_block_size + 2))
+        actual = list(gen_fragments(stringio(data),
+                                    default_block_size + 2))
         assert expected == actual
 
     def test_nosize(self):

@@ -237,9 +237,9 @@ def _dom_to_config(this_config, topnode, options, prefixes = ()):
                 raise ConfigError, "config file item %s has no value" \
                       % (child.tagName,)
 
-            value = _parse_value(options[child.tagName], value,
-                                 "value %%s for config file item %s invalid"
-                                 % (child.tagName,))
+            message = "value %%s for config file item %s invalid" \
+                        % (child.tagName,)
+            value = _parse_value(options[child.tagName], value, message)
         else:
             value = True
 
@@ -265,7 +265,8 @@ def _config_to_dom_tree(this_config, options, document, topnode,
                 if options[option].has_key("parameter-type"):
                     if options[option]["parameter-type"] == "number":
                         value = str(value)
-                    elif options[option]["parameter-type"] == "multistring":
+                    elif options[option]["parameter-type"] \
+                            == "multistring":
                         value = ":".join(value)
                     else:
                         raise ConfigError, \

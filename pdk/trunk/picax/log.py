@@ -41,7 +41,8 @@ class StdoutFilter(logging.Filter):
         return record.levelno < logging.WARNING
 
 class DebianFormatter(logging.Formatter):
-    """Format log messages in a manner similar to other Debian utilities."""
+    """Format log messages in a manner similar to other Debian utilities.
+    """
 
     def format(self, record):
         """Write the log record in a manner similar to other

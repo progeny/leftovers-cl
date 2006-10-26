@@ -881,7 +881,8 @@ EOF
 ''')
 
         desc = ComponentDescriptor('test.xml')
-        self.assert_equal([('some-meta', 'can-do')], desc.contents[0].links)
+        self.assert_equal([('some-meta', 'can-do')],
+                          desc.contents[0].links)
         cache = ShamCache()
         package = MockPackage('a', '1', deb, 'sha-1:aaa')
         cache.add(package)
