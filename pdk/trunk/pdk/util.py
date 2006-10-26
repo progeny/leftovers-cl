@@ -87,7 +87,22 @@ def cached_property(prop_name, create_fn):
             value = create_fn(self)
             setattr(self, private_name, value)
         return value
-    return property(_get_property, doc = create_fn.__doc__)
+
+    def _set_property(self, value):
+        '''Set the underlying private variable.'''
+        setattr(self, private_name, value)
+
+    def _del_property(self):
+        '''Delete the underlying private variable.
+
+        If we try to delete the property before it has been retrieved,
+        just silently succeed.
+        '''
+        if hasattr(self, private_name):
+            delattr(self, private_name)
+
+    return property(_get_property, _set_property, _del_property,
+                    doc = create_fn.__doc__)
 
 # These _must_ come from "real" python elementtree
 from elementtree.ElementTree import Comment as et_comment
