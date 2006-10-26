@@ -50,7 +50,7 @@ setup_initial() {
     if [ -n "$install_in_sandbox" ]; then
         rm -rf build/
         python setup.py     --quiet build --build-base=${tdir}/tmp-build \
-            install --prefix=${tdir}
+            install --home=${tdir}
         echo "import compileall; " \
              "compileall.compile_dir('${tdir}/lib', quiet=True)" \
             | python
@@ -154,7 +154,7 @@ run_test() {
 
         mkdir -p ${tmp_dir}/bin
         PATH=${tmp_dir}/bin:$PATH
-        PYTHONPATH=${tmp_dir}/lib/python2.3/site-packages:$PYTHONPATH
+        PYTHONPATH=${tmp_dir}/lib/python:$PYTHONPATH
         export PYTHONPATH
         EDITOR=false
         export EDITOR
