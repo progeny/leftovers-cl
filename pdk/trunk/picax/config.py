@@ -198,7 +198,7 @@ def _init():
         conf["temp_dir"] = "/tmp"
 
     if os.environ.has_key("PICAX_DEBUG"):
-        conf["debug"] == True
+        conf["debug"] = True
 
     return conf
 
