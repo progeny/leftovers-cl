@@ -270,6 +270,9 @@ SHA1:
  e3dc8362c1586e4d9702ad862f29b6bef869afde               11 data/Release
 """
         actual_release = self.read_file(release_path)
-        self.assert_equals_long(expected_release, actual_release)
+        # Newer versions of apt-ftparchive put more sums after the file.
+        # We'll overlook these for now, for compatibility purposes.
+        edited_release = ''.join(actual_release.splitlines(True)[:13])
+        self.assert_equals_long(expected_release, edited_release)
 
 # vim:set ai et sw=4 ts=4 tw=75:
